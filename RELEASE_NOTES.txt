@@ -1,0 +1,14 @@
+OVERVIEW
+-----------------------------------------
+Service for metabolic modeling for Model SEED and PATRIC
+
+VERSION: 0.0.5 (Released 12/9/2014)
+------------------------------------------
+NEW FEATURES:
+-
+
+UPDATED FEATURES / MAJOR BUG FIXES:
+-none.
+
+ANTICIPATED FUTURE DEVELOPMENTS:
+-public release of the service
