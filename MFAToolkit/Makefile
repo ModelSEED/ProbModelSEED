@@ -10,11 +10,11 @@ CWD= $(shell pwd)
 # CC
 CC = g++
 # LIBS
-GLPKLIB = -lpthread -lglpk -lcplex -lm
+GLPKLIB = -lpthread -lglpk
 LIBS = -lz ${GLPKLIB}
 # INCS
 MFATK_INC = -I${CWD}/include
-ENV_INC   = ${INC} -I/Users/chenry/Applications/IBM/ILOG/CPLEX_Studio125/cplex/include/ilcplex/ -L/Users/chenry/Applications/IBM/ILOG/CPLEX_Studio125/cplex/lib/x86-64_darwin/static_pic/
+ENV_INC   = ${INC}
 INCS = ${MFATK_INC} ${ENV_INC}
 # FLAGS
 OFLAGS = -DLINUX -DNDEBUG -DIL_STD -DILOSTRICTPOD -DNOSAFEMEM -DNOBLOCKMEM -O3
@@ -23,7 +23,7 @@ FFLAGS = -fPIC -fexceptions
 CCFLAGS = ${INCS} ${OFLAGS} ${FFLAGS}
 LDFLAGS = ${GLPKLIB}
 
-CPLEXAPI = CPLEXapi.cpp
+CPLEXAPI = CPLEXapiEMPTY.cpp
 SRCDIR=${CWD}/src
 
 SRCFILES = ${SRCDIR}/driver.cpp ${SRCDIR}/MFAProblem.cpp ${SRCDIR}/${CPLEXAPI} ${SRCDIR}/SCIPapi.cpp ${SRCDIR}/GLPKapi.cpp ${SRCDIR}/LINDOapiEMPTY.cpp ${SRCDIR}/SolverInterface.cpp ${SRCDIR}/Species.cpp ${SRCDIR}/Data.cpp ${SRCDIR}/InterfaceFunctions.cpp ${SRCDIR}/Identity.cpp ${SRCDIR}/Reaction.cpp ${SRCDIR}/GlobalFunctions.cpp ${SRCDIR}/AtomCPP.cpp ${SRCDIR}/UtilityFunctions.cpp ${SRCDIR}/AtomType.cpp ${SRCDIR}/Gene.cpp ${SRCDIR}/GeneInterval.cpp ${SRCDIR}/stringDB.cpp
