@@ -165,22 +165,32 @@ class ProbModelSEED(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
 
-    def import_media(self, input):
-        resp = self._call('ProbModelSEED.import_media',
+    def list_gapfill_solutions(self, input):
+        resp = self._call('ProbModelSEED.list_gapfill_solutions',
                           [input])
         return resp[0]
 
-    def reconstruct_fbamodel(self, input):
-        resp = self._call('ProbModelSEED.reconstruct_fbamodel',
+    def manage_gapfill_solutions(self, input):
+        resp = self._call('ProbModelSEED.manage_gapfill_solutions',
                           [input])
         return resp[0]
 
-    def flux_balance_analysis(self, input):
-        resp = self._call('ProbModelSEED.flux_balance_analysis',
+    def list_fba_studies(self, input):
+        resp = self._call('ProbModelSEED.list_fba_studies',
                           [input])
         return resp[0]
 
-    def gapfill_model(self, input):
-        resp = self._call('ProbModelSEED.gapfill_model',
+    def delete_fba_studies(self, input):
+        resp = self._call('ProbModelSEED.delete_fba_studies',
+                          [input])
+        return resp[0]
+
+    def list_model_edits(self, input):
+        resp = self._call('ProbModelSEED.list_model_edits',
+                          [input])
+        return resp[0]
+
+    def manage_model_edits(self, input):
+        resp = self._call('ProbModelSEED.manage_model_edits',
                           [input])
         return resp[0]

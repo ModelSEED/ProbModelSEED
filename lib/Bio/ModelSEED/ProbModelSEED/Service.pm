@@ -1,4 +1,4 @@
-package Bio::ModelSEED::ProbModelSEED::Server;
+package Bio::ModelSEED::ProbModelSEED::Service;
 
 
 use Data::Dumper;
@@ -27,18 +27,22 @@ has 'config' => (is => 'ro', required => 1, builder => '_build_config');
 our $CallContext;
 
 our %return_counts = (
-        'import_media' => 1,
-        'reconstruct_fbamodel' => 1,
-        'flux_balance_analysis' => 1,
-        'gapfill_model' => 1,
+        'list_gapfill_solutions' => 1,
+        'manage_gapfill_solutions' => 1,
+        'list_fba_studies' => 1,
+        'delete_fba_studies' => 1,
+        'list_model_edits' => 1,
+        'manage_model_edits' => 1,
         'version' => 1,
 );
 
 our %method_authentication = (
-        'import_media' => 'required',
-        'reconstruct_fbamodel' => 'required',
-        'flux_balance_analysis' => 'required',
-        'gapfill_model' => 'required',
+        'list_gapfill_solutions' => 'required',
+        'manage_gapfill_solutions' => 'required',
+        'list_fba_studies' => 'required',
+        'delete_fba_studies' => 'required',
+        'list_model_edits' => 'required',
+        'manage_model_edits' => 'required',
 );
 
 
@@ -46,10 +50,12 @@ sub _build_valid_methods
 {
     my($self) = @_;
     my $methods = {
-        'import_media' => 1,
-        'reconstruct_fbamodel' => 1,
-        'flux_balance_analysis' => 1,
-        'gapfill_model' => 1,
+        'list_gapfill_solutions' => 1,
+        'manage_gapfill_solutions' => 1,
+        'list_fba_studies' => 1,
+        'delete_fba_studies' => 1,
+        'list_model_edits' => 1,
+        'manage_model_edits' => 1,
         'version' => 1,
     };
     return $methods;
@@ -212,7 +218,7 @@ sub call_method {
 
     my ($module, $method, $modname) = @$method_info{qw(module method modname)};
     
-    my $ctx = Bio::ModelSEED::ProbModelSEED::ServerContext->new($self->{loggers}->{userlog},
+    my $ctx = Bio::ModelSEED::ProbModelSEED::ServiceContext->new($self->{loggers}->{userlog},
                            client_ip => $self->getIPAddress());
     $ctx->module($modname);
     $ctx->method($method);
@@ -274,7 +280,7 @@ sub call_method {
 	local $ENV{KBRPC_METADATA} = $kb_metadata if $kb_metadata;
 	local $ENV{KBRPC_ERROR_DEST} = $kb_errordest if $kb_errordest;
 
-	my $stderr = Bio::ModelSEED::ProbModelSEED::ServerStderrWrapper->new($ctx, $get_time);
+	my $stderr = Bio::ModelSEED::ProbModelSEED::ServiceStderrWrapper->new($ctx, $get_time);
 	$ctx->stderr($stderr);
 
         my $xFF = $self->_plack_req->header("X-Forwarded-For");
@@ -387,13 +393,13 @@ sub get_method
     return { module => $module, method => $method, modname => $package };
 }
 
-package Bio::ModelSEED::ProbModelSEED::ServerContext;
+package Bio::ModelSEED::ProbModelSEED::ServiceContext;
 
 use strict;
 
 =head1 NAME
 
-Bio::ModelSEED::ProbModelSEED::ServerContext
+Bio::ModelSEED::ProbModelSEED::ServiceContext
 
 head1 DESCRIPTION
 
@@ -484,7 +490,7 @@ sub clear_log_level
     $self->{_logger}->clear_user_log_level();
 }
 
-package Bio::ModelSEED::ProbModelSEED::ServerStderrWrapper;
+package Bio::ModelSEED::ProbModelSEED::ServiceStderrWrapper;
 
 use strict;
 use POSIX;

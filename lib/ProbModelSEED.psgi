@@ -1,6 +1,6 @@
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl;
 
-use Bio::ModelSEED::ProbModelSEED::Server;
+use Bio::ModelSEED::ProbModelSEED::Service;
 use Plack::Middleware::CrossOrigin;
 
 
@@ -13,7 +13,7 @@ my @dispatch;
 }
 
 
-my $server = Bio::ModelSEED::ProbModelSEED::Server->new(instance_dispatch => { @dispatch },
+my $server = Bio::ModelSEED::ProbModelSEED::Service->new(instance_dispatch => { @dispatch },
 				allow_get => 0,
 			       );
 

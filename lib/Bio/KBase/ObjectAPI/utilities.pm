@@ -15,6 +15,7 @@ our $keggmaphash = undef;
 our $report = {};
 our $shockurl = undef;
 our $token = undef;
+our $globalparams = {};
 
 =head1 Bio::KBase::ObjectAPI::utilities
 
@@ -1216,6 +1217,16 @@ sub LoadToShock {
 	my $json = JSON::XS->new;
 	my $data = $json->decode(join("\n",@{$output}));
 	return $data->{data}->{id};
+}
+
+sub set_global {
+	my ($parameter,$value) = @_;
+	$globalparams->{$parameter} = $value;
+}
+
+sub get_global {
+	my ($parameter) = @_;
+	return $globalparams->{$parameter};
 }
 
 1;
