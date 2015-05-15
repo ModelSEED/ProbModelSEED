@@ -4,17 +4,10 @@ use strict;
 # http://semver.org 
 our $VERSION = "0.1.0";
 
-use File::Path;
-use File::Copy ("cp","mv");
-use File::stat;
-use Fcntl ':mode';
-use Data::UUID;
 use Bio::P3::Workspace::WorkspaceClientExt;
 use JSON::XS;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
-use Config::Simple;
-use Bio::KBase::AuthToken;
 use Bio::KBase::ObjectAPI::utilities;
 use Bio::KBase::ObjectAPI::PATRICStore;
 
@@ -24,39 +17,14 @@ Log::Log4perl->easy_init($DEBUG);
 #Getter setters for parameters
 #****************************************************************************
 sub workspace_url {
-	my ($self,$url) = @_;
-	if (defined($url)) {
-		$self->{_params}->{"workspace-url"} = $url;
-	}
+	my ($self) = @_;
 	return $self->{_params}->{"workspace-url"};
 }
-sub admin_mode {
+sub adminmode {
 	my ($self,$adminmode) = @_;
-	if (defined($adminmode)) {
-		$self->PATRICStore()->adminmode($adminmode);
-	}
-	return $self->PATRICStore()->adminmode();
+	return $self->{_params}->{adminmode};
 }
 
-#****************************************************************************
-#Authentication functions
-#****************************************************************************
-sub authenticate_token {
-	my($self) = @_;
-    my $token = Bio::KBase::AuthToken->new(ignore_authrc => ($ENV{KB_INTERACTIVE} ? 0 : 1));
-    if ($token->validate()){
-		$self->{_authenticated} = 1;
-		$self->{_user_id} = $token->user_id;
-		$self->{_token} = $token->token;
-		Bio::KBase::ObjectAPI::utilities::token($self->{_token});
-    } else {
-		$self->error("Token did not validate\n" . Dumper($token));
-	}
-}
-sub get_username {
-	my ($self) = @_;
-	return $self->{_user_id};
-}
 #****************************************************************************
 #Workspace interaction functions
 #****************************************************************************
@@ -94,12 +62,14 @@ sub get_model_meta {
 	my($self, $ref) = @_;
 	my $metas = $self->workspace_service()->get({
 		objects => [$ref],
-		metadata_only => 1
+		metadata_only => 1,
+		adminmode => $self->{_params}->{adminmode}
 	});
 	if ($metas->[0]->[0]->[1] ne "model") {
 		$metas = $self->workspace_service()->get({
 			objects => [$metas->[0]->[0]->[2].".".$metas->[0]->[0]->[0]."/".$metas->[0]->[0]->[0].".model"],
-			metadata_only => 1
+			metadata_only => 1,
+			adminmode => $self->{_params}->{adminmode}
 		});
 	}
     if (!defined($metas->[0])) {
@@ -110,14 +80,14 @@ sub get_model_meta {
 sub workspace_service {
 	my($self) = @_;
 	if (!defined($self->{_workspace_service})) {
-		$self->{_workspace_service} =Bio::P3::Workspace::WorkspaceClientExt->new($self->workspace_url());
+		$self->{_workspace_service} = Bio::P3::Workspace::WorkspaceClientExt->new($self->workspace_url(),token => $self->{_params}->{token});
 	}
 	return $self->{_workspace_service};
 }
 sub PATRICStore {
 	my($self) = @_;
 	if (!defined($self->{_PATRICStore})) {
-		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({workspace => $self->workspace_service()});
+		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({workspace => $self->workspace_service(),adminmode => $self->{_params}->{adminmode}});
 	}
 	return $self->{_PATRICStore};
 }
@@ -125,50 +95,12 @@ sub PATRICStore {
 #Utility functions
 #****************************************************************************
 sub validate_args {
-	my ($self,$args,$mandatoryArguments,$optionalArguments,$substitutions) = @_;
-	$self->{_adminmode} = 0;
-	if (!defined($args)) {
-	    $args = {};
-	}
-	if (ref($args) ne "HASH") {
-		$self->error("Arguments not hash");
-	}
-	if (defined($args->{adminmode}) && $args->{adminmode} == 1) {
-		if ($self->_user_is_admin() == 0) {
-			$self->error("Cannot run functions in admin mode. User is not an admin!");
-		}
-		$self->{_adminmode} = 1;
-	}
-	if (defined($substitutions) && ref($substitutions) eq "HASH") {
-		foreach my $original (keys(%{$substitutions})) {
-			$args->{$original} = $args->{$substitutions->{$original}};
-		}
-	}
-	if (defined($mandatoryArguments)) {
-		for (my $i=0; $i < @{$mandatoryArguments}; $i++) {
-			if (!defined($args->{$mandatoryArguments->[$i]})) {
-				push(@{$args->{_error}},$mandatoryArguments->[$i]);
-			}
-		}
-	}
-	if (defined($args->{_error})) {
-		$self->error("Mandatory arguments ".join("; ",@{$args->{_error}})." missing.");
-	}
-	if (defined($optionalArguments)) {
-		foreach my $argument (keys(%{$optionalArguments})) {
-			if (!defined($args->{$argument})) {
-				$args->{$argument} = $optionalArguments->{$argument};	
-			}
-		}
-	}
-	return $args;
+	my ($self,$args,$mandatoryArguments,$optionalArguments) = @_;
+	return Bio::KBase::ObjectAPI::utilities::ARGS($args,$mandatoryArguments,$optionalArguments);
 }
 sub error {
-	my($self,$msg,$type) = @_;
-	if (!defined($type)) {
-		$type = "Unspecified";
-	}
-	Bio::KBase::ObjectAPI::utilities::error($self->{_current_method}.":".$msg);
+	my($self,$msg) = @_;
+	Bio::KBase::ObjectAPI::utilities::error($msg);
 }
 #****************************************************************************
 #Research functions
@@ -388,57 +320,15 @@ sub build_fba_object {
 #Constructor
 #****************************************************************************
 sub new {
-    my($class, @args) = @_;
+    my($class, $parameters) = @_;
     my $self = {};
     bless $self, $class;
-    my $params = $args[0];
-    my $paramlist = [qw(
-    	authentication
-    	username
-    	fbajobcache
-    	awe-url
-    	shock-url
-    	fbajobdir
-    	mfatoolkitbin
-		probanno-url
-		mssserver-url
-		workspace-url
-    )];
-    if ((my $e = $ENV{KB_DEPLOYMENT_CONFIG}) && -e $ENV{KB_DEPLOYMENT_CONFIG}) {
-		my $service = $ENV{KB_SERVICE_NAME};
-		if (!defined($service)) {
-			$service = "ProbModelSEED";
-		}
-		if (defined($service)) {
-			my $c = Config::Simple->new();
-			$c->read($e);
-			for my $p (@{$paramlist}) {
-			  	my $v = $c->param("$service.$p");
-			    if ($v && !defined($params->{$p})) {
-					$params->{$p} = $v;
-					if ($v eq "null") {
-						$params->{$p} = undef;
-					}
-			    }
-			}
-		}
-    }
-	$params = $self->validate_args($params,[],{
-		"workspace-url" => "http://p3.theseed.org/services/Workspace"
-	});
-	$self->{_params} = $params;
-	if (defined($params->{mfatoolkitbin})) {
-		Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($params->{mfatoolkitbin});
-	}
-	if (defined($params->{fbajobdir})) {
-		Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($params->{fbajobdir});
-	}
-	if (defined($params->{fbajobcache})) {
-		Bio::KBase::ObjectAPI::utilities::FinalJobCache($params->{fbajobcache});
-	}
-	if (!defined($params->{authentication})) {
-		$self->authenticate_token();
-	}
+    $parameters = $self->validate_args($parameters,["fbajobcache","fbajobdir","mfatoolkitbin","token","username",],{
+    	"workspace-url" => "http://p3.theseed.org/services/Workspace",
+    	adminmode => 0,
+    	method => "unknown"
+    });
+    $self->{_params} = $parameters;
     return $self;
 }
 

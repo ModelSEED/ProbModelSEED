@@ -33,28 +33,42 @@ Log::Log4perl->easy_init($DEBUG);
 our $CallContext;
 
 #Returns the authentication token supplied to the service in the context object
-sub authentication {
+sub token {
 	my($self) = @_;
 	return $CallContext->token;
 }
 
 #Returns the username supplied to the service in the context object
-sub getUsername {
+sub user_id {
 	my ($self) = @_;
 	return $CallContext->user_id;
+}
+
+sub workspace_url {
+	my ($self) = @_;
+	if (!defined($CallContext->{"_workspace-url"})) {
+		return $self->config()->{"workspace-url"};
+	}
+	return $CallContext->{"_workspace-url"};
+}
+
+sub adminmode {
+	my ($self) = @_;
+	if (!defined($CallContext->{_adminmode})) {
+		return 0;
+	}
+	return $CallContext->{_adminmode};
 }
 
 #Initialization function for call
 sub initialize_call {
 	my ($self,$params) = @_;
-	#Setting URL for connected services
 	if (defined($params->{adminmode})) {
-		$self->helper()->admin_mode($params->{adminmode});
+		$CallContext->{_adminmode} = $params->{adminmode};
 	}
 	if (defined($params->{wsurl})) {
-		$self->helper()->workspace_url($params->{wsurl});
+		$CallContext->{"_workspace-url"} = $params->{wsurl};
 	}
-    Bio::KBase::ObjectAPI::utilities::token($self->authentication());
 	return $params;
 }
 
@@ -71,9 +85,17 @@ sub config {
 
 sub helper {
 	my ($self) = @_;
-	if (!defined($self->{_helper})) {
-		$self->config()->{username => $self->getUsername(),authentication => $self->authentication()};
-		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new($self->config());
+	if (!defined($CallContext->{_helper})) {
+		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
+			fbajobcache => $self->config()->{fbajobcache},
+    		fbajobdir => $self->config()->{fbajobdir},
+    		mfatoolkitbin => $self->config()->{mfatoolkitbin},
+			token => $self->token(),
+			username => $self->user_id(),
+			"workspace-url" => $self->workspace_url(),
+			adminmode => $self->adminmode(),
+			method => $self->current_method()
+		});
 	}
 	return $CallContext->{_helper};
 }
@@ -177,8 +199,37 @@ sub new
     bless $self, $class;
     #BEGIN_CONSTRUCTOR
     my $params = $args[0];
-    my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new($params);
-    $self->{_config} = $helper->{_params};
+    my $paramlist = [qw(
+    	fbajobcache
+    	fbajobdir
+    	mfatoolkitbin
+		mssserver-url
+		workspace-url
+    )];
+    if ((my $e = $ENV{KB_DEPLOYMENT_CONFIG}) && -e $ENV{KB_DEPLOYMENT_CONFIG}) {
+		my $service = $ENV{KB_SERVICE_NAME};
+		if (!defined($service)) {
+			$service = "ProbModelSEED";
+		}
+		if (defined($service)) {
+			my $c = Config::Simple->new();
+			$c->read($e);
+			for my $p (@{$paramlist}) {
+			  	my $v = $c->param("$service.$p");
+			    if ($v && !defined($params->{$p})) {
+					$params->{$p} = $v;
+					if ($v eq "null") {
+						$params->{$p} = undef;
+					}
+			    }
+			}
+		}
+    }
+	$params = Bio::KBase::ObjectAPI::utilities::ARGS($params,["fbajobcache","fbajobdir","mfatoolkitbin"],{
+		"workspace-url" => "http://p3.theseed.org/services/Workspace",
+		"mssserver-url" => "http://bio-data-1.mcs.anl.gov/services/ms_fba",
+	});
+	$self->{_config} = $params;
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
@@ -431,13 +482,13 @@ sub manage_gapfill_solutions
     }
     $self->helper()->workspace_service()->update_metadata({
 		objects => $updatelist,
-		adminmode => $self->helper()->admin_mode()
+		adminmode => $self->adminmode()
     });
     $self->helper()->workspace_service()->delete({
 		objects => $rmlist,
 		deleteDirectories => 1,
 		force => 1,
-		adminmode => $self->helper()->admin_mode()
+		adminmode => $self->adminmode()
     });
     #END manage_gapfill_solutions
     my @_bad_returns;
@@ -643,7 +694,7 @@ sub delete_fba_studies
 		objects => $rmlist,
 		deleteDirectories => 1,
 		force => 1,
-		adminmode => $self->helper()->admin_mode()
+		adminmode => $self->adminmode()
     });
     #END delete_fba_studies
     my @_bad_returns;
@@ -937,13 +988,13 @@ sub manage_model_edits
     }
     $self->helper()->workspace_service()->update_metadata({
 		objects => $updatelist,
-		adminmode => $self->helper()->admin_mode()
+		adminmode => $self->adminmode()
     });
     $self->helper()->workspace_service()->delete({
 		objects => $rmlist,
 		deleteDirectories => 1,
 		force => 1,
-		adminmode => $self->helper()->admin_mode()
+		adminmode => $self->adminmode()
     });
     if (defined($input->{new_edit})) {
     	my $editmeta = {
@@ -965,7 +1016,7 @@ sub manage_model_edits
     			$editobj
     		]],
     		overwrite => 1,
-    		adminmode => $self->helper()->admin_mode()
+    		adminmode => $self->adminmode()
     	});
     	$output->{$editobj->{id}} = $editobj;
     };

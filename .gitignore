@@ -1,0 +1,10 @@
+.*
+*~
+*.swp
+*.#*
+*.o
+*.bak-*
+!.gitignore
+MFAToolkit/bin/*
+MFAToolkit/Debug/*
+MFAToolkit/stderr.log

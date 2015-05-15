@@ -10,11 +10,8 @@ use JSON::XS;
 
 our $VERBOSE = undef; # A GLOBAL Reference to print verbose() calls to, or undef.
 our $CONFIG = undef;
-our $idserver = undef;
 our $keggmaphash = undef;
 our $report = {};
-our $shockurl = undef;
-our $token = undef;
 our $globalparams = {};
 
 =head1 Bio::KBase::ObjectAPI::utilities
@@ -98,26 +95,6 @@ sub verbose {
     } else {
         return 0;
     }
-}
-
-=head3 idServer
-
-Definition:
-	Bio::KBase::IDServer::Client = idServer();
-Description:
-	Returns ID server client
-
-=cut
-sub idServer {
-	if (!defined($idserver)) {
-		if (Bio::KBase::ObjectAPI::utilities::ID_SERVER_URL() eq "impl") {
-			require "Bio/KBase/IDServer/Impl.pm";
-			$idserver = Bio::KBase::IDServer::Impl->new();
-		} else {
-			$idserver = Bio::KBase::IDServer::Client->new(Bio::KBase::ObjectAPI::utilities::ID_SERVER_URL());
-		}
-	}
-	return $idserver;
 }
 
 =head3 report
@@ -583,42 +560,6 @@ sub MFATOOLKIT_JOB_DIRECTORY {
 	return $ENV{MFATOOLKIT_JOB_DIRECTORY};
 }
 
-=head3 token
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::token(string input);
-Description:
-	Getter setter for authentication token
-Example:
-
-=cut
-
-sub token {
-	my ($input) = @_;
-	if (defined($input)) {
-		$token = $input;
-	}
-	return $token;
-}
-
-=head3 shockurl
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::shockurl(string input);
-Description:
-	Getter setter for authentication shock url
-Example:
-
-=cut
-
-sub shockurl {
-	my ($input) = @_;
-	if (defined($input)) {
-		$shockurl = $input;
-	}
-	return $shockurl;
-}
-
 =head3 CLASSIFIER_BINARY
 
 Definition:
@@ -655,117 +596,6 @@ sub MFATOOLKIT_BINARY {
 	return $ENV{MFATOOLKIT_BINARY};
 }
 
-=head3 SHOCK_URL
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::SHOCK_URL(string input);
-Description:
-	Getter setter for Shock URL
-Example:
-
-=cut
-
-sub SHOCK_URL {
-	my ($input) = @_;
-	if (defined($input)) {
-		$ENV{SHOCK_URL} = $input;
-	}
-	return $ENV{SHOCK_URL};
-}
-
-=head3 AUTHTOKEN
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::AUTHTOKEN();
-Description:
-	Getter for auth token
-Example:
-
-=cut
-
-sub AUTHTOKEN {
-	if (defined(Bio::KBase::ObjectAPI::utilities::CONTEXT()->{_override}->{_authentication})) {
-		return Bio::KBase::ObjectAPI::utilities::CONTEXT()->{_override}->{_authentication};
-	} elsif (defined(Bio::KBase::ObjectAPI::utilities::CONTEXT()->{token})) {
-		return Bio::KBase::ObjectAPI::utilities::CONTEXT()->{token};
-	}
-}
-
-=head3 CONTEXT
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::CONTEXT();
-Description:
-	Getter for context
-Example:
-
-=cut
-
-sub CONTEXT {
-	if (!defined($Bio::KBase::fbaModelServices::Server::CallContext)) {
-		$Bio::KBase::fbaModelServices::Server::CallContext = {};
-	}
-	return $Bio::KBase::fbaModelServices::Server::CallContext;
-}
-
-=head3 Load_file_to_shock
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::Load_file_to_shock(string filename);
-Description:
-	Load a file to shock
-Example:
-
-=cut
-
-sub Load_file_to_shock {
-	my ($input,$meta) = @_;
-	my $att = " ";
-	if (defined($meta) && keys(%{$meta}) > 0) {
-		my $JSON = JSON->new->utf8(1);
-		$att = " 'attributes_str=".$JSON->encode($meta)."' ";
-	}
-	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth".$att.Bio::KBase::ObjectAPI::utilities::AUTHTOKEN()."\" -X POST -F 'upload=\@".$input."' ".Bio::KBase::ObjectAPI::utilities::SHOCK_URL()."/node");
-	$output = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$output}));
-	return $output->{data}->{id};
-}
-
-=head3 Load_data_to_shock
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::Load_data_to_shock(string data);
-Description:
-	Load data to shock
-Example:
-
-=cut
-
-sub Load_data_to_shock {
-	my ($input,$meta) = @_;
-	my $uuid = Data::UUID->new()->create_str();
-	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
-	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid,[$input]);
-	return Load_file_to_shock(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid,$meta);
-}
-
-=head3 Pull_file_from_shock
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::Pull_file_from_shock(string node);
-Description:
-	Pull a file from shock given node ID
-Example:
-
-=cut
-
-sub Pull_file_from_shock {
-	my ($input) = @_;
-	my $uuid = Data::UUID->new()->create_str();
-	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
-	my $data = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -X GET ".Bio::KBase::ObjectAPI::utilities::SHOCK_URL()."/node/".$input."?download_raw > ".File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid);
-	return File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
-}
-
 =head3 CurrentJobID
 
 Definition:
@@ -800,24 +630,6 @@ sub FinalJobCache {
 		$ENV{KBFBA_FinalJobCache} = $input;
 	}
 	return $ENV{KBFBA_FinalJobCache};
-}
-
-=head3 ID_SERVER_URL
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::ID_SERVER_URL(string input);
-Description:
-	Getter setter for ID server URL
-Example:
-
-=cut
-
-sub ID_SERVER_URL {
-	my ($input) = @_;
-	if (defined($input)) {
-		$ENV{ID_SERVER_URL} = $input;
-	}
-	return $ENV{ID_SERVER_URL};
 }
 
 =head3 parseArrayString
@@ -1209,14 +1021,6 @@ sub IsCofactor {
 		return 1;
 	}
 	return 0;
-}
-
-sub LoadToShock {
-	my ($filename) = @_;
-	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable('curl -X POST -H "Authorization: OAuth '.Bio::KBase::ObjectAPI::utilities::token().'" --data-binary @'.$filename.' '.Bio::KBase::ObjectAPI::utilities::shockurl().'/node');
-	my $json = JSON::XS->new;
-	my $data = $json->decode(join("\n",@{$output}));
-	return $data->{data}->{id};
 }
 
 sub set_global {
