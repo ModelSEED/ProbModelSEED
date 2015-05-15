@@ -11,7 +11,7 @@ use File::stat;
 use Fcntl ':mode';
 use Data::UUID;
 use REST::Client;
-use Bio::P3::Workspace::WorkspaceClient;
+use Bio::P3::Workspace::WorkspaceClientExt;
 use JSON::XS;
 use Data::Dumper;
 use HTTP::Request::Common;
@@ -97,10 +97,27 @@ sub get_model {
     }
 	return $model;
 }
+sub get_model_meta {
+	my($self, $ref) = @_;
+	my $metas = $self->workspace_service()->get({
+		objects => [$ref],
+		metadata_only => 1
+	});
+	if ($metas->[0]->[0]->[1] ne "model") {
+		$metas = $self->workspace_service()->get({
+			objects => [$metas->[0]->[0]->[2].".".$metas->[0]->[0]->[0]."/".$metas->[0]->[0]->[0].".model"],
+			metadata_only => 1
+		});
+	}
+    if (!defined($metas->[0])) {
+    	$self->error("Model retrieval failed!");
+    }
+	return $metas->[0]->[0];
+}
 sub workspace_service {
 	my($self) = @_;
 	if (!defined($self->{_workspace_service})) {
-		$self->{_workspace_service} = Bio::P3::Workspace::WorkspaceClientExt->new($self->workspace_url());
+		$self->{_workspace_service} =Bio::P3::Workspace::WorkspaceClientExt->new($self->workspace_url());
 	}
 	return $self->{_workspace_service};
 }
@@ -383,6 +400,8 @@ sub new {
     bless $self, $class;
     my $params = $args[0];
     my $paramlist = [qw(
+    	authentication
+    	username
     	fbajobcache
     	awe-url
     	shock-url
@@ -424,7 +443,9 @@ sub new {
 	if (defined($params->{fbajobcache})) {
 		Bio::KBase::ObjectAPI::utilities::FinalJobCache($params->{fbajobcache});
 	}
-	$self->authenticate_token();
+	if (!defined($params->{authentication})) {
+		$self->authenticate_token();
+	}
     return $self;
 }
 

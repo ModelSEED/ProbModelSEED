@@ -15,7 +15,7 @@ SERVICE_URL = http://p3.theseed.org/services/$(SERVICE)
 SERVICE_NAME = ProbModelSEED
 SERVICE_NAME_PY = $(SERVICE_NAME)
 
-SERVICE_PSGI_FILE = $(SERVICE_NAME).psgi
+SERVICE_PSGI_FILE = /lib/$(SERVICE_NAME).psgi
 
 SRC_SERVICE_PERL = $(wildcard service-scripts/*.pl)
 BIN_SERVICE_PERL = $(addprefix $(BIN_DIR)/,$(basename $(notdir $(SRC_SERVICE_PERL))))
@@ -30,9 +30,7 @@ TPAGE_ARGS = --define kb_top=$(TARGET) \
 	--define kb_runtime=$(DEPLOY_RUNTIME) \
 	--define kb_service_name=$(SERVICE) \
 	--define kb_service_port=$(SERVICE_PORT) \
-	--define kb_psgi=$(SERVICE_PSGI_FILE) \
-	--define kb_download_port=$(DOWNLOAD_SERVICE_PORT) \
-	--define kb_download_psgi=$(DOWNLOAD_SERVICE_PSGI_FILE) \
+	--define kb_service_psgi=$(SERVICE_PSGI_FILE) \
 	$(TPAGE_TEMPDIR)
 
 TESTS = $(wildcard t/client-tests/*.t)

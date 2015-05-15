@@ -35,6 +35,7 @@ use AnyEvent::HTTP;
 use Config::Simple;
 use Plack::Request;
 use Bio::ModelSEED::Exceptions;
+use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 
 Log::Log4perl->easy_init($DEBUG);
 
@@ -66,7 +67,7 @@ sub initialize_call {
 	if (defined($params->{wsurl})) {
 		$self->helper()->workspace_url($params->{wsurl});
 	}
-    Bio::ModelSEED::ProbModelSEED::utilities::token($self->_authentication());
+    Bio::KBase::ObjectAPI::utilities::token($self->authentication());
 	return $params;
 }
 
@@ -84,6 +85,7 @@ sub config {
 sub helper {
 	my ($self) = @_;
 	if (!defined($self->{_helper})) {
+		$self->config()->{username => $self->getUsername(),authentication => $self->authentication()};
 		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new($self->config());
 	}
 	return $CallContext->{_helper};
@@ -92,19 +94,22 @@ sub helper {
 sub _list_fba_studies {
 	my ($self,$input) = @_;
 	$input = $self->helper()->validate_args($input,["model"],{});
-    $input->{model_obj} = $self->helper()->get_model($input->{model});
+    $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
     my $list = $self->helper()->workspace_service()->ls({
-		paths => [$input->{model_obj}->wsmeta()->[2]."fba"],
+		paths => [$input->{model_meta}->[2]."fba"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
 		recursive => 1,
 		query => {type => "fba"}
 	});
+	$list = $list->{$input->{model_meta}->[2]."fba"};
 	my $output = {};
 	for (my $i=0; $i < @{$list}; $i++) {
-		$output->{$list->[$i]->[0]} = {
+		my $id = $list->[$i]->[0];
+		$id =~ s/\.fba$//;
+		$output->{$id} = {
 			rundate => $list->[$i]->[3],
-			id => $list->[$i]->[0],
+			id => $id,
 			fba => $list->[$i]->[2].$list->[$i]->[0],
 			media => $list->[$i]->[7]->{media},
 			objective => $list->[$i]->[7]->{objective},
@@ -117,23 +122,26 @@ sub _list_fba_studies {
 sub _list_gapfill_studies {
 	my ($self,$input) = @_;
 	$input = $self->helper()->validate_args($input,["model"],{});
-    $input->{model_obj} = $self->helper()->get_model($input->{model});
+    $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
     my $gflist = $self->helper()->workspace_service()->ls({
-		paths => [$model->wsmeta()->[2]."gapfilling"],
+		paths => [$input->{model_meta}->[2]."gapfilling"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	$output = {};
+	$gflist = $gflist->{$input->{model_meta}->[2]."gapfilling"};
+	my $output = {};
 	for (my $i=0; $i < @{$gflist}; $i++) {
-		$output->{$gflist->[$i]->[0]} = {
+		my $id = $gflist->[$i]->[0];
+		$id =~ s/\.fba$//;
+		$output->{$id} = {
 			rundate => $gflist->[$i]->[3],
-			id => $gflist->[$i]->[0],
+			id => $id,
 			gapfill => $gflist->[$i]->[2].$gflist->[$i]->[0],
 			media => $gflist->[$i]->[7]->{media},
-			integrated => $gflist->[$i]->[7]->{media},
-			integrated_solution => $gflist->[$i]->[7]->{media},
+			integrated => $gflist->[$i]->[7]->{integrated},
+			integrated_solution => $gflist->[$i]->[7]->{integrated_solution},
 			solution_reactions => []
 		};
 	}
@@ -143,21 +151,24 @@ sub _list_gapfill_studies {
 sub _list_model_edits {
 	my ($self,$input) = @_;
 	$input = $self->helper()->validate_args($input,["model"],{});
-    $input->{model_obj} = $self->helper()->get_model($input->{model});
+   $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
     my $list = $self->helper()->workspace_service()->ls({
-		paths => [$input->{model_obj}->wsmeta()->[2]."edits"],
+		paths => [$input->{model_meta}->[2]."edits"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
 		recursive => 1,
 		query => {type => "model_edit"}
 	});
+	$list = $list->{$input->{model_meta}->[2]."edits"};
 	my $output = {};
 	for (my $i=0; $i < @{$list}; $i++) {
 		my $data = Bio::KBase::ObjectAPI::utilities::FROMJSON($list->[$i]->[7]->{editdata});
-		$output->{$list->[$i]->[0]} = {
+		my $id = $list->[$i]->[0];
+		$id =~ s/\.model_edit$//;
+		$output->{$id} = {
 			rundate => $list->[$i]->[3],
 			integrated => $list->[$i]->[7]->{integrated},
-			id => $list->[$i]->[0],
+			id => $id,
 			edit => $list->[$i]->[2].$list->[$i]->[0],
 			reactions_to_delete => $data->{reactions_to_delete},
 			altered_directions => $data->{altered_directions},
@@ -408,37 +419,37 @@ sub manage_gapfill_solutions
     	if (defined($gflist->{$gf})) {
     		$output->{$gf} = $gflist->{$gf};
     		if (lc($input->{commands}->{$gf}) eq "d") {
-    			push(@{$rmlist},$input->{model_obj}->wsmeta()->[2]."gapfilling/".$gf);#Deleting job result object
-    			push(@{$rmlist},$input->{model_obj}->wsmeta()->[2]."gapfilling/.".$gf);#Deleting job result directory
+    			push(@{$rmlist},$input->{model_meta}->[2]."gapfilling/".$gf);#Deleting job result object
+    			push(@{$rmlist},$input->{model_meta}->[2]."gapfilling/.".$gf);#Deleting job result directory
     		} elsif (lc($input->{commands}->{$gf}) eq "i") {
     			if (!defined($input->{selected_solutions}->{$gf})) {
     				$input->{selected_solutions}->{$gf} = 0;
     			}
     			$output->{$gf}->{integrated} = 1;
     			$output->{$gf}->{integrated_solution} = $input->{selected_solutions}->{$gf};
-    			push(@{$updatelist},[$input->{model_obj}->wsmeta()->[2]."gapfilling/.".$gf."/".$gf.".fba",{
+    			push(@{$updatelist},[$input->{model_meta}->[2]."gapfilling/.".$gf."/".$gf.".fba",{
     				integrated => 1,
     				integrated_solution => $input->{selected_solutions}->{$gf}
-    			});
+    			}]);
     		} elsif (lc($input->{commands}->{$gf}) eq "u") {
     			$output->{$gf}->{integrated} = 0;
     			$output->{$gf}->{integrated_solution} = -1;
-    			push(@{$updatelist},[$input->{model_obj}->wsmeta()->[2]."gapfilling/.".$gf."/".$gf.".fba",{
+    			push(@{$updatelist},[$input->{model_meta}->[2]."gapfilling/.".$gf."/".$gf.".fba",{
     				integrated => 0,
     				integrated_solution => -1
-    			});
+    			}]);
     		}
     	}
     }
     $self->helper()->workspace_service()->update_metadata({
 		objects => $updatelist,
-		adminmode => $self->helper()->adminmode()
+		adminmode => $self->helper()->admin_mode()
     });
     $self->helper()->workspace_service()->delete({
 		objects => $rmlist,
 		deleteDirectories => 1,
 		force => 1,
-		adminmode => $self->helper()->adminmode()
+		adminmode => $self->helper()->admin_mode()
     });
     #END manage_gapfill_solutions
     my @_bad_returns;
@@ -635,15 +646,15 @@ sub delete_fba_studies
     for (my $i=0; $i < @{$input->{fbas}}; $i++) {
     	if (defined($fbalist->{$input->{fbas}->[$i]})) {
     		$output->{$input->{fbas}->[$i]} = $fbalist->{$input->{fbas}->[$i]};
-    		push(@{$rmlist},$input->{model_obj}->wsmeta()->[2]."fba/".$input->{fbas}->[$i]);#Deleting job result object
-    		push(@{$rmlist},$input->{model_obj}->wsmeta()->[2]."fba/.".$input->{fbas}->[$i]);#Deleting job result directory
+    		push(@{$rmlist},$input->{model_meta}->[2]."fba/".$input->{fbas}->[$i]);#Deleting job result object
+    		push(@{$rmlist},$input->{model_meta}->[2]."fba/.".$input->{fbas}->[$i]);#Deleting job result directory
     	}
     }
     $self->helper()->workspace_service()->delete({
 		objects => $rmlist,
 		deleteDirectories => 1,
 		force => 1,
-		adminmode => $self->helper()->adminmode()
+		adminmode => $self->helper()->admin_mode()
     });
     #END delete_fba_studies
     my @_bad_returns;
@@ -920,29 +931,29 @@ sub manage_model_edits
     	if (defined($list->{$edit})) {
     		$output->{$edit} = $list->{$edit};
     		if (lc($input->{commands}->{$edit}) eq "d") {
-    			push(@{$rmlist},$input->{model_obj}->wsmeta()->[2]."edits/".$edit.".model_edit");
+    			push(@{$rmlist},$input->{model_meta}->[2]."edits/".$edit.".model_edit");
     		} elsif (lc($input->{commands}->{$edit}) eq "i") {
     			$output->{$edit}->{integrated} = 1;
-    			push(@{$updatelist},[$input->{model_obj}->wsmeta()->[2]."edits/".$edit.".model_edit",{
+    			push(@{$updatelist},[$input->{model_meta}->[2]."edits/".$edit.".model_edit",{
     				integrated => 1,
-    			});
+    			}]);
     		} elsif (lc($input->{commands}->{$edit}) eq "u") {
     			$output->{$edit}->{integrated} = 0;
-    			push(@{$updatelist},[$input->{model_obj}->wsmeta()->[2]."edits/".$edit.".model_edit",{
+    			push(@{$updatelist},[$input->{model_meta}->[2]."edits/".$edit.".model_edit",{
     				integrated => 0,
-    			});
+    			}]);
     		}
     	}
     }
     $self->helper()->workspace_service()->update_metadata({
 		objects => $updatelist,
-		adminmode => $self->helper()->adminmode()
+		adminmode => $self->helper()->admin_mode()
     });
     $self->helper()->workspace_service()->delete({
 		objects => $rmlist,
 		deleteDirectories => 1,
 		force => 1,
-		adminmode => $self->helper()->adminmode()
+		adminmode => $self->helper()->admin_mode()
     });
     if (defined($input->{new_edit})) {
     	my $editmeta = {
@@ -958,13 +969,13 @@ sub manage_model_edits
 	    $editmeta->{editdata} = Bio::KBase::ObjectAPI::utilities::TOJSON($editobj);
     	$self->helper()->workspace_service()->create({
     		objects => [[
-    			$input->{model_obj}->wsmeta()->[2]."edits/".$input->{new_edit}->{id}.".model_edit",
+    			$input->{model_meta}->[2]."edits/".$input->{new_edit}->{id}.".model_edit",
     			"model_edit",
     			$editmeta,
     			$editobj
     		]],
     		overwrite => 1,
-    		adminmode => $self->helper()->adminmode()
+    		adminmode => $self->helper()->admin_mode()
     	});
     	$output->{$editobj->{id}} = $editobj;
     };
