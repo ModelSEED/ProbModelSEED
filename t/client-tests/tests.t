@@ -12,5 +12,3 @@ my $tester = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDTests->new(
 );
 
 $tester->run_tests();
-
-done_testing($tester->{testcount});

@@ -17,24 +17,11 @@ ProbModelSEED
 
 #BEGIN_HEADER
 
-use File::Path;
-use File::Copy ("cp","mv");
-use File::stat;
-use Fcntl ':mode';
-use Data::UUID;
-use REST::Client;
-use Bio::P3::Workspace::WorkspaceClient;
 use JSON::XS;
 use Data::Dumper;
-use HTTP::Request::Common;
 use Log::Log4perl qw(:easy);
-use MongoDB::Connection;
-use URI::Escape;
-use AnyEvent;
-use AnyEvent::HTTP;
 use Config::Simple;
 use Plack::Request;
-use Bio::ModelSEED::Exceptions;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 
 Log::Log4perl->easy_init($DEBUG);
@@ -415,6 +402,7 @@ sub manage_gapfill_solutions
     my $gflist = $self->_list_gapfill_studies($input);
     my $rmlist = [];
     my $updatelist = [];
+    $output = {};
     foreach my $gf (keys(%{$input->{commands}})) {
     	if (defined($gflist->{$gf})) {
     		$output->{$gf} = $gflist->{$gf};
@@ -643,6 +631,7 @@ sub delete_fba_studies
     $input = $self->helper()->validate_args($input,["model","fbas"],{});
     my $fbalist = $self->_list_fba_studies($input);
     my $rmlist = [];
+    $output = {};
     for (my $i=0; $i < @{$input->{fbas}}; $i++) {
     	if (defined($fbalist->{$input->{fbas}->[$i]})) {
     		$output->{$input->{fbas}->[$i]} = $fbalist->{$input->{fbas}->[$i]};
@@ -927,6 +916,7 @@ sub manage_model_edits
     my $list = $self->_list_model_edits($input);
     my $rmlist = [];
     my $updatelist = [];
+    $output = {};
     foreach my $edit (keys(%{$input->{commands}})) {
     	if (defined($list->{$edit})) {
     		$output->{$edit} = $list->{$edit};

@@ -80,6 +80,7 @@
 		if ($self->{dumpoutput}) {
 			print "manage_gapfill_solutions output:\n".Data::Dumper->Dump([$output])."\n\n";
 		}
+		done_testing($self->{testcount});
 	}
 }	
 
