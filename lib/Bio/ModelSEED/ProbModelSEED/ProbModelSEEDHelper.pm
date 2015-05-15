@@ -1,6 +1,5 @@
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 use strict;
-use Bio::ModelSEED::Exceptions;
 # Use Semantic Versioning (2.0.0-rc.1)
 # http://semver.org 
 our $VERSION = "0.1.0";
@@ -10,16 +9,10 @@ use File::Copy ("cp","mv");
 use File::stat;
 use Fcntl ':mode';
 use Data::UUID;
-use REST::Client;
 use Bio::P3::Workspace::WorkspaceClientExt;
 use JSON::XS;
 use Data::Dumper;
-use HTTP::Request::Common;
 use Log::Log4perl qw(:easy);
-use MongoDB::Connection;
-use URI::Escape;
-use AnyEvent;
-use AnyEvent::HTTP;
 use Config::Simple;
 use Bio::KBase::AuthToken;
 use Bio::KBase::ObjectAPI::utilities;
@@ -57,7 +50,7 @@ sub authenticate_token {
 		$self->{_token} = $token->token;
 		Bio::KBase::ObjectAPI::utilities::token($self->{_token});
     } else {
-		warn "Token did not validate\n" . Dumper($token);
+		$self->error("Token did not validate\n" . Dumper($token));
 	}
 }
 sub get_username {
@@ -175,7 +168,7 @@ sub error {
 	if (!defined($type)) {
 		$type = "Unspecified";
 	}
-	die $self->{_current_method}.":".$msg;
+	Bio::KBase::ObjectAPI::utilities::error($self->{_current_method}.":".$msg);
 }
 #****************************************************************************
 #Research functions
