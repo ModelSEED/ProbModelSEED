@@ -86,6 +86,7 @@ sub config {
 sub helper {
 	my ($self) = @_;
 	if (!defined($CallContext->{_helper})) {
+		print Data::Dumper->Dump([$CallContext])."\n\n";
 		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 			fbajobcache => $self->config()->{fbajobcache},
     		fbajobdir => $self->config()->{fbajobdir},
