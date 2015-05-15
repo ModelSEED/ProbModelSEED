@@ -22,8 +22,8 @@
 	    }
 	    if (!defined($url) || $url eq "impl") {
 	    	print "Loading server with this config: ".$ENV{KB_DEPLOYMENT_CONFIG}."\n";
-	    	$Bio::ModelSEED::ProbModelSEED::Service::CallContext = Bio::ModelSEED::ProbModelSEED::Service::CallContext->new($auth->[0]->{token},"test",$auth->[0]->{username});
 	    	require "Bio/ModelSEED/ProbModelSEED/ProbModelSEEDImpl.pm";
+	    	$Bio::ModelSEED::ProbModelSEED::Service::CallContext = Bio::ModelSEED::ProbModelSEED::Service::CallContext->new($auth->[0]->{token},"test",$auth->[0]->{username});
 	    	$self->{obj} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl->new();
 	    } else {
 	    	require "Bio/ModelSEED/ProbModelSEED/ProbModelSEEDClient.pm";
