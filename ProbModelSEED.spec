@@ -235,7 +235,7 @@ module ProbModelSEED {
 		
 	*/
     authentication required;
-    funcdef list_models() returns (list<ref model> output);
+    funcdef list_models() returns (list<ref> output);
 	
 	/*********************************************************************************
     Functions for editing models
