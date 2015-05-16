@@ -31,8 +31,13 @@ our %return_counts = (
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
         'delete_fba_studies' => 1,
+        'delete_model' => 1,
+        'list_models' => 1,
         'list_model_edits' => 1,
         'manage_model_edits' => 1,
+        'ModelReconstruction' => 1,
+        'FluxBalanceAnalysis' => 1,
+        'GapfillModel' => 1,
         'version' => 1,
 );
 
@@ -41,8 +46,13 @@ our %method_authentication = (
         'manage_gapfill_solutions' => 'required',
         'list_fba_studies' => 'required',
         'delete_fba_studies' => 'required',
+        'delete_model' => 'required',
+        'list_models' => 'required',
         'list_model_edits' => 'required',
         'manage_model_edits' => 'required',
+        'ModelReconstruction' => 'required',
+        'FluxBalanceAnalysis' => 'required',
+        'GapfillModel' => 'required',
 );
 
 
@@ -54,8 +64,13 @@ sub _build_valid_methods
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
         'delete_fba_studies' => 1,
+        'delete_model' => 1,
+        'list_models' => 1,
         'list_model_edits' => 1,
         'manage_model_edits' => 1,
+        'ModelReconstruction' => 1,
+        'FluxBalanceAnalysis' => 1,
+        'GapfillModel' => 1,
         'version' => 1,
     };
     return $methods;

@@ -12,7 +12,7 @@ module ProbModelSEED {
     typedef string ref;
     
     /* Standard perl timestamp (e.g. 2015-03-21-02:14:53)*/
-    typedef string timestamp;
+    typedef string Timestamp;
     
     /* ID of gapfilling solution */
     typedef string gapfill_id;
@@ -41,6 +41,36 @@ module ProbModelSEED {
     /* An enum of directions for reactions [</=/>]; < = reverse, = = reversible, > = forward*/
     typedef string reaction_direction;
     
+    /* Login name for user */
+	typedef string Username;
+
+	/* Name assigned to an object saved to a workspace */
+	typedef string ObjectName;
+
+	/* Unique UUID assigned to every object in a workspace on save - IDs never reused */
+	typedef string ObjectID;
+
+	/* Specified type of an object (e.g. Genome) */
+	typedef string ObjectType;
+
+	/* Size of the object */
+	typedef int ObjectSize;
+
+	/* Generic type containing object data */
+	typedef string ObjectData;
+
+	/* Path to any object in workspace database */
+	typedef string FullObjectPath;
+
+	/* This is a key value hash of user-specified metadata */
+	typedef mapping<string,string> UserMetadata;
+
+	/* This is a key value hash of automated metadata populated based on object type */
+	typedef mapping<string,string> AutoMetadata;
+
+    /* User permission in worksace (e.g. w - write, r - read, a - admin, n - none) */
+	typedef string WorkspacePerm;
+    
     /*********************************************************************************
     Complex data structures to support functions
    	*********************************************************************************/
@@ -52,7 +82,7 @@ module ProbModelSEED {
     } gapfill_reaction;
     
     typedef structure {
-		timestamp rundate;
+		Timestamp rundate;
 		gapfill_id id;
 		ref gapfill;
 		ref media;
@@ -62,7 +92,7 @@ module ProbModelSEED {
     } gapfill_data;
         
     typedef structure {
-		timestamp rundate;
+		Timestamp rundate;
 		fba_id id;
 		ref fba;
 		float objective;
@@ -78,7 +108,7 @@ module ProbModelSEED {
     } edit_reaction;
     
     typedef structure {
-		timestamp rundate;
+		Timestamp rundate;
 		edit_id id;
 		ref edit;
 		list<reaction_id> reactions_to_delete;
@@ -87,6 +117,26 @@ module ProbModelSEED {
 		list<edit_reaction> reactions_to_add;
 		mapping<compound_id,tuple<float,compartment_id>> altered_biomass_compound;
     } edit_data;
+    
+    
+    /* ObjectMeta: tuple containing information about an object in the workspace 
+
+	ObjectName - name selected for object in workspace
+	ObjectType - type of the object in the workspace
+	FullObjectPath - full path to object in workspace, including object name
+	Timestamp creation_time - time when the object was created
+	ObjectID - a globally unique UUID assigned to every object that will never change even if the object is moved
+	Username object_owner - name of object owner
+	ObjectSize - size of the object in bytes or if object is directory, the number of objects in directory
+	UserMetadata - arbitrary user metadata associated with object
+	AutoMetadata - automatically populated metadata generated from object data in automated way
+	WorkspacePerm user_permission - permissions for the authenticated user of this workspace.
+	WorkspacePerm global_permission - whether this workspace is globally readable.
+	string shockurl - shockurl included if object is a reference to a shock node
+	
+	*/
+	typedef tuple<ObjectName,ObjectType,FullObjectPath,Timestamp creation_time,ObjectID,Username object_owner,ObjectSize,UserMetadata,AutoMetadata,WorkspacePerm user_permission,WorkspacePerm global_permission,string shockurl> ObjectMeta;
+
 
     /*********************************************************************************
     Functions for managing gapfilling studies
@@ -159,6 +209,35 @@ module ProbModelSEED {
 	funcdef delete_fba_studies(delete_fba_studies_params input) returns (mapping<fba_id,fba_data> output);
 	
 	/*********************************************************************************
+    Functions for managing models
+   	*********************************************************************************/
+		
+	/* 
+    	FUNCTION: delete_model
+    	DESCRIPTION: This function deletes a model specified by the user
+    	
+    	REQUIRED INPUTS:
+		ref model - reference to model to delete
+		
+	*/
+    typedef structure {
+		ref model;
+    } delete_model_params;
+    authentication required;
+    funcdef delete_model(delete_model_params input) returns (ObjectMeta output);
+    
+    /* 
+    	FUNCTION: list_models
+    	DESCRIPTION: This function lists all models owned by the user
+    	
+    	REQUIRED INPUTS:
+
+		
+	*/
+    authentication required;
+    funcdef list_models() returns (list<ref model> output);
+	
+	/*********************************************************************************
     Functions for editing models
    	*********************************************************************************/
 	
@@ -194,4 +273,37 @@ module ProbModelSEED {
     } manage_model_edits_params;
     authentication required;
 	funcdef manage_model_edits(manage_model_edits_params input) returns (mapping<edit_id,edit_data> output);
+
+	/*********************************************************************************
+	Functions corresponding to modeling apps
+   	*********************************************************************************/
+	/* 
+		FUNCTION: ModelReconstruction
+		DESCRIPTION: This function runs the model reconstruction app directly. See app service for detailed specs.
+	*/
+    typedef structure {
+		ref genome;
+    } ModelReconstruction_params;
+    authentication required;
+	funcdef ModelReconstruction(ModelReconstruction_params input) returns (ObjectMeta output);
+	
+	/* 
+		FUNCTION: FluxBalanceAnalysis
+		DESCRIPTION: This function runs the flux balance analysis app directly. See app service for detailed specs.
+	*/
+    typedef structure {
+		ref model;
+    } FluxBalanceAnalysis_params;
+    authentication required;
+	funcdef FluxBalanceAnalysis(FluxBalanceAnalysis_params input) returns (ObjectMeta output);
+	
+	/* 
+		FUNCTION: GapfillModel
+		DESCRIPTION: This function runs the gapfilling app directly. See app service for detailed specs.
+	*/
+    typedef structure {
+		ref model;
+    } GapfillModel_params;
+    authentication required;
+	funcdef GapfillModel(GapfillModel_params input) returns (ObjectMeta output);
 };

@@ -8,7 +8,7 @@
 	sub new {
 	    my($class,$auth,$url,$dump,$config) = @_;
 	    my $self = {
-			testcount => 5,
+			testcount => 0,
 			dumpoutput => 0,
 			auth => $auth,
 			url => $url
@@ -32,54 +32,69 @@
 	    return bless $self, $class;
 	}
 	
+	sub test_harness {
+		my($self,$function,$parameters) = @_;
+		my $output = $self->{obj}->$function($parameters);
+		ok defined($output), "Successfully ran $function!";
+		if ($self->{dumpoutput}) {
+			print "$function output:\n".Data::Dumper->Dump([$output])."\n\n";
+		}
+		$self->{testcount}++;
+		return $output;
+	}
+	
 	sub run_tests {
 		my($self) = @_;
-		my $output = $self->{obj}->list_gapfill_solutions({
+		my $meta = $self->{obj}->helper()->get_model_meta("/chenry/models/TestModel");
+		if (defined($meta)) {
+			my $output = $self->test_harness("delete_model",{
+				model => "/chenry/models/TestModel",
+			});
+		}
+		my $output = $self->test_harness("ModelReconstruction",{
+			genome => "/chenry/genomes/testgenome.genome",
+			fulldb => "0",
+			output_path => "/chenry/models",
+			output_file => "TestModel"
+		});
+		$output = $self->test_harness("list_models",undef);
+		$output = $self->test_harness("GapfillModel",{
+			model => "/chenry/models/TestModel",
+			output_file => "testgapfill",
+			integrate_solution => "1"
+		});
+		$output = $self->test_harness("FluxBalanceAnalysis",{
+			model => "/chenry/models/TestModel",
+			output_file => "testfba",
+		});
+		$output = $self->test_harness("list_gapfill_solutions",{
 			model => "/chenry/models/TestModel"
 		});
-		ok defined($output), "Successfully ran list_gapfill_solutions!";
-		if ($self->{dumpoutput}) {
-			print "list_gapfill_solutions output:\n".Data::Dumper->Dump([$output])."\n\n";
-		}
-		
-		$output = $self->{obj}->manage_gapfill_solutions({
+		$output = $self->test_harness("manage_gapfill_solutions",{
 			model => "/chenry/models/TestModel",
 			commands => {
-				testgapfill2 => "u"
+				testgapfill => "u"
 			}
 		});
-		ok defined($output), "Successfully ran manage_gapfill_solutions!";
-		if ($self->{dumpoutput}) {
-			print "manage_gapfill_solutions output:\n".Data::Dumper->Dump([$output])."\n\n";
-		}
-		
-		$output = $self->{obj}->manage_gapfill_solutions({
+		$output = $self->test_harness("manage_gapfill_solutions",{
 			model => "/chenry/models/TestModel",
 			commands => {
-				testgapfill2 => "i"
+				testgapfill => "i"
 			}
 		});
-		ok defined($output), "Successfully ran manage_gapfill_solutions!";
-		if ($self->{dumpoutput}) {
-			print "manage_gapfill_solutions output:\n".Data::Dumper->Dump([$output])."\n\n";
-		}
-		
-		my $output = $self->{obj}->list_fba_studies({
+		$output = $self->test_harness("manage_gapfill_solutions",{
+			model => "/chenry/models/TestModel",
+			commands => {
+				testgapfill => "d"
+			}
+		});
+		$output = $self->test_harness("list_fba_studies",{
 			model => "/chenry/models/TestModel"
 		});
-		ok defined($output), "Successfully ran list_fba_studies!";
-		if ($self->{dumpoutput}) {
-			print "list_fba_studies output:\n".Data::Dumper->Dump([$output])."\n\n";
-		}
-		
-		$output = $self->{obj}->delete_fba_studies({
+		$output = $self->test_harness("delete_fba_studies",{
 			model => "/chenry/models/TestModel",
-			fbas => []
+			fbas => ["testfba"]
 		});
-		ok defined($output), "Successfully ran manage_gapfill_solutions!";
-		if ($self->{dumpoutput}) {
-			print "manage_gapfill_solutions output:\n".Data::Dumper->Dump([$output])."\n\n";
-		}
 		done_testing($self->{testcount});
 	}
 }	

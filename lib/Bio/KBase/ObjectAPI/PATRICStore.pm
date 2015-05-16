@@ -227,58 +227,60 @@ sub transform_model_from_ws {
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	$gflist = $gflist->{$meta->[2]."gapfilling"};
-	for (my $i=0; $i < @{$gflist}; $i++) {
-		if ($gflist->[$i]->[0] ne Bio::KBase::ObjectAPI::utilities::get_global("gapfill name")) {
-			if ($gflist->[$i]->[7]->{integrated} == 1) {
-				my $soldata = Bio::KBase::ObjectAPI::utilities::FROMJSON($gflist->[$i]->[7]->{solutiondata});
-				if (defined($soldata->[$gflist->[$i]->[7]->{integratedindex}])) {
-					my $sol = $soldata->[$gflist->[$i]->[7]->{integratedindex}];
-					for (my $j=0; $j < @{$sol}; $j++) {
-						my $rxnobj = $obj->getLinkedObject($sol->[$j]->{reaction_ref});
-						my $cmpobj = $obj->getLinkedObject($sol->[$j]->{compartment_ref});
-						if (ref($rxnobj) eq "Bio::KBase::ObjectAPI::KBaseBiochem::Reaction") {
-							my $mdlrxn = $obj->getObject("modelreactions",$rxnobj->id()."_".$cmpobj->id().$sol->[$j]->{compartmentIndex});
-							if (defined($mdlrxn)) {
-								if ($mdlrxn->direction() eq ">" && $sol->[$j]->{direction} eq "<") {
-									$mdlrxn->direction("=");
-								} elsif ($mdlrxn->direction() eq "<" && $sol->[$j]->{direction} eq ">") {
-									$mdlrxn->direction("=");
+	if (defined($gflist->{$meta->[2]."gapfilling"})) {
+		$gflist = $gflist->{$meta->[2]."gapfilling"};
+		for (my $i=0; $i < @{$gflist}; $i++) {
+			if ($gflist->[$i]->[0] ne Bio::KBase::ObjectAPI::utilities::get_global("gapfill name")) {
+				if ($gflist->[$i]->[7]->{integrated} == 1) {
+					my $soldata = Bio::KBase::ObjectAPI::utilities::FROMJSON($gflist->[$i]->[7]->{solutiondata});
+					if (defined($soldata->[$gflist->[$i]->[7]->{integratedindex}])) {
+						my $sol = $soldata->[$gflist->[$i]->[7]->{integratedindex}];
+						for (my $j=0; $j < @{$sol}; $j++) {
+							my $rxnobj = $obj->getLinkedObject($sol->[$j]->{reaction_ref});
+							my $cmpobj = $obj->getLinkedObject($sol->[$j]->{compartment_ref});
+							if (ref($rxnobj) eq "Bio::KBase::ObjectAPI::KBaseBiochem::Reaction") {
+								my $mdlrxn = $obj->getObject("modelreactions",$rxnobj->id()."_".$cmpobj->id().$sol->[$j]->{compartmentIndex});
+								if (defined($mdlrxn)) {
+									if ($mdlrxn->direction() eq ">" && $sol->[$j]->{direction} eq "<") {
+										$mdlrxn->direction("=");
+									} elsif ($mdlrxn->direction() eq "<" && $sol->[$j]->{direction} eq ">") {
+										$mdlrxn->direction("=");
+									}
+								} else {
+									my $mdlcmp = $obj->addCompartmentToModel({compartment => $cmpobj,pH => 7,potential => 0,compartmentIndex => $sol->[$j]->{compartmentIndex}});
+									$mdlrxn = $obj->addReactionToModel({
+										reaction => $rxnobj,
+										direction => $sol->[$j]->{direction},
+										overrideCompartment => $mdlcmp
+									});
 								}
 							} else {
-								my $mdlcmp = $obj->addCompartmentToModel({compartment => $cmpobj,pH => 7,potential => 0,compartmentIndex => $sol->[$j]->{compartmentIndex}});
-								$mdlrxn = $obj->addReactionToModel({
-									reaction => $rxnobj,
-									direction => $sol->[$j]->{direction},
-									overrideCompartment => $mdlcmp
-								});
-							}
-						} else {
-							my $mdlrxn = $obj->getObject("modelreactions",$rxnobj->id());
-							if (defined($mdlrxn)) {
-								if ($mdlrxn->direction() eq ">" && $sol->[$j]->{direction} eq "<") {
-									$mdlrxn->direction("=");
-								} elsif ($mdlrxn->direction() eq "<" && $sol->[$j]->{direction} eq ">") {
-									$mdlrxn->direction("=");
-								}
-							} else {
-								$mdlrxn = $rxnobj->cloneObject();
-								$obj->add("modelreactions",$mdlrxn);
-								$mdlrxn->parent($rxnobj->parent());
-								my $prots = $mdlrxn->modelReactionProteins();
-								for (my $m=0; $m < @{$prots}; $m++) {
-									$mdlrxn->remove("modelReactionProteins",$prots->[$m]);
-								}
-								my $rgts = $mdlrxn->modelReactionReagents();
-								for (my $m=0; $m < @{$rgts}; $m++) {
-									if (!defined($obj->getObject("modelcompounds",$rgts->[$m]->modelcompound()->id()))) {
-										$obj->add("modelcompounds",$rgts->[$m]->modelcompound()->cloneObject());		
-										if (!defined($obj->getObject("modelcompartments",$rgts->[$m]->modelcompound()->modelcompartment()->id()))) {
-											$obj->add("modelcompartments",$rgts->[$m]->modelcompound()->modelcompartment()->cloneObject());
+								my $mdlrxn = $obj->getObject("modelreactions",$rxnobj->id());
+								if (defined($mdlrxn)) {
+									if ($mdlrxn->direction() eq ">" && $sol->[$j]->{direction} eq "<") {
+										$mdlrxn->direction("=");
+									} elsif ($mdlrxn->direction() eq "<" && $sol->[$j]->{direction} eq ">") {
+										$mdlrxn->direction("=");
+									}
+								} else {
+									$mdlrxn = $rxnobj->cloneObject();
+									$obj->add("modelreactions",$mdlrxn);
+									$mdlrxn->parent($rxnobj->parent());
+									my $prots = $mdlrxn->modelReactionProteins();
+									for (my $m=0; $m < @{$prots}; $m++) {
+										$mdlrxn->remove("modelReactionProteins",$prots->[$m]);
+									}
+									my $rgts = $mdlrxn->modelReactionReagents();
+									for (my $m=0; $m < @{$rgts}; $m++) {
+										if (!defined($obj->getObject("modelcompounds",$rgts->[$m]->modelcompound()->id()))) {
+											$obj->add("modelcompounds",$rgts->[$m]->modelcompound()->cloneObject());		
+											if (!defined($obj->getObject("modelcompartments",$rgts->[$m]->modelcompound()->modelcompartment()->id()))) {
+												$obj->add("modelcompartments",$rgts->[$m]->modelcompound()->modelcompartment()->cloneObject());
+											}
 										}
 									}
+									$mdlrxn->parent($obj);
 								}
-								$mdlrxn->parent($obj);
 							}
 						}
 					}

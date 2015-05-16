@@ -58,6 +58,28 @@ sub get_model {
     }
 	return $model;
 }
+sub get_genome {
+	my($self, $ref) = @_;
+	my $obj;
+	if ($ref =~ m/^\/public\/genomes\/(.+)$/) {
+		$obj = $self->retreive_reference_genome($1);
+	} else {
+		$obj = $self->get_object($ref);
+	    if (defined($obj) && ref($obj) ne "Bio::KBase::ObjectAPI::KBaseGenomes::Genome" && defined($obj->{output_files})) {
+	    	my $output = $obj->{output_files};
+	    	for (my $i=0; $i < @{$obj->{output_files}}; $i++) {
+	    		if ($obj->{output_files}->[$i]->[0] =~ m/\.genome$/) {
+	    			$ref = $obj->{output_files}->[$i]->[0];
+	    		}
+	    	}
+	    	$obj = $self->get_object($ref,"genome");
+	    }
+	}
+    if (!defined($obj)) {
+    	$self->error("Genome retrieval failed!");
+    }
+	return $obj;
+}
 sub get_model_meta {
 	my($self, $ref) = @_;
 	my $metas = $self->workspace_service()->get({
@@ -65,6 +87,9 @@ sub get_model_meta {
 		metadata_only => 1,
 		adminmode => $self->{_params}->{adminmode}
 	});
+	if (!defined($metas->[0]->[0]->[0])) {
+    	return undef;
+    }
 	if ($metas->[0]->[0]->[1] ne "model") {
 		$metas = $self->workspace_service()->get({
 			objects => [$metas->[0]->[0]->[2].".".$metas->[0]->[0]->[0]."/".$metas->[0]->[0]->[0].".model"],
@@ -73,7 +98,7 @@ sub get_model_meta {
 		});
 	}
     if (!defined($metas->[0])) {
-    	$self->error("Model retrieval failed!");
+    	return undef;
     }
 	return $metas->[0]->[0];
 }
@@ -102,9 +127,71 @@ sub error {
 	my($self,$msg) = @_;
 	Bio::KBase::ObjectAPI::utilities::error($msg);
 }
+sub load_from_config {
+	my($self,$msg) = @_;
+	if ((my $e = $ENV{KB_DEPLOYMENT_CONFIG}) && -e $ENV{KB_DEPLOYMENT_CONFIG}) {
+		my $service = $ENV{KB_SERVICE_NAME};
+		if (!defined($service)) {
+			$service = "ProbModelSEED";
+		}
+		if (defined($service)) {
+			my $c = Config::Simple->new();
+			$c->read($e);
+			my $paramlist = [keys(%{$self->{_params}})];
+			for my $p (@{$paramlist}) {
+			  	my $v = $c->param("$service.$p");
+			    if ($v) {
+					$self->{_params}->{$p} = $v;
+					if ($v eq "null") {
+						$self->{_params}->{$p} = undef;
+					}
+			    }
+			}
+		}
+    }
+}
 #****************************************************************************
 #Research functions
 #****************************************************************************
+=head3 delete_model
+
+Definition:
+	Genome = $self->delete_model(ref Model);
+Description:
+	Deletes the specified model
+		
+=cut
+sub delete_model {
+	my($self,$model) = @_;
+	my $metas = $self->workspace_service()->get({
+		objects => [$model],
+		metadata_only => 1,
+		adminmode => $self->adminmode()
+	});
+	if ($metas->[0]->[0]->[1] eq "model" && $model =~ m/^(.+\/)\.[^\/]+\/(.+)\.model$/) {
+		$model = $1.$2;
+	} elsif ($metas->[0]->[0]->[1] ne "job_result") {
+		$self->error("Not a recognizable model reference!");
+	}
+	my $modelfolder;
+	if ($model =~ m/^(.+\/)([^\/]+)$/) {
+		$modelfolder = $1.".".$2;
+	}
+	my $output = $self->workspace_service()->delete({
+		objects => [$model],
+		deleteDirectories => 1,
+		force => 1,
+		adminmode => $self->adminmode()
+	});
+	push(@{$output},$self->workspace_service()->delete({
+		objects => [$modelfolder],
+		deleteDirectories => 1,
+		force => 1,
+		adminmode => $self->adminmode()
+	}));
+	return $output;
+}
+
 =head3 classify_genome
 
 Definition:
@@ -317,16 +404,297 @@ sub build_fba_object {
 	return $fba;
 }
 #****************************************************************************
+#Apps
+#****************************************************************************
+sub ModelReconstruction {
+	my($self,$parameters) = @_;
+    my $starttime = time();
+    if (defined($parameters->{adminmode})) {
+    	$self->{_params}->{adminmode} = $parameters->{adminmode}
+    }
+    $parameters = $self->validate_args($parameters,[],{
+    	template_model => undef,
+    	fulldb => 0,
+    	output_path => "/".$self->{_params}->{username}."/models/",
+    	media => "/chenry/public/modelsupport/media/Complete",
+    	genome => undef,
+    	output_file => undef
+    });
+  	my $genome = $self->get_genome($parameters->{genome});
+    if (!defined($parameters->{output_file})) {
+    	$parameters->{output_file} = $genome->id()."_model";	
+    }
+    my $template;
+    if (!defined($parameters->{templatemodel})) {
+    	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
+    		$template = $self->get_object("/chenry/public/modelsupport/templates/plant.modeltemplate","modeltemplate");
+    	} else {
+    		my $classifier_data = $self->get_object("/chenry/public/modelsupport/classifiers/gramclassifier.string","string");
+    		my $class = $self->classify_genome($classifier_data,$genome);
+    		if ($class eq "Gram positive") {
+	    		$template = $self->get_object("/chenry/public/modelsupport/templates/GramPositive.modeltemplate","modeltemplate");
+	    	} elsif ($class eq "Gram negative") {
+	    		$template = $self->get_object("/chenry/public/modelsupport/templates/GramNegative.modeltemplate","modeltemplate");
+	    	}
+    	}
+    } else {
+    	$template = $self->get_object($parameters->{templatemodel},"modeltemplate");
+    }
+    if (!defined($template)) {
+    	$self->error("template retrieval failed!");
+    }
+    my $mdl = $template->buildModel({
+	    genome => $genome,
+	    modelid => $parameters->{output_file},
+	    fulldb => $parameters->{fulldb}
+	});
+	my $folder = $parameters->{output_path}."/.".$parameters->{output_file};
+    my $outputfiles = [];
+    if ($self->{_params}->{run_as_app} == 0) {
+    	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
+    } else {
+    	$self->{_params}->{app}->create_result_folder();
+    }
+    push(@{$outputfiles},$self->save_object($folder."/".$parameters->{output_file}.".model",$mdl,"model"));
+    push(@{$outputfiles},$self->save_object($folder."/fba",undef,"folder"));
+    push(@{$outputfiles},$self->save_object($folder."/gapfilling",undef,"folder"));
+    if ($self->{_params}->{run_as_app} == 0) {
+		return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},{
+			id => 0,
+			app => {
+				"id"=>"ModelReconstruction",
+				"script"=>"App-ModelReconstruction",
+				"label"=>"Reconstruct metabolic model",
+				"description"=>"Reconstructs a metabolic model from an annotated genome.",
+				"parameters"=>[]
+			},
+			parameters => $parameters,
+			start_time => $starttime,
+			end_time => time(),
+			elapsed_time => time()-$starttime,
+			output_files => [ map { [ $_->[2] . $_->[0], $_->[4] ] } @{$outputfiles}],
+			job_output => "",
+			hostname => "https://p3.theseed.org/services/ProbModelSEED",
+		},"job_result",{});
+    }
+}
+sub FluxBalanceAnalysis {
+	my($self,$parameters) = @_;
+    my $starttime = time();
+    if (defined($parameters->{adminmode})) {
+    	$self->{_params}->{adminmode} = $parameters->{adminmode}
+    }
+	$parameters = $self->validate_args($parameters,["model"],{
+		media => "/chenry/public/modelsupport/media/Complete",
+		fva => 0,
+		predict_essentiality => 0,
+		minimizeflux => 0,
+		findminmedia => 0,
+		allreversible => 0,
+		thermo_const_type => "None",
+		media_supplement => [],
+		geneko => [],
+		rxnko => [],
+		objective_fraction => 1,
+		custom_bounds => [],
+		objective => [["biomassflux","bio1",1]],
+		custom_constraints => [],
+		uptake_limits => [],
+	});
+    my $model = $self->get_model($parameters->{model});
+    $parameters->{model} = $model->_reference();
+    
+    #Setting output path based on model and then creating results folder
+    $parameters->{output_path} = $model->wsmeta()->[2]."fba";
+    if (!defined($parameters->{output_file})) {
+	    my $list = $self->workspace_service()->ls({
+			paths => [$model->wsmeta()->[2]."fba"],
+			excludeDirectories => 1,
+			excludeObjects => 0,
+			recursive => 1,
+			query => {type => "fba"}
+		});
+		my $index = @{$list};
+		for (my $i=0; $i < @{$list}; $i++) {
+			if ($list->[$i]->[0] =~ /^fba\.(\d+)$/) {
+				if ($1 > $index) {
+					$index = $1+1;
+				}
+			}
+		}
+		$parameters->{output_file} = "fba.".$index;
+    }
+    
+    my $fba = $self->build_fba_object($model,$parameters);
+    my $objective = $fba->runFBA();
+    if (!defined($objective)) {
+    	$self->error("FBA failed with no solution returned! See ".$fba->jobnode());
+    }
+    my $folder = $parameters->{output_path}."/.".$parameters->{output_file};
+    my $outputfiles = [];
+    if ($self->{_params}->{run_as_app} == 0) {
+    	$self->save_object($folder,undef,"folder",{application_type => "FluxBalanceAnalysis"});
+    } else {
+    	$self->{_params}->{app}->create_result_folder();
+    }
+    push(@{$outputfiles},$self->save_object($folder."/".$parameters->{output_file}.".fba",$fba,"fba",{
+    	objective => $objective,
+    	media => $parameters->{media}
+    }));
+    if ($self->{_params}->{run_as_app} == 0) {
+		return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},{
+			id => 0,
+			app => {
+				"id"=>"FluxBalanceAnalysis",
+				"script"=>"App-FluxBalanceAnalysis",
+				"label"=>"Run flux balance analysis",
+				"description"=>"Run flux balance analysis on model.",
+				"parameters"=>[]
+			},
+			parameters => $parameters,
+			start_time => $starttime,
+			end_time => time(),
+			elapsed_time => time()-$starttime,
+			output_files => [ map { [ $_->[2] . $_->[0], $_->[4] ] } @{$outputfiles}],
+			job_output => "",
+			hostname => "https://p3.theseed.org/services/ProbModelSEED",
+		},"job_result",{});
+    }
+}
+
+sub GapfillModel {
+	my($self,$parameters) = @_;
+	my $starttime = time();
+    if (defined($parameters->{adminmode})) {
+    	$self->{_params}->{adminmode} = $parameters->{adminmode}
+    }
+    $parameters = $self->validate_args($parameters,["model"],{
+		media => "/chenry/public/modelsupport/media/Complete",
+		probanno => undef,
+		alpha => 0,
+		allreversible => 0,
+		thermo_const_type => "None",
+		media_supplement => [],
+		geneko => [],
+		rxnko => [],
+		objective_fraction => 0.001,
+		uptake_limits => [],
+		custom_bounds => [],
+		objective => [["biomassflux","bio1",1]],
+		custom_constraints => [],
+		low_expression_theshold => 0.5,
+		high_expression_theshold => 0.5,
+		target_reactions => [],
+		completeGapfill => 0,
+		solver => undef,
+		omega => 0,
+		allowunbalanced => 0,
+		blacklistedrxns => [],
+		gauranteedrxns => [],
+		exp_raw_data => {},
+		source_model => undef,
+		integrate_solution => 0,
+	});
+    if (defined($parameters->{adminmode}) && $parameters->{adminmode} == 1) {
+    	$self->admin_mode($parameters->{adminmode});
+    }
+    my $model = $self->get_model($parameters->{model});
+    $parameters->{model} = $model->_reference();
+    
+    #Setting output path based on model and then creating results folder
+    $parameters->{output_path} = $model->wsmeta()->[2]."gapfilling";
+    if (!defined($parameters->{output_file})) {
+	    my $gflist = $self->workspace_service()->ls({
+			paths => [$model->wsmeta()->[2]."gapfilling"],
+			excludeDirectories => 1,
+			excludeObjects => 0,
+			recursive => 1,
+			query => {type => "fba"}
+		});
+		my $index = @{$gflist};
+		for (my $i=0; $i < @{$gflist}; $i++) {
+			if ($gflist->[$i]->[0] =~ /^gf\.(\d+)$/) {
+				if ($1 > $index) {
+					$index = $1+1;
+				}
+			}
+		}
+		$parameters->{output_file} = "gf.".$index;
+    }
+    Bio::KBase::ObjectAPI::utilities::set_global("gapfill name",$parameters->{output_file});
+    
+    if (defined($parameters->{source_model})) {
+		$parameters->{source_model} = $self->get_model($parameters->{source_model});
+    }
+    
+    my $fba = $self->build_fba_object($model,$parameters);
+    $fba->PrepareForGapfilling($parameters);
+    my $objective = $fba->runFBA();
+    $fba->parseGapfillingOutput();
+    if (!defined($fba->gapfillingSolutions()->[0])) {
+		$self->error("Analysis completed, but no valid solutions found!");
+	}
+	if (@{$fba->gapfillingSolutions()->[0]->gapfillingSolutionReactions()} == 0) {
+		$self->error("No gapfilling needed on specified condition!");
+	}
+	my $gfsols = [];
+	for (my $i=0; $i < @{$fba->gapfillingSolutions()}; $i++) {
+		for (my $j=0; $j < @{$fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()}; $j++) {
+			$gfsols->[$i]->[$j] = $fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()->[$j]->serializeToDB();
+		}
+	}
+	my $solutiondata = Bio::KBase::ObjectAPI::utilities::TOJSON($gfsols);
+
+	my $folder = $parameters->{output_path}."/.".$parameters->{output_file};
+    my $outputfiles = [];
+    if ($self->{_params}->{run_as_app} == 0) {
+    	$self->save_object($folder,undef,"folder",{application_type => "GapfillModel"});
+    } else {
+    	$self->{_params}->{app}->create_result_folder();
+    }
+	push(@{$outputfiles},$self->save_object($folder."/".$parameters->{output_file}.".fba",$fba,"fba",{
+		integrated_solution => 0,
+		solutiondata => $solutiondata,
+		integratedindex => 0,
+		media => $parameters->{media},
+		integrated => $parameters->{integrate_solution}
+	}));
+    if ($self->{_params}->{run_as_app} == 0) {
+		return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},{
+			id => 0,
+			app => {
+				"id"=>"GapfillModel",
+				"script"=>"App-GapfillModel",
+				"label"=>"Gapfill metabolic model",
+				"description"=>"Run gapfilling on model.",
+				"parameters"=>[]
+			},
+			parameters => $parameters,
+			start_time => $starttime,
+			end_time => time(),
+			elapsed_time => time()-$starttime,
+			output_files => [ map { [ $_->[2] . $_->[0], $_->[4] ] } @{$outputfiles}],
+			job_output => "",
+			hostname => "https://p3.theseed.org/services/ProbModelSEED",
+		},"job_result",{});
+    }
+}
+
+#****************************************************************************
 #Constructor
 #****************************************************************************
 sub new {
     my($class, $parameters) = @_;
     my $self = {};
     bless $self, $class;
-    $parameters = $self->validate_args($parameters,["fbajobcache","fbajobdir","mfatoolkitbin","token","username",],{
+    $parameters = $self->validate_args($parameters,["token","username",],{
+    	fbajobcache => "",
+    	fbajobdir => "",
+    	mfatoolkitbin => "",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
     	adminmode => 0,
-    	method => "unknown"
+    	method => "unknown",
+    	run_as_app => 0
     });
     $self->{_params} = $parameters;
     return $self;

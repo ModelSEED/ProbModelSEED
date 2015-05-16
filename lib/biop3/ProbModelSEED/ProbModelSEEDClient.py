@@ -185,6 +185,16 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def delete_model(self, input):
+        resp = self._call('ProbModelSEED.delete_model',
+                          [input])
+        return resp[0]
+
+    def list_models(self):
+        resp = self._call('ProbModelSEED.list_models',
+                          [])
+        return resp[0]
+
     def list_model_edits(self, input):
         resp = self._call('ProbModelSEED.list_model_edits',
                           [input])
@@ -192,5 +202,20 @@ class ProbModelSEED(object):
 
     def manage_model_edits(self, input):
         resp = self._call('ProbModelSEED.manage_model_edits',
+                          [input])
+        return resp[0]
+
+    def ModelReconstruction(self, input):
+        resp = self._call('ProbModelSEED.ModelReconstruction',
+                          [input])
+        return resp[0]
+
+    def FluxBalanceAnalysis(self, input):
+        resp = self._call('ProbModelSEED.FluxBalanceAnalysis',
+                          [input])
+        return resp[0]
+
+    def GapfillModel(self, input):
+        resp = self._call('ProbModelSEED.GapfillModel',
                           [input])
         return resp[0]
