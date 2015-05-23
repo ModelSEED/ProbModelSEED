@@ -10,9 +10,6 @@ use LWP::Simple qw(getstore);
 use File::Temp qw(tempfile);
 use Bio::KBase::ObjectAPI::KBaseOntology::DB::Mapping;
 package Bio::KBase::ObjectAPI::KBaseOntology::Mapping;
-use Class::Autouse qw(
-    ModelSEED::Client::SAP
-);
 use Bio::KBase::ObjectAPI::KBaseOntology::Subsystem;
 use Moose;
 use Bio::KBase::ObjectAPI::utilities;
@@ -416,9 +413,6 @@ sub searchForRoleSet {
 
 sub buildSubsystemRoleSets {
     my ($self) = @_;
-    # get subsystems
-    my $SAP = ModelSEED::Client::SAP->new();
-
 }
 
 =head3 buildSubsystemReactionSets

@@ -34,7 +34,12 @@
 	
 	sub test_harness {
 		my($self,$function,$parameters) = @_;
-		my $output = $self->{obj}->$function($parameters);
+		my $output;
+		if (defined($parameters)) {
+			$output = $self->{obj}->$function($parameters);
+		} else {
+			$output = $self->{obj}->$function();
+		}
 		ok defined($output), "Successfully ran $function!";
 		if ($self->{dumpoutput}) {
 			print "$function output:\n".Data::Dumper->Dump([$output])."\n\n";
@@ -45,13 +50,15 @@
 	
 	sub run_tests {
 		my($self) = @_;
-		my $meta = $self->{obj}->helper()->get_model_meta("/chenry/models/TestModel");
-		if (defined($meta)) {
-			my $output = $self->test_harness("delete_model",{
-				model => "/chenry/models/TestModel",
-			});
+		my $output = $self->test_harness("list_models",undef);
+		for(my $i=0; $i < @{$output}; $i++) {
+			if ($output->[$i] eq "/chenry/models/TestModel") {
+				my $output = $self->test_harness("delete_model",{
+					model => "/chenry/models/TestModel",
+				});
+			}
 		}
-		my $output = $self->test_harness("ModelReconstruction",{
+		$output = $self->test_harness("ModelReconstruction",{
 			genome => "/chenry/genomes/testgenome.genome",
 			fulldb => "0",
 			output_path => "/chenry/models",
