@@ -98,6 +98,8 @@ use namespace::autoclean;
 use Scalar::Util qw(weaken);
 our $VERSION = undef;
 
+has jobresult => ( is => 'rw', isa => 'HashRef', default => sub { return {} } );
+
 my $htmlheader = <<HEADER;
 <!doctype HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <head>
@@ -356,6 +358,9 @@ sub serializeToDB {
 		delete $data->{$item->{name}};
 	    }
 	}
+    }
+    if (defined($self->jobresult()) && keys(%{$self->jobresult()}) > 0) {
+    	$data->{jobresult} = $self->jobresult();
     }
     return $data;
 }

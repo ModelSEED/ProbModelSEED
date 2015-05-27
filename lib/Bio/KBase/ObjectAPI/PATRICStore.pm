@@ -79,6 +79,10 @@ my $transform = {
 		in => "transform_media_from_ws",
 		out => "transform_media_to_ws"
 	},
+	genome => {
+		in => "transform_genome_from_ws",
+		out => "transform_genome_to_ws"
+	},
 	model => {
 		in => "transform_model_from_ws"
 	}
@@ -128,6 +132,11 @@ sub get_objects {
 		my $object;
 		for (my $i=0; $i < @{$objdatas}; $i++) {
 			$self->cache()->{$objdatas->[$i]->[0]->[4]} = $objdatas->[$i];
+			if (defined($objdatas->[$i]->[0]->[11]) && length($objdatas->[$i]->[0]->[11]) > 0) {
+				my $ua = LWP::UserAgent->new();
+				my $res = $ua->get($objdatas->[$i]->[0]->[11]."?download",Authorization => "OAuth " . $self->workspace()->{token});
+				$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1] = $res->{_content};
+			}
 			if (defined($typetrans->{$objdatas->[$i]->[0]->[1]})) {
 				my $class = $typetrans->{$objdatas->[$i]->[0]->[1]};
 				if (defined($transform->{$objdatas->[$i]->[0]->[1]}->{in})) {
@@ -213,6 +222,62 @@ sub save_objects {
     	}
     }
     return $output; 
+}
+
+sub transform_genome_from_ws {
+	my ($self,$data,$meta) = @_;
+	$data = Bio::KBase::ObjectAPI::utilities::FROMJSON($data);
+	$data->{id} = $meta->[0];
+	$data->{source} = "PATRIC";
+	foreach my $gene (@{$data->{features}}) {
+		delete $gene->{feature_creation_event};
+		if (defined($gene->{protein_translation})) {
+			$gene->{protein_translation_length} = length($gene->{protein_translation});
+			$gene->{dna_sequence_length} = 3*$gene->{protein_translation_length};
+			$gene->{md5} = Digest::MD5::md5_hex($gene->{protein_translation}),
+			$gene->{publications} = [],
+			$gene->{subsystems} = [],
+			$gene->{protein_families} = [],
+			$gene->{aliases} = [],
+			$gene->{subsystem_data} = [],
+			$gene->{regulon_data} = [],
+			$gene->{atomic_regulons} = [],
+			$gene->{coexpressed_fids} = [],
+			$gene->{co_occurring_fids} = [],
+		}
+	}
+	my $contigset;
+	if (defined($data->{contigs})) {
+		my $obj = {
+			id => $meta->[0].".contigs",
+			name => $data->{scientific_name},
+			md5 => "",
+			source_id => $meta->[0],
+			source => "PATRIC",
+			type => "organism",
+			contigs => []
+		};
+		foreach my $contig (@{$data->{contigs}}) {
+			push(@{$obj->{contigs}},{
+				id => $contig->{id},
+				length => length($contig->{dna}),
+				sequence => $contig->{dna},
+				md5 => Digest::MD5::md5_hex($contig->{dna}),
+			});
+		}
+		$contigset = Bio::KBase::ObjectAPI::KBaseGenomes::ContigSet->new($obj);
+		delete $data->{contigs};
+	}
+	$data = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($data);
+	if (defined($contigset)) {
+		$data->contigs($contigset);
+	}
+	return $data;
+}
+
+sub transform_genome_to_ws {
+	my ($self,$data,$meta) = @_;
+	return $data;
 }
 
 sub transform_model_from_ws {

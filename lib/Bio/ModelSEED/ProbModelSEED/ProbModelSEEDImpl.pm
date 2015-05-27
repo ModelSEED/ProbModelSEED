@@ -105,17 +105,16 @@ sub _list_fba_studies {
 	$input = $self->helper()->validate_args($input,["model"],{});
     $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
     my $list = $self->helper()->workspace_service()->ls({
-		paths => [$input->{model_meta}->[2]."fba"],
+		paths => [$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	$list = $list->{$input->{model_meta}->[2]."fba"};
+	$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"};
 	my $output = {};
 	for (my $i=0; $i < @{$list}; $i++) {
 		my $id = $list->[$i]->[0];
-		$id =~ s/\.fba$//;
 		$output->{$id} = {
 			rundate => $list->[$i]->[3],
 			id => $id,
@@ -149,9 +148,7 @@ sub _list_models {
 		if (defined($newlist->{$list->[$i]->[2].$list->[$i]->[0]})) {
 			$newlist = $newlist->{$list->[$i]->[2].$list->[$i]->[0]};
 			for (my $j=0; $j < @{$newlist}; $j++) {
-				if ($newlist->[$j]->[2] =~ m/^(.+\/)\.([^\/]+)\//) {
-					push(@{$totallist},$1.$2);
-				}
+				push(@{$totallist},$newlist->[$j]->[2].$newlist->[$j]->[0]);
 			}
 		}
 	}
@@ -163,17 +160,16 @@ sub _list_gapfill_studies {
 	$input = $self->helper()->validate_args($input,["model"],{});
     $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
     my $gflist = $self->helper()->workspace_service()->ls({
-		paths => [$input->{model_meta}->[2]."gapfilling"],
+		paths => [$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	$gflist = $gflist->{$input->{model_meta}->[2]."gapfilling"};
+	$gflist = $gflist->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"};
 	my $output = {};
 	for (my $i=0; $i < @{$gflist}; $i++) {
 		my $id = $gflist->[$i]->[0];
-		$id =~ s/\.fba$//;
 		$output->{$id} = {
 			rundate => $gflist->[$i]->[3],
 			id => $id,
@@ -192,18 +188,17 @@ sub _list_model_edits {
 	$input = $self->helper()->validate_args($input,["model"],{});
    $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
     my $list = $self->helper()->workspace_service()->ls({
-		paths => [$input->{model_meta}->[2]."edits"],
+		paths => [$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
 		recursive => 1,
 		query => {type => "model_edit"}
 	});
-	$list = $list->{$input->{model_meta}->[2]."edits"};
+	$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"};
 	my $output = {};
 	for (my $i=0; $i < @{$list}; $i++) {
 		my $data = Bio::KBase::ObjectAPI::utilities::FROMJSON($list->[$i]->[7]->{editdata});
 		my $id = $list->[$i]->[0];
-		$id =~ s/\.model_edit$//;
 		$output->{$id} = {
 			rundate => $list->[$i]->[3],
 			integrated => $list->[$i]->[7]->{integrated},

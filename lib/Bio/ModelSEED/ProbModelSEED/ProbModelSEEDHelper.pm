@@ -44,15 +44,6 @@ sub get_object {
 sub get_model {
 	my($self, $ref) = @_;
 	my $model = $self->get_object($ref);
-    if (defined($model) && ref($model) ne "Bio::KBase::ObjectAPI::KBaseFBA::FBAModel" && defined($model->{output_files})) {
-    	my $output = $model->{output_files};
-    	for (my $i=0; $i < @{$model->{output_files}}; $i++) {
-    		if ($model->{output_files}->[$i]->[0] =~ m/\.model$/) {
-    			$ref = $model->{output_files}->[$i]->[0];
-    		}
-    	}
-    	$model = $self->get_object($ref,"model");
-    }
     if (!defined($model)) {
     	$self->error("Model retrieval failed!");
     }
@@ -88,16 +79,6 @@ sub get_model_meta {
 		adminmode => $self->{_params}->{adminmode}
 	});
 	if (!defined($metas->[0]->[0]->[0])) {
-    	return undef;
-    }
-	if ($metas->[0]->[0]->[1] ne "model") {
-		$metas = $self->workspace_service()->get({
-			objects => [$metas->[0]->[0]->[2].".".$metas->[0]->[0]->[0]."/".$metas->[0]->[0]->[0].".model"],
-			metadata_only => 1,
-			adminmode => $self->{_params}->{adminmode}
-		});
-	}
-    if (!defined($metas->[0])) {
     	return undef;
     }
 	return $metas->[0]->[0];
@@ -168,11 +149,6 @@ sub delete_model {
 		metadata_only => 1,
 		adminmode => $self->adminmode()
 	});
-	if ($metas->[0]->[0]->[1] eq "model" && $model =~ m/^(.+\/)\.[^\/]+\/(.+)\.model$/) {
-		$model = $1.$2;
-	} elsif ($metas->[0]->[0]->[1] ne "job_result") {
-		$self->error("Not a recognizable model reference!");
-	}
 	my $modelfolder;
 	if ($model =~ m/^(.+\/)([^\/]+)$/) {
 		$modelfolder = $1.".".$2;
@@ -455,29 +431,28 @@ sub ModelReconstruction {
     } else {
     	$self->{_params}->{app}->create_result_folder();
     }
-    push(@{$outputfiles},$self->save_object($folder."/".$parameters->{output_file}.".model",$mdl,"model"));
-    push(@{$outputfiles},$self->save_object($folder."/fba",undef,"folder"));
-    push(@{$outputfiles},$self->save_object($folder."/gapfilling",undef,"folder"));
-    if ($self->{_params}->{run_as_app} == 0) {
-		return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},{
-			id => 0,
-			app => {
-				"id"=>"ModelReconstruction",
-				"script"=>"App-ModelReconstruction",
-				"label"=>"Reconstruct metabolic model",
-				"description"=>"Reconstructs a metabolic model from an annotated genome.",
-				"parameters"=>[]
-			},
-			parameters => $parameters,
-			start_time => $starttime,
-			end_time => time(),
-			elapsed_time => time()-$starttime,
-			output_files => [ map { [ $_->[2] . $_->[0], $_->[4] ] } @{$outputfiles}],
-			job_output => "",
-			hostname => "https://p3.theseed.org/services/ProbModelSEED",
-		},"job_result",{});
-    }
+    $mdl->jobresult({
+    	id => 0,
+		app => {
+			"id"=>"ModelReconstruction",
+			"script"=>"App-ModelReconstruction",
+			"label"=>"Reconstruct metabolic model",
+			"description"=>"Reconstructs a metabolic model from an annotated genome.",
+			"parameters"=>[]
+		},
+		parameters => $parameters,
+		start_time => $starttime,
+		end_time => time(),
+		elapsed_time => time()-$starttime,
+		output_files => [[$parameters->{output_path}."/".$parameters->{output_file}]],
+		job_output => "",
+		hostname => "https://p3.theseed.org/services/ProbModelSEED"
+    });
+    $self->save_object($folder."/fba",undef,"folder");
+    $self->save_object($folder."/gapfilling",undef,"folder");
+    return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$mdl,"model");
 }
+
 sub FluxBalanceAnalysis {
 	my($self,$parameters) = @_;
     my $starttime = time();
@@ -505,10 +480,10 @@ sub FluxBalanceAnalysis {
     $parameters->{model} = $model->_reference();
     
     #Setting output path based on model and then creating results folder
-    $parameters->{output_path} = $model->wsmeta()->[2]."fba";
+    $parameters->{output_path} = $model->wsmeta()->[2].".".$model->wsmeta()->[0]."/fba";
     if (!defined($parameters->{output_file})) {
 	    my $list = $self->workspace_service()->ls({
-			paths => [$model->wsmeta()->[2]."fba"],
+			paths => [$parameters->{output_path}],
 			excludeDirectories => 1,
 			excludeObjects => 0,
 			recursive => 1,
@@ -530,36 +505,27 @@ sub FluxBalanceAnalysis {
     if (!defined($objective)) {
     	$self->error("FBA failed with no solution returned! See ".$fba->jobnode());
     }
-    my $folder = $parameters->{output_path}."/.".$parameters->{output_file};
-    my $outputfiles = [];
-    if ($self->{_params}->{run_as_app} == 0) {
-    	$self->save_object($folder,undef,"folder",{application_type => "FluxBalanceAnalysis"});
-    } else {
-    	$self->{_params}->{app}->create_result_folder();
-    }
-    push(@{$outputfiles},$self->save_object($folder."/".$parameters->{output_file}.".fba",$fba,"fba",{
+    $fba->jobresult({
+    	id => 0,
+		app => {
+			"id"=>"FluxBalanceAnalysis",
+			"script"=>"App-FluxBalanceAnalysis",
+			"label"=>"Run flux balance analysis",
+			"description"=>"Run flux balance analysis on model.",
+			"parameters"=>[]
+		},
+		parameters => $parameters,
+		start_time => $starttime,
+		end_time => time(),
+		elapsed_time => time()-$starttime,
+		output_files => [[ $parameters->{output_path}."/".$parameters->{output_file}]],
+		job_output => "",
+		hostname => "https://p3.theseed.org/services/ProbModelSEED",
+    });
+    return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
     	objective => $objective,
     	media => $parameters->{media}
-    }));
-    if ($self->{_params}->{run_as_app} == 0) {
-		return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},{
-			id => 0,
-			app => {
-				"id"=>"FluxBalanceAnalysis",
-				"script"=>"App-FluxBalanceAnalysis",
-				"label"=>"Run flux balance analysis",
-				"description"=>"Run flux balance analysis on model.",
-				"parameters"=>[]
-			},
-			parameters => $parameters,
-			start_time => $starttime,
-			end_time => time(),
-			elapsed_time => time()-$starttime,
-			output_files => [ map { [ $_->[2] . $_->[0], $_->[4] ] } @{$outputfiles}],
-			job_output => "",
-			hostname => "https://p3.theseed.org/services/ProbModelSEED",
-		},"job_result",{});
-    }
+    });
 }
 
 sub GapfillModel {
@@ -602,10 +568,10 @@ sub GapfillModel {
     $parameters->{model} = $model->_reference();
     
     #Setting output path based on model and then creating results folder
-    $parameters->{output_path} = $model->wsmeta()->[2]."gapfilling";
+    $parameters->{output_path} = $model->wsmeta()->[2].".".$model->wsmeta()->[0]."/gapfilling";
     if (!defined($parameters->{output_file})) {
 	    my $gflist = $self->workspace_service()->ls({
-			paths => [$model->wsmeta()->[2]."gapfilling"],
+			paths => [$parameters->{output_path}],
 			excludeDirectories => 1,
 			excludeObjects => 0,
 			recursive => 1,
@@ -644,40 +610,30 @@ sub GapfillModel {
 		}
 	}
 	my $solutiondata = Bio::KBase::ObjectAPI::utilities::TOJSON($gfsols);
-
-	my $folder = $parameters->{output_path}."/.".$parameters->{output_file};
-    my $outputfiles = [];
-    if ($self->{_params}->{run_as_app} == 0) {
-    	$self->save_object($folder,undef,"folder",{application_type => "GapfillModel"});
-    } else {
-    	$self->{_params}->{app}->create_result_folder();
-    }
-	push(@{$outputfiles},$self->save_object($folder."/".$parameters->{output_file}.".fba",$fba,"fba",{
+	$fba->jobresult({
+    	id => 0,
+		app => {
+			"id"=>"GapfillModel",
+			"script"=>"App-GapfillModel",
+			"label"=>"Gapfill metabolic model",
+			"description"=>"Run gapfilling on model.",
+			"parameters"=>[]
+		},
+		parameters => $parameters,
+		start_time => $starttime,
+		end_time => time(),
+		elapsed_time => time()-$starttime,
+		output_files => [[ $parameters->{output_path}."/".$parameters->{output_file}]],
+		job_output => "",
+		hostname => "https://p3.theseed.org/services/ProbModelSEED",
+    });
+	return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
 		integrated_solution => 0,
 		solutiondata => $solutiondata,
 		integratedindex => 0,
 		media => $parameters->{media},
 		integrated => $parameters->{integrate_solution}
-	}));
-    if ($self->{_params}->{run_as_app} == 0) {
-		return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},{
-			id => 0,
-			app => {
-				"id"=>"GapfillModel",
-				"script"=>"App-GapfillModel",
-				"label"=>"Gapfill metabolic model",
-				"description"=>"Run gapfilling on model.",
-				"parameters"=>[]
-			},
-			parameters => $parameters,
-			start_time => $starttime,
-			end_time => time(),
-			elapsed_time => time()-$starttime,
-			output_files => [ map { [ $_->[2] . $_->[0], $_->[4] ] } @{$outputfiles}],
-			job_output => "",
-			hostname => "https://p3.theseed.org/services/ProbModelSEED",
-		},"job_result",{});
-    }
+	});
 }
 
 #****************************************************************************

@@ -59,7 +59,7 @@
 			}
 		}
 		$output = $self->test_harness("ModelReconstruction",{
-			genome => "/chenry/genomes/testgenome.genome",
+			genome => "/chenry/genomes/test/.Buchnera_aphidicola/Buchnera_aphidicola.genome",
 			fulldb => "0",
 			output_path => "/chenry/models",
 			output_file => "TestModel"
