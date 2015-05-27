@@ -577,9 +577,9 @@ sub GapfillModel {
 			recursive => 1,
 			query => {type => "fba"}
 		});
-		my $index = @{$gflist};
-		for (my $i=0; $i < @{$gflist}; $i++) {
-			if ($gflist->[$i]->[0] =~ /^gf\.(\d+)$/) {
+		my $index = 0;
+		foreach my $key (keys %$gflist) {
+			if ($gflist->{$key}->[0] =~ /^gf\.(\d+)$/) {
 				if ($1 > $index) {
 					$index = $1+1;
 				}
