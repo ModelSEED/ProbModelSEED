@@ -35,7 +35,7 @@ TPAGE_ARGS = --define kb_top=$(TARGET) \
 
 TESTS = $(wildcard t/client-tests/*.t)
 
-all: bin compile-typespec service
+all: bin service
 
 jarfile:
 	gen_java_client $(SERVER_SPEC) org.patricbrc.ProbModelSEED java
