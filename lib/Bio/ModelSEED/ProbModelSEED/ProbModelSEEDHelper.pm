@@ -489,12 +489,15 @@ sub FluxBalanceAnalysis {
 			recursive => 1,
 			query => {type => "fba"}
 		});
-		$list = $list->{$parameters->{output_path}};
-		my $index = @{$list};
-		for (my $i=0; $i < @{$list}; $i++) {
-			if ($list->[$i]->[0] =~ /^fba\.(\d+)$/) {
-				if ($1 > $index) {
-					$index = $1+1;
+		my $index = 0;
+		if (defined($parameters->{output_path})) {
+			$list = $list->{$parameters->{output_path}};
+			$index = @{$list};
+			for (my $i=0; $i < @{$list}; $i++) {
+				if ($list->[$i]->[0] =~ /^fba\.(\d+)$/) {
+					if ($1 > $index) {
+						$index = $1+1;
+					}
 				}
 			}
 		}
@@ -578,12 +581,15 @@ sub GapfillModel {
 			recursive => 1,
 			query => {type => "fba"}
 		});
-		$gflist = $gflist->{$parameters->{output_path}};
-		my $index = @{$gflist};
-		for (my $i=0; $i < @{$gflist}; $i++) {
-			if ($gflist->[$i]->[0] =~ /^gf\.(\d+)$/) {
-				if ($1 > $index) {
-					$index = $1+1;
+		my $index = 0;
+		if (defined($gflist->{$parameters->{output_path}})) {
+			$gflist = $gflist->{$parameters->{output_path}};
+			$index = @{$gflist};
+			for (my $i=0; $i < @{$gflist}; $i++) {
+				if ($gflist->[$i]->[0] =~ /^gf\.(\d+)$/) {
+					if ($1 > $index) {
+						$index = $1+1;
+					}
 				}
 			}
 		}

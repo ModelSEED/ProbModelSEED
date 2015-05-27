@@ -70,9 +70,20 @@
 			output_file => "testgapfill",
 			integrate_solution => "1"
 		});
+		$output = $self->test_harness("GapfillModel",{
+			model => "/chenry/models/TestModel",
+			output_file => "testgapfill",
+			integrate_solution => "1",
+			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
+		});
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => "/chenry/models/TestModel",
 			output_file => "testfba",
+		});
+		$output = $self->test_harness("FluxBalanceAnalysis",{
+			model => "/chenry/models/TestModel",
+			output_file => "testfba",
+			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		});
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => "/chenry/models/TestModel"
