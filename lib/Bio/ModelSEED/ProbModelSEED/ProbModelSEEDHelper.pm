@@ -489,6 +489,7 @@ sub FluxBalanceAnalysis {
 			recursive => 1,
 			query => {type => "fba"}
 		});
+		$list = $list->{$parameters->{output_path}};
 		my $index = @{$list};
 		for (my $i=0; $i < @{$list}; $i++) {
 			if ($list->[$i]->[0] =~ /^fba\.(\d+)$/) {
@@ -577,6 +578,7 @@ sub GapfillModel {
 			recursive => 1,
 			query => {type => "fba"}
 		});
+		$gflist = $gflist->{$parameters->{output_path}}
 		my $index = @{$gflist};
 		for (my $i=0; $i < @{$gflist}; $i++) {
 			if ($gflist->[$i]->[0] =~ /^gf\.(\d+)$/) {
