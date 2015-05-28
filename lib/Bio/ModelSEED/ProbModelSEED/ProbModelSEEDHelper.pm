@@ -490,7 +490,7 @@ sub FluxBalanceAnalysis {
 			query => {type => "fba"}
 		});
 		my $index = 0;
-		if (defined($parameters->{output_path})) {
+		if (defined($list->{$parameters->{output_path}})) {
 			$list = $list->{$parameters->{output_path}};
 			$index = @{$list};
 			for (my $i=0; $i < @{$list}; $i++) {
