@@ -919,6 +919,16 @@ sub export_model
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN export_model
+    $input = $self->initialize_call($input);
+    $input = $self->helper()->validate_args($input,["model"],{
+		format => "sbml",
+		to_shock => 0
+    });
+    my $model = $self->helper()->get_model($input->{model});
+    $output = $model
+    if ($input->{to_shock} == 1) {
+    	$output = $self->helper()->load_to_shock($output);
+    }
     #END export_model
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -1010,7 +1020,7 @@ sub export_media
     	}    	
     }
     if ($input->{to_shock} == 1) {
-    	
+    	$output = $self->helper()->load_to_shock($output);
     }
     #END export_media
     my @_bad_returns;

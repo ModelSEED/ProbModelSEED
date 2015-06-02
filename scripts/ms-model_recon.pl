@@ -39,4 +39,3 @@ while ($task->{status} ne "failed" && $task->{status} ne "completed") {
 }
 print "Task results:\n";
 print join("\t", $task->{id}, $task->{app}, $task->{workspace}, $task->{status}, $task->{submit_time}, $task->{completed_time}), "\n";
-
