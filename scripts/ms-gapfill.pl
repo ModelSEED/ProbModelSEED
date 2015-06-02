@@ -2,6 +2,7 @@ use strict;
 use Bio::P3::Workspace::ScriptHelpers;
 use Bio::KBase::AppService::Client;
 
+Bio::P3::Workspace::ScriptHelpers::SetConfig({appurl => "http://p3.theseed.org/services/app_service"});
 my($opt, $usage) = Bio::P3::Workspace::ScriptHelpers::options("%c %o <contigs path> <scientific name>",[
 	["fromfile|f", "Load fasta from file"],
 	["domain|d=s", "Domain of life for genome", { "default" => "Bacteria" }],

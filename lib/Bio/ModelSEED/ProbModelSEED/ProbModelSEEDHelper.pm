@@ -644,6 +644,33 @@ sub GapfillModel {
 	});
 }
 
+sub load_to_shock {
+	my($self,$data) = @_;
+	my $uuid = Data::UUID->new()->create_str();
+	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
+	my $filename = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
+	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$input]);
+	my ($input,$meta) = @_;
+	my $att = " ";
+	if (defined($meta) && keys(%{$meta}) > 0) {
+		my $JSON = JSON->new->utf8(1);
+		$att = " 'attributes_str=".$JSON->encode($meta)."' ";
+	}
+	
+	
+	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth".$att.$self->{_params}->{token}."\" -X POST -F 'upload=\@".$filename."' ".$self->shock_url()."/node");
+	$output = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$output}));
+	return $self->shock_url()."/node/".$output->{data}->{id};
+
+
+	my ($input,$meta) = @_;
+	
+	
+	return Load_file_to_shock(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid,$meta);
+	
+	
+}
+
 #****************************************************************************
 #Constructor
 #****************************************************************************

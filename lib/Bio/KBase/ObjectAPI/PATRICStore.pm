@@ -424,15 +424,48 @@ sub transform_media_to_ws {
 	$meta->{isMinimal} = $object->isMinimal();
 	$meta->{isDefined} = $object->isDefined();
 	$meta->{source_id} = $object->source_id();
+	$meta->{number_compounds} = @{$object->mediacompounds()};
 	my $data = "id\tname\tconcentration\tminflux\tmaxflux\n";
 	my $mediacpds = $object->mediacompounds();
+	my $compounds = "";
 	for (my $i=0; $i < @{$mediacpds}; $i++) {
 		$data .= $mediacpds->[$i]->id()."\t".
 			$mediacpds->[$i]->name()."\t".
 			$mediacpds->[$i]->concentration()."\t".
 			$mediacpds->[$i]->minFlux()."\t".
 			$mediacpds->[$i]->maxFlux()."\n";
+		if (length($compounds) > 0) {
+			$compounds .= "|";
+		}
+		$compounds .= $mediacpds->[$i]->id().":".$mediacpds->[$i]->name();
 	}
+	$meta->{compounds} = $compounds;
+	return $data;
+}
+
+sub transform_model_to_ws {
+	my ($self,$object,$meta) = @_;
+	$meta->{name} = $object->name();
+	$meta->{type} = $object->type();
+	$meta->{isMinimal} = $object->isMinimal();
+	$meta->{isDefined} = $object->isDefined();
+	$meta->{source_id} = $object->source_id();
+	$meta->{number_compounds} = @{$object->mediacompounds()};
+	my $data = "id\tname\tconcentration\tminflux\tmaxflux\n";
+	my $mediacpds = $object->mediacompounds();
+	my $compounds = "";
+	for (my $i=0; $i < @{$mediacpds}; $i++) {
+		$data .= $mediacpds->[$i]->id()."\t".
+			$mediacpds->[$i]->name()."\t".
+			$mediacpds->[$i]->concentration()."\t".
+			$mediacpds->[$i]->minFlux()."\t".
+			$mediacpds->[$i]->maxFlux()."\n";
+		if (length($compounds) > 0) {
+			$compounds .= "|";
+		}
+		$compounds .= $mediacpds->[$i]->id().":".$mediacpds->[$i]->name();
+	}
+	$meta->{compounds} = $compounds;
 	return $data;
 }
 

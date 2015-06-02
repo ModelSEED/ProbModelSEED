@@ -109,6 +109,131 @@ sub new
 
 
 
+=head2 print_model_stats_params
+
+  $output = $obj->print_model_stats_params($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a print_model_stats_params
+$output is a reference to a hash where the key is a ref and the value is a ModelStats
+print_model_stats_params is a reference to a hash where the following keys are defined:
+	models has a value which is a reference to a list where each element is a ref
+ref is a string
+ModelStats is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	genome has a value which is a ref
+	template has a value which is a ref
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	spontaneous_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a print_model_stats_params
+$output is a reference to a hash where the key is a ref and the value is a ModelStats
+print_model_stats_params is a reference to a hash where the following keys are defined:
+	models has a value which is a reference to a list where each element is a ref
+ref is a string
+ModelStats is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	genome has a value which is a ref
+	template has a value which is a ref
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	spontaneous_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub print_model_stats_params
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function print_model_stats_params (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to print_model_stats_params:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'print_model_stats_params');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.print_model_stats_params",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'print_model_stats_params',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method print_model_stats_params",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'print_model_stats_params',
+				       );
+    }
+}
+
+
+
 =head2 list_gapfill_solutions
 
   $output = $obj->list_gapfill_solutions($input)
@@ -569,6 +694,192 @@ sub delete_fba_studies
 
 
 
+=head2 export_model
+
+  $output = $obj->export_model($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is an export_model_params
+$output is a reference to a list where each element is a string
+export_model_params is a reference to a hash where the following keys are defined:
+	model has a value which is a ref
+	format has a value which is a string
+	to_shock has a value which is a bool
+ref is a string
+bool is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is an export_model_params
+$output is a reference to a list where each element is a string
+export_model_params is a reference to a hash where the following keys are defined:
+	model has a value which is a ref
+	format has a value which is a string
+	to_shock has a value which is a bool
+ref is a string
+bool is an int
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub export_model
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function export_model (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to export_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'export_model');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.export_model",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'export_model',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method export_model",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'export_model',
+				       );
+    }
+}
+
+
+
+=head2 export_media
+
+  $output = $obj->export_media($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is an export_media_params
+$output is a reference to a list where each element is a string
+export_media_params is a reference to a hash where the following keys are defined:
+	media has a value which is a ref
+	format has a value which is a string
+	to_shock has a value which is a bool
+ref is a string
+bool is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is an export_media_params
+$output is a reference to a list where each element is a string
+export_media_params is a reference to a hash where the following keys are defined:
+	media has a value which is a ref
+	format has a value which is a string
+	to_shock has a value which is a bool
+ref is a string
+bool is an int
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub export_media
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function export_media (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to export_media:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'export_media');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.export_media",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'export_media',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method export_media",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'export_media',
+				       );
+    }
+}
+
+
+
 =head2 delete_model
 
   $output = $obj->delete_model($input)
@@ -713,30 +1024,8 @@ sub delete_model
 =begin html
 
 <pre>
-$output is a reference to a list where each element is an ObjectMeta
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
-Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
+$output is a reference to a list where each element is a ref
+ref is a string
 
 </pre>
 
@@ -744,30 +1033,8 @@ WorkspacePerm is a string
 
 =begin text
 
-$output is a reference to a list where each element is an ObjectMeta
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
-Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
+$output is a reference to a list where each element is a ref
+ref is a string
 
 
 =end text
@@ -2468,6 +2735,70 @@ altered_biomass_compound has a value which is a reference to a hash where the ke
 
 
 
+=head2 ModelStats
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+source has a value which is a string
+source_id has a value which is a string
+name has a value which is a string
+type has a value which is a string
+genome has a value which is a ref
+template has a value which is a ref
+fba_count has a value which is an int
+integrated_gapfills has a value which is an int
+unintegrated_gapfills has a value which is an int
+gene_associated_reactions has a value which is an int
+gapfilled_reactions has a value which is an int
+spontaneous_reactions has a value which is an int
+num_genes has a value which is an int
+num_compounds has a value which is an int
+num_reactions has a value which is an int
+num_biomasses has a value which is an int
+num_biomass_compounds has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+source has a value which is a string
+source_id has a value which is a string
+name has a value which is a string
+type has a value which is a string
+genome has a value which is a ref
+template has a value which is a ref
+fba_count has a value which is an int
+integrated_gapfills has a value which is an int
+unintegrated_gapfills has a value which is an int
+gene_associated_reactions has a value which is an int
+gapfilled_reactions has a value which is an int
+spontaneous_reactions has a value which is an int
+num_genes has a value which is an int
+num_compounds has a value which is an int
+num_reactions has a value which is an int
+num_biomasses has a value which is an int
+num_biomass_compounds has a value which is an int
+
+
+=end text
+
+=back
+
+
+
 =head2 ObjectMeta
 
 =over 4
@@ -2530,6 +2861,43 @@ a reference to a list containing 12 items:
 9: (user_permission) a WorkspacePerm
 10: (global_permission) a WorkspacePerm
 11: (shockurl) a string
+
+
+=end text
+
+=back
+
+
+
+=head2 print_model_stats_params
+
+=over 4
+
+
+
+=item Description
+
+********************************************************************************
+    Functions for model stats
+   	********************************************************************************
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+models has a value which is a reference to a list where each element is a ref
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+models has a value which is a reference to a list where each element is a ref
 
 
 =end text
@@ -2693,6 +3061,91 @@ commands has a value which is a reference to a hash where the key is a gapfill_i
 a reference to a hash where the following keys are defined:
 model has a value which is a ref
 commands has a value which is a reference to a hash where the key is a gapfill_id and the value is a gapfill_command
+
+
+=end text
+
+=back
+
+
+
+=head2 export_model_params
+
+=over 4
+
+
+
+=item Description
+
+********************************************************************************
+    Functions for export of model data
+   	********************************************************************************
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+model has a value which is a ref
+format has a value which is a string
+to_shock has a value which is a bool
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+model has a value which is a ref
+format has a value which is a string
+to_shock has a value which is a bool
+
+
+=end text
+
+=back
+
+
+
+=head2 export_media_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: export_media
+DESCRIPTION: This function exports a media in TSV format
+
+REQUIRED INPUTS:
+ref media - reference to media to export
+bool to_shock - load exported file to shock and return shock url
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+media has a value which is a ref
+format has a value which is a string
+to_shock has a value which is a bool
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+media has a value which is a ref
+format has a value which is a string
+to_shock has a value which is a bool
 
 
 =end text
