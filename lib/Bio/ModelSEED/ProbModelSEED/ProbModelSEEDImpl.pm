@@ -19,12 +19,9 @@ ProbModelSEED
 
 use JSON::XS;
 use Data::Dumper;
-use Log::Log4perl qw(:easy);
 use Config::Simple;
 use Plack::Request;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
-
-Log::Log4perl->easy_init($DEBUG);
 
 #
 # Alias our context variable.
@@ -489,25 +486,31 @@ sub manage_gapfill_solutions
     	if (defined($gflist->{$gf})) {
     		$output->{$gf} = $gflist->{$gf};
     		if (lc($input->{commands}->{$gf}) eq "d") {
-    			push(@{$rmlist},$input->{model_meta}->[2]."gapfilling/".$gf);#Deleting job result object
-    			push(@{$rmlist},$input->{model_meta}->[2]."gapfilling/.".$gf);#Deleting job result directory
+    			$ctx->log_debug("Deleting gapfill ".$gflist->{$gf}->{gapfill});
+    			push(@{$rmlist},$gflist->{$gf}->{gapfill});
     		} elsif (lc($input->{commands}->{$gf}) eq "i") {
     			if (!defined($input->{selected_solutions}->{$gf})) {
     				$input->{selected_solutions}->{$gf} = 0;
     			}
+    			$ctx->log_debug("Integrating gapfill ".$gflist->{$gf}->{gapfill}." solution ".$input->{selected_solutions}->{$gf});
     			$output->{$gf}->{integrated} = 1;
     			$output->{$gf}->{integrated_solution} = $input->{selected_solutions}->{$gf};
-    			push(@{$updatelist},[$input->{model_meta}->[2]."gapfilling/.".$gf."/".$gf.".fba",{
+    			push(@{$updatelist},[$gflist->{$gf}->{gapfill},{
     				integrated => 1,
-    				integrated_solution => $input->{selected_solutions}->{$gf}
+    				integrated_solution => $input->{selected_solutions}->{$gf},
+    				media => $gflist->{$gf}->{media}
     			}]);
     		} elsif (lc($input->{commands}->{$gf}) eq "u") {
+    			$ctx->log_debug("Unintegrating gapfill ".$gflist->{$gf}->{gapfill});
     			$output->{$gf}->{integrated} = 0;
     			$output->{$gf}->{integrated_solution} = -1;
-    			push(@{$updatelist},[$input->{model_meta}->[2]."gapfilling/.".$gf."/".$gf.".fba",{
+    			push(@{$updatelist},[$gflist->{$gf}->{gapfill},{
     				integrated => 0,
-    				integrated_solution => -1
+    				integrated_solution => -1,
+    				media => $gflist->{$gf}->{media}
     			}]);
+    		} else {
+    			$self->helper()->error("Specified command ".$input->{commands}->{$gf}." is not supported!");
     		}
     	} else {
     		$self->helper()->error("Specified gapfilling does not exist!");
