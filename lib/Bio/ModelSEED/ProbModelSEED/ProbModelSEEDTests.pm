@@ -58,6 +58,7 @@
 				});
 			}
 		}
+		$output = $self->test_harness("list_models", undef);
 		$output = $self->test_harness("ModelReconstruction",{
 			genome => "/chenry/genomes/test/.Buchnera_aphidicola/Buchnera_aphidicola.genome",
 			fulldb => "0",
@@ -65,6 +66,15 @@
 			output_file => "TestModel"
 		});
 		$output = $self->test_harness("list_models",undef);
+		$output = $self->test_harness("list_gapfill_solutions",{
+			model => "/chenry/models/TestModel"
+		});
+		$output = $self->test_harness("list_fba_studies",{
+			model => "/chenry/models/TestModel"
+		});
+		$output = $self->test_harness("list_model_edits",{
+			model => "/chenry/models/TestModel"
+		});
 		$output = $self->test_harness("GapfillModel",{
 			model => "/chenry/models/TestModel",
 			integrate_solution => "1"

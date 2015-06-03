@@ -111,18 +111,20 @@ sub _list_fba_studies {
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"};
 	my $output = {};
-	for (my $i=0; $i < @{$list}; $i++) {
-		my $id = $list->[$i]->[0];
-		$output->{$id} = {
-			rundate => $list->[$i]->[3],
-			id => $id,
-			fba => $list->[$i]->[2].$list->[$i]->[0],
-			media => $list->[$i]->[7]->{media},
-			objective => $list->[$i]->[7]->{objective},
-			objective_function => $list->[$i]->[7]->{objective_function},
-		};
+	if (defined($list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"})) {
+		$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"};
+		for (my $i=0; $i < @{$list}; $i++) {
+			my $id = $list->[$i]->[0];
+			$output->{$id} = {
+				rundate => $list->[$i]->[3],
+				id => $id,
+				fba => $list->[$i]->[2].$list->[$i]->[0],
+				media => $list->[$i]->[7]->{media},
+				objective => $list->[$i]->[7]->{objective},
+				objective_function => $list->[$i]->[7]->{objective_function},
+			};
+		}
 	}
 	return $output;
 }
@@ -166,19 +168,21 @@ sub _list_gapfill_studies {
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	$gflist = $gflist->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"};
 	my $output = {};
-	for (my $i=0; $i < @{$gflist}; $i++) {
-		my $id = $gflist->[$i]->[0];
-		$output->{$id} = {
-			rundate => $gflist->[$i]->[3],
-			id => $id,
-			gapfill => $gflist->[$i]->[2].$gflist->[$i]->[0],
-			media => $gflist->[$i]->[7]->{media},
-			integrated => $gflist->[$i]->[7]->{integrated},
-			integrated_solution => $gflist->[$i]->[7]->{integrated_solution},
-			solution_reactions => []
-		};
+	if (defined($gflist->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"})) {
+		$gflist = $gflist->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"};
+		for (my $i=0; $i < @{$gflist}; $i++) {
+			my $id = $gflist->[$i]->[0];
+			$output->{$id} = {
+				rundate => $gflist->[$i]->[3],
+				id => $id,
+				gapfill => $gflist->[$i]->[2].$gflist->[$i]->[0],
+				media => $gflist->[$i]->[7]->{media},
+				integrated => $gflist->[$i]->[7]->{integrated},
+				integrated_solution => $gflist->[$i]->[7]->{integrated_solution},
+				solution_reactions => []
+			};
+		}
 	}
 	return $output;
 }
@@ -186,7 +190,7 @@ sub _list_gapfill_studies {
 sub _list_model_edits {
 	my ($self,$input) = @_;
 	$input = $self->helper()->validate_args($input,["model"],{});
-   $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
+    $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
     my $list = $self->helper()->workspace_service()->ls({
 		paths => [$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"],
 		excludeDirectories => 1,
@@ -194,22 +198,24 @@ sub _list_model_edits {
 		recursive => 1,
 		query => {type => "model_edit"}
 	});
-	$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"};
 	my $output = {};
-	for (my $i=0; $i < @{$list}; $i++) {
-		my $data = Bio::KBase::ObjectAPI::utilities::FROMJSON($list->[$i]->[7]->{editdata});
-		my $id = $list->[$i]->[0];
-		$output->{$id} = {
-			rundate => $list->[$i]->[3],
-			integrated => $list->[$i]->[7]->{integrated},
-			id => $id,
-			edit => $list->[$i]->[2].$list->[$i]->[0],
-			reactions_to_delete => $data->{reactions_to_delete},
-			altered_directions => $data->{altered_directions},
-			altered_gpr => $data->{altered_gpr},
-			reactions_to_add => $data->{reactions_to_add},
-			altered_biomass_compound => $data->{altered_biomass_compound}
-		};
+	if (defined($list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"})) {
+		$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"};
+		for (my $i=0; $i < @{$list}; $i++) {
+			my $data = Bio::KBase::ObjectAPI::utilities::FROMJSON($list->[$i]->[7]->{editdata});
+			my $id = $list->[$i]->[0];
+			$output->{$id} = {
+				rundate => $list->[$i]->[3],
+				integrated => $list->[$i]->[7]->{integrated},
+				id => $id,
+				edit => $list->[$i]->[2].$list->[$i]->[0],
+				reactions_to_delete => $data->{reactions_to_delete},
+				altered_directions => $data->{altered_directions},
+				altered_gpr => $data->{altered_gpr},
+				reactions_to_add => $data->{reactions_to_add},
+				altered_biomass_compound => $data->{altered_biomass_compound}
+			};
+		}
 	}
 	return $output;
 }

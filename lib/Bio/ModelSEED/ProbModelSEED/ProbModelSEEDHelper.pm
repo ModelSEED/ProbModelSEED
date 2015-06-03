@@ -399,7 +399,7 @@ sub ModelReconstruction {
     $parameters = $self->validate_args($parameters,[],{
     	template_model => undef,
     	fulldb => 0,
-    	output_path => "/".$self->{_params}->{username}."/models/",
+    	output_path => "/".$self->{_params}->{username}."/home/models/",
     	media => "/chenry/public/modelsupport/media/Complete",
     	genome => undef,
     	output_file => undef
