@@ -652,15 +652,24 @@ sub new {
     my $self = {};
     bless $self, $class;
     $parameters = $self->validate_args($parameters,["token","username",],{
-    	fbajobcache => "",
-    	fbajobdir => "",
-    	mfatoolkitbin => "",
+    	fbajobcache => undef,
+    	fbajobdir => undef,
+    	mfatoolkitbin => undef,
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
     	adminmode => 0,
     	method => "unknown",
     	run_as_app => 0
     });
     $self->{_params} = $parameters;
+    if (defined($self->{_params}->{fbajobcache}) && $self->{_params}->{fbajobcache} ne "none") {
+    	Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
+    }
+    if (defined($self->{_params}->{fbajobdir})) {
+    	Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($self->{_params}->{fbajobdir});
+    }
+    if (defined($self->{_params}->{mfatoolkitbin})) {
+    	Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($self->{_params}->{mfatoolkitbin});
+    }
     return $self;
 }
 
