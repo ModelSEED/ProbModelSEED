@@ -84,6 +84,7 @@ deploy-service: deploy-dir deploy-monit deploy-libs deploy-service-scripts deplo
 	chmod +x $(TARGET)/services/$(SERVICE)/start_service
 	$(TPAGE) $(TPAGE_ARGS) service/stop_service.tt > $(TARGET)/services/$(SERVICE)/stop_service
 	chmod +x $(TARGET)/services/$(SERVICE)/stop_service
+	$(TPAGE) $(TPAGE_ARGS) service/log.conf.tt > $(TARGET)/services/$(SERVICE)/log.conf
 
 deploy-service-scripts:
 	export KB_TOP=$(TARGET); \
