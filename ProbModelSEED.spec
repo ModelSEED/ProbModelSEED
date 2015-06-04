@@ -191,7 +191,7 @@ module ProbModelSEED {
 		ref model;
     } list_fba_studies_params;
     authentication required;
-    funcdef list_fba_studies(list_fba_studies_params input) returns (mapping<fba_id,fba_data> output);
+    funcdef list_fba_studies(list_fba_studies_params input) returns (list<fba_data> output);
 
 	/* 
 		FUNCTION: delete_fba_studies

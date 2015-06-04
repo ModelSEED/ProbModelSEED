@@ -108,22 +108,23 @@ sub _list_fba_studies {
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	my $output = {};
+	my $output = [];
 	if (defined($list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"})) {
 		$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"};
 		for (my $i=0; $i < @{$list}; $i++) {
-			my $id = $list->[$i]->[0];
-			$output->{$id} = {
+			my $element = {
 				rundate => $list->[$i]->[3],
-				id => $id,
+				id => $list->[$i]->[0],
 				fba => $list->[$i]->[2].$list->[$i]->[0],
 				media => $list->[$i]->[7]->{media},
 				objective => $list->[$i]->[7]->{objective},
-				objective_function => $list->[$i]->[7]->{objective_function},
+				objective_function => $list->[$i]->[7]->{objective_function},				
 			};
+			push(@{$output},$element);
 		}
 	}
-	return $output;
+	# Output is sorted by rundate (newest first).
+	return [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
 }
 
 sub _list_models {
@@ -556,11 +557,10 @@ sub manage_gapfill_solutions
 
 <pre>
 $input is a list_fba_studies_params
-$output is a reference to a hash where the key is a fba_id and the value is a fba_data
+$output is a reference to a list where each element is a fba_data
 list_fba_studies_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-fba_id is a string
 fba_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a fba_id
@@ -569,6 +569,7 @@ fba_data is a reference to a hash where the following keys are defined:
 	media has a value which is a ref
 	objective_function has a value which is a string
 Timestamp is a string
+fba_id is a string
 
 </pre>
 
@@ -577,11 +578,10 @@ Timestamp is a string
 =begin text
 
 $input is a list_fba_studies_params
-$output is a reference to a hash where the key is a fba_id and the value is a fba_data
+$output is a reference to a list where each element is a fba_data
 list_fba_studies_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-fba_id is a string
 fba_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a fba_id
@@ -590,6 +590,7 @@ fba_data is a reference to a hash where the following keys are defined:
 	media has a value which is a ref
 	objective_function has a value which is a string
 Timestamp is a string
+fba_id is a string
 
 
 =end text
@@ -624,7 +625,7 @@ sub list_fba_studies
     $output = $self->_list_fba_studies($input);
     #END list_fba_studies
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_fba_studies:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
