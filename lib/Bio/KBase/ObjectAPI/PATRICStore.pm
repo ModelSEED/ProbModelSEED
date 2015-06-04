@@ -46,6 +46,7 @@ Client or server class for accessing a PATRIC workspace
 package Bio::KBase::ObjectAPI::PATRICStore;
 use Moose;
 use Bio::KBase::ObjectAPI::utilities;
+use Data::Dumper;
 
 use Class::Autouse qw(
     Bio::KBase::ObjectAPI::KBaseRegulation::Regulome
@@ -286,14 +287,14 @@ sub transform_model_from_ws {
 	my $obj = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new($data);
 	$obj->parent($self);
 	my $gflist = $self->workspace()->ls({
-		paths => [$meta->[2]."gapfilling"],
+		paths => [$meta->[2].".".$meta->[0]."/gapfilling"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	if (defined($gflist->{$meta->[2]."gapfilling"})) {
-		$gflist = $gflist->{$meta->[2]."gapfilling"};
+	if (defined($gflist->{$meta->[2].".".$meta->[0]."/gapfilling"})) {
+		$gflist = $gflist->{$meta->[2].".".$meta->[0]."/gapfilling"};
 		for (my $i=0; $i < @{$gflist}; $i++) {
 			if ($gflist->[$i]->[0] ne Bio::KBase::ObjectAPI::utilities::get_global("gapfill name")) {
 				if ($gflist->[$i]->[7]->{integrated} == 1) {

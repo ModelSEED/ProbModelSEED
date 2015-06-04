@@ -571,6 +571,9 @@ sub GapfillModel {
 		exp_raw_data => {},
 		source_model => undef,
 		integrate_solution => 0,
+		fva => 0,
+		minimizeflux => 0,
+		findminmedia => 0,
 	});
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
     $log->info("Starting gap fill for model ".$parameters->{model}." on media ".$parameters->{media});
