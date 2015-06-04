@@ -7,11 +7,11 @@ our $VERSION = "0.1.0";
 use Bio::P3::Workspace::WorkspaceClientExt;
 use JSON::XS;
 use Data::Dumper;
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 use Bio::KBase::ObjectAPI::utilities;
 use Bio::KBase::ObjectAPI::PATRICStore;
 
-Log::Log4perl->easy_init($DEBUG);
+Log::Log4perl::init($ENV{KB_SERVICE_DIR}."/log.conf");
 
 #****************************************************************************
 #Getter setters for parameters
@@ -392,10 +392,13 @@ sub ModelReconstruction {
     	template_model => undef,
     	fulldb => 0,
     	output_path => "/".$self->{_params}->{username}."/home/models/",
-    	media => "/chenry/public/modelsupport/media/Complete",
     	genome => undef,
     	output_file => undef
     });
+
+	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
+    $log->info("Started model reconstruction for genome ".$parameters->{genome});
+
   	my $genome = $self->get_genome($parameters->{genome});
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $genome->id()."_model";	
@@ -476,6 +479,10 @@ sub FluxBalanceAnalysis {
 		custom_constraints => [],
 		uptake_limits => [],
 	});
+
+	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
+    $log->info("Started flux balance analysis for model ".$parameters->{model}." on media ".$parameters->{media});
+
     my $model = $self->get_model($parameters->{model});
     $parameters->{model} = $model->_reference();
     
@@ -565,6 +572,9 @@ sub GapfillModel {
 		source_model => undef,
 		integrate_solution => 0,
 	});
+	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
+    $log->info("Starting gap fill for model ".$parameters->{model}." on media ".$parameters->{media});
+	
     if (defined($parameters->{adminmode}) && $parameters->{adminmode} == 1) {
     	$self->admin_mode($parameters->{adminmode});
     }
