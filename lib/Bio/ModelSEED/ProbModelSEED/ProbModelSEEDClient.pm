@@ -35,6 +35,10 @@ sub new
 {
     my($class, $url, @args) = @_;
     
+    if (!defined($url))
+    {
+	$url = 'http://p3.theseed.org/services/ProbModelSEED';
+    }
 
     my $self = {
 	client => Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient->new,
@@ -365,11 +369,10 @@ sub manage_gapfill_solutions
 
 <pre>
 $input is a list_fba_studies_params
-$output is a reference to a hash where the key is a fba_id and the value is a fba_data
+$output is a reference to a list where each element is a fba_data
 list_fba_studies_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-fba_id is a string
 fba_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a fba_id
@@ -378,6 +381,7 @@ fba_data is a reference to a hash where the following keys are defined:
 	media has a value which is a ref
 	objective_function has a value which is a string
 Timestamp is a string
+fba_id is a string
 
 </pre>
 
@@ -386,11 +390,10 @@ Timestamp is a string
 =begin text
 
 $input is a list_fba_studies_params
-$output is a reference to a hash where the key is a fba_id and the value is a fba_data
+$output is a reference to a list where each element is a fba_data
 list_fba_studies_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-fba_id is a string
 fba_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a fba_id
@@ -399,6 +402,7 @@ fba_data is a reference to a hash where the following keys are defined:
 	media has a value which is a ref
 	objective_function has a value which is a string
 Timestamp is a string
+fba_id is a string
 
 
 =end text
@@ -713,30 +717,8 @@ sub delete_model
 =begin html
 
 <pre>
-$output is a reference to a list where each element is an ObjectMeta
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
-Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
+$output is a reference to a list where each element is a ref
+ref is a string
 
 </pre>
 
@@ -744,30 +726,8 @@ WorkspacePerm is a string
 
 =begin text
 
-$output is a reference to a list where each element is an ObjectMeta
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
-Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
+$output is a reference to a list where each element is a ref
+ref is a string
 
 
 =end text
