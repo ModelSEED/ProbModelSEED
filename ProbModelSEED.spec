@@ -264,7 +264,7 @@ module ProbModelSEED {
 		bool to_shock;
     } export_model_params;
     authentication required;
-	funcdef export_model(export_model_params input) returns (list<string> output);
+	funcdef export_model(export_model_params input) returns (string output);
 
 	/* 
 		FUNCTION: export_media
@@ -276,11 +276,10 @@ module ProbModelSEED {
 	*/
     typedef structure {
 		ref media;
-		string format;
 		bool to_shock;
     } export_media_params;
     authentication required;
-	funcdef export_media(export_media_params input) returns (list<string> output);
+	funcdef export_media(export_media_params input) returns (string output);
 	
 	/*********************************************************************************
     Functions for managing models

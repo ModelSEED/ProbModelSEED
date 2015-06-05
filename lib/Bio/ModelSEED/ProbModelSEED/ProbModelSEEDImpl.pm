@@ -873,7 +873,7 @@ sub delete_fba_studies
 
 <pre>
 $input is an export_model_params
-$output is a reference to a list where each element is a string
+$output is a string
 export_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 	format has a value which is a string
@@ -888,7 +888,7 @@ bool is an int
 =begin text
 
 $input is an export_model_params
-$output is a reference to a list where each element is a string
+$output is a string
 export_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 	format has a value which is a string
@@ -931,13 +931,13 @@ sub export_model
 		to_shock => 0
     });
     my $model = $self->helper()->get_model($input->{model});
-    $output = $model
+    $output = $model->export({format => $input->{format}});
     if ($input->{to_shock} == 1) {
     	$output = $self->helper()->load_to_shock($output);
     }
     #END export_model
     my @_bad_returns;
-    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to export_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -961,10 +961,9 @@ sub export_model
 
 <pre>
 $input is an export_media_params
-$output is a reference to a list where each element is a string
+$output is a string
 export_media_params is a reference to a hash where the following keys are defined:
 	media has a value which is a ref
-	format has a value which is a string
 	to_shock has a value which is a bool
 ref is a string
 bool is an int
@@ -976,10 +975,9 @@ bool is an int
 =begin text
 
 $input is an export_media_params
-$output is a reference to a list where each element is a string
+$output is a string
 export_media_params is a reference to a hash where the following keys are defined:
 	media has a value which is a ref
-	format has a value which is a string
 	to_shock has a value which is a bool
 ref is a string
 bool is an int
@@ -1030,7 +1028,7 @@ sub export_media
     }
     #END export_media
     my @_bad_returns;
-    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to export_media:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -3251,7 +3249,6 @@ bool to_shock - load exported file to shock and return shock url
 <pre>
 a reference to a hash where the following keys are defined:
 media has a value which is a ref
-format has a value which is a string
 to_shock has a value which is a bool
 
 </pre>
@@ -3262,7 +3259,6 @@ to_shock has a value which is a bool
 
 a reference to a hash where the following keys are defined:
 media has a value which is a ref
-format has a value which is a string
 to_shock has a value which is a bool
 
 

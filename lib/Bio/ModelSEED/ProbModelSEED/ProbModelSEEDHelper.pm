@@ -101,7 +101,7 @@ sub workspace_service {
 sub PATRICStore {
 	my($self) = @_;
 	if (!defined($self->{_PATRICStore})) {
-		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({workspace => $self->workspace_service(),adminmode => $self->{_params}->{adminmode}});
+		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({data_api_url => $self->{_params}->{data_api_url},workspace => $self->workspace_service(),adminmode => $self->{_params}->{adminmode}});
 	}
 	return $self->{_PATRICStore};
 }
@@ -319,6 +319,9 @@ sub build_fba_object {
 		FBAMinimalMediaResults => [],
 		FBAMetaboliteProductionResults => [],
 	});
+	if ($params->{predict_essentiality} == 1) {
+		$fba->{comboDeletions} = 1;
+	}
 	$fba->parent($self->PATRICStore());
 	foreach my $term (@{$params->{objective}}) {
 		if ($term->[0] eq "flux" || $term->[0] eq "reactionflux") {
@@ -402,7 +405,9 @@ sub ModelReconstruction {
     	output_path => "/".$self->{_params}->{username}."/home/models/",
     	media => "/chenry/public/modelsupport/media/Complete",
     	genome => undef,
-    	output_file => undef
+    	output_file => undef,
+    	gapfill => 1,
+    	predict_essentiality => 1,
     });
   	my $genome = $self->get_genome($parameters->{genome});
     if (!defined($parameters->{output_file})) {
@@ -458,7 +463,22 @@ sub ModelReconstruction {
     });
     $self->save_object($folder."/fba",undef,"folder");
     $self->save_object($folder."/gapfilling",undef,"folder");
-    return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$mdl,"model");
+    my $output = $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$mdl,"model");
+    if ($parameters->{gapfill} == 1) {
+    	$self->GapfillModel({
+    		model => $parameters->{output_path}."/".$parameters->{output_file},
+    		media => $parameters->{media},
+    		integrate_solution => 1
+    	});    	
+    	if ($parameters->{predict_essentiality} == 1) {
+    		$self->FluxBalanceAnalysis({
+	    		model => $parameters->{output_path}."/".$parameters->{output_file},
+	    		media => $parameters->{media},
+	    		predict_essentiality => 1
+	    	});
+    	}	
+    }
+    return $output;
 }
 
 sub FluxBalanceAnalysis {
@@ -671,6 +691,7 @@ sub new {
     my $self = {};
     bless $self, $class;
     $parameters = $self->validate_args($parameters,["token","username",],{
+    	data_api_url => "https://www.patricbrc.org/api/",
     	fbajobcache => "",
     	fbajobdir => "",
     	mfatoolkitbin => "",

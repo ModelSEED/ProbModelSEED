@@ -706,7 +706,7 @@ sub delete_fba_studies
 
 <pre>
 $input is an export_model_params
-$output is a reference to a list where each element is a string
+$output is a string
 export_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 	format has a value which is a string
@@ -721,7 +721,7 @@ bool is an int
 =begin text
 
 $input is an export_model_params
-$output is a reference to a list where each element is a string
+$output is a string
 export_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 	format has a value which is a string
@@ -799,10 +799,9 @@ sub export_model
 
 <pre>
 $input is an export_media_params
-$output is a reference to a list where each element is a string
+$output is a string
 export_media_params is a reference to a hash where the following keys are defined:
 	media has a value which is a ref
-	format has a value which is a string
 	to_shock has a value which is a bool
 ref is a string
 bool is an int
@@ -814,10 +813,9 @@ bool is an int
 =begin text
 
 $input is an export_media_params
-$output is a reference to a list where each element is a string
+$output is a string
 export_media_params is a reference to a hash where the following keys are defined:
 	media has a value which is a ref
-	format has a value which is a string
 	to_shock has a value which is a bool
 ref is a string
 bool is an int
@@ -3133,7 +3131,6 @@ bool to_shock - load exported file to shock and return shock url
 <pre>
 a reference to a hash where the following keys are defined:
 media has a value which is a ref
-format has a value which is a string
 to_shock has a value which is a bool
 
 </pre>
@@ -3144,7 +3141,6 @@ to_shock has a value which is a bool
 
 a reference to a hash where the following keys are defined:
 media has a value which is a ref
-format has a value which is a string
 to_shock has a value which is a bool
 
 

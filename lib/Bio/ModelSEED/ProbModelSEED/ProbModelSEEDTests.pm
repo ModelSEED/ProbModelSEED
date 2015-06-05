@@ -52,71 +52,89 @@
 		my($self) = @_;
 		my $output = $self->test_harness("list_models",undef);
 		for(my $i=0; $i < @{$output}; $i++) {
-			if ($output->[$i] eq "/chenry/models/TestModel") {
+			if ($output->[$i] eq "/chenry/home/models/TestModel") {
 				my $output = $self->test_harness("delete_model",{
-					model => "/chenry/models/TestModel",
+					model => "/chenry/home/models/TestModel",
+				});
+			}
+			if ($output->[$i] eq "/chenry/home/models/PubGenomeModel") {
+				my $output = $self->test_harness("delete_model",{
+					model => "/chenry/home/models/PubGenomeModel",
 				});
 			}
 		}
 		$output = $self->test_harness("list_models", undef);
 		$output = $self->test_harness("ModelReconstruction",{
+			genome => "PATRICSOLR:83333.84",
+			fulldb => "0",
+			output_path => "/chenry/home/models",
+			output_file => "PubGenomeModel"
+		});
+		$output = $self->test_harness("ModelReconstruction",{
 			genome => "/chenry/genomes/test/.Buchnera_aphidicola/Buchnera_aphidicola.genome",
 			fulldb => "0",
-			output_path => "/chenry/models",
+			output_path => "/chenry/home/models",
 			output_file => "TestModel"
 		});
 		$output = $self->test_harness("list_models",undef);
 		$output = $self->test_harness("list_gapfill_solutions",{
-			model => "/chenry/models/TestModel"
+			model => "/chenry/home/models/TestModel"
 		});
 		$output = $self->test_harness("list_fba_studies",{
-			model => "/chenry/models/TestModel"
+			model => "/chenry/home/models/TestModel"
 		});
 		$output = $self->test_harness("list_model_edits",{
-			model => "/chenry/models/TestModel"
+			model => "/chenry/home/models/TestModel"
 		});
 		$output = $self->test_harness("GapfillModel",{
-			model => "/chenry/models/TestModel",
+			model => "/chenry/home/models/TestModel",
 			integrate_solution => "1"
 		});
 		$output = $self->test_harness("GapfillModel",{
-			model => "/chenry/models/TestModel",
+			model => "/chenry/home/models/TestModel",
 			integrate_solution => "1",
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		});
-		$output = $self->test_harness("FluxBalanceAnalysis",{
-			model => "/chenry/models/TestModel",
+		$output = $self->test_harness("export_model",{
+			model => "/chenry/home/models/TestModel",
+			format => "sbml"
+		});
+		$output = $self->test_harness("export_media",{
+			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		});
 		$output = $self->test_harness("FluxBalanceAnalysis",{
-			model => "/chenry/models/TestModel",
+			model => "/chenry/home/models/TestModel",
+		});
+		$output = $self->test_harness("FluxBalanceAnalysis",{
+			model => "/chenry/home/models/TestModel",
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		});
 		$output = $self->test_harness("list_gapfill_solutions",{
-			model => "/chenry/models/TestModel"
+			model => "/chenry/home/models/TestModel"
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
-			model => "/chenry/models/TestModel",
+			model => "/chenry/home/models/TestModel",
 			commands => {
 				testgapfill => "u"
 			}
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
-			model => "/chenry/models/TestModel",
+			model => "/chenry/home/models/TestModel",
 			commands => {
 				testgapfill => "i"
 			}
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
-			model => "/chenry/models/TestModel",
+			model => "/chenry/home/models/TestModel",
 			commands => {
 				testgapfill => "d"
 			}
 		});
 		$output = $self->test_harness("list_fba_studies",{
-			model => "/chenry/models/TestModel"
+			model => "/chenry/home/models/TestModel"
 		});
 		$output = $self->test_harness("delete_fba_studies",{
-			model => "/chenry/models/TestModel",
+			model => "/chenry/home/models/TestModel",
 			fbas => ["testfba"]
 		});
 		done_testing($self->{testcount});
