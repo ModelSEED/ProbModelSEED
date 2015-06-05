@@ -191,7 +191,7 @@ module ProbModelSEED {
 		ref model;
     } list_gapfill_solutions_params;
     authentication required;
-    funcdef list_gapfill_solutions(list_gapfill_solutions_params input) returns (mapping<gapfill_id,gapfill_data> output);
+    funcdef list_gapfill_solutions(list_gapfill_solutions_params input) returns (list<gapfill_data> output);
 
 	/* 
 		FUNCTION: manage_gapfill_solutions
@@ -326,7 +326,7 @@ module ProbModelSEED {
 		ref model;
     } list_model_edits_params;
     authentication required;
-    funcdef list_model_edits(list_model_edits_params input) returns (mapping<edit_id,edit_data> output);
+    funcdef list_model_edits(list_model_edits_params input) returns (list<edit_data> output);
 
 	/* 
 		FUNCTION: manage_model_edits

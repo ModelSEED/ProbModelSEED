@@ -155,7 +155,7 @@ sub _list_models {
 	return $totallist;
 }
 
-sub _list_gapfill_studies {
+sub _list_gapfill_solutions {
 	my ($self,$input) = @_;
 	$input = $self->helper()->validate_args($input,["model"],{});
     $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
@@ -166,23 +166,24 @@ sub _list_gapfill_studies {
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	my $output = {};
+	my $output = [];
 	if (defined($gflist->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"})) {
 		$gflist = $gflist->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"};
 		for (my $i=0; $i < @{$gflist}; $i++) {
-			my $id = $gflist->[$i]->[0];
-			$output->{$id} = {
+			my $element = {
 				rundate => $gflist->[$i]->[3],
-				id => $id,
+				id => $gflist->[$i]->[0],
 				gapfill => $gflist->[$i]->[2].$gflist->[$i]->[0],
 				media => $gflist->[$i]->[7]->{media},
 				integrated => $gflist->[$i]->[7]->{integrated},
 				integrated_solution => $gflist->[$i]->[7]->{integrated_solution},
 				solution_reactions => []
 			};
+			push(@{$output},$element);
 		}
 	}
-	return $output;
+	# Output is sorted by rundate (newest first).
+	return [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
 }
 
 sub _list_model_edits {
@@ -196,16 +197,15 @@ sub _list_model_edits {
 		recursive => 1,
 		query => {type => "model_edit"}
 	});
-	my $output = {};
+	my $output = [];
 	if (defined($list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"})) {
 		$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"};
 		for (my $i=0; $i < @{$list}; $i++) {
 			my $data = Bio::KBase::ObjectAPI::utilities::FROMJSON($list->[$i]->[7]->{editdata});
-			my $id = $list->[$i]->[0];
-			$output->{$id} = {
+			my $element = {
 				rundate => $list->[$i]->[3],
 				integrated => $list->[$i]->[7]->{integrated},
-				id => $id,
+				id => $list->[$i]->[0],
 				edit => $list->[$i]->[2].$list->[$i]->[0],
 				reactions_to_delete => $data->{reactions_to_delete},
 				altered_directions => $data->{altered_directions},
@@ -213,9 +213,11 @@ sub _list_model_edits {
 				reactions_to_add => $data->{reactions_to_add},
 				altered_biomass_compound => $data->{altered_biomass_compound}
 			};
+			push(@{$output},$element);
 		}
 	}
-	return $output;
+	# Output is sorted by rundate (newest first).
+	return [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
 }
 
 #END_HEADER
@@ -394,11 +396,10 @@ sub print_model_stats_params
 
 <pre>
 $input is a list_gapfill_solutions_params
-$output is a reference to a hash where the key is a gapfill_id and the value is a gapfill_data
+$output is a reference to a list where each element is a gapfill_data
 list_gapfill_solutions_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-gapfill_id is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
@@ -408,6 +409,7 @@ gapfill_data is a reference to a hash where the following keys are defined:
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
 Timestamp is a string
+gapfill_id is a string
 bool is an int
 gapfill_reaction is a reference to a hash where the following keys are defined:
 	reaction has a value which is a ref
@@ -422,11 +424,10 @@ reaction_direction is a string
 =begin text
 
 $input is a list_gapfill_solutions_params
-$output is a reference to a hash where the key is a gapfill_id and the value is a gapfill_data
+$output is a reference to a list where each element is a gapfill_data
 list_gapfill_solutions_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-gapfill_id is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
@@ -436,6 +437,7 @@ gapfill_data is a reference to a hash where the following keys are defined:
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
 Timestamp is a string
+gapfill_id is a string
 bool is an int
 gapfill_reaction is a reference to a hash where the following keys are defined:
 	reaction has a value which is a ref
@@ -474,10 +476,10 @@ sub list_gapfill_solutions
     #BEGIN list_gapfill_solutions
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["model"],{});
-	$output = $self->_list_gapfill_studies($input);
+	$output = $self->_list_gapfill_solutions($input);
     #END list_gapfill_solutions
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_gapfill_solutions:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -589,7 +591,7 @@ sub manage_gapfill_solutions
     $input = $self->helper()->validate_args($input,["model","commands"],{
     	selected_solutions => {}
     });
-    my $gflist = $self->_list_gapfill_studies($input);
+    my $gflist = $self->_list_gapfill_solutions($input);
     my $rmlist = [];
     my $updatelist = [];
     $output = {};
@@ -1238,11 +1240,10 @@ sub list_models
 
 <pre>
 $input is a list_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
+$output is a reference to a list where each element is an edit_data
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-edit_id is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
@@ -1256,6 +1257,7 @@ edit_data is a reference to a hash where the following keys are defined:
 	1: a compartment_id
 
 Timestamp is a string
+edit_id is a string
 reaction_id is a string
 reaction_direction is a string
 feature_id is a string
@@ -1278,11 +1280,10 @@ compartment_id is a string
 =begin text
 
 $input is a list_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
+$output is a reference to a list where each element is an edit_data
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-edit_id is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
@@ -1296,6 +1297,7 @@ edit_data is a reference to a hash where the following keys are defined:
 	1: a compartment_id
 
 Timestamp is a string
+edit_id is a string
 reaction_id is a string
 reaction_direction is a string
 feature_id is a string
@@ -1344,7 +1346,7 @@ sub list_model_edits
     $output = $self->_list_model_edits($input);
     #END list_model_edits
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_model_edits:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
