@@ -250,11 +250,10 @@ sub print_model_stats_params
 
 <pre>
 $input is a list_gapfill_solutions_params
-$output is a reference to a hash where the key is a gapfill_id and the value is a gapfill_data
+$output is a reference to a list where each element is a gapfill_data
 list_gapfill_solutions_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-gapfill_id is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
@@ -264,6 +263,7 @@ gapfill_data is a reference to a hash where the following keys are defined:
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
 Timestamp is a string
+gapfill_id is a string
 bool is an int
 gapfill_reaction is a reference to a hash where the following keys are defined:
 	reaction has a value which is a ref
@@ -278,11 +278,10 @@ reaction_direction is a string
 =begin text
 
 $input is a list_gapfill_solutions_params
-$output is a reference to a hash where the key is a gapfill_id and the value is a gapfill_data
+$output is a reference to a list where each element is a gapfill_data
 list_gapfill_solutions_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-gapfill_id is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
@@ -292,6 +291,7 @@ gapfill_data is a reference to a hash where the following keys are defined:
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
 Timestamp is a string
+gapfill_id is a string
 bool is an int
 gapfill_reaction is a reference to a hash where the following keys are defined:
 	reaction has a value which is a ref
@@ -1100,11 +1100,10 @@ sub list_models
 
 <pre>
 $input is a list_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
+$output is a reference to a list where each element is an edit_data
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-edit_id is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
@@ -1118,6 +1117,7 @@ edit_data is a reference to a hash where the following keys are defined:
 	1: a compartment_id
 
 Timestamp is a string
+edit_id is a string
 reaction_id is a string
 reaction_direction is a string
 feature_id is a string
@@ -1140,11 +1140,10 @@ compartment_id is a string
 =begin text
 
 $input is a list_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
+$output is a reference to a list where each element is an edit_data
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-edit_id is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
@@ -1158,6 +1157,7 @@ edit_data is a reference to a hash where the following keys are defined:
 	1: a compartment_id
 
 Timestamp is a string
+edit_id is a string
 reaction_id is a string
 reaction_direction is a string
 feature_id is a string
