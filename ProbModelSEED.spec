@@ -118,6 +118,26 @@ module ProbModelSEED {
 		mapping<compound_id,tuple<float,compartment_id>> altered_biomass_compound;
     } edit_data;
     
+    typedef structure {
+		string id;
+		string source;
+		string source_id;
+		string name;
+		string type;
+		ref genome;
+		ref template;
+		int fba_count;
+		int integrated_gapfills;
+		int unintegrated_gapfills;
+		int gene_associated_reactions;
+		int gapfilled_reactions;
+		int spontaneous_reactions;
+		int num_genes;
+		int num_compounds;
+		int num_reactions;	
+		int num_biomasses;			
+		int num_biomass_compounds;
+    } ModelStats;
     
     /* ObjectMeta: tuple containing information about an object in the workspace 
 
@@ -137,6 +157,23 @@ module ProbModelSEED {
 	*/
 	typedef tuple<ObjectName,ObjectType,FullObjectPath,Timestamp creation_time,ObjectID,Username object_owner,ObjectSize,UserMetadata,AutoMetadata,WorkspacePerm user_permission,WorkspacePerm global_permission,string shockurl> ObjectMeta;
 
+	/*********************************************************************************
+    Functions for model stats
+   	*********************************************************************************/
+
+	/* 
+    	FUNCTION: print_model_stats
+    	DESCRIPTION: This function prints stats on a list of input models
+    	
+    	REQUIRED INPUTS:
+		list<ref> models - list of references to models to print stats for
+		
+	*/
+    typedef structure {
+		list<ref> models;
+    } print_model_stats_params;
+    authentication required;
+    funcdef print_model_stats_params(print_model_stats_params input) returns (mapping<ref,ModelStats> output);
 
     /*********************************************************************************
     Functions for managing gapfilling studies
@@ -207,6 +244,42 @@ module ProbModelSEED {
     } delete_fba_studies_params;
     authentication required;
 	funcdef delete_fba_studies(delete_fba_studies_params input) returns (mapping<fba_id,fba_data> output);
+	
+	/*********************************************************************************
+    Functions for export of model data
+   	*********************************************************************************/
+	
+	/* 
+		FUNCTION: export_model
+		DESCRIPTION: This function exports a model in the specified format
+		
+		REQUIRED INPUTS:
+		ref model - reference to model to export
+		string format - format to export model in
+		bool to_shock - load exported file to shock and return shock url
+	*/
+    typedef structure {
+		ref model;
+		string format;
+		bool to_shock;
+    } export_model_params;
+    authentication required;
+	funcdef export_model(export_model_params input) returns (string output);
+
+	/* 
+		FUNCTION: export_media
+		DESCRIPTION: This function exports a media in TSV format
+		
+		REQUIRED INPUTS:
+		ref media - reference to media to export
+		bool to_shock - load exported file to shock and return shock url
+	*/
+    typedef structure {
+		ref media;
+		bool to_shock;
+    } export_media_params;
+    authentication required;
+	funcdef export_media(export_media_params input) returns (string output);
 	
 	/*********************************************************************************
     Functions for managing models

@@ -96,6 +96,7 @@ my $jsontypes = {
 # ATTRIBUTES:
 #***********************************************************************************************************
 has workspace => ( is => 'rw', isa => 'Ref', required => 1);
+has data_api_url => ( is => 'rw', isa => 'Str', required => 1);
 has cache => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 has adminmode => ( is => 'rw', isa => 'Num',default => 0);
 has setowner => ( is => 'rw', isa => 'Str');
@@ -122,9 +123,17 @@ sub get_objects {
 	my ($self,$refs,$options) = @_;
 	#Checking cache for objects
 	my $newrefs = [];
+	my $solrrefs = [];
 	for (my $i=0; $i < @{$refs}; $i++) {
 		if (!defined($self->cache()->{$refs->[$i]}) || defined($options->{refreshcache})) {
-    		push(@{$newrefs},$refs->[$i]);
+    		if ($refs->[$i] =~ m/^PATRICSOLR:(.+)/) {
+    			$self->cache()->{$refs->[$i]} = $self->genome_from_solr($1);
+    			$self->cache()->{$refs->[$i]}->[1]->parent($self);
+    			$self->cache()->{$refs->[$i]}->[1]->wsmeta($self->cache()->{$refs->[$i]}->[0]);
+    			$self->cache()->{$refs->[$i]}->[1]->_reference($refs->[$i]."||");
+    		} else {
+    			push(@{$newrefs},$refs->[$i]);
+    		}
     	}
 	}
 	#Pulling objects from workspace
@@ -223,6 +232,102 @@ sub save_objects {
     	}
     }
     return $output; 
+}
+
+sub genome_from_solr {
+	my ($self,$genomeid) = @_;
+	my $ua = LWP::UserAgent->new();
+	#Retrieving genome information
+	my $res = $ua->get($self->data_api_url()."/genome/?genome_id=".$genomeid."&http_accept=application/json");
+	my $data = Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
+	$data = $data->[0];
+	my $perm = "n";
+	my $uperm = "o";
+	if ($data->{public} == 1) {
+		$perm = "r";
+		$uperm = "r";
+	}
+	my $meta = [
+    	$genomeid,
+		"genome",
+		"https://www.patricbrc.org/api/genome/?genome_id=".$genomeid."&http_accept=application/json",
+		$data->{completion_date},
+		$genomeid,
+		$data->{owner},
+		$data->{genome_length},
+		{},
+		{},
+		$uperm,
+		$perm
+    ];
+	my $genome = {
+    	id => $genomeid,
+		scientific_name => $data->{genome_name},
+		domain => $data->{taxon_lineage_names}->[0],
+		genetic_code => 11,
+		dna_size => $data->{genome_length},
+		num_contigs => $data->{contigs},
+		contigs => [],
+		contig_lengths => [],
+		contig_ids => [],
+		source => "PATRIC",
+		source_id => $genomeid,
+		md5 => "none",
+		taxonomy => join(":",@{$data->{taxon_lineage_names}}),
+		gc_content => $data->{gc_content},
+		complete => 1,
+		publications => [$data->{publication}],
+		features => [],
+		contigset_ref => "PATRICSOLR:CONTIGS:".$genomeid,
+	};
+	#Retrieving feature information
+	my $start = 0;
+	while ($start >= 0) {
+		$res = $ua->get($self->data_api_url()."/genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(250,$start)");
+		my $ftrdata = Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
+		if (defined($ftrdata) && @{$ftrdata} > 0) {
+			$start += 250;
+		} else {
+			$start = -1;
+		}
+		for (my $i=0; $i < @{$ftrdata}; $i++) {
+			$data = $ftrdata->[$i];
+			my $id = $data->{feature_id};
+			if (defined($data->{seed_id})) {
+				$id = $data->{seed_id};
+			}
+			if (defined($data->{patric_id})) {
+				$id = $data->{patric_id};
+			}
+			my $ftrobj = {id => $id,type => "CDS",aliases=>[]};
+			if (defined($data->{start})) {
+				$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
+			}
+			if (defined($data->{feature_type})) {
+				$ftrobj->{type} = $data->{feature_type};
+			}
+			if (defined($data->{product})) {
+				$ftrobj->{function} = $data->{product};
+			}
+			if (defined($data->{na_sequence})) {
+				$ftrobj->{dna_sequence} = $data->{na_sequence};
+				$ftrobj->{dna_sequence_length} = $data->{na_length};
+			}
+			if (defined($data->{aa_sequence})) {
+				$ftrobj->{protein_translation} = $data->{aa_sequence};
+				$ftrobj->{protein_translation_length} = $data->{aa_length};
+				$ftrobj->{md5} = $data->{aa_sequence_md5};
+			}
+			my $list = ["alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
+			for (my $j=0; $j < @{$list}; $j++) {
+				if (defined($data->{$list->[$j]})) {
+					push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
+				}
+			}
+			push(@{$genome->{features}},$ftrobj);
+		}
+	}
+	return [$meta,Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome)];
 }
 
 sub transform_genome_from_ws {
@@ -425,15 +530,48 @@ sub transform_media_to_ws {
 	$meta->{isMinimal} = $object->isMinimal();
 	$meta->{isDefined} = $object->isDefined();
 	$meta->{source_id} = $object->source_id();
+	$meta->{number_compounds} = @{$object->mediacompounds()};
 	my $data = "id\tname\tconcentration\tminflux\tmaxflux\n";
 	my $mediacpds = $object->mediacompounds();
+	my $compounds = "";
 	for (my $i=0; $i < @{$mediacpds}; $i++) {
 		$data .= $mediacpds->[$i]->id()."\t".
 			$mediacpds->[$i]->name()."\t".
 			$mediacpds->[$i]->concentration()."\t".
 			$mediacpds->[$i]->minFlux()."\t".
 			$mediacpds->[$i]->maxFlux()."\n";
+		if (length($compounds) > 0) {
+			$compounds .= "|";
+		}
+		$compounds .= $mediacpds->[$i]->id().":".$mediacpds->[$i]->name();
 	}
+	$meta->{compounds} = $compounds;
+	return $data;
+}
+
+sub transform_model_to_ws {
+	my ($self,$object,$meta) = @_;
+	$meta->{name} = $object->name();
+	$meta->{type} = $object->type();
+	$meta->{isMinimal} = $object->isMinimal();
+	$meta->{isDefined} = $object->isDefined();
+	$meta->{source_id} = $object->source_id();
+	$meta->{number_compounds} = @{$object->mediacompounds()};
+	my $data = "id\tname\tconcentration\tminflux\tmaxflux\n";
+	my $mediacpds = $object->mediacompounds();
+	my $compounds = "";
+	for (my $i=0; $i < @{$mediacpds}; $i++) {
+		$data .= $mediacpds->[$i]->id()."\t".
+			$mediacpds->[$i]->name()."\t".
+			$mediacpds->[$i]->concentration()."\t".
+			$mediacpds->[$i]->minFlux()."\t".
+			$mediacpds->[$i]->maxFlux()."\n";
+		if (length($compounds) > 0) {
+			$compounds .= "|";
+		}
+		$compounds .= $mediacpds->[$i]->id().":".$mediacpds->[$i]->name();
+	}
+	$meta->{compounds} = $compounds;
 	return $data;
 }
 

@@ -712,6 +712,7 @@ sub convertRoleToSearchRole {
 	$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
 	$rolename =~ s/\s//g;
 	$rolename =~ s/\#.*$//g;
+	$rolename =~ s/\(ec\)//g;
 	return $rolename;
 }
 

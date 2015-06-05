@@ -165,6 +165,11 @@ class ProbModelSEED(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
 
+    def print_model_stats_params(self, input):
+        resp = self._call('ProbModelSEED.print_model_stats_params',
+                          [input])
+        return resp[0]
+
     def list_gapfill_solutions(self, input):
         resp = self._call('ProbModelSEED.list_gapfill_solutions',
                           [input])
@@ -182,6 +187,16 @@ class ProbModelSEED(object):
 
     def delete_fba_studies(self, input):
         resp = self._call('ProbModelSEED.delete_fba_studies',
+                          [input])
+        return resp[0]
+
+    def export_model(self, input):
+        resp = self._call('ProbModelSEED.export_model',
+                          [input])
+        return resp[0]
+
+    def export_media(self, input):
+        resp = self._call('ProbModelSEED.export_media',
                           [input])
         return resp[0]
 

@@ -20,6 +20,14 @@ sub workspace_url {
 	my ($self) = @_;
 	return $self->{_params}->{"workspace-url"};
 }
+sub token {
+	my ($self) = @_;
+	return $self->{_params}->{token};
+}
+sub shock_url {
+	my ($self) = @_;
+	return $self->{_params}->{"shock-url"};
+}
 sub adminmode {
 	my ($self,$adminmode) = @_;
 	return $self->{_params}->{adminmode};
@@ -93,7 +101,7 @@ sub workspace_service {
 sub PATRICStore {
 	my($self) = @_;
 	if (!defined($self->{_PATRICStore})) {
-		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({workspace => $self->workspace_service(),adminmode => $self->{_params}->{adminmode}});
+		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({data_api_url => $self->{_params}->{data_api_url},workspace => $self->workspace_service(),adminmode => $self->{_params}->{adminmode}});
 	}
 	return $self->{_PATRICStore};
 }
@@ -311,6 +319,9 @@ sub build_fba_object {
 		FBAMinimalMediaResults => [],
 		FBAMetaboliteProductionResults => [],
 	});
+	if ($params->{predict_essentiality} == 1) {
+		$fba->{comboDeletions} = 1;
+	}
 	$fba->parent($self->PATRICStore());
 	foreach my $term (@{$params->{objective}}) {
 		if ($term->[0] eq "flux" || $term->[0] eq "reactionflux") {
@@ -393,7 +404,9 @@ sub ModelReconstruction {
     	fulldb => 0,
     	output_path => "/".$self->{_params}->{username}."/home/models/",
     	genome => undef,
-    	output_file => undef
+    	output_file => undef,
+    	gapfill => 1,
+    	predict_essentiality => 1,
     });
 
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
@@ -453,7 +466,22 @@ sub ModelReconstruction {
     });
     $self->save_object($folder."/fba",undef,"folder");
     $self->save_object($folder."/gapfilling",undef,"folder");
-    return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$mdl,"model");
+    my $output = $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$mdl,"model");
+    if ($parameters->{gapfill} == 1) {
+    	$self->GapfillModel({
+    		model => $parameters->{output_path}."/".$parameters->{output_file},
+    		media => $parameters->{media},
+    		integrate_solution => 1
+    	});    	
+    	if ($parameters->{predict_essentiality} == 1) {
+    		$self->FluxBalanceAnalysis({
+	    		model => $parameters->{output_path}."/".$parameters->{output_file},
+	    		media => $parameters->{media},
+	    		predict_essentiality => 1
+	    	});
+    	}	
+    }
+    return $output;
 }
 
 sub FluxBalanceAnalysis {
@@ -657,6 +685,17 @@ sub GapfillModel {
 	});
 }
 
+sub load_to_shock {
+	my($self,$data) = @_;
+	my $uuid = Data::UUID->new()->create_str();
+	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
+	my $filename = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
+	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$data]);
+	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth ".$self->{_params}->{token}."\" -X POST -F 'upload=\@".$filename."' ".$self->shock_url()."/node");
+	$output = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$output}));
+	return $self->shock_url()."/node/".$output->{data}->{id};
+}
+
 #****************************************************************************
 #Constructor
 #****************************************************************************
@@ -668,7 +707,9 @@ sub new {
     	fbajobcache => undef,
     	fbajobdir => undef,
     	mfatoolkitbin => undef,
+    	data_api_url => "https://www.patricbrc.org/api/",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
+    	"shock-url" => "",
     	adminmode => 0,
     	method => "unknown",
     	run_as_app => 0
