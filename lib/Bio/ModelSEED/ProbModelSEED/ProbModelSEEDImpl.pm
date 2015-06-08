@@ -184,7 +184,7 @@ sub _list_models {
 							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills}++;
 						}
 					}
-					$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/fba/"}};
+					$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/gapfilling/"}};
 				}
 				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{reactions} = [split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{reactions})];
 				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{genes} = [split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{genes})];
