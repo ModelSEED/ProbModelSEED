@@ -67,7 +67,6 @@
 				});
 			}
 		}
-		$output = $self->test_harness("list_models", undef);
 		$output = $self->test_harness("ModelReconstruction",{
 			genome => "/".$self->{auth}->[0]->{username}."/genomes/test/.Buchnera_aphidicola/Buchnera_aphidicola.genome",
 			fulldb => "0",

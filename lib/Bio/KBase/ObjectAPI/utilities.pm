@@ -1065,7 +1065,8 @@ sub load_config {
 }
 
 sub rest_download {
-	my ($args) = @_;
+	my ($args,$params) = @_;
+	print "START!\n";
 	$args = Bio::KBase::ObjectAPI::utilities::ARGS($args,["url"],{
 		retry => 5
 	});
@@ -1073,6 +1074,10 @@ sub rest_download {
 	for (my $i=0; $i < $args->{retry}; $i++) {
 		my $res = $ua->get($args->{url});
 		if ($res->{_msg} ne "Bad Gateway") {
+			if (defined($res->{_headers}->{"content-range"}) && $res->{_headers}->{"content-range"} =~ m/\/(.+)/) {
+				$params->{count} = $1;
+			}
+			print "STOP!\n";
 			return Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
 		} else {
 			print "Failed URL call!\n";

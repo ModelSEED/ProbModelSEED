@@ -280,48 +280,54 @@ sub genome_from_solr {
 	};
 	#Retrieving feature information
 	my $start = 0;
-	while ($start >= 0) {
-		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(250,$start)"});
+	my $params = {};
+	my $loopcount = 0;
+	while ($start >= 0 && $loopcount < 100) {
+		$loopcount++;#Insurance that no matter what, this loop won't run for more than 100 iterations
+		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)"},$params);
 		if (defined($ftrdata) && @{$ftrdata} > 0) {
-			$start += 250;
+			for (my $i=0; $i < @{$ftrdata}; $i++) {
+				$data = $ftrdata->[$i];
+				my $id = $data->{feature_id};
+				if (defined($data->{seed_id})) {
+					$id = $data->{seed_id};
+				}
+				if (defined($data->{patric_id})) {
+					$id = $data->{patric_id};
+				}
+				my $ftrobj = {id => $id,type => "CDS",aliases=>[]};
+				if (defined($data->{start})) {
+					$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
+				}
+				if (defined($data->{feature_type})) {
+					$ftrobj->{type} = $data->{feature_type};
+				}
+				if (defined($data->{product})) {
+					$ftrobj->{function} = $data->{product};
+				}
+				if (defined($data->{na_sequence})) {
+					$ftrobj->{dna_sequence} = $data->{na_sequence};
+					$ftrobj->{dna_sequence_length} = $data->{na_length};
+				}
+				if (defined($data->{aa_sequence})) {
+					$ftrobj->{protein_translation} = $data->{aa_sequence};
+					$ftrobj->{protein_translation_length} = $data->{aa_length};
+					$ftrobj->{md5} = $data->{aa_sequence_md5};
+				}
+				my $list = ["alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
+				for (my $j=0; $j < @{$list}; $j++) {
+					if (defined($data->{$list->[$j]})) {
+						push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
+					}
+				}
+				push(@{$genome->{features}},$ftrobj);
+			}
+		}
+		print $start."\t".@{$genome->{features}}."\t".@{$ftrdata}."\n";
+		if (@{$genome->{features}} < $params->{count}) {
+			$start = @{$genome->{features}};
 		} else {
 			$start = -1;
-		}
-		for (my $i=0; $i < @{$ftrdata}; $i++) {
-			$data = $ftrdata->[$i];
-			my $id = $data->{feature_id};
-			if (defined($data->{seed_id})) {
-				$id = $data->{seed_id};
-			}
-			if (defined($data->{patric_id})) {
-				$id = $data->{patric_id};
-			}
-			my $ftrobj = {id => $id,type => "CDS",aliases=>[]};
-			if (defined($data->{start})) {
-				$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
-			}
-			if (defined($data->{feature_type})) {
-				$ftrobj->{type} = $data->{feature_type};
-			}
-			if (defined($data->{product})) {
-				$ftrobj->{function} = $data->{product};
-			}
-			if (defined($data->{na_sequence})) {
-				$ftrobj->{dna_sequence} = $data->{na_sequence};
-				$ftrobj->{dna_sequence_length} = $data->{na_length};
-			}
-			if (defined($data->{aa_sequence})) {
-				$ftrobj->{protein_translation} = $data->{aa_sequence};
-				$ftrobj->{protein_translation_length} = $data->{aa_length};
-				$ftrobj->{md5} = $data->{aa_sequence_md5};
-			}
-			my $list = ["alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
-			for (my $j=0; $j < @{$list}; $j++) {
-				if (defined($data->{$list->[$j]})) {
-					push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
-				}
-			}
-			push(@{$genome->{features}},$ftrobj);
 		}
 	}
 	return [$meta,Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome)];
