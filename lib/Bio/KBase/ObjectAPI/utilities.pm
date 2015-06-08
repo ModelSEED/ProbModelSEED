@@ -1034,4 +1034,63 @@ sub get_global {
 	return $globalparams->{$parameter};
 }
 
+sub load_config {
+	my ($args) = @_;
+	$args = Bio::KBase::ObjectAPI::utilities::ARGS($args,[],{
+		filename => $ENV{KB_DEPLOYMENT_CONFIG},
+		service => $ENV{KB_SERVICE_NAME},
+	});
+	if (!defined($args->{service})) {
+		Bio::KBase::ObjectAPI::utilities::error("No service specified!");
+	}
+	if (!defined($args->{filename})) {
+		Bio::KBase::ObjectAPI::utilities::error("No config file specified!");
+	}
+	if (!-e $args->{filename}) {
+		Bio::KBase::ObjectAPI::utilities::error("Specified config file ".$args->{filename}." doesn't exist!");
+	}
+	my $c = Config::Simple->new();
+	$c->read($args->{filename});
+	my $hash = $c->vars();
+	my $service_config = {};
+	foreach my $key (keys(%{$hash})) {
+		my $array = [split(/\./,$key)];
+		if ($array->[0] eq $args->{service}) {
+			if ($hash->{$key} ne "null") {
+				$service_config->{$array->[1]} = $hash->{$key};
+			}
+		}
+	}
+	return $service_config;
+}
+
+sub rest_download {
+	my ($args) = @_;
+	$args = Bio::KBase::ObjectAPI::utilities::ARGS($args,["url"],{
+		retry => 5
+	});
+	my $ua = LWP::UserAgent->new();
+	for (my $i=0; $i < $args->{retry}; $i++) {
+		my $res = $ua->get($args->{url});
+		if ($res->{_msg} ne "Bad Gateway") {
+			return Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
+		} else {
+			print "Failed URL call!\n";
+		}
+	}
+	Bio::KBase::ObjectAPI::utilities::error("REST download failed at URL:".$args->{url});
+}
+
+sub load_to_shock {
+	my ($content) = @_;
+	my $uuid = Data::UUID->new()->create_str();
+	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
+	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid,[$content]);	
+	my $filename = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
+	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable('curl -X POST -H "Authorization: OAuth '.Bio::KBase::ObjectAPI::utilities::token().'" --data-binary @'.$filename.' '.Bio::KBase::ObjectAPI::utilities::shockurl().'/node');
+	my $json = JSON::XS->new;
+	my $data = $json->decode(join("\n",@{$output}));
+	return $data->{data}->{id};
+}
+
 1;

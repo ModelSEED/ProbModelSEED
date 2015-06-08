@@ -113,9 +113,9 @@ sub new
 
 
 
-=head2 print_model_stats_params
+=head2 print_model_stats
 
-  $output = $obj->print_model_stats_params($input)
+  $output = $obj->print_model_stats($input)
 
 =over 4
 
@@ -191,7 +191,7 @@ ModelStats is a reference to a hash where the following keys are defined:
 
 =cut
 
-sub print_model_stats_params
+sub print_model_stats
 {
     my($self, @args) = @_;
 
@@ -200,7 +200,7 @@ sub print_model_stats_params
     if ((my $n = @args) != 1)
     {
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function print_model_stats_params (received $n, expecting 1)");
+							       "Invalid argument count for function print_model_stats (received $n, expecting 1)");
     }
     {
 	my($input) = @args;
@@ -208,30 +208,30 @@ sub print_model_stats_params
 	my @_bad_arguments;
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to print_model_stats_params:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    my $msg = "Invalid arguments passed to print_model_stats:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'print_model_stats_params');
+								   method_name => 'print_model_stats');
 	}
     }
 
     my $result = $self->{client}->call($self->{url}, $self->{headers}, {
-	method => "ProbModelSEED.print_model_stats_params",
+	method => "ProbModelSEED.print_model_stats",
 	params => \@args,
     });
     if ($result) {
 	if ($result->is_error) {
 	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
 					       code => $result->content->{error}->{code},
-					       method_name => 'print_model_stats_params',
+					       method_name => 'print_model_stats',
 					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
 					      );
 	} else {
 	    return wantarray ? @{$result->result} : $result->result->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method print_model_stats_params",
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method print_model_stats",
 					    status_line => $self->{client}->status_line,
-					    method_name => 'print_model_stats_params',
+					    method_name => 'print_model_stats',
 				       );
     }
 }
@@ -250,11 +250,10 @@ sub print_model_stats_params
 
 <pre>
 $input is a list_gapfill_solutions_params
-$output is a reference to a hash where the key is a gapfill_id and the value is a gapfill_data
+$output is a reference to a list where each element is a gapfill_data
 list_gapfill_solutions_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-gapfill_id is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
@@ -264,6 +263,7 @@ gapfill_data is a reference to a hash where the following keys are defined:
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
 Timestamp is a string
+gapfill_id is a string
 bool is an int
 gapfill_reaction is a reference to a hash where the following keys are defined:
 	reaction has a value which is a ref
@@ -278,11 +278,10 @@ reaction_direction is a string
 =begin text
 
 $input is a list_gapfill_solutions_params
-$output is a reference to a hash where the key is a gapfill_id and the value is a gapfill_data
+$output is a reference to a list where each element is a gapfill_data
 list_gapfill_solutions_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-gapfill_id is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
@@ -292,6 +291,7 @@ gapfill_data is a reference to a hash where the following keys are defined:
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
 Timestamp is a string
+gapfill_id is a string
 bool is an int
 gapfill_reaction is a reference to a hash where the following keys are defined:
 	reaction has a value which is a ref
@@ -1026,7 +1026,26 @@ sub delete_model
 =begin html
 
 <pre>
-$output is a reference to a list where each element is a ref
+$output is a reference to a list where each element is a ModelStats
+ModelStats is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	genome has a value which is a ref
+	template has a value which is a ref
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	spontaneous_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
 ref is a string
 
 </pre>
@@ -1035,7 +1054,26 @@ ref is a string
 
 =begin text
 
-$output is a reference to a list where each element is a ref
+$output is a reference to a list where each element is a ModelStats
+ModelStats is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	genome has a value which is a ref
+	template has a value which is a ref
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	spontaneous_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
 ref is a string
 
 
@@ -1100,11 +1138,10 @@ sub list_models
 
 <pre>
 $input is a list_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
+$output is a reference to a list where each element is an edit_data
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-edit_id is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
@@ -1118,6 +1155,7 @@ edit_data is a reference to a hash where the following keys are defined:
 	1: a compartment_id
 
 Timestamp is a string
+edit_id is a string
 reaction_id is a string
 reaction_direction is a string
 feature_id is a string
@@ -1140,11 +1178,10 @@ compartment_id is a string
 =begin text
 
 $input is a list_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
+$output is a reference to a list where each element is an edit_data
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-edit_id is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
@@ -1158,6 +1195,7 @@ edit_data is a reference to a hash where the following keys are defined:
 	1: a compartment_id
 
 Timestamp is a string
+edit_id is a string
 reaction_id is a string
 reaction_direction is a string
 feature_id is a string

@@ -11,8 +11,6 @@ use Log::Log4perl;
 use Bio::KBase::ObjectAPI::utilities;
 use Bio::KBase::ObjectAPI::PATRICStore;
 
-Log::Log4perl::init($ENV{KB_SERVICE_DIR}."/log.conf");
-
 #****************************************************************************
 #Getter setters for parameters
 #****************************************************************************
@@ -116,29 +114,7 @@ sub error {
 	my($self,$msg) = @_;
 	Bio::KBase::ObjectAPI::utilities::error($msg);
 }
-sub load_from_config {
-	my($self,$msg) = @_;
-	if ((my $e = $ENV{KB_DEPLOYMENT_CONFIG}) && -e $ENV{KB_DEPLOYMENT_CONFIG}) {
-		my $service = $ENV{KB_SERVICE_NAME};
-		if (!defined($service)) {
-			$service = "ProbModelSEED";
-		}
-		if (defined($service)) {
-			my $c = Config::Simple->new();
-			$c->read($e);
-			my $paramlist = [keys(%{$self->{_params}})];
-			for my $p (@{$paramlist}) {
-			  	my $v = $c->param("$service.$p");
-			    if ($v) {
-					$self->{_params}->{$p} = $v;
-					if ($v eq "null") {
-						$self->{_params}->{$p} = undef;
-					}
-			    }
-			}
-		}
-    }
-}
+
 #****************************************************************************
 #Research functions
 #****************************************************************************
@@ -442,11 +418,7 @@ sub ModelReconstruction {
 	});
 	my $folder = $parameters->{output_path}."/.".$parameters->{output_file};
     my $outputfiles = [];
-    if ($self->{_params}->{run_as_app} == 0) {
-    	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
-    } else {
-    	$self->{_params}->{app}->create_result_folder();
-    }
+   	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
     $mdl->jobresult({
     	id => 0,
 		app => {
@@ -703,27 +675,23 @@ sub new {
     my($class, $parameters) = @_;
     my $self = {};
     bless $self, $class;
-    $parameters = $self->validate_args($parameters,["token","username",],{
-    	fbajobcache => undef,
-    	fbajobdir => undef,
-    	mfatoolkitbin => undef,
+    $parameters = $self->validate_args($parameters,["token","username","fbajobcache","fbajobdir","mfatoolkitbin",],{
+    	logfile => undef,
     	data_api_url => "https://www.patricbrc.org/api/",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
-    	"shock-url" => "",
+    	"shock-url" => "http://p3.theseed.org/services/shock_api",
     	adminmode => 0,
     	method => "unknown",
     	run_as_app => 0
     });
     $self->{_params} = $parameters;
-    if (defined($self->{_params}->{fbajobcache}) && $self->{_params}->{fbajobcache} ne "none") {
-    	Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
+    if (!defined($parameters->{logfile})) {
+    	$parameters->{logfile} = $self->{_params}->{fbajobdir}."log.conf";
     }
-    if (defined($self->{_params}->{fbajobdir})) {
-    	Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($self->{_params}->{fbajobdir});
-    }
-    if (defined($self->{_params}->{mfatoolkitbin})) {
-    	Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($self->{_params}->{mfatoolkitbin});
-    }
+    Log::Log4perl::init($parameters->{logfile});
+    Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
+    Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($self->{_params}->{fbajobdir});
+    Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($self->{_params}->{mfatoolkitbin});
     return $self;
 }
 

@@ -124,19 +124,23 @@ module ProbModelSEED {
 		string source_id;
 		string name;
 		string type;
-		ref genome;
-		ref template;
+		ref genome_ref;
+		ref template_ref;
 		int fba_count;
 		int integrated_gapfills;
 		int unintegrated_gapfills;
 		int gene_associated_reactions;
 		int gapfilled_reactions;
-		int spontaneous_reactions;
 		int num_genes;
 		int num_compounds;
 		int num_reactions;	
 		int num_biomasses;			
 		int num_biomass_compounds;
+		int num_compartments;
+		list<string> biomasses;
+		list<string> reactions;
+		list<string> genes;
+		list<string> biomasscpds;
     } ModelStats;
     
     /* ObjectMeta: tuple containing information about an object in the workspace 
@@ -173,7 +177,7 @@ module ProbModelSEED {
 		list<ref> models;
     } print_model_stats_params;
     authentication required;
-    funcdef print_model_stats_params(print_model_stats_params input) returns (mapping<ref,ModelStats> output);
+    funcdef print_model_stats(print_model_stats_params input) returns (mapping<ref,ModelStats> output);
 
     /*********************************************************************************
     Functions for managing gapfilling studies
@@ -191,7 +195,7 @@ module ProbModelSEED {
 		ref model;
     } list_gapfill_solutions_params;
     authentication required;
-    funcdef list_gapfill_solutions(list_gapfill_solutions_params input) returns (mapping<gapfill_id,gapfill_data> output);
+    funcdef list_gapfill_solutions(list_gapfill_solutions_params input) returns (list<gapfill_data> output);
 
 	/* 
 		FUNCTION: manage_gapfill_solutions
@@ -308,7 +312,7 @@ module ProbModelSEED {
 		
 	*/
     authentication required;
-    funcdef list_models() returns (list<ref> output);
+    funcdef list_models() returns (list<ModelStats> output);
 	
 	/*********************************************************************************
     Functions for editing models
@@ -326,7 +330,7 @@ module ProbModelSEED {
 		ref model;
     } list_model_edits_params;
     authentication required;
-    funcdef list_model_edits(list_model_edits_params input) returns (mapping<edit_id,edit_data> output);
+    funcdef list_model_edits(list_model_edits_params input) returns (list<edit_data> output);
 
 	/* 
 		FUNCTION: manage_model_edits

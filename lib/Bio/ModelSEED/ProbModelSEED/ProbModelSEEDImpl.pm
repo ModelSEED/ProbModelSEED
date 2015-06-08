@@ -84,12 +84,15 @@ sub helper {
 	my ($self) = @_;
 	if (!defined($CallContext->{_helper})) {
 		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
+			token => $self->token(),
+			username => $self->user_id(),
 			fbajobcache => $self->config()->{fbajobcache},
     		fbajobdir => $self->config()->{fbajobdir},
     		mfatoolkitbin => $self->config()->{mfatoolkitbin},
-			token => $self->token(),
-			username => $self->user_id(),
+			logfile => $self->config()->{logfile},
+			data_api_url => $self->config()->{data_api_url},
 			"workspace-url" => $self->workspace_url(),
+			"shock-url" => $self->config()->{shock_url},
 			adminmode => $self->adminmode(),
 			method => $self->current_method()
 		});
@@ -108,7 +111,7 @@ sub _list_fba_studies {
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	my $output = [];
+	my $output = {};
 	if (defined($list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"})) {
 		$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"};
 		for (my $i=0; $i < @{$list}; $i++) {
@@ -120,11 +123,11 @@ sub _list_fba_studies {
 				objective => $list->[$i]->[7]->{objective},
 				objective_function => $list->[$i]->[7]->{objective_function},				
 			};
-			push(@{$output},$element);
+			$output->{$list->[$i]->[0]} = $element;
 		}
 	}
 	# Output is sorted by rundate (newest first).
-	return [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+	return $output;
 }
 
 sub _list_models {
@@ -135,24 +138,63 @@ sub _list_models {
 		adminmode => $self->adminmode()
 	});
 	$list = $list->{"/".$self->user_id."/"};
-	my $totallist = [];
+	my $output = {};
 	for (my $i=0; $i < @{$list}; $i++) {
-		my $newlist = $self->helper()->workspace_service()->ls({
+		my $currentlist = $self->helper()->workspace_service()->ls({
 			paths => [$list->[$i]->[2].$list->[$i]->[0]],
 			excludeDirectories => 1,
 			excludeObjects => 0,
 			recursive => 1,
-			query => {type => "model"},
+			query => {type => ["model","fba"]},
 			adminmode => $self->adminmode()
 		});
-		if (defined($newlist->{$list->[$i]->[2].$list->[$i]->[0]})) {
-			$newlist = $newlist->{$list->[$i]->[2].$list->[$i]->[0]};
+		if (defined($currentlist->{$list->[$i]->[2].$list->[$i]->[0]})) {
+			$currentlist = $currentlist->{$list->[$i]->[2].$list->[$i]->[0]};
+			my $newlist = [];
+			my $fbalist = [];
+			for (my $k=0; $k < @{$currentlist}; $k++) {
+				if ($currentlist->[$k]->[1] eq "fba") {
+					push(@{$fbalist},$currentlist->[$k]);
+				} elsif ($currentlist->[$k]->[1] eq "model") {
+					push(@{$newlist},$currentlist->[$k]);
+				}
+			}
+			my $fbahash = {};
+			for (my $k=0; $k < @{$fbalist}; $k++) {
+				push(@{$fbahash->{$fbalist->[$k]->[2]}},$fbalist->[$k]); 
+			}
 			for (my $j=0; $j < @{$newlist}; $j++) {
-				push(@{$totallist},$newlist->[$j]->[2].$newlist->[$j]->[0]);
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]} = $newlist->[$j]->[8];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{id} = $newlist->[$j]->[0];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gene_associated_reactions} = ($output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_reactions} - 22);
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gapfilled_reactions} = 0;
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = 0;
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{integrated_gapfills} = 0;
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills} = 0;
+				if (defined($fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/fba/"})) {
+					$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/fba/"}};
+				}
+				if (defined($fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/gapfilling/"})) {
+					for (my $k=0; $k < @{$fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/gapfilling/"}}; $k++) {
+						my $item = $fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/gapfilling/"}->[$k];
+						if ($item->[7]->{integrated} == 1) {
+							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{integrated_gapfills}++;
+						} else {
+							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills}++;
+						}
+					}
+					$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/fba/"}};
+				}
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{reactions} = [split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{reactions})];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{genes} = [split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{genes})];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasses} = [split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasses})];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds} = [split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds})];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_biomass_compounds} = @{$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds}};
 			}
 		}
 	}
-	return $totallist;
+	return $output;
 }
 
 sub _list_gapfill_studies {
@@ -227,32 +269,13 @@ sub new
     };
     bless $self, $class;
     #BEGIN_CONSTRUCTOR
-    my $params = $args[0];
-    my $paramlist = [qw(
-    	fbajobcache
-    	fbajobdir
-    	mfatoolkitbin
-		mssserver-url
-		workspace-url
-    )];
-    if ((my $e = $ENV{KB_DEPLOYMENT_CONFIG}) && -e $ENV{KB_DEPLOYMENT_CONFIG}) {
-		my $service = $ENV{KB_SERVICE_NAME};
-		if (!defined($service)) {
-			$service = "ProbModelSEED";
-		}
-		if (defined($service)) {
-			my $c = Config::Simple->new();
-			$c->read($e);
-			for my $p (@{$paramlist}) {
-			  	my $v = $c->param("$service.$p");
-			    if ($v && !defined($params->{$p})) {
-					$params->{$p} = $v;
-					if ($v eq "null") {
-						$params->{$p} = undef;
-					}
-			    }
-			}
-		}
+    my $params = Bio::KBase::ObjectAPI::utilities::load_config({
+    	service => "ProbModelSEED"
+    });
+    if (defined($args[0])) {
+    	foreach my $key (keys(%{$args[0]})) {
+    		$params->{$key} = $args[0]->{$key};
+    	}
     }
 	$params = Bio::KBase::ObjectAPI::utilities::ARGS($params,["fbajobcache","fbajobdir","mfatoolkitbin"],{
 		"workspace-url" => "http://p3.theseed.org/services/Workspace",
@@ -272,9 +295,9 @@ sub new
 
 
 
-=head2 print_model_stats_params
+=head2 print_model_stats
 
-  $output = $obj->print_model_stats_params($input)
+  $output = $obj->print_model_stats($input)
 
 =over 4
 
@@ -352,7 +375,7 @@ ModelStats is a reference to a hash where the following keys are defined:
 
 =cut
 
-sub print_model_stats_params
+sub print_model_stats
 {
     my $self = shift;
     my($input) = @_;
@@ -360,21 +383,21 @@ sub print_model_stats_params
     my @_bad_arguments;
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
-	my $msg = "Invalid arguments passed to print_model_stats_params:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	my $msg = "Invalid arguments passed to print_model_stats:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'print_model_stats_params');
+							       method_name => 'print_model_stats');
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
-    #BEGIN print_model_stats_params
-    #END print_model_stats_params
+    #BEGIN print_model_stats
+    #END print_model_stats
     my @_bad_returns;
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
-	my $msg = "Invalid returns passed to print_model_stats_params:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	my $msg = "Invalid returns passed to print_model_stats:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'print_model_stats_params');
+							       method_name => 'print_model_stats');
     }
     return($output);
 }
@@ -394,11 +417,10 @@ sub print_model_stats_params
 
 <pre>
 $input is a list_gapfill_solutions_params
-$output is a reference to a hash where the key is a gapfill_id and the value is a gapfill_data
+$output is a reference to a list where each element is a gapfill_data
 list_gapfill_solutions_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-gapfill_id is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
@@ -408,6 +430,7 @@ gapfill_data is a reference to a hash where the following keys are defined:
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
 Timestamp is a string
+gapfill_id is a string
 bool is an int
 gapfill_reaction is a reference to a hash where the following keys are defined:
 	reaction has a value which is a ref
@@ -422,11 +445,10 @@ reaction_direction is a string
 =begin text
 
 $input is a list_gapfill_solutions_params
-$output is a reference to a hash where the key is a gapfill_id and the value is a gapfill_data
+$output is a reference to a list where each element is a gapfill_data
 list_gapfill_solutions_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-gapfill_id is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
@@ -436,6 +458,7 @@ gapfill_data is a reference to a hash where the following keys are defined:
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
 Timestamp is a string
+gapfill_id is a string
 bool is an int
 gapfill_reaction is a reference to a hash where the following keys are defined:
 	reaction has a value which is a ref
@@ -474,10 +497,15 @@ sub list_gapfill_solutions
     #BEGIN list_gapfill_solutions
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["model"],{});
-	$output = $self->_list_gapfill_studies($input);
+	my $hash = $self->_list_gapfill_studies($input);
+	my $output = [];
+	foreach my $key (keys(%{$hash})) {
+		push(@{$output},$hash->{$key});
+	}
+    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
     #END list_gapfill_solutions
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_gapfill_solutions:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -732,7 +760,12 @@ sub list_fba_studies
     my($output);
     #BEGIN list_fba_studies
     $input = $self->initialize_call($input);
-    $output = $self->_list_fba_studies($input);
+    my $hash = $self->_list_fba_studies($input);
+	my $output = [];
+	foreach my $key (keys(%{$hash})) {
+		push(@{$output},$hash->{$key});
+	}
+    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
     #END list_fba_studies
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -1021,10 +1054,10 @@ sub export_media
     });
     my $media = $self->helper()->get_object($input->{media},"media");
     $output = "id\tname\tconcentration\tminflux\tmaxflux\n";
-    my $mediacpds = $media->{mediacompounds};
+    my $mediacpds = $media->mediacompounds();
     for (my $i=0; $i < @{$mediacpds}; $i++) {
     	if ($mediacpds->[$i]->compound_ref() =~ m/(cpd\d+)$/) {
-    		$output .= $1."\t".$mediacpds->[$i]->name()."\t".$mediacpds->[$i]->concentraton()."\t".$mediacpds->[$i]->minFlux()."\t".$mediacpds->[$i]->maxFlux()."\n";
+    		$output .= $1."\t".$mediacpds->[$i]->name()."\t".$mediacpds->[$i]->concentration()."\t".$mediacpds->[$i]->minFlux()."\t".$mediacpds->[$i]->maxFlux()."\n";
     	}    	
     }
     if ($input->{to_shock} == 1) {
@@ -1175,7 +1208,26 @@ sub delete_model
 =begin html
 
 <pre>
-$output is a reference to a list where each element is a ref
+$output is a reference to a list where each element is a ModelStats
+ModelStats is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	genome has a value which is a ref
+	template has a value which is a ref
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	spontaneous_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
 ref is a string
 
 </pre>
@@ -1184,7 +1236,26 @@ ref is a string
 
 =begin text
 
-$output is a reference to a list where each element is a ref
+$output is a reference to a list where each element is a ModelStats
+ModelStats is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	genome has a value which is a ref
+	template has a value which is a ref
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	spontaneous_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
 ref is a string
 
 
@@ -1211,7 +1282,12 @@ sub list_models
     my($output);
     #BEGIN list_models
     my $input = $self->initialize_call({});
-    $output = $self->_list_models($input);
+    my $hash = $self->_list_models($input);
+	my $output = [];
+	foreach my $key (keys(%{$hash})) {
+		push(@{$output},$hash->{$key});
+	}
+    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
     #END list_models
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -1238,11 +1314,10 @@ sub list_models
 
 <pre>
 $input is a list_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
+$output is a reference to a list where each element is an edit_data
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-edit_id is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
@@ -1256,6 +1331,7 @@ edit_data is a reference to a hash where the following keys are defined:
 	1: a compartment_id
 
 Timestamp is a string
+edit_id is a string
 reaction_id is a string
 reaction_direction is a string
 feature_id is a string
@@ -1278,11 +1354,10 @@ compartment_id is a string
 =begin text
 
 $input is a list_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
+$output is a reference to a list where each element is an edit_data
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a ref
 ref is a string
-edit_id is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
@@ -1296,6 +1371,7 @@ edit_data is a reference to a hash where the following keys are defined:
 	1: a compartment_id
 
 Timestamp is a string
+edit_id is a string
 reaction_id is a string
 reaction_direction is a string
 feature_id is a string
@@ -1341,10 +1417,15 @@ sub list_model_edits
     my($output);
     #BEGIN list_model_edits
     $input = $self->initialize_call($input);
-    $output = $self->_list_model_edits($input);
+    my $hash = $self->_list_model_edits($input);
+	my $output = [];
+	foreach my $key (keys(%{$hash})) {
+		push(@{$output},$hash->{$key});
+	}
+    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
     #END list_model_edits
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_model_edits:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,

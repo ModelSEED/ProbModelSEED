@@ -165,8 +165,8 @@ class ProbModelSEED(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
 
-    def print_model_stats_params(self, input):
-        resp = self._call('ProbModelSEED.print_model_stats_params',
+    def print_model_stats(self, input):
+        resp = self._call('ProbModelSEED.print_model_stats',
                           [input])
         return resp[0]
 

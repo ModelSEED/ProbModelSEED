@@ -3,8 +3,8 @@ use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDTests;
 
 my $tester = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDTests->new(
 	[{
-		username => "chenry",
-		token => "un=chenry|tokenid=03B0C858-7A70-11E4-9DE6-FDA042A49C03|expiry=1449094224|client_id=chenry|token_type=Bearer|SigningSubject=http://rast.nmpdr.org/goauth/keys/E087E220-F8B1-11E3-9175-BD9D42A49C03|sig=085255b952c8db3ddd7e051ac4a729f719f22e531ddbc0a3edd86a895da851faa93249a7347c75324dc025b977e9ac7c4e02fb4c966ec6003ecf90d3148e35160265dbcdd235658deeed0ec4e0c030efee923fda1a55e8cc6f116bcd632fa6a576d7bf4a794554d2d914b54856e1e7ac2b071f81a8841d142123095f6af957cc"
+		username => "reviewer",
+		token => "un=reviewer|tokenid=C69E8DDE-0CE0-11E5-85A4-D3BB682E0674|expiry=1465195524|client_id=reviewer|token_type=Bearer|SigningSubject=http://rast.nmpdr.org/goauth/keys/E087E220-F8B1-11E3-9175-BD9D42A49C03|this_is_globus=globus_style_token|sig=35fedec4e9f9b4a5a404c4372f7b1aba3cdc91ce694bd9ce070914a83a84a02b2e94bc7b8a946ff05cc56116cbc4e3b31be3f2edfe1728b1d4de88df50cf2f164d2d0c15c6ea6f72ddec93609749c4c81ff776ccba7b8e93463832dc5d7beaaf26173a25861380bde748e778d993f8495638df3e0a87b07ee29ae6ec69e37b97"
 	}],
 	"impl",
 	1,

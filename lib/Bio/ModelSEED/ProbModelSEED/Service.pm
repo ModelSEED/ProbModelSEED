@@ -27,7 +27,7 @@ has 'config' => (is => 'ro', required => 1, builder => '_build_config');
 our $CallContext;
 
 our %return_counts = (
-        'print_model_stats_params' => 1,
+        'print_model_stats' => 1,
         'list_gapfill_solutions' => 1,
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
@@ -45,7 +45,7 @@ our %return_counts = (
 );
 
 our %method_authentication = (
-        'print_model_stats_params' => 'required',
+        'print_model_stats' => 'required',
         'list_gapfill_solutions' => 'required',
         'manage_gapfill_solutions' => 'required',
         'list_fba_studies' => 'required',
@@ -66,7 +66,7 @@ sub _build_valid_methods
 {
     my($self) = @_;
     my $methods = {
-        'print_model_stats_params' => 1,
+        'print_model_stats' => 1,
         'list_gapfill_solutions' => 1,
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,

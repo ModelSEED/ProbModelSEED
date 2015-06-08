@@ -236,10 +236,8 @@ sub save_objects {
 
 sub genome_from_solr {
 	my ($self,$genomeid) = @_;
-	my $ua = LWP::UserAgent->new();
 	#Retrieving genome information
-	my $res = $ua->get($self->data_api_url()."/genome/?genome_id=".$genomeid."&http_accept=application/json");
-	my $data = Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
+	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome/?genome_id=".$genomeid."&http_accept=application/json"});
 	$data = $data->[0];
 	my $perm = "n";
 	my $uperm = "o";
@@ -250,7 +248,7 @@ sub genome_from_solr {
 	my $meta = [
     	$genomeid,
 		"genome",
-		"https://www.patricbrc.org/api/genome/?genome_id=".$genomeid."&http_accept=application/json",
+		$self->data_api_url()."genome/?genome_id=".$genomeid."&http_accept=application/json",
 		$data->{completion_date},
 		$genomeid,
 		$data->{owner},
@@ -283,8 +281,7 @@ sub genome_from_solr {
 	#Retrieving feature information
 	my $start = 0;
 	while ($start >= 0) {
-		$res = $ua->get($self->data_api_url()."/genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(250,$start)");
-		my $ftrdata = Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
+		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(250,$start)"});
 		if (defined($ftrdata) && @{$ftrdata} > 0) {
 			$start += 250;
 		} else {
