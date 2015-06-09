@@ -34,7 +34,7 @@ pushd modules/$SERVICE
 
 source /disks/p3/deployment/user-env.sh
 
-perl t/client-tests/probmodelseed.t
+perl t/client-tests/tests.t
 if [ $? -ne 0 ] ; then
         echo "BUILD ERROR: problem running make test"
         exit 1
