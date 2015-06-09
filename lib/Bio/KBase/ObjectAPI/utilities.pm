@@ -12,7 +12,7 @@ our $VERBOSE = undef; # A GLOBAL Reference to print verbose() calls to, or undef
 our $CONFIG = undef;
 our $keggmaphash = undef;
 our $report = {};
-our $globalparams = {};
+our $globalparams = {"gapfill name" => "none"};
 
 =head1 Bio::KBase::ObjectAPI::utilities
 
@@ -357,6 +357,9 @@ Description:
 
 sub FROMJSON {
     my ($data) = @_;
+    if (!defined($data)) {
+    	Bio::KBase::ObjectAPI::utilities::error("Data undefined!");
+    }
     return decode_json $data;
 }
 

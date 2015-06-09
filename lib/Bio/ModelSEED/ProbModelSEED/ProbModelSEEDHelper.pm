@@ -304,24 +304,24 @@ sub build_fba_object {
 			$term->[0] = "flux";
 			my $obj = $model->searchForReaction($term->[1]);
 			if (!defined($obj)) {
-				$self->_error("Reaction ".$term->[1]." not found!");
+				$self->error("Reaction ".$term->[1]." not found!");
 			}
 			$fba->reactionflux_objterms()->{$obj->id()} = $term->[2];
 		} elsif ($term->[0] eq "compoundflux" || $term->[0] eq "drainflux") {
 			$term->[0] = "drainflux";
 			my $obj = $model->searchForCompound($term->[1]);
 			if (!defined($obj)) {
-				$self->_error("Compound ".$term->[1]." not found!");
+				$self->error("Compound ".$term->[1]." not found!");
 			}
 			$fba->compoundflux_objterms()->{$obj->id()} = $term->[2];
 		} elsif ($term->[0] eq "biomassflux") {
 			my $obj = $model->searchForBiomass($term->[1]);
 			if (!defined($obj)) {
-				$self->_error("Biomass ".$term->[1]." not found!");
+				$self->error("Biomass ".$term->[1]." not found!");
 			}
 			$fba->biomassflux_objterms()->{$obj->id()} = $term->[2];
 		} else {
-			$self->_error("Objective variable type ".$term->[0]." not recognized!");
+			$self->error("Objective variable type ".$term->[0]." not recognized!");
 		}
 	}
 	foreach my $term (@{$params->{custom_bounds}}) {
@@ -329,18 +329,18 @@ sub build_fba_object {
 			$term->[0] = "flux";
 			my $obj = $model->searchForReaction($term->[1]);
 			if (!defined($obj)) {
-				$self->_error("Reaction ".$term->[1]." not found!");
+				$self->error("Reaction ".$term->[1]." not found!");
 			}
 			$fba->add("FBAReactionBounds",{modelreaction_ref => $obj->_reference(),variableType=> $term->[0],upperBound => $term->[2],lowerBound => $term->[3]});
 		} elsif ($term->[0] eq "compoundflux" || $term->[0] eq "drainflux") {
 			$term->[0] = "flux";
 			my $obj = $model->searchForCompound($term->[1]);
 			if (!defined($obj)) {
-				$self->_error("Compound ".$term->[1]." not found!");
+				$self->error("Compound ".$term->[1]." not found!");
 			}
 			$fba->add("FBACompoundBounds",{modelcompound_ref => $obj->_reference(),variableType=> $term->[0],upperBound => $term->[2],lowerBound => $term->[3]});
 		} else {
-			$self->_error("Objective variable type ".$term->[0]." not recognized!");
+			$self->error("Objective variable type ".$term->[0]." not recognized!");
 		}
 	}
 	if (defined($model->genome_ref())) {
@@ -579,7 +579,7 @@ sub GapfillModel {
     $log->info("Starting gap fill for model ".$parameters->{model}." on media ".$parameters->{media});
 	
     if (defined($parameters->{adminmode}) && $parameters->{adminmode} == 1) {
-    	$self->admin_mode($parameters->{adminmode});
+    	$self->adminmode($parameters->{adminmode});
     }
     my $model = $self->get_model($parameters->{model});
     $parameters->{model} = $model->_reference();
@@ -588,6 +588,7 @@ sub GapfillModel {
     $parameters->{output_path} = $model->wsmeta()->[2].".".$model->wsmeta()->[0]."/gapfilling";
     if (!defined($parameters->{output_file})) {
 	    my $gflist = $self->workspace_service()->ls({
+			adminmode => $self->adminmode(),
 			paths => [$parameters->{output_path}],
 			excludeDirectories => 1,
 			excludeObjects => 0,
