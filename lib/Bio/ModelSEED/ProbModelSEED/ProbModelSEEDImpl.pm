@@ -165,6 +165,7 @@ sub _list_models {
 			}
 			for (my $j=0; $j < @{$newlist}; $j++) {
 				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]} = $newlist->[$j]->[8];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{rundate} = $newlist->[$j]->[3];
 				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{id} = $newlist->[$j]->[0];
 				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
 				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gene_associated_reactions} = ($output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_reactions} - 22);
