@@ -189,7 +189,7 @@ sub _list_models {
 				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{reactions};
 				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{genes};
 				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasses};		
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_biomass_compounds} = @{$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds}};
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_biomass_compounds} = split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds});
 				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds};
 			}
 		}
