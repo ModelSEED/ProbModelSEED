@@ -245,6 +245,16 @@ sub genome_from_solr {
 		$perm = "r";
 		$uperm = "r";
 	}
+	$data = Bio::KBase::ObjectAPI::utilities::ARGS($data,[],{
+		genome_length => 0,
+		contigs => 0,
+		genome_name => "Unknown",
+		taxon_lineage_names => ["Unknown"],
+		owner => "Unknown",
+		gc_content => 0,
+		publication => "Unknown",
+		completion_date => "1970-01-01T00:00:00+0000"
+	});
 	my $meta = [
     	$genomeid,
 		"genome",
