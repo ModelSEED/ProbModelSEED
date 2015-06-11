@@ -91,16 +91,13 @@
 		});
 		$output = $self->test_harness("GapfillModel",{
 			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-			integrate_solution => "1"
-		});
-		$output = $self->test_harness("GapfillModel",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
 			integrate_solution => "1",
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		});
 		$output = $self->test_harness("export_model",{
 			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-			format => "sbml"
+			format => "sbml",
+			to_shock => 1
 		});
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",

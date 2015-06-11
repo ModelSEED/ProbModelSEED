@@ -176,7 +176,7 @@ sub get_objects {
 
 sub get_object {
     my ($self,$ref,$options) = @_;
-    return $self->get_objects([$ref])->[0];
+    return $self->get_objects([$ref],$options)->[0];
 }
 
 sub save_object {
@@ -237,7 +237,7 @@ sub save_objects {
 sub genome_from_solr {
 	my ($self,$genomeid) = @_;
 	#Retrieving genome information
-	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome/?genome_id=".$genomeid."&http_accept=application/json"});
+	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome/?genome_id=".$genomeid."&http_accept=application/json",token => $self->workspace()->{token}});
 	$data = $data->[0];
 	my $perm = "n";
 	my $uperm = "o";

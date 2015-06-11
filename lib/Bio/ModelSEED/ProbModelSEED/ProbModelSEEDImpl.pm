@@ -121,7 +121,7 @@ sub _list_fba_studies {
 				fba => $list->[$i]->[2].$list->[$i]->[0],
 				media => $list->[$i]->[7]->{media},
 				objective => $list->[$i]->[7]->{objective},
-				objective_function => $list->[$i]->[7]->{objective_function},				
+				objective_function => $list->[$i]->[8]->{objective_function},				
 			};
 			$output->{$list->[$i]->[0]} = $element;
 		}
@@ -222,6 +222,22 @@ sub _list_gapfill_studies {
 				integrated_solution => $gflist->[$i]->[7]->{integrated_solution},
 				solution_reactions => []
 			};
+			if (defined($gflist->[$i]->[7]->{solutiondata})) {
+				$output->{$id}->{solution_reactions} = Bio::KBase::ObjectAPI::utilities::FROMJSON($gflist->[$i]->[7]->{solutiondata});
+				for (my $j=0; $j < @{$output->{$id}->{solution_reactions}}; $j++) {
+					for (my $k=0; $k < @{$output->{$id}->{solution_reactions}->[$j]}; $k++) {
+						my $comp = "c";
+						if ($output->{$id}->{solution_reactions}->[$j]->[$k]->{compartment_ref} =~ m/\/([^\/]+)$/) {
+							$comp = $1;
+						}
+						$output->{$id}->{solution_reactions}->[$j]->[$k] = {
+							direction => $output->{$id}->{solution_reactions}->[$j]->[$k]->{direction},
+							reaction => $output->{$id}->{solution_reactions}->[$j]->[$k]->{reaction_ref},
+							compartment => $comp.$output->{$id}->{solution_reactions}->[$j]->[$k]->{compartmentIndex}
+						};
+					}
+				}
+			}			
 		}
 	}
 	return $output;

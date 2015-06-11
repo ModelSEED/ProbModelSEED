@@ -1071,9 +1071,13 @@ sub rest_download {
 	my ($args,$params) = @_;
 	print "START!\n";
 	$args = Bio::KBase::ObjectAPI::utilities::ARGS($args,["url"],{
-		retry => 5
+		retry => 5,
+		token => undef
 	});
 	my $ua = LWP::UserAgent->new();
+	if (defined($args->{token})) {
+		$ua->default_header( "Authorization" => $args->{token} );
+	}
 	for (my $i=0; $i < $args->{retry}; $i++) {
 		my $res = $ua->get($args->{url});
 		if ($res->{_msg} ne "Bad Gateway") {

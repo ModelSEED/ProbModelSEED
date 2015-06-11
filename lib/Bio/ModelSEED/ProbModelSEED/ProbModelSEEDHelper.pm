@@ -39,8 +39,8 @@ sub save_object {
 	my $object = $self->PATRICStore()->save_object($data,$ref,$metadata,$type,1);
 }
 sub get_object {
-	my($self, $ref,$type) = @_;
-	my $object = $self->PATRICStore()->get_object($ref);
+	my($self, $ref,$type,$options) = @_;
+	my $object = $self->PATRICStore()->get_object($ref,$options);
 	my $meta = $self->PATRICStore()->object_meta($ref);
 	if (defined($type) && $meta->[1] ne $type) {
 		$self->error("Type retrieved (".$meta->[1].") does not match specified type (".$type.")!");
@@ -49,7 +49,7 @@ sub get_object {
 }
 sub get_model {
 	my($self, $ref) = @_;
-	my $model = $self->get_object($ref);
+	my $model = $self->get_object($ref,undef,{refreshcache => 1});
     if (!defined($model)) {
     	$self->error("Model retrieval failed!");
     }
@@ -446,6 +446,7 @@ sub ModelReconstruction {
     		integrate_solution => 1
     	});    	
     	if ($parameters->{predict_essentiality} == 1) {
+    		Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
     		$self->FluxBalanceAnalysis({
 	    		model => $parameters->{output_path}."/".$parameters->{output_file},
 	    		media => $parameters->{media},
@@ -513,6 +514,7 @@ sub FluxBalanceAnalysis {
     
     my $fba = $self->build_fba_object($model,$parameters);
     my $objective = $fba->runFBA();
+    print "Objective:".$objective."\n";
     if (!defined($objective)) {
     	$self->error("FBA failed with no solution returned! See ".$fba->jobnode());
     }
@@ -649,6 +651,7 @@ sub GapfillModel {
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED",
     });
+    Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
 	return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
 		integrated_solution => 0,
 		solutiondata => $solutiondata,
