@@ -325,7 +325,7 @@ sub genome_from_solr {
 					$ftrobj->{protein_translation_length} = $data->{aa_length};
 					$ftrobj->{md5} = $data->{aa_sequence_md5};
 				}
-				my $list = ["alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
+				my $list = ["feature_id","alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
 				for (my $j=0; $j < @{$list}; $j++) {
 					if (defined($data->{$list->[$j]})) {
 						push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
