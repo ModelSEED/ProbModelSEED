@@ -376,6 +376,7 @@ sub ModelReconstruction {
     	$self->{_params}->{adminmode} = $parameters->{adminmode}
     }
     $parameters = $self->validate_args($parameters,[],{
+    	media => "/chenry/public/modelsupport/patric-media/Complete",
     	template_model => undef,
     	fulldb => 0,
     	output_path => "/".$self->{_params}->{username}."/home/models/",
@@ -440,11 +441,12 @@ sub ModelReconstruction {
     $self->save_object($folder."/gapfilling",undef,"folder");
     my $output = $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$mdl,"model");
     if ($parameters->{gapfill} == 1) {
-    	$self->GapfillModel({
+    	my $gfmeta = $self->GapfillModel({
     		model => $parameters->{output_path}."/".$parameters->{output_file},
     		media => $parameters->{media},
     		integrate_solution => 1
-    	});    	
+    	});
+    		
     	if ($parameters->{predict_essentiality} == 1) {
     		Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
     		$self->FluxBalanceAnalysis({
@@ -454,6 +456,31 @@ sub ModelReconstruction {
 	    	});
     	}	
     }
+    $mdl = $self->get_model($parameters->{output_path}."/".$parameters->{output_file});
+    $self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".sbml",$mdl->export({format => "sbml"}),"string",{
+	   description => "SBML version of model data for use in COBRA toolbox and other applications",
+	   model => $parameters->{output_path}."/".$parameters->{output_file}
+	});
+	my $mdlcpds = $mdl->modelcompounds();
+	my $cpdtbl = "ID\tName\tFormula\tCharge\tCompartment\n";
+	for (my $i=0; $i < @{$mdlcpds}; $i++) {
+		$cpdtbl .= $mdlcpds->[$i]->id()."\t".$mdlcpds->[$i]->name()."\t".$mdlcpds->[$i]->formula()."\t".$mdlcpds->[$i]->compound()->defaultCharge()."\t".$mdlcpds->[$i]->modelcompartment()->label()."\n";
+	}
+	print $parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".cpdtbl\n";
+	$self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".cpdtbl",$cpdtbl,"string",{
+	   description => "Tab delimited table containing data on compounds in metabolic model",
+	   model => $parameters->{output_path}."/".$parameters->{output_file}
+	});
+	my $mdlrxns = $mdl->modelreactions();
+	my $rxntbl = "ID\tName\tEquation\tDefinition\tGenes\n";
+	for (my $i=0; $i < @{$mdlrxns}; $i++) {
+		$rxntbl .= $mdlrxns->[$i]->id()."\t".$mdlrxns->[$i]->name()."\t".$mdlrxns->[$i]->equation()."\t".$mdlrxns->[$i]->definition()."\t".$mdlrxns->[$i]->gprString()."\n";
+	}
+	print $parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".rxntbl\n";
+	$self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".rxntbl",$rxntbl,"string",{
+	   description => "Tab delimited table containing data on reactions in metabolic model",
+	   model => $parameters->{output_path}."/".$parameters->{output_file}
+	});
     return $output;
 }
 
@@ -535,6 +562,78 @@ sub FluxBalanceAnalysis {
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED",
     });
+    print "comboDeletions:".$fba->comboDeletions()."\n";
+    #Printing essential gene list as feature group and text list
+    my $fbatbl = "ID\tName\tEquation\tFlux\tUpper bound\tLower bound\tMax\tMin\n";
+    my $objs = $fba->FBABiomassVariables();
+    for (my $i=0; $i < @{$objs}; $i++) {
+    	$fbatbl .= $objs->[$i]->biomass()->id()."\t".$objs->[$i]->biomass()->name()."\t".
+    		$objs->[$i]->biomass()->definition()."\t".
+    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
+    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
+    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
+    }
+    $objs = $fba->FBAReactionVariables();
+    for (my $i=0; $i < @{$objs}; $i++) {
+    	$fbatbl .= $objs->[$i]->modelreaction()->id()."\t".$objs->[$i]->modelreaction()->name()."\t".
+    		$objs->[$i]->modelreaction()->definition()."\t".
+    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
+    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
+    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
+    }
+    $objs = $fba->FBACompoundVariables();
+    for (my $i=0; $i < @{$objs}; $i++) {
+    	$fbatbl .= $objs->[$i]->modelcompound()->id()."\t".$objs->[$i]->modelcompound()->name()."\t".
+    		"=> ".$objs->[$i]->modelcompound()->name()."[e]\t".
+    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
+    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
+    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
+    } 
+    $self->save_object($parameters->{output_path}."/".$parameters->{output_file}.".fluxtbl",$fbatbl,"string",{
+	   description => "Tab delimited table containing data on reaction fluxes from flux balance analysis",
+	   fba => $parameters->{output_file},
+	   media => $parameters->{media},
+	   model => $parameters->{model}
+	});
+    if ($parameters->{predict_essentiality} == 1) {
+	    my $esslist = [];
+	    my $ftrlist = [];
+	    my $delresults = $fba->FBADeletionResults();
+	    for (my $i=0; $i < @{$delresults}; $i++) {
+	    	if ($delresults->[$i]->growthFraction < 0.00001) {
+	    		my $ftrs =  $delresults->[$i]->features();
+	    		my $aliases = $ftrs->[0]->aliases();
+	    		my $ftrid;
+	    		for (my $j=0; $j < @{$aliases}; $j++) {
+	    		 	if ($aliases->[$j] =~ m/^PATRIC\./) {
+	    		 		$ftrid = $aliases->[$j];
+	    		 		last;
+	    		 	}
+	    		}
+	    		if (!defined($ftrid)) {
+	    			$ftrid = $ftrs->[0]->id();
+	    		}
+	    		push(@{$ftrlist},$ftrid);
+	    		push(@{$esslist},$ftrs->[0]->id());
+	    	}
+	    }
+	   	$self->save_object($model->wsmeta()->[2].".".$model->wsmeta()->[0]."/essentialgenes/".$parameters->{output_file}."-essentials",join("\n",@{$esslist}),"string",{
+	    	description => "Tab delimited table containing list of predicted genes from flux balance analysis",
+	    	media => $parameters->{media},
+	    	model => $parameters->{model}
+	    });
+	    my $ftrgroup = {
+	    	id_list => {
+	    		feature_id => $ftrlist
+	    	},
+	    	name => $model->wsmeta()->[0]."-".$fba->media()->wsmeta()->[0]."-essentials"
+	    };
+	    $self->save_object("/".$self->{_params}->{username}."/home/Feature Groups/".$model->wsmeta()->[0]."-".$fba->media()->wsmeta()->[0]."-essentials",$ftrgroup,"feature_group",{
+	    	description => "Group of essential genes predicted by metabolic models",
+	    	media => $parameters->{media},
+	    	model => $parameters->{model}
+	    });
+    }
     return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
     	objective => $objective,
     	media => $parameters->{media}
@@ -628,12 +727,53 @@ sub GapfillModel {
 		$self->error("No gapfilling needed on specified condition!");
 	}
 	my $gfsols = [];
+	my $gftbl = "Solution\tID\tName\tEquation\tDirection\n";
 	for (my $i=0; $i < @{$fba->gapfillingSolutions()}; $i++) {
 		for (my $j=0; $j < @{$fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()}; $j++) {
+			my $rxn = $fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()->[$j];
+			$gftbl .= $i."\t".$rxn->reaction()->id()."\t".$rxn->reaction()->name()."\t".
+    		$rxn->reaction()->definition()."\t".$rxn->direction()."\n";
 			$gfsols->[$i]->[$j] = $fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()->[$j]->serializeToDB();
 		}
 	}
+	$self->save_object($parameters->{output_path}."/".$parameters->{output_file}.".gftbl",$gftbl,"string",{
+	   description => "Tab delimited table of reactions gapfilled in metabolic model",
+	   fba => $parameters->{output_file},
+	   media => $parameters->{media},
+	   model => $parameters->{model}
+	});
 	my $solutiondata = Bio::KBase::ObjectAPI::utilities::TOJSON($gfsols);
+	my $fbatbl = "ID\tName\tEquation\tFlux\tUpper bound\tLower bound\tMax\tMin\n";
+    my $objs = $fba->FBABiomassVariables();
+    for (my $i=0; $i < @{$objs}; $i++) {
+    	$fbatbl .= $objs->[$i]->biomass()->id()."\t".$objs->[$i]->biomass()->name()."\t".
+    		$objs->[$i]->biomass()->definition()."\t".
+    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
+    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
+    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
+    }
+    $objs = $fba->FBAReactionVariables();
+    for (my $i=0; $i < @{$objs}; $i++) {
+    	$fbatbl .= $objs->[$i]->modelreaction()->id()."\t".$objs->[$i]->modelreaction()->name()."\t".
+    		$objs->[$i]->modelreaction()->definition()."\t".
+    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
+    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
+    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
+    }
+    $objs = $fba->FBACompoundVariables();
+    for (my $i=0; $i < @{$objs}; $i++) {
+    	$fbatbl .= $objs->[$i]->modelcompound()->id()."\t".$objs->[$i]->modelcompound()->name()."\t".
+    		"=> ".$objs->[$i]->modelcompound()->name()."[e]\t".
+    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
+    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
+    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
+    } 
+    $self->save_object($parameters->{output_path}."/".$parameters->{output_file}.".fbatbl",$fbatbl,"string",{
+	   description => "Table of fluxes through reactions used in gapfilling solution",
+	   fba => $parameters->{output_file},
+	   media => $parameters->{media},
+	   model => $parameters->{model}
+	});
 	$fba->jobresult({
     	id => 0,
 		app => {
@@ -692,10 +832,27 @@ sub new {
     if (!defined($parameters->{logfile})) {
     	$parameters->{logfile} = $self->{_params}->{fbajobdir}."log.conf";
     }
-    Log::Log4perl::init($parameters->{logfile});
     Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
     Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($self->{_params}->{fbajobdir});
     Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($self->{_params}->{mfatoolkitbin});
+    if (!-e Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf") {
+    	File::Path::mkpath (Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY());
+    	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf",[
+	    	"############################################################",
+			"# A simple root logger with a Log::Log4perl::Appender::File ",
+			"# file appender in Perl.",
+			"############################################################",
+			"log4perl.rootLogger=ERROR, LOGFILE",
+			"",
+			"log4perl.appender.LOGFILE=Log::Log4perl::Appender::File",
+			"log4perl.appender.LOGFILE.filename=".Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.log",
+			"log4perl.appender.LOGFILE.mode=append",
+			"",
+			"log4perl.appender.LOGFILE.layout=PatternLayout",
+			"log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n",
+    	]);
+    }
+    Log::Log4perl::init($parameters->{logfile});
     return $self;
 }
 

@@ -6,6 +6,7 @@ my($opt, $usage) = Bio::P3::Workspace::ScriptHelpers::options("%c %o <contigs pa
 	["fromfile|f", "Load fasta from file"],
 	["domain|d=s", "Domain of life for genome", { "default" => "Bacteria" }],
 	["code|c=s", "Genetic code of genome", { "default" => 11 }],
+	["taxonomy|t=s", "Taxonomy ID of genome", { "default" => 6666666 }],
 	["path|p=s", "Path in workspace to save genome"],
 	["name|n=s", "Path in workspace to save genome"],
 	["overwrite|o", "Overwrite output objects"],
@@ -46,6 +47,7 @@ my $task = $client->start_app("GenomeAnnotation",{
 	output_file => $opt->{name}
 },$paths->[0]);
 while ($task->{status} ne "failed" && $task->{status} ne "completed") {
+	sleep(3);
 	my $res = $client->query_tasks([$task->{id}]);
 	$task = $res->{$task->{id}};
 	print $task->{status}."\n";
