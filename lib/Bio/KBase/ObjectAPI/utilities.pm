@@ -1069,7 +1069,6 @@ sub load_config {
 
 sub rest_download {
 	my ($args,$params) = @_;
-	print "START!\n";
 	$args = Bio::KBase::ObjectAPI::utilities::ARGS($args,["url"],{
 		retry => 5,
 		token => undef
@@ -1084,10 +1083,8 @@ sub rest_download {
 			if (defined($res->{_headers}->{"content-range"}) && $res->{_headers}->{"content-range"} =~ m/\/(.+)/) {
 				$params->{count} = $1;
 			}
-			print "STOP!\n";
 			return Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
 		} else {
-			print "Failed URL call!\n";
 		}
 	}
 	Bio::KBase::ObjectAPI::utilities::error("REST download failed at URL:".$args->{url});

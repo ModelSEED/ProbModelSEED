@@ -295,7 +295,7 @@ sub genome_from_solr {
 	my $loopcount = 0;
 	while ($start >= 0 && $loopcount < 100) {
 		$loopcount++;#Insurance that no matter what, this loop won't run for more than 100 iterations
-		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)"},$params);
+		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => $self->workspace()->{token}},$params);
 		if (defined($ftrdata) && @{$ftrdata} > 0) {
 			for (my $i=0; $i < @{$ftrdata}; $i++) {
 				$data = $ftrdata->[$i];
