@@ -90,7 +90,8 @@ my $transform = {
 };
 my $jsontypes = {
 	job_result => 1,
-	feature_group => 1
+	feature_group => 1,
+	rxnprobs => 1
 };
 
 #***********************************************************************************************************
@@ -396,8 +397,8 @@ sub transform_genome_from_ws {
 }
 
 sub transform_genome_to_ws {
-	my ($self,$data,$meta) = @_;
-	return $data;
+	my ($self,$object,$meta) = @_;
+	return $object->export( { format => "json" } );
 }
 
 sub transform_model_from_ws {
