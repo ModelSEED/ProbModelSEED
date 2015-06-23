@@ -84,8 +84,8 @@ module ProbModelSEED {
     typedef structure {
 		Timestamp rundate;
 		gapfill_id id;
-		ref gapfill;
-		ref media;
+		ref ref;
+		ref media_ref;
 		bool integrated;
 		int integrated_solution;
 		list<list<gapfill_reaction>> solution_reactions;
@@ -94,9 +94,9 @@ module ProbModelSEED {
     typedef structure {
 		Timestamp rundate;
 		fba_id id;
-		ref fba;
+		ref ref;
 		float objective;
-		ref media;
+		ref media_ref;
 		string objective_function;
     } fba_data;
     
@@ -110,7 +110,7 @@ module ProbModelSEED {
     typedef structure {
 		Timestamp rundate;
 		edit_id id;
-		ref edit;
+		ref ref;
 		list<reaction_id> reactions_to_delete;
 		mapping<reaction_id,reaction_direction> altered_directions;
 		mapping<reaction_id,list<list<list<feature_id> > > > altered_gpr;
@@ -119,11 +119,13 @@ module ProbModelSEED {
     } edit_data;
     
     typedef structure {
+ 		Timestamp rundate;
 		string id;
 		string source;
 		string source_id;
 		string name;
 		string type;
+		ref ref;
 		ref genome_ref;
 		ref template_ref;
 		int fba_count;
