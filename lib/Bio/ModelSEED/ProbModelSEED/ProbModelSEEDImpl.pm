@@ -118,8 +118,8 @@ sub _list_fba_studies {
 			my $element = {
 				rundate => $list->[$i]->[3],
 				id => $list->[$i]->[0],
-				fba => $list->[$i]->[2].$list->[$i]->[0],
-				media => $list->[$i]->[7]->{media},
+				"ref" => $list->[$i]->[2].$list->[$i]->[0],
+				media_ref => $list->[$i]->[7]->{media},
 				objective => $list->[$i]->[7]->{objective},
 				objective_function => $list->[$i]->[8]->{objective_function},				
 			};
@@ -197,7 +197,7 @@ sub _list_models {
 	return $output;
 }
 
-sub _list_gapfill_studies {
+sub _list_gapfill_solutions {
 	my ($self,$input) = @_;
 	$input = $self->helper()->validate_args($input,["model"],{});
     $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
@@ -216,8 +216,8 @@ sub _list_gapfill_studies {
 			$output->{$id} = {
 				rundate => $gflist->[$i]->[3],
 				id => $id,
-				gapfill => $gflist->[$i]->[2].$gflist->[$i]->[0],
-				media => $gflist->[$i]->[7]->{media},
+				"ref" => $gflist->[$i]->[2].$gflist->[$i]->[0],
+				media_ref => $gflist->[$i]->[7]->{media},
 				integrated => $gflist->[$i]->[7]->{integrated},
 				integrated_solution => $gflist->[$i]->[7]->{integrated_solution},
 				solution_reactions => []
@@ -264,7 +264,7 @@ sub _list_model_edits {
 				rundate => $list->[$i]->[3],
 				integrated => $list->[$i]->[7]->{integrated},
 				id => $id,
-				edit => $list->[$i]->[2].$list->[$i]->[0],
+				"ref" => $list->[$i]->[2].$list->[$i]->[0],
 				reactions_to_delete => $data->{reactions_to_delete},
 				altered_directions => $data->{altered_directions},
 				altered_gpr => $data->{altered_gpr},
@@ -513,7 +513,7 @@ sub list_gapfill_solutions
     #BEGIN list_gapfill_solutions
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["model"],{});
-	my $hash = $self->_list_gapfill_studies($input);
+	my $hash = $self->_list_gapfill_solutions($input);
 	my $output = [];
 	foreach my $key (keys(%{$hash})) {
 		push(@{$output},$hash->{$key});
@@ -633,7 +633,7 @@ sub manage_gapfill_solutions
     $input = $self->helper()->validate_args($input,["model","commands"],{
     	selected_solutions => {}
     });
-    my $gflist = $self->_list_gapfill_studies($input);
+    my $gflist = $self->_list_gapfill_solutions($input);
     my $rmlist = [];
     my $updatelist = [];
     $output = {};
