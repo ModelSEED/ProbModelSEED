@@ -130,24 +130,31 @@ print_model_stats_params is a reference to a hash where the following keys are d
 	models has a value which is a reference to a list where each element is a ref
 ref is a string
 ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
 	id has a value which is a string
 	source has a value which is a string
 	source_id has a value which is a string
 	name has a value which is a string
 	type has a value which is a string
-	genome has a value which is a ref
-	template has a value which is a ref
+	ref has a value which is a ref
+	genome_ref has a value which is a ref
+	template_ref has a value which is a ref
 	fba_count has a value which is an int
 	integrated_gapfills has a value which is an int
 	unintegrated_gapfills has a value which is an int
 	gene_associated_reactions has a value which is an int
 	gapfilled_reactions has a value which is an int
-	spontaneous_reactions has a value which is an int
 	num_genes has a value which is an int
 	num_compounds has a value which is an int
 	num_reactions has a value which is an int
 	num_biomasses has a value which is an int
 	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
+	biomasses has a value which is a reference to a list where each element is a string
+	reactions has a value which is a reference to a list where each element is a string
+	genes has a value which is a reference to a list where each element is a string
+	biomasscpds has a value which is a reference to a list where each element is a string
+Timestamp is a string
 
 </pre>
 
@@ -161,24 +168,31 @@ print_model_stats_params is a reference to a hash where the following keys are d
 	models has a value which is a reference to a list where each element is a ref
 ref is a string
 ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
 	id has a value which is a string
 	source has a value which is a string
 	source_id has a value which is a string
 	name has a value which is a string
 	type has a value which is a string
-	genome has a value which is a ref
-	template has a value which is a ref
+	ref has a value which is a ref
+	genome_ref has a value which is a ref
+	template_ref has a value which is a ref
 	fba_count has a value which is an int
 	integrated_gapfills has a value which is an int
 	unintegrated_gapfills has a value which is an int
 	gene_associated_reactions has a value which is an int
 	gapfilled_reactions has a value which is an int
-	spontaneous_reactions has a value which is an int
 	num_genes has a value which is an int
 	num_compounds has a value which is an int
 	num_reactions has a value which is an int
 	num_biomasses has a value which is an int
 	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
+	biomasses has a value which is a reference to a list where each element is a string
+	reactions has a value which is a reference to a list where each element is a string
+	genes has a value which is a reference to a list where each element is a string
+	biomasscpds has a value which is a reference to a list where each element is a string
+Timestamp is a string
 
 
 =end text
@@ -257,8 +271,8 @@ ref is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
-	gapfill has a value which is a ref
-	media has a value which is a ref
+	ref has a value which is a ref
+	media_ref has a value which is a ref
 	integrated has a value which is a bool
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
@@ -285,8 +299,8 @@ ref is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
-	gapfill has a value which is a ref
-	media has a value which is a ref
+	ref has a value which is a ref
+	media_ref has a value which is a ref
 	integrated has a value which is a bool
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
@@ -380,8 +394,8 @@ gapfill_command is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
-	gapfill has a value which is a ref
-	media has a value which is a ref
+	ref has a value which is a ref
+	media_ref has a value which is a ref
 	integrated has a value which is a bool
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
@@ -411,8 +425,8 @@ gapfill_command is a string
 gapfill_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a gapfill_id
-	gapfill has a value which is a ref
-	media has a value which is a ref
+	ref has a value which is a ref
+	media_ref has a value which is a ref
 	integrated has a value which is a bool
 	integrated_solution has a value which is an int
 	solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
@@ -501,9 +515,9 @@ ref is a string
 fba_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a fba_id
-	fba has a value which is a ref
+	ref has a value which is a ref
 	objective has a value which is a float
-	media has a value which is a ref
+	media_ref has a value which is a ref
 	objective_function has a value which is a string
 Timestamp is a string
 fba_id is a string
@@ -522,9 +536,9 @@ ref is a string
 fba_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a fba_id
-	fba has a value which is a ref
+	ref has a value which is a ref
 	objective has a value which is a float
-	media has a value which is a ref
+	media_ref has a value which is a ref
 	objective_function has a value which is a string
 Timestamp is a string
 fba_id is a string
@@ -610,9 +624,9 @@ fba_id is a string
 fba_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a fba_id
-	fba has a value which is a ref
+	ref has a value which is a ref
 	objective has a value which is a float
-	media has a value which is a ref
+	media_ref has a value which is a ref
 	objective_function has a value which is a string
 Timestamp is a string
 
@@ -634,9 +648,9 @@ fba_id is a string
 fba_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a fba_id
-	fba has a value which is a ref
+	ref has a value which is a ref
 	objective has a value which is a float
-	media has a value which is a ref
+	media_ref has a value which is a ref
 	objective_function has a value which is a string
 Timestamp is a string
 
@@ -1028,24 +1042,31 @@ sub delete_model
 <pre>
 $output is a reference to a list where each element is a ModelStats
 ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
 	id has a value which is a string
 	source has a value which is a string
 	source_id has a value which is a string
 	name has a value which is a string
 	type has a value which is a string
-	genome has a value which is a ref
-	template has a value which is a ref
+	ref has a value which is a ref
+	genome_ref has a value which is a ref
+	template_ref has a value which is a ref
 	fba_count has a value which is an int
 	integrated_gapfills has a value which is an int
 	unintegrated_gapfills has a value which is an int
 	gene_associated_reactions has a value which is an int
 	gapfilled_reactions has a value which is an int
-	spontaneous_reactions has a value which is an int
 	num_genes has a value which is an int
 	num_compounds has a value which is an int
 	num_reactions has a value which is an int
 	num_biomasses has a value which is an int
 	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
+	biomasses has a value which is a reference to a list where each element is a string
+	reactions has a value which is a reference to a list where each element is a string
+	genes has a value which is a reference to a list where each element is a string
+	biomasscpds has a value which is a reference to a list where each element is a string
+Timestamp is a string
 ref is a string
 
 </pre>
@@ -1056,24 +1077,31 @@ ref is a string
 
 $output is a reference to a list where each element is a ModelStats
 ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
 	id has a value which is a string
 	source has a value which is a string
 	source_id has a value which is a string
 	name has a value which is a string
 	type has a value which is a string
-	genome has a value which is a ref
-	template has a value which is a ref
+	ref has a value which is a ref
+	genome_ref has a value which is a ref
+	template_ref has a value which is a ref
 	fba_count has a value which is an int
 	integrated_gapfills has a value which is an int
 	unintegrated_gapfills has a value which is an int
 	gene_associated_reactions has a value which is an int
 	gapfilled_reactions has a value which is an int
-	spontaneous_reactions has a value which is an int
 	num_genes has a value which is an int
 	num_compounds has a value which is an int
 	num_reactions has a value which is an int
 	num_biomasses has a value which is an int
 	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
+	biomasses has a value which is a reference to a list where each element is a string
+	reactions has a value which is a reference to a list where each element is a string
+	genes has a value which is a reference to a list where each element is a string
+	biomasscpds has a value which is a reference to a list where each element is a string
+Timestamp is a string
 ref is a string
 
 
@@ -1145,7 +1173,7 @@ ref is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
-	edit has a value which is a ref
+	ref has a value which is a ref
 	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
 	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
 	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
@@ -1185,7 +1213,7 @@ ref is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
-	edit has a value which is a ref
+	ref has a value which is a ref
 	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
 	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
 	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
@@ -1292,7 +1320,7 @@ gapfill_command is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
-	edit has a value which is a ref
+	ref has a value which is a ref
 	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
 	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
 	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
@@ -1335,7 +1363,7 @@ gapfill_command is a string
 edit_data is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is an edit_id
-	edit has a value which is a ref
+	ref has a value which is a ref
 	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
 	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
 	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
@@ -2613,8 +2641,8 @@ compartment has a value which is a string
 a reference to a hash where the following keys are defined:
 rundate has a value which is a Timestamp
 id has a value which is a gapfill_id
-gapfill has a value which is a ref
-media has a value which is a ref
+ref has a value which is a ref
+media_ref has a value which is a ref
 integrated has a value which is a bool
 integrated_solution has a value which is an int
 solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
@@ -2628,8 +2656,8 @@ solution_reactions has a value which is a reference to a list where each element
 a reference to a hash where the following keys are defined:
 rundate has a value which is a Timestamp
 id has a value which is a gapfill_id
-gapfill has a value which is a ref
-media has a value which is a ref
+ref has a value which is a ref
+media_ref has a value which is a ref
 integrated has a value which is a bool
 integrated_solution has a value which is an int
 solution_reactions has a value which is a reference to a list where each element is a reference to a list where each element is a gapfill_reaction
@@ -2655,9 +2683,9 @@ solution_reactions has a value which is a reference to a list where each element
 a reference to a hash where the following keys are defined:
 rundate has a value which is a Timestamp
 id has a value which is a fba_id
-fba has a value which is a ref
+ref has a value which is a ref
 objective has a value which is a float
-media has a value which is a ref
+media_ref has a value which is a ref
 objective_function has a value which is a string
 
 </pre>
@@ -2669,9 +2697,9 @@ objective_function has a value which is a string
 a reference to a hash where the following keys are defined:
 rundate has a value which is a Timestamp
 id has a value which is a fba_id
-fba has a value which is a ref
+ref has a value which is a ref
 objective has a value which is a float
-media has a value which is a ref
+media_ref has a value which is a ref
 objective_function has a value which is a string
 
 
@@ -2739,7 +2767,7 @@ direction has a value which is a reaction_direction
 a reference to a hash where the following keys are defined:
 rundate has a value which is a Timestamp
 id has a value which is an edit_id
-edit has a value which is a ref
+ref has a value which is a ref
 reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
 altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
 altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
@@ -2758,7 +2786,7 @@ altered_biomass_compound has a value which is a reference to a hash where the ke
 a reference to a hash where the following keys are defined:
 rundate has a value which is a Timestamp
 id has a value which is an edit_id
-edit has a value which is a ref
+ref has a value which is a ref
 reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
 altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
 altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
@@ -2787,24 +2815,30 @@ altered_biomass_compound has a value which is a reference to a hash where the ke
 
 <pre>
 a reference to a hash where the following keys are defined:
+rundate has a value which is a Timestamp
 id has a value which is a string
 source has a value which is a string
 source_id has a value which is a string
 name has a value which is a string
 type has a value which is a string
-genome has a value which is a ref
-template has a value which is a ref
+ref has a value which is a ref
+genome_ref has a value which is a ref
+template_ref has a value which is a ref
 fba_count has a value which is an int
 integrated_gapfills has a value which is an int
 unintegrated_gapfills has a value which is an int
 gene_associated_reactions has a value which is an int
 gapfilled_reactions has a value which is an int
-spontaneous_reactions has a value which is an int
 num_genes has a value which is an int
 num_compounds has a value which is an int
 num_reactions has a value which is an int
 num_biomasses has a value which is an int
 num_biomass_compounds has a value which is an int
+num_compartments has a value which is an int
+biomasses has a value which is a reference to a list where each element is a string
+reactions has a value which is a reference to a list where each element is a string
+genes has a value which is a reference to a list where each element is a string
+biomasscpds has a value which is a reference to a list where each element is a string
 
 </pre>
 
@@ -2813,24 +2847,30 @@ num_biomass_compounds has a value which is an int
 =begin text
 
 a reference to a hash where the following keys are defined:
+rundate has a value which is a Timestamp
 id has a value which is a string
 source has a value which is a string
 source_id has a value which is a string
 name has a value which is a string
 type has a value which is a string
-genome has a value which is a ref
-template has a value which is a ref
+ref has a value which is a ref
+genome_ref has a value which is a ref
+template_ref has a value which is a ref
 fba_count has a value which is an int
 integrated_gapfills has a value which is an int
 unintegrated_gapfills has a value which is an int
 gene_associated_reactions has a value which is an int
 gapfilled_reactions has a value which is an int
-spontaneous_reactions has a value which is an int
 num_genes has a value which is an int
 num_compounds has a value which is an int
 num_reactions has a value which is an int
 num_biomasses has a value which is an int
 num_biomass_compounds has a value which is an int
+num_compartments has a value which is an int
+biomasses has a value which is a reference to a list where each element is a string
+reactions has a value which is a reference to a list where each element is a string
+genes has a value which is a reference to a list where each element is a string
+biomasscpds has a value which is a reference to a list where each element is a string
 
 
 =end text
