@@ -474,9 +474,10 @@ sub ModelReconstruction {
 	my $folder = $parameters->{output_path}.".".$parameters->{output_file};
     my $outputfiles = [];
    	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
+    my $genomeref = $folder."/".$genome->id().".genome";
+    $self->save_object($genomeref,$genome,"genome");
+#    $mdl->genome_ref($genomeref);
     if ($parameters->{probanno} == 1) {
-	    my $genomeref = $folder."/".$genome->id().".genome";
-	    $self->save_object($genomeref,$genome,"genome");
     	my $rxnprobsref = $folder."/".$genome->id().".rxnprobs";
     	my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$genomeref." ".$rxnprobsref." --token '".$self->token()."'";
     	$log->info("Calculating reaction likelihoods with command: ".$cmd);

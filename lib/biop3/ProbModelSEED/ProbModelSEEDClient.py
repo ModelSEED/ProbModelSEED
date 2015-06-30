@@ -165,11 +165,6 @@ class ProbModelSEED(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
 
-    def print_model_stats(self, input):
-        resp = self._call('ProbModelSEED.print_model_stats',
-                          [input])
-        return resp[0]
-
     def list_gapfill_solutions(self, input):
         resp = self._call('ProbModelSEED.list_gapfill_solutions',
                           [input])

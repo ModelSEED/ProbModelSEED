@@ -28,7 +28,6 @@ has 'config' => (is => 'ro', required => 1, builder => '_build_config');
 our $CallContext;
 
 our %return_counts = (
-        'print_model_stats' => 1,
         'list_gapfill_solutions' => 1,
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
@@ -47,7 +46,6 @@ our %return_counts = (
 );
 
 our %method_authentication = (
-        'print_model_stats' => 'required',
         'list_gapfill_solutions' => 'required',
         'manage_gapfill_solutions' => 'required',
         'list_fba_studies' => 'required',
@@ -69,7 +67,6 @@ sub _build_valid_methods
 {
     my($self) = @_;
     my $methods = {
-        'print_model_stats' => 1,
         'list_gapfill_solutions' => 1,
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
@@ -230,20 +227,6 @@ sub encode_output_from_exception {
     return $self->encode_output_from_object($json_error);
 }
 
-sub get_package_isa {
-    my ($self, $module) = @_;
-    my $original_isa;
-    { no strict 'refs'; $original_isa = \@{"${module}::ISA"}; }
-    my @new_isa = @$original_isa;
-
-    my $base = $self->package_base;
-    if (not $module->isa($base)) {
-        Class::Load::load_class($base);
-        push(@new_isa, $base);
-    }
-    return \@new_isa;
-}
-
 sub trim {
     my ($str) = @_;
     if (!(defined $str)) {
@@ -331,8 +314,7 @@ sub call_method {
 	    my ($t, $us) = &$get_time();
 	    $us = sprintf("%06d", $us);
 	    my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
-	    my $hostname = $ctx->hostname;
-	    $tag = "S:$hostname:$$:$ts";
+	    $tag = "S:$self->{hostname}:$$:$ts";
 	}
 	local $ENV{KBRPC_TAG} = $tag;
 	my $kb_metadata = $self->_plack_req->header("Kbrpc-Metadata");
