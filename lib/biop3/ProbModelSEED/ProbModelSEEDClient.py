@@ -109,7 +109,7 @@ class ProbModelSEED(object):
                  password=None, token=None, ignore_authrc=False,
                  trust_all_ssl_certificates=False):
         if url is None:
-            raise ValueError('A url is required')
+            url = 'http://p3.theseed.org/services/ProbModelSEED'
         scheme, _, _, _, _, _ = _urlparse.urlparse(url)
         if scheme not in _URL_SCHEME:
             raise ValueError(url + " isn't a valid http url")
@@ -197,6 +197,11 @@ class ProbModelSEED(object):
 
     def export_media(self, input):
         resp = self._call('ProbModelSEED.export_media',
+                          [input])
+        return resp[0]
+
+    def get_model(self, input):
+        resp = self._call('ProbModelSEED.get_model',
                           [input])
         return resp[0]
 

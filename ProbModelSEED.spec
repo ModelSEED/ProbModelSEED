@@ -38,6 +38,12 @@ module ProbModelSEED {
     /* ID of compartment in model */
     typedef string compartment_id;
     
+	/* ID of gene in model */
+	typedef string gene_id;
+
+	/* ID of biomass reaction in model */
+	typedef string biomass_id;
+
     /* An enum of directions for reactions [</=/>]; < = reverse, = = reversible, > = forward*/
     typedef string reaction_direction;
     
@@ -144,6 +150,47 @@ module ProbModelSEED {
 		list<string> genes;
 		list<string> biomasscpds;
     } ModelStats;
+
+	typedef structure {
+		reaction_id id;
+		string name;
+		string definition;
+		string gpr;
+		list<gene_id> genes;
+	} model_reaction;
+
+	typedef structure {
+		compound_id id;
+		string name;
+		string formula;
+		float charge;
+	} model_compound;
+
+	typedef structure {
+		gene_id id;
+		list<reaction_id> reactions;
+	} model_gene;
+
+	typedef structure {
+		compartment_id id;
+		string name;
+		float pH;
+		float potential;
+	} model_compartment;
+
+	typedef structure {
+		biomass_id id;
+		list<tuple<compound_id compound, float coefficient, compartment_id compartment>> compounds;
+	} model_biomass;
+
+	typedef structure {
+		ref ref;
+		list<model_reaction> reactions;
+		list<model_compound> compounds;
+		list<model_gene> genes;
+		list<model_compartment> compartments;
+		list<model_biomass> biomasses;
+	} model_data;
     
     /* ObjectMeta: tuple containing information about an object in the workspace 
 
@@ -290,7 +337,21 @@ module ProbModelSEED {
 	/*********************************************************************************
     Functions for managing models
    	*********************************************************************************/
-		
+
+	/*
+		FUNCTION: get_model
+		DESCRIPTION: This function gets model data
+
+		REQUIRED INPUTS:
+		ref model - reference to model to get
+
+	*/		
+	typedef structure {
+		ref model;
+	} get_model_params;
+	authentication required;
+	funcdef get_model(get_model_params input) returns (model_data output);
+
 	/* 
     	FUNCTION: delete_model
     	DESCRIPTION: This function deletes a model specified by the user

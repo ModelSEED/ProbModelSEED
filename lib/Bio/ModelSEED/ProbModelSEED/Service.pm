@@ -6,6 +6,7 @@ use Moose;
 use POSIX;
 use JSON;
 use Bio::KBase::Log;
+use Class::Load qw();
 use Config::Simple;
 my $get_time = sub { time, 0 };
 eval {
@@ -34,6 +35,7 @@ our %return_counts = (
         'delete_fba_studies' => 1,
         'export_model' => 1,
         'export_media' => 1,
+        'get_model' => 1,
         'delete_model' => 1,
         'list_models' => 1,
         'list_model_edits' => 1,
@@ -52,6 +54,7 @@ our %method_authentication = (
         'delete_fba_studies' => 'required',
         'export_model' => 'required',
         'export_media' => 'required',
+        'get_model' => 'required',
         'delete_model' => 'required',
         'list_models' => 'required',
         'list_model_edits' => 'required',
@@ -73,6 +76,7 @@ sub _build_valid_methods
         'delete_fba_studies' => 1,
         'export_model' => 1,
         'export_media' => 1,
+        'get_model' => 1,
         'delete_model' => 1,
         'list_models' => 1,
         'list_model_edits' => 1,
@@ -158,6 +162,23 @@ sub _build_loggers
     return $loggers;
 }
 
+#
+# Override method from RPC::Any::Server::JSONRPC 
+# to eliminate the deprecation warning for Class::MOP::load_class.
+#
+sub _default_error {
+    my ($self, %params) = @_;
+    my $version = $self->default_version;
+    $version =~ s/\./_/g;
+    my $error_class = "JSON::RPC::Common::Procedure::Return::Version_${version}::Error";
+    Class::Load::load_class($error_class);
+    my $error = $error_class->new(%params);
+    my $return_class = "JSON::RPC::Common::Procedure::Return::Version_$version";
+    Class::Load::load_class($return_class);
+    return $return_class->new(error => $error);
+}
+
+
 #override of RPC::Any::Server
 sub handle_error {
     my ($self, $error) = @_;
@@ -207,6 +228,20 @@ sub encode_output_from_exception {
         $json_error = $self->_default_error(%error_params);
     }
     return $self->encode_output_from_object($json_error);
+}
+
+sub get_package_isa {
+    my ($self, $module) = @_;
+    my $original_isa;
+    { no strict 'refs'; $original_isa = \@{"${module}::ISA"}; }
+    my @new_isa = @$original_isa;
+
+    my $base = $self->package_base;
+    if (not $module->isa($base)) {
+        Class::Load::load_class($base);
+        push(@new_isa, $base);
+    }
+    return \@new_isa;
 }
 
 sub trim {
@@ -296,7 +331,8 @@ sub call_method {
 	    my ($t, $us) = &$get_time();
 	    $us = sprintf("%06d", $us);
 	    my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
-	    $tag = "S:$self->{hostname}:$$:$ts";
+	    my $hostname = $ctx->hostname;
+	    $tag = "S:$hostname:$$:$ts";
 	}
 	local $ENV{KBRPC_TAG} = $tag;
 	my $kb_metadata = $self->_plack_req->header("Kbrpc-Metadata");
@@ -405,7 +441,7 @@ sub get_method
 			     "There is no method package named '$package'.");
 	}
 	
-	Class::MOP::load_class($module);
+	Class::Load::load_class($module);
     }
     
     if (!$module->can($method)) {

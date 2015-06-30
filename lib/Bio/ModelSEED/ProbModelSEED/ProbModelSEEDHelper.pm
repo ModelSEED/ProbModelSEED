@@ -152,6 +152,20 @@ sub delete_model {
 	return $output;
 }
 
+=head3 get_model_data
+
+Definition:
+	model_data = $self->get_model(ref modelref);
+Description:
+	Gets the specified model
+		
+=cut
+sub get_model_data {
+	my ($self,$modelref) = @_;
+	my $model = $self->get_model($modelref);
+	return $model->export({format => "condensed"});
+}
+
 =head3 classify_genome
 
 Definition:

@@ -3,7 +3,7 @@ use strict;
 use Bio::KBase::Exceptions;
 # Use Semantic Versioning (2.0.0-rc.1)
 # http://semver.org 
-our $VERSION = "0.1.0";
+our $VERSION = "0.2.0";
 
 =head1 NAME
 
@@ -334,7 +334,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	source_id has a value which is a string
 	name has a value which is a string
 	type has a value which is a string
-	ref has a value which is a ref
 	genome_ref has a value which is a ref
 	template_ref has a value which is a ref
 	fba_count has a value which is an int
@@ -352,7 +351,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	reactions has a value which is a reference to a list where each element is a string
 	genes has a value which is a reference to a list where each element is a string
 	biomasscpds has a value which is a reference to a list where each element is a string
-Timestamp is a string
 
 </pre>
 
@@ -372,7 +370,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	source_id has a value which is a string
 	name has a value which is a string
 	type has a value which is a string
-	ref has a value which is a ref
 	genome_ref has a value which is a ref
 	template_ref has a value which is a ref
 	fba_count has a value which is an int
@@ -390,7 +387,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	reactions has a value which is a reference to a list where each element is a string
 	genes has a value which is a reference to a list where each element is a string
 	biomasscpds has a value which is a reference to a list where each element is a string
-Timestamp is a string
 
 
 =end text
@@ -1107,6 +1103,137 @@ sub export_media
 
 
 
+=head2 get_model
+
+  $output = $obj->get_model($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a get_model_params
+$output is a model_data
+get_model_params is a reference to a hash where the following keys are defined:
+	model has a value which is a ref
+ref is a string
+model_data is a reference to a hash where the following keys are defined:
+	ref has a value which is a ref
+	reactions has a value which is a reference to a list where each element is a model_reaction
+	compounds has a value which is a reference to a list where each element is a model_compound
+	genes has a value which is a reference to a list where each element is a model_gene
+	compartments has a value which is a reference to a list where each element is a model_compartment
+	biomasses has a value which is a reference to a list where each element is a model_biomass
+model_reaction is a reference to a hash where the following keys are defined:
+	id has a value which is a reaction_id
+	gpr has a value which is a string
+	genes has a value which is a reference to a list where each element is a gene_id
+reaction_id is a string
+gene_id is a string
+model_compound is a reference to a hash where the following keys are defined:
+	id has a value which is a compound_id
+compound_id is a string
+model_gene is a reference to a hash where the following keys are defined:
+	id has a value which is a gene_id
+	reactions has a value which is a reference to a list where each element is a reaction_id
+model_compartment is a reference to a hash where the following keys are defined:
+	id has a value which is a compartment_id
+compartment_id is a string
+model_biomass is a reference to a hash where the following keys are defined:
+	id has a value which is a biomass_id
+	cpd_id has a value which is a compound_id
+	coefficient has a value which is a float
+	compartment_id has a value which is a compartment_id
+biomass_id is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a get_model_params
+$output is a model_data
+get_model_params is a reference to a hash where the following keys are defined:
+	model has a value which is a ref
+ref is a string
+model_data is a reference to a hash where the following keys are defined:
+	ref has a value which is a ref
+	reactions has a value which is a reference to a list where each element is a model_reaction
+	compounds has a value which is a reference to a list where each element is a model_compound
+	genes has a value which is a reference to a list where each element is a model_gene
+	compartments has a value which is a reference to a list where each element is a model_compartment
+	biomasses has a value which is a reference to a list where each element is a model_biomass
+model_reaction is a reference to a hash where the following keys are defined:
+	id has a value which is a reaction_id
+	gpr has a value which is a string
+	genes has a value which is a reference to a list where each element is a gene_id
+reaction_id is a string
+gene_id is a string
+model_compound is a reference to a hash where the following keys are defined:
+	id has a value which is a compound_id
+compound_id is a string
+model_gene is a reference to a hash where the following keys are defined:
+	id has a value which is a gene_id
+	reactions has a value which is a reference to a list where each element is a reaction_id
+model_compartment is a reference to a hash where the following keys are defined:
+	id has a value which is a compartment_id
+compartment_id is a string
+model_biomass is a reference to a hash where the following keys are defined:
+	id has a value which is a biomass_id
+	cpd_id has a value which is a compound_id
+	coefficient has a value which is a float
+	compartment_id has a value which is a compartment_id
+biomass_id is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub get_model
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to get_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'get_model');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN get_model
+    $input = $self->initialize_call($input);
+    $input = $self->helper()->validate_args($input,["model"],{});
+    $output = $self->helper()->get_model_data($input->{model});
+    #END get_model
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to get_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'get_model');
+    }
+    return($output);
+}
+
+
+
+
 =head2 delete_model
 
   $output = $obj->delete_model($input)
@@ -1212,6 +1339,7 @@ sub delete_model
     my($output);
     #BEGIN delete_model
     $input = $self->initialize_call($input);
+    $input = $self->helper()->validate_args($input,["model"],{});
     $output = $self->helper()->delete_model($input->{model});
     #END delete_model
     my @_bad_returns;
@@ -1246,7 +1374,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	source_id has a value which is a string
 	name has a value which is a string
 	type has a value which is a string
-	ref has a value which is a ref
 	genome_ref has a value which is a ref
 	template_ref has a value which is a ref
 	fba_count has a value which is an int
@@ -1264,7 +1391,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	reactions has a value which is a reference to a list where each element is a string
 	genes has a value which is a reference to a list where each element is a string
 	biomasscpds has a value which is a reference to a list where each element is a string
-Timestamp is a string
 ref is a string
 
 </pre>
@@ -1281,7 +1407,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	source_id has a value which is a string
 	name has a value which is a string
 	type has a value which is a string
-	ref has a value which is a ref
 	genome_ref has a value which is a ref
 	template_ref has a value which is a ref
 	fba_count has a value which is an int
@@ -1299,7 +1424,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	reactions has a value which is a reference to a list where each element is a string
 	genes has a value which is a reference to a list where each element is a string
 	biomasscpds has a value which is a reference to a list where each element is a string
-Timestamp is a string
 ref is a string
 
 
@@ -2422,6 +2546,68 @@ a string
 
 
 
+=head2 gene_id
+
+=over 4
+
+
+
+=item Description
+
+ID of gene in model
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 biomass_id
+
+=over 4
+
+
+
+=item Description
+
+ID of biomass reaction in model
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
 =head2 reaction_direction
 
 =over 4
@@ -2998,7 +3184,6 @@ source has a value which is a string
 source_id has a value which is a string
 name has a value which is a string
 type has a value which is a string
-ref has a value which is a ref
 genome_ref has a value which is a ref
 template_ref has a value which is a ref
 fba_count has a value which is an int
@@ -3030,7 +3215,6 @@ source has a value which is a string
 source_id has a value which is a string
 name has a value which is a string
 type has a value which is a string
-ref has a value which is a ref
 genome_ref has a value which is a ref
 template_ref has a value which is a ref
 fba_count has a value which is an int
@@ -3048,6 +3232,208 @@ biomasses has a value which is a reference to a list where each element is a str
 reactions has a value which is a reference to a list where each element is a string
 genes has a value which is a reference to a list where each element is a string
 biomasscpds has a value which is a reference to a list where each element is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 model_reaction
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a reaction_id
+gpr has a value which is a string
+genes has a value which is a reference to a list where each element is a gene_id
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a reaction_id
+gpr has a value which is a string
+genes has a value which is a reference to a list where each element is a gene_id
+
+
+=end text
+
+=back
+
+
+
+=head2 model_compound
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a compound_id
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a compound_id
+
+
+=end text
+
+=back
+
+
+
+=head2 model_gene
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a gene_id
+reactions has a value which is a reference to a list where each element is a reaction_id
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a gene_id
+reactions has a value which is a reference to a list where each element is a reaction_id
+
+
+=end text
+
+=back
+
+
+
+=head2 model_compartment
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a compartment_id
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a compartment_id
+
+
+=end text
+
+=back
+
+
+
+=head2 model_biomass
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a biomass_id
+cpd_id has a value which is a compound_id
+coefficient has a value which is a float
+compartment_id has a value which is a compartment_id
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a biomass_id
+cpd_id has a value which is a compound_id
+coefficient has a value which is a float
+compartment_id has a value which is a compartment_id
+
+
+=end text
+
+=back
+
+
+
+=head2 model_data
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+ref has a value which is a ref
+reactions has a value which is a reference to a list where each element is a model_reaction
+compounds has a value which is a reference to a list where each element is a model_compound
+genes has a value which is a reference to a list where each element is a model_gene
+compartments has a value which is a reference to a list where each element is a model_compartment
+biomasses has a value which is a reference to a list where each element is a model_biomass
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+ref has a value which is a ref
+reactions has a value which is a reference to a list where each element is a model_reaction
+compounds has a value which is a reference to a list where each element is a model_compound
+genes has a value which is a reference to a list where each element is a model_gene
+compartments has a value which is a reference to a list where each element is a model_compartment
+biomasses has a value which is a reference to a list where each element is a model_biomass
 
 
 =end text
@@ -3409,7 +3795,7 @@ to_shock has a value which is a bool
 
 
 
-=head2 delete_model_params
+=head2 get_model_params
 
 =over 4
 
@@ -3420,6 +3806,45 @@ to_shock has a value which is a bool
 ********************************************************************************
     Functions for managing models
    	********************************************************************************
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+model has a value which is a ref
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+model has a value which is a ref
+
+
+=end text
+
+=back
+
+
+
+=head2 delete_model_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: delete_model
+DESCRIPTION: This function deletes a model specified by the user
+
+REQUIRED INPUTS:
+    ref model - reference to model to delete
 
 
 =item Definition
