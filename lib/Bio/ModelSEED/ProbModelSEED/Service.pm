@@ -6,6 +6,7 @@ use Moose;
 use POSIX;
 use JSON;
 use Bio::KBase::Log;
+use Class::Load qw();
 use Config::Simple;
 my $get_time = sub { time, 0 };
 eval {
@@ -27,13 +28,13 @@ has 'config' => (is => 'ro', required => 1, builder => '_build_config');
 our $CallContext;
 
 our %return_counts = (
-        'print_model_stats' => 1,
         'list_gapfill_solutions' => 1,
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
         'delete_fba_studies' => 1,
         'export_model' => 1,
         'export_media' => 1,
+        'get_model' => 1,
         'delete_model' => 1,
         'list_models' => 1,
         'list_model_edits' => 1,
@@ -45,13 +46,13 @@ our %return_counts = (
 );
 
 our %method_authentication = (
-        'print_model_stats' => 'required',
         'list_gapfill_solutions' => 'required',
         'manage_gapfill_solutions' => 'required',
         'list_fba_studies' => 'required',
         'delete_fba_studies' => 'required',
         'export_model' => 'required',
         'export_media' => 'required',
+        'get_model' => 'required',
         'delete_model' => 'required',
         'list_models' => 'required',
         'list_model_edits' => 'required',
@@ -66,13 +67,13 @@ sub _build_valid_methods
 {
     my($self) = @_;
     my $methods = {
-        'print_model_stats' => 1,
         'list_gapfill_solutions' => 1,
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
         'delete_fba_studies' => 1,
         'export_model' => 1,
         'export_media' => 1,
+        'get_model' => 1,
         'delete_model' => 1,
         'list_models' => 1,
         'list_model_edits' => 1,
@@ -157,6 +158,23 @@ sub _build_loggers
     $loggers->{serverlog}->set_log_level(6);
     return $loggers;
 }
+
+#
+# Override method from RPC::Any::Server::JSONRPC 
+# to eliminate the deprecation warning for Class::MOP::load_class.
+#
+sub _default_error {
+    my ($self, %params) = @_;
+    my $version = $self->default_version;
+    $version =~ s/\./_/g;
+    my $error_class = "JSON::RPC::Common::Procedure::Return::Version_${version}::Error";
+    Class::Load::load_class($error_class);
+    my $error = $error_class->new(%params);
+    my $return_class = "JSON::RPC::Common::Procedure::Return::Version_$version";
+    Class::Load::load_class($return_class);
+    return $return_class->new(error => $error);
+}
+
 
 #override of RPC::Any::Server
 sub handle_error {
@@ -405,7 +423,7 @@ sub get_method
 			     "There is no method package named '$package'.");
 	}
 	
-	Class::MOP::load_class($module);
+	Class::Load::load_class($module);
     }
     
     if (!$module->can($method)) {

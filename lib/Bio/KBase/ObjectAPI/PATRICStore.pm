@@ -47,6 +47,7 @@ package Bio::KBase::ObjectAPI::PATRICStore;
 use Moose;
 use Bio::KBase::ObjectAPI::utilities;
 use Data::Dumper;
+use Log::Log4perl;
 
 use Class::Autouse qw(
     Bio::KBase::ObjectAPI::KBaseRegulation::Regulome
@@ -125,8 +126,8 @@ sub get_objects {
 	my ($self,$refs,$options) = @_;
 	#Checking cache for objects
 	my $newrefs = [];
-	my $solrrefs = [];
 	for (my $i=0; $i < @{$refs}; $i++) {
+		$refs->[$i] =~ s/\/+/\//g;
 		if (!defined($self->cache()->{$refs->[$i]}) || defined($options->{refreshcache})) {
     		if ($refs->[$i] =~ m/^PATRICSOLR:(.+)/) {
     			$self->cache()->{$refs->[$i]} = $self->genome_from_solr($1);
@@ -143,7 +144,7 @@ sub get_objects {
 		my $objdatas = $self->workspace()->get({adminmode => $self->adminmode(),objects => $newrefs});
 		my $object;
 		for (my $i=0; $i < @{$objdatas}; $i++) {
-			$self->cache()->{$objdatas->[$i]->[0]->[4]} = $objdatas->[$i];
+			$self->cache()->{$objdatas->[$i]->[0]->[4]} = $objdatas->[$i]; # Add UUID key to cache
 			if (defined($objdatas->[$i]->[0]->[11]) && length($objdatas->[$i]->[0]->[11]) > 0) {
 				my $ua = LWP::UserAgent->new();
 				my $res = $ua->get($objdatas->[$i]->[0]->[11]."?download",Authorization => "OAuth " . $self->workspace()->{token});

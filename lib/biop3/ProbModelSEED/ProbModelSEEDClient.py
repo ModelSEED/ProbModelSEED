@@ -109,7 +109,7 @@ class ProbModelSEED(object):
                  password=None, token=None, ignore_authrc=False,
                  trust_all_ssl_certificates=False):
         if url is None:
-            raise ValueError('A url is required')
+            url = 'http://p3.theseed.org/services/ProbModelSEED'
         scheme, _, _, _, _, _ = _urlparse.urlparse(url)
         if scheme not in _URL_SCHEME:
             raise ValueError(url + " isn't a valid http url")
@@ -165,11 +165,6 @@ class ProbModelSEED(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
 
-    def print_model_stats(self, input):
-        resp = self._call('ProbModelSEED.print_model_stats',
-                          [input])
-        return resp[0]
-
     def list_gapfill_solutions(self, input):
         resp = self._call('ProbModelSEED.list_gapfill_solutions',
                           [input])
@@ -197,6 +192,11 @@ class ProbModelSEED(object):
 
     def export_media(self, input):
         resp = self._call('ProbModelSEED.export_media',
+                          [input])
+        return resp[0]
+
+    def get_model(self, input):
+        resp = self._call('ProbModelSEED.get_model',
                           [input])
         return resp[0]
 
