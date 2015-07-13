@@ -109,7 +109,7 @@ class ProbModelSEED(object):
                  password=None, token=None, ignore_authrc=False,
                  trust_all_ssl_certificates=False):
         if url is None:
-            url = 'http://p3.theseed.org/services/ProbModelSEED'
+            raise ValueError('A url is required')
         scheme, _, _, _, _, _ = _urlparse.urlparse(url)
         if scheme not in _URL_SCHEME:
             raise ValueError(url + " isn't a valid http url")
@@ -217,6 +217,11 @@ class ProbModelSEED(object):
 
     def manage_model_edits(self, input):
         resp = self._call('ProbModelSEED.manage_model_edits',
+                          [input])
+        return resp[0]
+
+    def get_feature(self, input):
+        resp = self._call('ProbModelSEED.get_feature',
                           [input])
         return resp[0]
 
