@@ -1702,6 +1702,130 @@ sub manage_model_edits
 
 
 
+=head2 get_feature
+
+  $output = $obj->get_feature($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a get_feature_params
+$output is a feature_data
+get_feature_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+reference is a string
+feature_id is a string
+feature_data is a reference to a hash where the following keys are defined:
+	id has a value which is a feature_id
+	function has a value which is a string
+	protein_translation has a value which is a string
+	subsystems has a value which is a reference to a list where each element is a string
+	plant_similarities has a value which is a reference to a list where each element is a similarity
+	prokaryotic_similarities has a value which is a reference to a list where each element is a similarity
+similarity is a reference to a hash where the following keys are defined:
+	hit_id has a value which is a string
+	percent_id has a value which is a float
+	e_value has a value which is a float
+	bit_score has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a get_feature_params
+$output is a feature_data
+get_feature_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+reference is a string
+feature_id is a string
+feature_data is a reference to a hash where the following keys are defined:
+	id has a value which is a feature_id
+	function has a value which is a string
+	protein_translation has a value which is a string
+	subsystems has a value which is a reference to a list where each element is a string
+	plant_similarities has a value which is a reference to a list where each element is a similarity
+	prokaryotic_similarities has a value which is a reference to a list where each element is a similarity
+similarity is a reference to a hash where the following keys are defined:
+	hit_id has a value which is a string
+	percent_id has a value which is a float
+	e_value has a value which is a float
+	bit_score has a value which is an int
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub get_feature
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to get_feature:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'get_feature');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN get_feature
+    $input = $self->initialize_call($input);
+    $input = $self->helper()->validate_args($input,["genome","feature"],{});
+
+    my $genome = $self->get_object($input->{genome},"Genome");
+    if(!$genome){
+	$self->error("Genome not found using reference ".$input->{genome}."!");
+    }
+
+    my $found_ftr=undef;
+    foreach my $ftr (@{$genome->{features}}){
+	if($ftr->id() eq $input->{feature}){
+	    $found_ftr = $ftr;
+	}
+    }
+    if(!$found_ftr){
+	$self->error("Feature (".$input->{feature}.") not found in genome!");
+    }
+
+    #I will introduce separate code for finding and parsing blocks of similarities once I've loaded them into a workspace separately.
+    $found_ftr->{plant_similarities}=[];
+    $found_ftr->{prokaryotic_similarities}=[];
+
+    return $found_ftr;
+
+    #END get_feature
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to get_feature:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'get_feature');
+    }
+    return($output);
+}
+
+
+
+
 =head2 ModelReconstruction
 
   $output = $obj->ModelReconstruction($input)
@@ -3821,6 +3945,131 @@ a reference to a hash where the following keys are defined:
 model has a value which is a reference
 commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
 new_edit has a value which is an edit_data
+
+
+=end text
+
+=back
+
+
+
+=head2 similarity
+
+=over 4
+
+
+
+=item Description
+
+********************************************************************************
+	Functions corresponding to use of PlantSEED web-pages
+   	********************************************************************************
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+hit_id has a value which is a string
+percent_id has a value which is a float
+e_value has a value which is a float
+bit_score has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+hit_id has a value which is a string
+percent_id has a value which is a float
+e_value has a value which is a float
+bit_score has a value which is an int
+
+
+=end text
+
+=back
+
+
+
+=head2 feature_data
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a feature_id
+function has a value which is a string
+protein_translation has a value which is a string
+subsystems has a value which is a reference to a list where each element is a string
+plant_similarities has a value which is a reference to a list where each element is a similarity
+prokaryotic_similarities has a value which is a reference to a list where each element is a similarity
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a feature_id
+function has a value which is a string
+protein_translation has a value which is a string
+subsystems has a value which is a reference to a list where each element is a string
+plant_similarities has a value which is a reference to a list where each element is a similarity
+prokaryotic_similarities has a value which is a reference to a list where each element is a similarity
+
+
+=end text
+
+=back
+
+
+
+=head2 get_feature_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: get_feature
+DESCRIPTION: This function retrieves an individual Plant feature
+
+REQUIRED INPUTS:
+reference genome - reference of genome that contains feature
+feature_id feature - identifier of feature to get
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
 
 
 =end text

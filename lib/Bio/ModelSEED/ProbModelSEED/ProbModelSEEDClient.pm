@@ -1,6 +1,6 @@
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 
-use JSON::RPC::Client;
+use JSON::RPC::Legacy::Client;
 use POSIX;
 use strict;
 use Data::Dumper;
@@ -35,10 +35,6 @@ sub new
 {
     my($class, $url, @args) = @_;
     
-    if (!defined($url))
-    {
-	$url = 'http://p3.theseed.org/services/ProbModelSEED';
-    }
 
     my $self = {
 	client => Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient->new,
@@ -1456,6 +1452,121 @@ sub manage_model_edits
         Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method manage_model_edits",
 					    status_line => $self->{client}->status_line,
 					    method_name => 'manage_model_edits',
+				       );
+    }
+}
+
+
+
+=head2 get_feature
+
+  $output = $obj->get_feature($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a get_feature_params
+$output is a feature_data
+get_feature_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+reference is a string
+feature_id is a string
+feature_data is a reference to a hash where the following keys are defined:
+	id has a value which is a feature_id
+	function has a value which is a string
+	protein_translation has a value which is a string
+	subsystems has a value which is a reference to a list where each element is a string
+	plant_similarities has a value which is a reference to a list where each element is a similarity
+	prokaryotic_similarities has a value which is a reference to a list where each element is a similarity
+similarity is a reference to a hash where the following keys are defined:
+	hit_id has a value which is a string
+	percent_id has a value which is a float
+	e_value has a value which is a float
+	bit_score has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a get_feature_params
+$output is a feature_data
+get_feature_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+reference is a string
+feature_id is a string
+feature_data is a reference to a hash where the following keys are defined:
+	id has a value which is a feature_id
+	function has a value which is a string
+	protein_translation has a value which is a string
+	subsystems has a value which is a reference to a list where each element is a string
+	plant_similarities has a value which is a reference to a list where each element is a similarity
+	prokaryotic_similarities has a value which is a reference to a list where each element is a similarity
+similarity is a reference to a hash where the following keys are defined:
+	hit_id has a value which is a string
+	percent_id has a value which is a float
+	e_value has a value which is a float
+	bit_score has a value which is an int
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub get_feature
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function get_feature (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to get_feature:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'get_feature');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.get_feature",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'get_feature',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method get_feature",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'get_feature',
 				       );
     }
 }
@@ -3647,6 +3758,131 @@ new_edit has a value which is an edit_data
 
 
 
+=head2 similarity
+
+=over 4
+
+
+
+=item Description
+
+********************************************************************************
+	Functions corresponding to use of PlantSEED web-pages
+   	********************************************************************************
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+hit_id has a value which is a string
+percent_id has a value which is a float
+e_value has a value which is a float
+bit_score has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+hit_id has a value which is a string
+percent_id has a value which is a float
+e_value has a value which is a float
+bit_score has a value which is an int
+
+
+=end text
+
+=back
+
+
+
+=head2 feature_data
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a feature_id
+function has a value which is a string
+protein_translation has a value which is a string
+subsystems has a value which is a reference to a list where each element is a string
+plant_similarities has a value which is a reference to a list where each element is a similarity
+prokaryotic_similarities has a value which is a reference to a list where each element is a similarity
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a feature_id
+function has a value which is a string
+protein_translation has a value which is a string
+subsystems has a value which is a reference to a list where each element is a string
+plant_similarities has a value which is a reference to a list where each element is a similarity
+prokaryotic_similarities has a value which is a reference to a list where each element is a similarity
+
+
+=end text
+
+=back
+
+
+
+=head2 get_feature_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: get_feature
+DESCRIPTION: This function retrieves an individual Plant feature
+
+REQUIRED INPUTS:
+reference genome - reference of genome that contains feature
+feature_id feature - identifier of feature to get
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+
+
+=end text
+
+=back
+
+
+
 =head2 ModelReconstruction_params
 
 =over 4
@@ -3759,7 +3995,7 @@ model has a value which is a reference
 =cut
 
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient;
-use base 'JSON::RPC::Client';
+use base 'JSON::RPC::Legacy::Client';
 use POSIX;
 use strict;
 
@@ -3795,11 +4031,11 @@ sub call {
             return JSON::RPC::ServiceObject->new($result, $self->json);
         }
 
-        return JSON::RPC::ReturnObject->new($result, $self->json);
+        return JSON::RPC::Legacy::ReturnObject->new($result, $self->json);
     }
     elsif ($result->content_type eq 'application/json')
     {
-        return JSON::RPC::ReturnObject->new($result, $self->json);
+        return JSON::RPC::Legacy::ReturnObject->new($result, $self->json);
     }
     else {
         return;
@@ -3819,7 +4055,7 @@ sub _post {
             $self->id($obj->{id}) if ($obj->{id}); # if undef, it is notification.
         }
         else {
-            $obj->{id} = $self->id || ($self->id('JSON::RPC::Client'));
+            $obj->{id} = $self->id || ($self->id('JSON::RPC::Legacy::Client'));
         }
     }
     else {

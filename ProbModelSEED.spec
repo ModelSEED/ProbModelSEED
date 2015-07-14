@@ -393,6 +393,42 @@ module ProbModelSEED {
 	funcdef manage_model_edits(manage_model_edits_params input) returns (mapping<edit_id,edit_data> output);
 
 	/*********************************************************************************
+	Functions corresponding to use of PlantSEED web-pages
+   	*********************************************************************************/
+
+	typedef structure {
+        	string hit_id;
+        	float percent_id;
+        	float e_value; 
+        	int bit_score;
+    	} similarity;
+
+	typedef structure {
+	       feature_id id;
+               string function;
+               string protein_translation;
+               list<string> subsystems;
+               list<similarity> plant_similarities;
+               list<similarity> prokaryotic_similarities;
+	} feature_data;
+    
+	/*
+		FUNCTION: get_feature
+		DESCRIPTION: This function retrieves an individual Plant feature
+
+		REQUIRED INPUTS:
+		reference genome - reference of genome that contains feature
+		feature_id feature - identifier of feature to get
+
+	*/		
+	typedef structure {
+		reference genome;
+		feature_id feature;
+	} get_feature_params;
+	authentication required;
+	funcdef get_feature(get_feature_params input) returns (feature_data output);
+
+	/*********************************************************************************
 	Functions corresponding to modeling apps
    	*********************************************************************************/
 	/* 
