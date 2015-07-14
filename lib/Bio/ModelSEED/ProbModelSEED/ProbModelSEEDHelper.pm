@@ -32,7 +32,7 @@ sub adminmode {
 }
 
 #****************************************************************************
-#Workspace interaction functions
+#Data retrieval and storage functions functions
 #****************************************************************************
 sub save_object {
 	my($self, $ref,$data,$type,$metadata) = @_;
@@ -89,6 +89,22 @@ sub get_model_meta {
     }
 	return $metas->[0]->[0];
 }
+
+#This function retrieves or sets the biochemistry object in the server memory, making retrieval of biochemsitry very fast
+sub biochemistry {
+	my($self,$bio) = @_;
+	if (defined($bio)) {
+		#In this case, the cache is being overwritten with an existing biochemistry object (e.g. ProbModelSEED servers will call this)
+		$self->{_cached_biochemistry} = $bio;
+		$self->PATRICStore()->cache()->{"/chenry/public/modelsupport/biochemistry/default.biochem"}->[0] = $bio->wsmeta();
+		$self->PATRICStore()->cache()->{"/chenry/public/modelsupport/biochemistry/default.biochem"}->[1] = $bio;
+	}
+	if (!defined($self->{_cached_biochemistry})) {
+		$self->{_cached_biochemistry} = $self->get_object("/chenry/public/modelsupport/biochemistry/default.biochem","biochemistry");		
+	}
+	return $self->{_cached_biochemistry};
+}
+
 sub workspace_service {
 	my($self) = @_;
 	if (!defined($self->{_workspace_service})) {
@@ -99,7 +115,17 @@ sub workspace_service {
 sub PATRICStore {
 	my($self) = @_;
 	if (!defined($self->{_PATRICStore})) {
-		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({data_api_url => $self->{_params}->{data_api_url},workspace => $self->workspace_service(),adminmode => $self->{_params}->{adminmode}});
+		my $cachetarg = {};
+		for (my $i=0; $i < @{$self->{_params}->{cache_targets}}; $i++) {
+			$cachetarg->{$self->{_params}->{cache_targets}->[$i]} = 1;
+		}
+		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({
+			data_api_url => $self->{_params}->{data_api_url},
+			workspace => $self->workspace_service(),
+			adminmode => $self->{_params}->{adminmode},
+			file_cache => $self->{_params}->{file_cache},
+    		cache_targets => $cachetarg
+		});
 	}
 	return $self->{_PATRICStore};
 }
@@ -820,23 +846,23 @@ sub new {
     my $self = {};
     bless $self, $class;
     $parameters = $self->validate_args($parameters,["token","username","fbajobcache","fbajobdir","mfatoolkitbin",],{
-    	logfile => undef,
     	data_api_url => "https://www.patricbrc.org/api/",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
     	"shock-url" => "http://p3.theseed.org/services/shock_api",
     	adminmode => 0,
     	method => "unknown",
-    	run_as_app => 0
+    	run_as_app => 0,
+    	file_cache => undef,
+    	cache_targets => []
     });
     $self->{_params} = $parameters;
-    if (!defined($parameters->{logfile})) {
-    	$parameters->{logfile} = $self->{_params}->{fbajobdir}."log.conf";
-    }
     Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
     Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($self->{_params}->{fbajobdir});
     Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($self->{_params}->{mfatoolkitbin});
     if (!-e Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf") {
-    	File::Path::mkpath (Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY());
+    	if (!-d Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()) {
+    		File::Path::mkpath (Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY());
+    	}
     	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf",[
 	    	"############################################################",
 			"# A simple root logger with a Log::Log4perl::Appender::File ",
@@ -852,7 +878,7 @@ sub new {
 			"log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n",
     	]);
     }
-    Log::Log4perl::init($parameters->{logfile});
+    Log::Log4perl::init(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf");
     return $self;
 }
 

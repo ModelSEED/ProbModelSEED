@@ -67,18 +67,18 @@
 				});
 			}
 		}
-		#$output = $self->test_harness("ModelReconstruction",{
-		#	genome => "/".$self->{auth}->[0]->{username}."/genomes/test/.Buchnera_aphidicola/Buchnera_aphidicola.genome",
-		#	fulldb => "0",
-		#	output_path => "/".$self->{auth}->[0]->{username}."/home/models",
-		#	output_file => "TestModel"
-		#});
 		$output = $self->test_harness("ModelReconstruction",{
-			genome => "PATRICSOLR:563178.138",
+			genome => "/".$self->{auth}->[0]->{username}."/genomes/test/.Buchnera_aphidicola/Buchnera_aphidicola.genome",
 			fulldb => "0",
 			output_path => "/".$self->{auth}->[0]->{username}."/home/models",
-			output_file => "PrivateGenomeModel"
+			output_file => "TestModel"
 		});
+		#$output = $self->test_harness("ModelReconstruction",{
+		#	genome => "PATRICSOLR:83333.84",
+		#	fulldb => "0",
+		#	output_path => "/".$self->{auth}->[0]->{username}."/home/models",
+		#	output_file => "PubGenomeModel"
+		#});
 		$output = $self->test_harness("list_models",undef);
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel"

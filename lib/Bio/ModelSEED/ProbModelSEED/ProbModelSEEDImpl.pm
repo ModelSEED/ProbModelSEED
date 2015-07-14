@@ -83,6 +83,7 @@ sub config {
 sub helper {
 	my ($self) = @_;
 	if (!defined($CallContext->{_helper})) {
+		my $targets = [split(/;/,$self->config()->{cache_targets})];
 		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 			token => $self->token(),
 			username => $self->user_id(),
@@ -94,7 +95,9 @@ sub helper {
 			"workspace-url" => $self->workspace_url(),
 			"shock-url" => $self->config()->{shock_url},
 			adminmode => $self->adminmode(),
-			method => $self->current_method()
+			method => $self->current_method(),
+			file_cache => $self->config()->{file_cache},
+			cache_targets => $targets
 		});
 	}
 	return $CallContext->{_helper};
@@ -297,6 +300,7 @@ sub new
 		"workspace-url" => "http://p3.theseed.org/services/Workspace",
 		"mssserver-url" => "http://bio-data-1.mcs.anl.gov/services/ms_fba",
 	});
+	print Data::Dumper->Dump([$params]);
 	$self->{_config} = $params;
     #END_CONSTRUCTOR
 

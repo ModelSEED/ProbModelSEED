@@ -21,7 +21,16 @@ my $paths = Bio::P3::Workspace::ScriptHelpers::process_paths([$opt->{path}]);
 $opt->{path} = $paths->[0];
 $paths = Bio::P3::Workspace::ScriptHelpers::process_paths([$ARGV[0]]);
 my $genome = $paths->[0];
-
+my $client = Bio::P3::Workspace::ScriptHelpers::msClient();
+my $output = $client->ModelReconstruction({
+	genome => $genome,
+	template_model => $opt->{template},
+	fulldb => $opt->{fulldb},
+	output_path => $opt->{path},
+	output_file => $opt->{name}
+});
+print Data::Dumper->Dump($output)."\n";
+exit();
 print Bio::P3::Workspace::ScriptHelpers::appurl()."\n";
 
 my $client = Bio::KBase::AppService::Client->new(Bio::P3::Workspace::ScriptHelpers::appurl(),token => Bio::P3::Workspace::ScriptHelpers::token());
@@ -33,6 +42,7 @@ my $task = $client->start_app("ModelReconstruction",{
 	output_file => $opt->{name}
 },$opt->{path});
 while ($task->{status} ne "failed" && $task->{status} ne "completed") {
+	sleep(3);
 	my $res = $client->query_tasks([$task->{id}]);
 	$task = $res->{$task->{id}};
 	print $task->{status}."\n";

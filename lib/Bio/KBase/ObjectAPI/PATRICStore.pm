@@ -103,6 +103,8 @@ has adminmode => ( is => 'rw', isa => 'Num',default => 0);
 has setowner => ( is => 'rw', isa => 'Str');
 has provenance => ( is => 'rw', isa => 'ArrayRef',default => sub { return []; });
 has user_override => ( is => 'rw', isa => 'Str',default => "");
+has file_cache => ( is => 'rw', isa => 'Str',default => "");
+has cache_targets => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 
 #***********************************************************************************************************
 # BUILDERS:
@@ -120,6 +122,11 @@ sub object_meta {
 	return $self->cache()->{$ref}->[0];
 }
 
+sub get_object {
+    my ($self,$ref,$options) = @_;
+    return $self->get_objects([$ref],$options)->[0];
+}
+
 sub get_objects {
 	my ($self,$refs,$options) = @_;
 	#Checking cache for objects
@@ -132,8 +139,19 @@ sub get_objects {
     			$self->cache()->{$refs->[$i]}->[1]->parent($self);
     			$self->cache()->{$refs->[$i]}->[1]->wsmeta($self->cache()->{$refs->[$i]}->[0]);
     			$self->cache()->{$refs->[$i]}->[1]->_reference($refs->[$i]."||");
+    		} elsif ($refs->[$i] =~ m/^FILE:(.+)/) {
+    			$self->cache()->{$refs->[$i]} = $self->object_from_file($1);
+    			$self->cache()->{$refs->[$i]}->[1]->parent($self);
+    			$self->cache()->{$refs->[$i]}->[1]->wsmeta($self->cache()->{$refs->[$i]}->[0]);
+    			$self->cache()->{$refs->[$i]}->[1]->_reference($refs->[$i]."||");
     		} else {
-    			push(@{$newrefs},$refs->[$i]);
+    			#Checking file cache for object
+    			my $output = $self->read_object_from_file_cache($refs->[$i]);
+    			if (defined($output)) {
+    				$self->process_object($output->[0],$output->[1]);
+    			} else {
+    				push(@{$newrefs},$refs->[$i]);
+    			}
     		}
     	}
 	}
@@ -142,30 +160,7 @@ sub get_objects {
 		my $objdatas = $self->workspace()->get({adminmode => $self->adminmode(),objects => $newrefs});
 		my $object;
 		for (my $i=0; $i < @{$objdatas}; $i++) {
-			$self->cache()->{$objdatas->[$i]->[0]->[4]} = $objdatas->[$i];
-			if (defined($objdatas->[$i]->[0]->[11]) && length($objdatas->[$i]->[0]->[11]) > 0) {
-				my $ua = LWP::UserAgent->new();
-				my $res = $ua->get($objdatas->[$i]->[0]->[11]."?download",Authorization => "OAuth " . $self->workspace()->{token});
-				$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1] = $res->{_content};
-			}
-			if (defined($typetrans->{$objdatas->[$i]->[0]->[1]})) {
-				my $class = $typetrans->{$objdatas->[$i]->[0]->[1]};
-				if (defined($transform->{$objdatas->[$i]->[0]->[1]}->{in})) {
-	    			my $function = $transform->{$objdatas->[$i]->[0]->[1]}->{in};
-	    			$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1] = $self->$function($self->cache()->{$objdatas->[$i]->[0]->[4]}->[1],$self->cache()->{$objdatas->[$i]->[0]->[4]}->[0]);
-	    			if (ref($self->cache()->{$objdatas->[$i]->[0]->[4]}->[1]) eq "HASH") {
-	    				$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1] = $class->new($self->cache()->{$objdatas->[$i]->[0]->[4]}->[1]);
-	    			}
-				} else {
-					$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1] = $class->new(Bio::KBase::ObjectAPI::utilities::FROMJSON($self->cache()->{$objdatas->[$i]->[0]->[4]}->[1]));
-				}
-				$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1]->wsmeta($self->cache()->{$objdatas->[$i]->[0]->[4]}->[0]);
-				$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1]->parent($self);
-				$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1]->_reference($objdatas->[$i]->[0]->[2].$objdatas->[$i]->[0]->[0]."||");
-			} elsif (defined($jsontypes->{$objdatas->[$i]->[0]->[1]})) {
-				$self->cache()->{$objdatas->[$i]->[0]->[4]}->[1] = Bio::KBase::ObjectAPI::utilities::FROMJSON($self->cache()->{$objdatas->[$i]->[0]->[4]}->[1]);
-			}
-			$self->cache()->{$objdatas->[$i]->[0]->[2].$objdatas->[$i]->[0]->[0]} = $self->cache()->{$objdatas->[$i]->[0]->[4]};
+			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1]);
 		}
 	}
 	my $objs = [];
@@ -175,9 +170,72 @@ sub get_objects {
 	return $objs;
 }
 
-sub get_object {
-    my ($self,$ref,$options) = @_;
-    return $self->get_objects([$ref],$options)->[0];
+sub process_object {
+	my ($self,$meta,$data) = @_;
+	#Downloading object from shock if the object is in shock
+	$data = $self->download_object_from_shock($meta,$data);
+	#Writing target object to file cache if they are not already there
+	$self->write_object_to_file_cache($meta,$data);
+	#Handling all transforms of objects
+	if (defined($typetrans->{$meta->[1]})) {
+		my $class = $typetrans->{$meta->[1]};
+		if (defined($transform->{$meta->[1]}->{in})) {
+    		my $function = $transform->{$meta->[1]}->{in};
+    		$data = $self->$function($data,$meta);
+    		if (ref($data) eq "HASH") {
+    			$data = $class->new($data);
+    		}
+		} else {
+			$data = $class->new(Bio::KBase::ObjectAPI::utilities::FROMJSON($data));
+		}
+		$data->wsmeta($meta);
+		$data->parent($self);
+		$data->_reference($meta->[2].$meta->[0]."||");
+	} elsif (defined($jsontypes->{$meta->[1]})) {
+		$data = Bio::KBase::ObjectAPI::utilities::FROMJSON($data);
+	}
+	#Stashing objects into memmory cache based on uuid and workspace address
+	$self->cache()->{$meta->[4]} = [$meta,$data];
+	$self->cache()->{$meta->[2].$meta->[0]} = $self->cache()->{$meta->[4]};
+}
+
+#This function downloads an object from skock if it has a shock URL
+sub download_object_from_shock {
+	my ($self,$meta,$data) = @_;
+	if (defined($meta->[11]) && length($meta->[11]) > 0 && !defined($meta->[12])) {
+		my $ua = LWP::UserAgent->new();
+		my $res = $ua->get($meta->[11]."?download",Authorization => "OAuth " . $self->workspace()->{token});
+		$data = $res->{_content};
+	}
+	return $data;
+}
+
+#This function writes data to file cache if it's been flagged for local file caching
+sub write_object_to_file_cache {
+	my ($self,$meta,$data) = @_;
+	if (length($self->file_cache()) > 0 && defined($self->cache_targets()->{$meta->[2].$meta->[0]}) && !-e $self->file_cache()."/meta".$meta->[2].$meta->[0]) {
+		if (!-d $self->file_cache()."/meta/".$meta->[2]) {
+			File::Path::mkpath $self->file_cache()."/meta/".$meta->[2];
+		}
+		if (!-d $self->file_cache()."/data/".$meta->[2]) {
+			File::Path::mkpath $self->file_cache()."/data/".$meta->[2];
+		}
+		Bio::KBase::ObjectAPI::utilities::PRINTFILE($self->file_cache()."/meta".$meta->[2].$meta->[0],[Bio::KBase::ObjectAPI::utilities::TOJSON($meta)]);
+		Bio::KBase::ObjectAPI::utilities::PRINTFILE($self->file_cache()."/data".$meta->[2].$meta->[0],[$data]);
+	}
+}
+
+#This function writes data to file cache if it's been flagged for local file caching
+sub read_object_from_file_cache {
+	my ($self,$ref) = @_;
+	if (defined($self->cache_targets()->{$ref}) && -e $self->file_cache()."/meta".$ref) {
+		my $filearray = Bio::KBase::ObjectAPI::utilities::LOADFILE($self->file_cache()."/meta".$ref);
+		my $meta = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$filearray}));
+		$filearray = Bio::KBase::ObjectAPI::utilities::LOADFILE($self->file_cache()."/data".$ref);
+		my $data = join("\n",@{$filearray});
+		return [$meta,$data];
+	}
+	return undef;
 }
 
 sub save_object {
@@ -233,6 +291,18 @@ sub save_objects {
     	}
     }
     return $output; 
+}
+
+sub object_from_file {
+	my ($self,$filename) = @_;
+	my $meta = Bio::KBase::ObjectAPI::utilities::LOADFILE($filename.".meta");
+	$meta = join("\n",@{$meta});
+	$meta = Bio::KBase::ObjectAPI::utilities::FROMJSON($meta);
+	my $data = Bio::KBase::ObjectAPI::utilities::LOADFILE($filename.".data");
+	$data = join("\n",@{$data});
+	$data = Bio::KBase::ObjectAPI::utilities::FROMJSON($data);
+	
+	return [$meta,$data];
 }
 
 sub genome_from_solr {
