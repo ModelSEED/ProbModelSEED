@@ -36,6 +36,7 @@ has source_id => (is => 'rw', isa => 'Str', printOrder => '0', type => 'attribut
 has name => (is => 'rw', isa => 'Str', printOrder => '2', default => '', type => 'attribute', metaclass => 'Typed');
 has metagenome_otu_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has type => (is => 'rw', isa => 'Str', printOrder => '5', default => 'Singlegenome', type => 'attribute', metaclass => 'Typed');
+has rxnprobs_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # SUBOBJECTS:
@@ -183,10 +184,17 @@ my $attributes = [
             'type' => 'Str',
             'description' => undef,
             'perm' => 'rw'
-          }
+          },
+          {
+            'req' => 0,
+            'printOrder' => -1,
+            'name' => 'rxnprobs_ref',
+            'type' => 'Str',
+            'perm' => 'rw'
+          },
         ];
 
-my $attribute_map = {source => 0, template_refs => 1, ATPMaintenance => 2, ATPSynthaseStoichiometry => 3, id => 4, metagenome_ref => 5, genome_ref => 6, template_ref => 7, source_id => 8, name => 9, metagenome_otu_ref => 10, type => 11};
+my $attribute_map = {source => 0, template_refs => 1, ATPMaintenance => 2, ATPSynthaseStoichiometry => 3, id => 4, metagenome_ref => 5, genome_ref => 6, template_ref => 7, source_id => 8, name => 9, metagenome_otu_ref => 10, type => 11, rxnprobs_ref => 12};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {

@@ -1235,6 +1235,58 @@ sub printModelSEED {
 	return $output;
 }
 
+sub toCondensed {
+	my $self = shift;
+	my $output = {};
+	$output->{"ref"} = $self->_reference();
+
+	$output->{reactions} = [];
+	my $reactionList = $self->modelreactions();
+	for (my $i=0; $i < @{$reactionList}; $i++) {
+		my $rxn = $reactionList->[$i];
+		push(@{$output->{reactions}},{ "id" => $rxn->id(), "name" => $rxn->name(), "definition" => $rxn->definition(), "gpr" => $rxn->gprString, "genes" => $rxn->featureUUIDs() });
+	}
+
+	$output->{compounds} = [];
+	my $compoundList = $self->modelcompounds();
+	for (my $i=0; $i < @{$compoundList}; $i++) {
+		my $cpd = $compoundList->[$i];
+		push(@{$output->{compounds}},{ "id" => $cpd->id(), "name" => $cpd->name(), "formula" => $cpd->formula(), "charge" => $cpd->charge() });
+	}
+
+	$output->{genes} = [];
+	my $featureList = $self->genome()->features();
+	my $ftrHash = $self->featureHash();
+	for (my $i=0; $i < @{$featureList}; $i++) {
+		my $ftr = $featureList->[$i];
+		my $element = { "id" => $ftr->id(), "reactions" => [] };
+		foreach my $rxnuuid (keys(%{$ftrHash->{$ftr->_reference()}})) {
+			push(@{$element->{reactions}},$ftrHash->{$ftr->_reference()}->{$rxnuuid}->id());
+		}
+		push(@{$output->{genes}},$element);
+	}
+
+	$output->{compartments} = [];
+	my $compartmentList = $self->modelcompartments();
+	for (my $i=0; $i < @{$compartmentList}; $i++) {
+		my $cmp = $compartmentList->[$i];
+    	push(@{$output->{compartments}},{ "id" => $cmp->id(), "name" => $cmp->name(), "pH" => $cmp->pH(), "potential" => $cmp->potential() });
+    }
+
+    $output->{biomasses} = [];
+    my $biomassList = $self->biomasses();
+	for (my $i=0; $i < @{$biomassList}; $i++) {
+		my $biomass = $biomassList->[$i];
+		my $element = { "id" => $biomass->id(), "compounds" => [] };
+		foreach my $biocpd (@{$biomass->biomasscompounds()}) {
+			push(@{$element->{compounds}},[$biocpd->modelcompound()->id(), $biocpd->coefficient(), $biocpd->modelcompound()->modelcompartment()->id()]);
+		}
+		push(@{$output->{biomasses}}, $element);
+	}
+
+	return $output;
+}
+
 sub htmlComponents {
 	my $self = shift;
 	my $args = Bio::KBase::ObjectAPI::utilities::args([],{}, @_);
@@ -1422,6 +1474,8 @@ sub export {
 		return $self->printModelSEED();
 	} elsif (lc($args->{format}) eq "excel") {
 		return $self->printExcel();
+	} elsif (lc($args->{format}) eq "condensed") {
+		return $self->toCondensed();
 	}
 	Bio::KBase::ObjectAPI::utilities::error("Unrecognized type for export: ".$args->{format});
 }

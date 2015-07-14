@@ -9,7 +9,7 @@ module ProbModelSEED {
     typedef int bool;
     
     /* Reference to location in PATRIC workspace (e.g. /home/chenry/models/MyModel)*/
-    typedef string ref;
+    typedef string reference;
     
     /* Standard perl timestamp (e.g. 2015-03-21-02:14:53)*/
     typedef string Timestamp;
@@ -38,6 +38,12 @@ module ProbModelSEED {
     /* ID of compartment in model */
     typedef string compartment_id;
     
+	/* ID of gene in model */
+	typedef string gene_id;
+
+	/* ID of biomass reaction in model */
+	typedef string biomass_id;
+
     /* An enum of directions for reactions [</=/>]; < = reverse, = = reversible, > = forward*/
     typedef string reaction_direction;
     
@@ -76,7 +82,7 @@ module ProbModelSEED {
    	*********************************************************************************/
     
     typedef structure {
-		ref reaction;
+		reference reaction;
 		reaction_direction direction;
 		string compartment;
     } gapfill_reaction;
@@ -84,8 +90,8 @@ module ProbModelSEED {
     typedef structure {
 		Timestamp rundate;
 		gapfill_id id;
-		ref gapfill;
-		ref media;
+		reference ref;
+		reference media_ref;
 		bool integrated;
 		int integrated_solution;
 		list<list<gapfill_reaction>> solution_reactions;
@@ -94,9 +100,9 @@ module ProbModelSEED {
     typedef structure {
 		Timestamp rundate;
 		fba_id id;
-		ref fba;
+		reference ref;
 		float objective;
-		ref media;
+		reference media_ref;
 		string objective_function;
     } fba_data;
     
@@ -110,7 +116,7 @@ module ProbModelSEED {
     typedef structure {
 		Timestamp rundate;
 		edit_id id;
-		ref edit;
+		reference ref;
 		list<reaction_id> reactions_to_delete;
 		mapping<reaction_id,reaction_direction> altered_directions;
 		mapping<reaction_id,list<list<list<feature_id> > > > altered_gpr;
@@ -119,13 +125,15 @@ module ProbModelSEED {
     } edit_data;
     
     typedef structure {
+ 		Timestamp rundate;
 		string id;
 		string source;
 		string source_id;
 		string name;
 		string type;
-		ref genome_ref;
-		ref template_ref;
+		reference ref;
+		reference genome_ref;
+		reference template_ref;
 		int fba_count;
 		int integrated_gapfills;
 		int unintegrated_gapfills;
@@ -137,11 +145,48 @@ module ProbModelSEED {
 		int num_biomasses;			
 		int num_biomass_compounds;
 		int num_compartments;
-		list<string> biomasses;
-		list<string> reactions;
-		list<string> genes;
-		list<string> biomasscpds;
     } ModelStats;
+
+	typedef structure {
+		reaction_id id;
+		string name;
+		string definition;
+		string gpr;
+		list<gene_id> genes;
+	} model_reaction;
+
+	typedef structure {
+		compound_id id;
+		string name;
+		string formula;
+		float charge;
+	} model_compound;
+
+	typedef structure {
+		gene_id id;
+		list<reaction_id> reactions;
+	} model_gene;
+
+	typedef structure {
+		compartment_id id;
+		string name;
+		float pH;
+		float potential;
+	} model_compartment;
+
+	typedef structure {
+		biomass_id id;
+		list<tuple<compound_id compound, float coefficient, compartment_id compartment>> compounds;
+	} model_biomass;
+
+	typedef structure {
+		reference ref;
+		list<model_reaction> reactions;
+		list<model_compound> compounds;
+		list<model_gene> genes;
+		list<model_compartment> compartments;
+		list<model_biomass> biomasses;
+	} model_data;
     
     /* ObjectMeta: tuple containing information about an object in the workspace 
 
@@ -161,24 +206,6 @@ module ProbModelSEED {
 	*/
 	typedef tuple<ObjectName,ObjectType,FullObjectPath,Timestamp creation_time,ObjectID,Username object_owner,ObjectSize,UserMetadata,AutoMetadata,WorkspacePerm user_permission,WorkspacePerm global_permission,string shockurl> ObjectMeta;
 
-	/*********************************************************************************
-    Functions for model stats
-   	*********************************************************************************/
-
-	/* 
-    	FUNCTION: print_model_stats
-    	DESCRIPTION: This function prints stats on a list of input models
-    	
-    	REQUIRED INPUTS:
-		list<ref> models - list of references to models to print stats for
-		
-	*/
-    typedef structure {
-		list<ref> models;
-    } print_model_stats_params;
-    authentication required;
-    funcdef print_model_stats(print_model_stats_params input) returns (mapping<ref,ModelStats> output);
-
     /*********************************************************************************
     Functions for managing gapfilling studies
    	*********************************************************************************/
@@ -188,11 +215,11 @@ module ProbModelSEED {
     	DESCRIPTION: This function lists all the gapfilling results associated with model
     	
     	REQUIRED INPUTS:
-		ref model - reference to model for which to list gapfilling
+		reference model - reference to model for which to list gapfilling
 		
 	*/
     typedef structure {
-		ref model;
+		reference model;
     } list_gapfill_solutions_params;
     authentication required;
     funcdef list_gapfill_solutions(list_gapfill_solutions_params input) returns (list<gapfill_data> output);
@@ -202,14 +229,14 @@ module ProbModelSEED {
 		DESCRIPTION: This function manages the gapfill solutions for a model and returns gapfill solution data
 		
 		REQUIRED INPUTS:
-		ref model - reference to model to integrate solutions for
+		reference model - reference to model to integrate solutions for
 		mapping<gapfill_id,gapfill_command> commands - commands to manage gapfill solutions
 		
 		OPTIONAL INPUTS:
 		mapping<gapfill_id,int> selected_solutions - solutions to integrate
 	*/
     typedef structure {
-		ref model;
+		reference model;
 		mapping<gapfill_id,gapfill_command> commands;
 		mapping<gapfill_id,int> selected_solutions;
     } manage_gapfill_solutions_params;
@@ -225,11 +252,11 @@ module ProbModelSEED {
     	DESCRIPTION: This function lists all the FBA results associated with model
     	
     	REQUIRED INPUTS:
-		ref model - reference to model for which to list FBA
+		reference model - reference to model for which to list FBA
 		
 	*/
     typedef structure {
-		ref model;
+		reference model;
     } list_fba_studies_params;
     authentication required;
     funcdef list_fba_studies(list_fba_studies_params input) returns (list<fba_data> output);
@@ -239,11 +266,11 @@ module ProbModelSEED {
 		DESCRIPTION: This function deletes fba studies associated with model
 		
 		REQUIRED INPUTS:
-		ref model - reference to model to integrate solutions for
+		reference model - reference to model to integrate solutions for
 		list<fba_id> fbas - list of FBA studies to delete	
 	*/
     typedef structure {
-		ref model;
+		reference model;
 		mapping<gapfill_id,gapfill_command> commands;
     } delete_fba_studies_params;
     authentication required;
@@ -258,12 +285,12 @@ module ProbModelSEED {
 		DESCRIPTION: This function exports a model in the specified format
 		
 		REQUIRED INPUTS:
-		ref model - reference to model to export
+		reference model - reference to model to export
 		string format - format to export model in
 		bool to_shock - load exported file to shock and return shock url
 	*/
     typedef structure {
-		ref model;
+		reference model;
 		string format;
 		bool to_shock;
     } export_model_params;
@@ -275,11 +302,11 @@ module ProbModelSEED {
 		DESCRIPTION: This function exports a media in TSV format
 		
 		REQUIRED INPUTS:
-		ref media - reference to media to export
+		reference media - reference to media to export
 		bool to_shock - load exported file to shock and return shock url
 	*/
     typedef structure {
-		ref media;
+		reference media;
 		bool to_shock;
     } export_media_params;
     authentication required;
@@ -288,17 +315,31 @@ module ProbModelSEED {
 	/*********************************************************************************
     Functions for managing models
    	*********************************************************************************/
-		
+
+	/*
+		FUNCTION: get_model
+		DESCRIPTION: This function gets model data
+
+		REQUIRED INPUTS:
+		reference model - reference to model to get
+
+	*/		
+	typedef structure {
+		reference model;
+	} get_model_params;
+	authentication required;
+	funcdef get_model(get_model_params input) returns (model_data output);
+
 	/* 
     	FUNCTION: delete_model
     	DESCRIPTION: This function deletes a model specified by the user
     	
     	REQUIRED INPUTS:
-		ref model - reference to model to delete
+		reference model - reference to model to delete
 		
 	*/
     typedef structure {
-		ref model;
+		reference model;
     } delete_model_params;
     authentication required;
     funcdef delete_model(delete_model_params input) returns (ObjectMeta output);
@@ -323,11 +364,11 @@ module ProbModelSEED {
     	DESCRIPTION: This function lists all model edits submitted by the user
     	
     	REQUIRED INPUTS:
-		ref model - reference to model for which to list edits
+		reference model - reference to model for which to list edits
 		
 	*/
     typedef structure {
-		ref model;
+		reference model;
     } list_model_edits_params;
     authentication required;
     funcdef list_model_edits(list_model_edits_params input) returns (list<edit_data> output);
@@ -337,19 +378,55 @@ module ProbModelSEED {
 		DESCRIPTION: This function manages edits to model submitted by user
 		
 		REQUIRED INPUTS:
-		ref model - reference to model to integrate solutions for
+		reference model - reference to model to integrate solutions for
 		mapping<edit_id,gapfill_command> commands - list of edit commands
 		
 		OPTIONAL INPUTS:
 		edit_data new_edit - list of new edits to add
 	*/
     typedef structure {
-		ref model;
+		reference model;
 		mapping<edit_id,gapfill_command> commands;
 		edit_data new_edit;
     } manage_model_edits_params;
     authentication required;
 	funcdef manage_model_edits(manage_model_edits_params input) returns (mapping<edit_id,edit_data> output);
+
+	/*********************************************************************************
+	Functions corresponding to use of PlantSEED web-pages
+   	*********************************************************************************/
+
+	typedef structure {
+        	string hit_id;
+        	float percent_id;
+        	float e_value; 
+        	int bit_score;
+    	} similarity;
+
+	typedef structure {
+	       feature_id id;
+               string function;
+               string protein_translation;
+               list<string> subsystems;
+               list<similarity> plant_similarities;
+               list<similarity> prokaryotic_similarities;
+	} feature_data;
+    
+	/*
+		FUNCTION: get_feature
+		DESCRIPTION: This function retrieves an individual Plant feature
+
+		REQUIRED INPUTS:
+		reference genome - reference of genome that contains feature
+		feature_id feature - identifier of feature to get
+
+	*/		
+	typedef structure {
+		reference genome;
+		feature_id feature;
+	} get_feature_params;
+	authentication required;
+	funcdef get_feature(get_feature_params input) returns (feature_data output);
 
 	/*********************************************************************************
 	Functions corresponding to modeling apps
@@ -359,7 +436,7 @@ module ProbModelSEED {
 		DESCRIPTION: This function runs the model reconstruction app directly. See app service for detailed specs.
 	*/
     typedef structure {
-		ref genome;
+		reference genome;
     } ModelReconstruction_params;
     authentication required;
 	funcdef ModelReconstruction(ModelReconstruction_params input) returns (ObjectMeta output);
@@ -369,7 +446,7 @@ module ProbModelSEED {
 		DESCRIPTION: This function runs the flux balance analysis app directly. See app service for detailed specs.
 	*/
     typedef structure {
-		ref model;
+		reference model;
     } FluxBalanceAnalysis_params;
     authentication required;
 	funcdef FluxBalanceAnalysis(FluxBalanceAnalysis_params input) returns (ObjectMeta output);
@@ -379,7 +456,7 @@ module ProbModelSEED {
 		DESCRIPTION: This function runs the gapfilling app directly. See app service for detailed specs.
 	*/
     typedef structure {
-		ref model;
+		reference model;
     } GapfillModel_params;
     authentication required;
 	funcdef GapfillModel(GapfillModel_params input) returns (ObjectMeta output);

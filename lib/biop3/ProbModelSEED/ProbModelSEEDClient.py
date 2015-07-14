@@ -165,11 +165,6 @@ class ProbModelSEED(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
 
-    def print_model_stats(self, input):
-        resp = self._call('ProbModelSEED.print_model_stats',
-                          [input])
-        return resp[0]
-
     def list_gapfill_solutions(self, input):
         resp = self._call('ProbModelSEED.list_gapfill_solutions',
                           [input])
@@ -200,6 +195,11 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def get_model(self, input):
+        resp = self._call('ProbModelSEED.get_model',
+                          [input])
+        return resp[0]
+
     def delete_model(self, input):
         resp = self._call('ProbModelSEED.delete_model',
                           [input])
@@ -217,6 +217,11 @@ class ProbModelSEED(object):
 
     def manage_model_edits(self, input):
         resp = self._call('ProbModelSEED.manage_model_edits',
+                          [input])
+        return resp[0]
+
+    def get_feature(self, input):
+        resp = self._call('ProbModelSEED.get_feature',
                           [input])
         return resp[0]
 

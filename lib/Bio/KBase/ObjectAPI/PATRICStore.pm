@@ -47,6 +47,7 @@ package Bio::KBase::ObjectAPI::PATRICStore;
 use Moose;
 use Bio::KBase::ObjectAPI::utilities;
 use Data::Dumper;
+use Log::Log4perl;
 
 use Class::Autouse qw(
     Bio::KBase::ObjectAPI::KBaseRegulation::Regulome
@@ -90,7 +91,8 @@ my $transform = {
 };
 my $jsontypes = {
 	job_result => 1,
-	feature_group => 1
+	feature_group => 1,
+	rxnprobs => 1
 };
 
 #***********************************************************************************************************
@@ -131,8 +133,8 @@ sub get_objects {
 	my ($self,$refs,$options) = @_;
 	#Checking cache for objects
 	my $newrefs = [];
-	my $solrrefs = [];
 	for (my $i=0; $i < @{$refs}; $i++) {
+		$refs->[$i] =~ s/\/+/\//g;
 		if (!defined($self->cache()->{$refs->[$i]}) || defined($options->{refreshcache})) {
     		if ($refs->[$i] =~ m/^PATRICSOLR:(.+)/) {
     			$self->cache()->{$refs->[$i]} = $self->genome_from_solr($1);
@@ -466,8 +468,8 @@ sub transform_genome_from_ws {
 }
 
 sub transform_genome_to_ws {
-	my ($self,$data,$meta) = @_;
-	return $data;
+	my ($self,$object,$meta) = @_;
+	return $object->export( { format => "json" } );
 }
 
 sub transform_model_from_ws {

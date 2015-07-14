@@ -27,17 +27,18 @@ has 'config' => (is => 'ro', required => 1, builder => '_build_config');
 our $CallContext;
 
 our %return_counts = (
-        'print_model_stats' => 1,
         'list_gapfill_solutions' => 1,
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
         'delete_fba_studies' => 1,
         'export_model' => 1,
         'export_media' => 1,
+        'get_model' => 1,
         'delete_model' => 1,
         'list_models' => 1,
         'list_model_edits' => 1,
         'manage_model_edits' => 1,
+        'get_feature' => 1,
         'ModelReconstruction' => 1,
         'FluxBalanceAnalysis' => 1,
         'GapfillModel' => 1,
@@ -45,17 +46,18 @@ our %return_counts = (
 );
 
 our %method_authentication = (
-        'print_model_stats' => 'required',
         'list_gapfill_solutions' => 'required',
         'manage_gapfill_solutions' => 'required',
         'list_fba_studies' => 'required',
         'delete_fba_studies' => 'required',
         'export_model' => 'required',
         'export_media' => 'required',
+        'get_model' => 'required',
         'delete_model' => 'required',
         'list_models' => 'required',
         'list_model_edits' => 'required',
         'manage_model_edits' => 'required',
+        'get_feature' => 'required',
         'ModelReconstruction' => 'required',
         'FluxBalanceAnalysis' => 'required',
         'GapfillModel' => 'required',
@@ -66,17 +68,18 @@ sub _build_valid_methods
 {
     my($self) = @_;
     my $methods = {
-        'print_model_stats' => 1,
         'list_gapfill_solutions' => 1,
         'manage_gapfill_solutions' => 1,
         'list_fba_studies' => 1,
         'delete_fba_studies' => 1,
         'export_model' => 1,
         'export_media' => 1,
+        'get_model' => 1,
         'delete_model' => 1,
         'list_models' => 1,
         'list_model_edits' => 1,
         'manage_model_edits' => 1,
+        'get_feature' => 1,
         'ModelReconstruction' => 1,
         'FluxBalanceAnalysis' => 1,
         'GapfillModel' => 1,

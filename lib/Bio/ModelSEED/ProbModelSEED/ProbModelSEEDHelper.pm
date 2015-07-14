@@ -178,6 +178,20 @@ sub delete_model {
 	return $output;
 }
 
+=head3 get_model_data
+
+Definition:
+	model_data = $self->get_model(ref modelref);
+Description:
+	Gets the specified model
+		
+=cut
+sub get_model_data {
+	my ($self,$modelref) = @_;
+	my $model = $self->get_model($modelref);
+	return $model->export({format => "condensed"});
+}
+
 =head3 classify_genome
 
 Definition:
@@ -267,6 +281,7 @@ Description:
 =cut
 sub build_fba_object {
 	my($self,$model,$params) = @_;
+	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
 	my $media = $self->get_object($params->{media},"media");
     if (!defined($media)) {
     	$self->error("Media retrieval failed!");
@@ -390,6 +405,41 @@ sub build_fba_object {
 			$fba->addLinkArrayItem("additionalCpds",$cpdObj);
 		}
 	}
+	if ($params->{probanno}) {
+		# Will switch this to have get_object automatically convert to json.
+		$log->info("Getting reaction likelihoods from ".$model->rxnprobs_ref());
+		my $rxnprobs = $self->get_object($model->rxnprobs_ref(),undef,{refreshcache => 1});
+	    if (!defined($rxnprobs)) {
+	    	$self->error("Reaction likelihood retrieval from ".$model->rxnprobs_ref()." failed");
+	    }		
+		my $probrxns = Bio::KBase::ObjectAPI::utilities::FROMJSON($rxnprobs);
+		$fba->{parameters}->{"Objective coefficient file"} = "ProbModelReactionCoefficients.txt";
+		$fba->{inputfiles}->{"ProbModelReactionCoefficients.txt"} = [];
+		my $rxncosts = {};
+		for (my $i=0; $i < @{$probrxns}; $i++) {
+			my $rxn = $probrxns->[$i];
+			$rxncosts->{$rxn->[0]} = (1-$rxn->[1]);
+		}
+		my $compindecies = {};
+		my $comps = $model->modelcompartments();
+		for (my $i=0; $i < @{$comps}; $i++) {
+			$compindecies->{$comps->[$i]->compartmentIndex()}->{$comps->[$i]->compartment()->id()} = 1;
+		}
+		foreach my $compindex (keys(%{$compindecies})) {
+			my $tmp = $model->template();
+			my $tmprxns = $tmp->templateReactions();
+			for (my $i=0; $i < @{$tmprxns}; $i++) {
+				my $tmprxn = $tmprxns->[$i];
+				my $tmpid = $tmprxn->reaction()->id()."_".$tmprxn->compartment()->id().$compindex;
+				if (defined($rxncosts->{$tmprxn->reaction()->id()})) {
+					$log->info("adding rxn ".$tmpid." with cost ".$rxncosts->{$tmprxn->reaction()->id()});
+					push(@{$fba->{inputfiles}->{"ProbModelReactionCoefficients.txt"}},"forward\t".$tmpid."\t".$rxncosts->{$tmprxn->reaction()->id()});
+					push(@{$fba->{inputfiles}->{"ProbModelReactionCoefficients.txt"}},"reverse\t".$tmpid."\t".$rxncosts->{$tmprxn->reaction()->id()});
+				}
+			}
+		}	
+    	$log->info("Added reaction coefficients from reaction likelihoods in ".$model->rxnprobs_ref());
+	}
 	return $fba;
 }
 #****************************************************************************
@@ -409,8 +459,12 @@ sub ModelReconstruction {
     	genome => undef,
     	output_file => undef,
     	gapfill => 1,
+    	probanno => 0, # For now, probabilistic annotation is optional
     	predict_essentiality => 1,
     });
+    if (substr($parameters->{output_path},-1,1) ne "/") {
+    	$parameters->{output_path} .= "/";
+    }
 
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
     $log->info("Started model reconstruction for genome ".$parameters->{genome});
@@ -443,9 +497,23 @@ sub ModelReconstruction {
 	    modelid => $parameters->{output_file},
 	    fulldb => $parameters->{fulldb}
 	});
-	my $folder = $parameters->{output_path}."/.".$parameters->{output_file};
+	my $folder = $parameters->{output_path}.".".$parameters->{output_file};
     my $outputfiles = [];
    	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
+    my $genomeref = $folder."/".$genome->id().".genome";
+    $self->save_object($genomeref,$genome,"genome");
+#    $mdl->genome_ref($genomeref);
+    if ($parameters->{probanno} == 1) {
+    	my $rxnprobsref = $folder."/".$genome->id().".rxnprobs";
+    	my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$genomeref." ".$rxnprobsref." --token '".$self->token()."'";
+    	$log->info("Calculating reaction likelihoods with command: ".$cmd);
+    	system($cmd);
+    	if ($? == 0) {
+    		$mdl->rxnprobs_ref($rxnprobsref);
+    	} else {
+    		$self->error("Calculating reaction likelihoods failed!");	
+    	}
+    }
     $mdl->jobresult({
     	id => 0,
 		app => {
@@ -470,9 +538,9 @@ sub ModelReconstruction {
     	my $gfmeta = $self->GapfillModel({
     		model => $parameters->{output_path}."/".$parameters->{output_file},
     		media => $parameters->{media},
-    		integrate_solution => 1
-    	});
-    		
+    		integrate_solution => 1,
+    		probanno => $parameters->{probanno}
+    	});    	
     	if ($parameters->{predict_essentiality} == 1) {
     		Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
     		$self->FluxBalanceAnalysis({
@@ -674,7 +742,7 @@ sub GapfillModel {
     }
     $parameters = $self->validate_args($parameters,["model"],{
 		media => "/chenry/public/modelsupport/media/Complete",
-		probanno => undef,
+		probanno => 0,
 		alpha => 0,
 		allreversible => 0,
 		thermo_const_type => "None",
@@ -856,7 +924,9 @@ sub new {
     	cache_targets => []
     });
     $self->{_params} = $parameters;
-    Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
+    if ($self->{_params}->{fbajobcache} ne "none") {
+    	Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
+    }
     Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($self->{_params}->{fbajobdir});
     Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($self->{_params}->{mfatoolkitbin});
     if (!-e Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf") {
