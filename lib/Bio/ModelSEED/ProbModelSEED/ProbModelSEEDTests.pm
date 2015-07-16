@@ -50,28 +50,32 @@
 	
 	sub run_tests {
 		my($self) = @_;
+		my $model_dir = "/".$self->{auth}->[0]->{username}."/home/models";
+		my $model_name = "TestModel";
+		my $model = $model_dir."/".$model_name;
 		my $output = $self->test_harness("export_media",{
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
 			to_shock => 1,
 		});
 		$output = $self->test_harness("list_models",undef);
 		for(my $i=0; $i < @{$output}; $i++) {
-			if ($output->[$i]->{ref} eq "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel") {
+			if ($output->[$i]->{ref} eq $model_dir."/TestModel") {
 				my $output = $self->test_harness("delete_model",{
-					model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+					model => $model,
 				});
 			}
-			if ($output->[$i]->{ref} eq "/".$self->{auth}->[0]->{username}."/home/models/PubGenomeModel") {
+			if ($output->[$i]->{ref} eq $model_dir."/PubGenomeModel") {
 				my $output = $self->test_harness("delete_model",{
-					model => "/".$self->{auth}->[0]->{username}."/home/models/PubGenomeModel",
+					model => $model_dir."/PubGenomeModel",
 				});
 			}
 		}
+		$output = $self->test_harness("list_models",undef);
 		$output = $self->test_harness("ModelReconstruction",{
 			genome => "/".$self->{auth}->[0]->{username}."/genomes/test/.Buchnera_aphidicola/Buchnera_aphidicola.genome",
 			fulldb => "0",
-			output_path => "/".$self->{auth}->[0]->{username}."/home/models",
-			output_file => "TestModel"
+			output_path => $model_dir,
+			output_file => $model_name
 		});
 		#$output = $self->test_harness("ModelReconstruction",{
 		#	genome => "PATRICSOLR:83333.84",
@@ -81,57 +85,57 @@
 		#});
 		$output = $self->test_harness("list_models",undef);
 		$output = $self->test_harness("list_gapfill_solutions",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel"
+			model => $model
 		});
 		$output = $self->test_harness("list_fba_studies",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel"
+			model => $model
 		});
 		$output = $self->test_harness("list_model_edits",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel"
+			model => $model
 		});
 		$output = $self->test_harness("GapfillModel",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+			model => $model,
 			integrate_solution => "1",
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		});
 		$output = $self->test_harness("export_model",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+			model => $model,
 			format => "sbml",
 			to_shock => 1
 		});
 		$output = $self->test_harness("FluxBalanceAnalysis",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+			model => $model,
 		});
 		$output = $self->test_harness("FluxBalanceAnalysis",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+			model => $model,
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		});
 		$output = $self->test_harness("list_gapfill_solutions",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel"
+			model => $model
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+			model => $model,
 			commands => {
 				"gf.0" => "u"
 			}
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+			model => $model,
 			commands => {
 				"gf.0" => "i"
 			}
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+			model => $model,
 			commands => {
 				"gf.0" => "d"
 			}
 		});
 		$output = $self->test_harness("list_fba_studies",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel"
+			model => $model
 		});
 		$output = $self->test_harness("delete_fba_studies",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/PrivateGenomeModel",
+			model => $model,
 			fbas => ["fba.0"]
 		});
 		done_testing($self->{testcount});
