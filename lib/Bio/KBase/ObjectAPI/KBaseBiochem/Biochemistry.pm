@@ -719,6 +719,8 @@ sub addCompoundFromHash {
 	charge => 10000000,
 	deltag => 10000000,
 	deltagerr => 10000000,
+	pkas => {},
+	pkbs => {},
 	addmergealias => 0}, $arguments);
 
     #delete reference argument if not used, to be sure of no collusion
@@ -875,7 +877,9 @@ sub addCompoundFromHash {
 				   mass => $arguments->{mass},
 				   defaultCharge => $arguments->{charge},
 				   deltaG => $arguments->{deltag},
-				   deltaGErr => $arguments->{deltagerr}});
+				   deltaGErr => $arguments->{deltagerr},
+    			   pkas => $arguments->{pkas},
+    			   pkbs => $arguments->{pkbs}});
 
     # Adding id as alias
     $self->addAlias({attribute => "compounds",
