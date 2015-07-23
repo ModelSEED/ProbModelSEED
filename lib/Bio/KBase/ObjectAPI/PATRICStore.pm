@@ -121,7 +121,14 @@ has cache_targets => ( is => 'rw', isa => 'HashRef',default => sub { return {}; 
 #***********************************************************************************************************
 sub object_meta {
 	my ($self,$ref) = @_;
+	# Assumes object has already been retrieved and stored in cache.
 	return $self->cache()->{$ref}->[0];
+}
+
+sub get_object_type {
+	my ($self,$ref) = @_;
+	# Assumes object has already been retrieved and stored in cache.
+	return $self->cache()->{$ref}->[0]->[1];
 }
 
 sub get_object {
