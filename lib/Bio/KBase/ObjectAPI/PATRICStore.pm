@@ -136,24 +136,12 @@ sub get_objects {
 	for (my $i=0; $i < @{$refs}; $i++) {
 		$refs->[$i] =~ s/\/+/\//g;
 		if (!defined($self->cache()->{$refs->[$i]}) || defined($options->{refreshcache})) {
-    		if ($refs->[$i] =~ m/^PATRICSOLR:(.+)/) {
-    			$self->cache()->{$refs->[$i]} = $self->genome_from_solr($1);
-    			$self->cache()->{$refs->[$i]}->[1]->parent($self);
-    			$self->cache()->{$refs->[$i]}->[1]->wsmeta($self->cache()->{$refs->[$i]}->[0]);
-    			$self->cache()->{$refs->[$i]}->[1]->_reference($refs->[$i]."||");
-    		} elsif ($refs->[$i] =~ m/^FILE:(.+)/) {
-    			$self->cache()->{$refs->[$i]} = $self->object_from_file($1);
-    			$self->cache()->{$refs->[$i]}->[1]->parent($self);
-    			$self->cache()->{$refs->[$i]}->[1]->wsmeta($self->cache()->{$refs->[$i]}->[0]);
-    			$self->cache()->{$refs->[$i]}->[1]->_reference($refs->[$i]."||");
+    		#Checking file cache for object
+    		my $output = $self->read_object_from_file_cache($refs->[$i]);
+    		if (defined($output)) {
+    			$self->process_object($output->[0],$output->[1]);
     		} else {
-    			#Checking file cache for object
-    			my $output = $self->read_object_from_file_cache($refs->[$i]);
-    			if (defined($output)) {
-    				$self->process_object($output->[0],$output->[1]);
-    			} else {
-    				push(@{$newrefs},$refs->[$i]);
-    			}
+    			push(@{$newrefs},$refs->[$i]);
     		}
     	}
 	}
@@ -305,115 +293,6 @@ sub object_from_file {
 	$data = Bio::KBase::ObjectAPI::utilities::FROMJSON($data);
 	
 	return [$meta,$data];
-}
-
-sub genome_from_solr {
-	my ($self,$genomeid) = @_;
-	#Retrieving genome information
-	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome/?genome_id=".$genomeid."&http_accept=application/json",token => $self->workspace()->{token}});
-	$data = $data->[0];
-	my $perm = "n";
-	my $uperm = "o";
-	if ($data->{public} == 1) {
-		$perm = "r";
-		$uperm = "r";
-	}
-	$data = Bio::KBase::ObjectAPI::utilities::ARGS($data,[],{
-		genome_length => 0,
-		contigs => 0,
-		genome_name => "Unknown",
-		taxon_lineage_names => ["Unknown"],
-		owner => "Unknown",
-		gc_content => 0,
-		publication => "Unknown",
-		completion_date => "1970-01-01T00:00:00+0000"
-	});
-	my $meta = [
-    	$genomeid,
-		"genome",
-		$self->data_api_url()."genome/?genome_id=".$genomeid."&http_accept=application/json",
-		$data->{completion_date},
-		$genomeid,
-		$data->{owner},
-		$data->{genome_length},
-		{},
-		{},
-		$uperm,
-		$perm
-    ];
-	my $genome = {
-    	id => $genomeid,
-		scientific_name => $data->{genome_name},
-		domain => $data->{taxon_lineage_names}->[0],
-		genetic_code => 11,
-		dna_size => $data->{genome_length},
-		num_contigs => $data->{contigs},
-		contigs => [],
-		contig_lengths => [],
-		contig_ids => [],
-		source => "PATRIC",
-		source_id => $genomeid,
-		md5 => "none",
-		taxonomy => join(":",@{$data->{taxon_lineage_names}}),
-		gc_content => $data->{gc_content},
-		complete => 1,
-		publications => [$data->{publication}],
-		features => [],
-		contigset_ref => "PATRICSOLR:CONTIGS:".$genomeid,
-	};
-	#Retrieving feature information
-	my $start = 0;
-	my $params = {};
-	my $loopcount = 0;
-	while ($start >= 0 && $loopcount < 100) {
-		$loopcount++;#Insurance that no matter what, this loop won't run for more than 100 iterations
-		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->data_api_url()."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => $self->workspace()->{token}},$params);
-		if (defined($ftrdata) && @{$ftrdata} > 0) {
-			for (my $i=0; $i < @{$ftrdata}; $i++) {
-				$data = $ftrdata->[$i];
-				my $id = $data->{feature_id};
-				if (defined($data->{seed_id})) {
-					$id = $data->{seed_id};
-				}
-				if (defined($data->{patric_id})) {
-					$id = $data->{patric_id};
-				}
-				my $ftrobj = {id => $id,type => "CDS",aliases=>[]};
-				if (defined($data->{start})) {
-					$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
-				}
-				if (defined($data->{feature_type})) {
-					$ftrobj->{type} = $data->{feature_type};
-				}
-				if (defined($data->{product})) {
-					$ftrobj->{function} = $data->{product};
-				}
-				if (defined($data->{na_sequence})) {
-					$ftrobj->{dna_sequence} = $data->{na_sequence};
-					$ftrobj->{dna_sequence_length} = $data->{na_length};
-				}
-				if (defined($data->{aa_sequence})) {
-					$ftrobj->{protein_translation} = $data->{aa_sequence};
-					$ftrobj->{protein_translation_length} = $data->{aa_length};
-					$ftrobj->{md5} = $data->{aa_sequence_md5};
-				}
-				my $list = ["feature_id","alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
-				for (my $j=0; $j < @{$list}; $j++) {
-					if (defined($data->{$list->[$j]})) {
-						push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
-					}
-				}
-				push(@{$genome->{features}},$ftrobj);
-			}
-		}
-		print $start."\t".@{$genome->{features}}."\t".@{$ftrdata}."\n";
-		if (@{$genome->{features}} < $params->{count}) {
-			$start = @{$genome->{features}};
-		} else {
-			$start = -1;
-		}
-	}
-	return [$meta,Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome)];
 }
 
 sub transform_genome_from_ws {

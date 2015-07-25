@@ -60,6 +60,8 @@ sub get_genome {
 	my $obj;
 	if ($ref =~ m/^\/public\/genomes\/(.+)$/) {
 		$obj = $self->retreive_reference_genome($1);
+	if ($refs->[$i] =~ m/^PATRICSOLR:(.+)/) {
+    	return $self->retrieve_PATRIC_genome();
 	} else {
 		$obj = $self->get_object($ref);
 	    if (defined($obj) && ref($obj) ne "Bio::KBase::ObjectAPI::KBaseGenomes::Genome" && defined($obj->{output_files})) {
@@ -256,21 +258,127 @@ sub classify_genome {
 	}
 	return $largestClass;
 }
-=head3 retreive_reference_genome
+=head3 retrieve_PATRIC_genome
 
 Definition:
-	Genome = $self->retreive_reference_genome(string genome);
+	Genome = $self->retrieve_PATRIC_genome(string genome);
 Description:
 	Returns typed object for genome in PATRIC reference database
 		
 =cut
-sub retreive_reference_genome {
-	my($self, $genome) = @_;
-	my $gto = {
-		
+sub retrieve_PATRIC_genome {
+	my ($self,$genomeid) = @_;
+	#Retrieving genome information
+	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->config()->{data_api_url}."genome/?genome_id=".$genomeid."&http_accept=application/json",token => $self->token()});
+	$data = $data->[0];
+	my $perm = "n";
+	my $uperm = "o";
+	if ($data->{public} == 1) {
+		$perm = "r";
+		$uperm = "r";
+	}
+	$data = Bio::KBase::ObjectAPI::utilities::ARGS($data,[],{
+		genome_length => 0,
+		contigs => 0,
+		genome_name => "Unknown",
+		taxon_lineage_names => ["Unknown"],
+		owner => "Unknown",
+		gc_content => 0,
+		publication => "Unknown",
+		completion_date => "1970-01-01T00:00:00+0000"
+	});
+	my $meta = [
+    	$genomeid,
+		"genome",
+		$self->config()->{data_api_url}."genome/?genome_id=".$genomeid."&http_accept=application/json",
+		$data->{completion_date},
+		$genomeid,
+		$data->{owner},
+		$data->{genome_length},
+		{},
+		{},
+		$uperm,
+		$perm
+    ];
+	my $genome = {
+    	id => $genomeid,
+		scientific_name => $data->{genome_name},
+		domain => $data->{taxon_lineage_names}->[0],
+		genetic_code => 11,
+		dna_size => $data->{genome_length},
+		num_contigs => $data->{contigs},
+		contigs => [],
+		contig_lengths => [],
+		contig_ids => [],
+		source => "PATRIC",
+		source_id => $genomeid,
+		md5 => "none",
+		taxonomy => join(":",@{$data->{taxon_lineage_names}}),
+		gc_content => $data->{gc_content},
+		complete => 1,
+		publications => [$data->{publication}],
+		features => [],
+		contigset_ref => "PATRICSOLR:CONTIGS:".$genomeid,
 	};
-	return $gto;
+	#Retrieving feature information
+	my $start = 0;
+	my $params = {};
+	my $loopcount = 0;
+	while ($start >= 0 && $loopcount < 100) {
+		$loopcount++;#Insurance that no matter what, this loop won't run for more than 100 iterations
+		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->config()->{data_api_url}."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => $self->workspace()->{token}},$params);
+		if (defined($ftrdata) && @{$ftrdata} > 0) {
+			for (my $i=0; $i < @{$ftrdata}; $i++) {
+				$data = $ftrdata->[$i];
+				my $id = $data->{feature_id};
+				if (defined($data->{seed_id})) {
+					$id = $data->{seed_id};
+				}
+				if (defined($data->{patric_id})) {
+					$id = $data->{patric_id};
+				}
+				my $ftrobj = {id => $id,type => "CDS",aliases=>[]};
+				if (defined($data->{start})) {
+					$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
+				}
+				if (defined($data->{feature_type})) {
+					$ftrobj->{type} = $data->{feature_type};
+				}
+				if (defined($data->{product})) {
+					$ftrobj->{function} = $data->{product};
+				}
+				if (defined($data->{na_sequence})) {
+					$ftrobj->{dna_sequence} = $data->{na_sequence};
+					$ftrobj->{dna_sequence_length} = $data->{na_length};
+				}
+				if (defined($data->{aa_sequence})) {
+					$ftrobj->{protein_translation} = $data->{aa_sequence};
+					$ftrobj->{protein_translation_length} = $data->{aa_length};
+					$ftrobj->{md5} = $data->{aa_sequence_md5};
+				}
+				my $list = ["feature_id","alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
+				for (my $j=0; $j < @{$list}; $j++) {
+					if (defined($data->{$list->[$j]})) {
+						push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
+					}
+				}
+				push(@{$genome->{features}},$ftrobj);
+			}
+		}
+		print $start."\t".@{$genome->{features}}."\t".@{$ftrdata}."\n";
+		if (@{$genome->{features}} < $params->{count}) {
+			$start = @{$genome->{features}};
+		} else {
+			$start = -1;
+		}
+	}
+	my $genome = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome);
+	$genome->wsmeta($meta);
+	$genome->_reference("PATRICSOLR:".$genomeid);
+	$genome->parent($self->PATRICStore());
+	return $genome;
 }
+
 =head3 build_fba_object
 
 Definition:
@@ -443,8 +551,58 @@ sub build_fba_object {
 	return $fba;
 }
 #****************************************************************************
+#Probanno functions
+#****************************************************************************
+
+#****************************************************************************
 #Apps
 #****************************************************************************
+sub ComputeReactionProbabilities {
+	my($self,$parameters) = @_;
+    my $starttime = time();
+    if (defined($parameters->{adminmode})) {
+    	$self->{_params}->{adminmode} = $parameters->{adminmode}
+    }
+    $parameters = $self->validate_args($parameters,["genome","output_path"],{
+    	output_file => undef
+    });
+    if (substr($parameters->{output_path},-1,1) ne "/") {
+    	$parameters->{output_path} .= "/";
+    }
+	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
+    $log->info("Started computing reaction probabilities for genome ".$parameters->{genome});
+	my $genome = $self->get_genome($parameters->{genome});
+	if (!defined($parameters->{output_file})) {
+		$parameters->{output_file} = $genome->wsmeta()->[0].".rxnprobs";
+	}
+	my $rxnprobsref = $parameters->{output_path}.$parameters->{output_file};
+    my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$genome->_reference()." ".$rxnprobsref." --token '".$self->token()."'";
+    $log->info("Calculating reaction likelihoods with command: ".$cmd);
+    system($cmd);
+    if ($? != 0) {
+    	$self->error("Calculating reaction likelihoods failed!");
+    }
+    my $rxnprob = $self->get_object($rxnprobsref,"rxnprob");
+	$rxnprob->{jobresult} = {
+	   	id => 0,
+		app => {
+			"id"=>"ComputeReactionProbabilities",
+			"script"=>"App-ComputeReactionProbabilities",
+			"label"=>"Compute reaction probabilities",
+			"description"=>"Computes probabilities for reactions in model based on potential blast hits.",
+			"parameters"=>[]
+		},
+		parameters => $parameters,
+		start_time => $starttime,
+		end_time => time(),
+		elapsed_time => time()-$starttime,
+		output_files => [[$parameters->{output_path}.$parameters->{output_file}]],
+		job_output => "",
+		hostname => "https://p3.theseed.org/services/ProbModelSEED"
+	};
+	return $self->save_object($parameters->{output_path}.$parameters->{output_file},$rxnprob,"rxnprob");
+}
+
 sub ModelReconstruction {
 	my($self,$parameters) = @_;
     my $starttime = time();
@@ -459,7 +617,8 @@ sub ModelReconstruction {
     	genome => undef,
     	output_file => undef,
     	gapfill => 1,
-    	probanno => 0, # For now, probabilistic annotation is optional
+    	probannogafill => 1,
+    	probanno => 0,
     	predict_essentiality => 1,
     });
     if (substr($parameters->{output_path},-1,1) ne "/") {
@@ -468,8 +627,8 @@ sub ModelReconstruction {
 
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
     $log->info("Started model reconstruction for genome ".$parameters->{genome});
-
-  	my $genome = $self->get_genome($parameters->{genome});
+	
+	my $genome = $self->get_genome($parameters->{genome});
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $genome->id()."_model";	
     }
@@ -500,19 +659,19 @@ sub ModelReconstruction {
 	my $folder = $parameters->{output_path}.".".$parameters->{output_file};
     my $outputfiles = [];
    	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
-    my $genomeref = $folder."/".$genome->id().".genome";
-    $self->save_object($genomeref,$genome,"genome");
-#    $mdl->genome_ref($genomeref);
-    if ($parameters->{probanno} == 1) {
-    	my $rxnprobsref = $folder."/".$genome->id().".rxnprobs";
-    	my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$genomeref." ".$rxnprobsref." --token '".$self->token()."'";
-    	$log->info("Calculating reaction likelihoods with command: ".$cmd);
-    	system($cmd);
-    	if ($? == 0) {
-    		$mdl->rxnprobs_ref($rxnprobsref);
-    	} else {
-    		$self->error("Calculating reaction likelihoods failed!");	
-    	}
+    #Only stash genome in model folder if it's not already a workspace genome (e.g. from RAST/PATRIC/KBase/SEED)
+    if ($genome->_reference() =~ m/^PATRICSTORE:(.+)$/ || $genome->_reference() =~ m/^RAST:(.+)$/ || $genome->_reference() =~ m/^PUBSEED:(.+)$/ || $genome->_reference() =~ m/^KBASE:(.+)$/) {
+    	$self->save_object($folder."/".$genome->id().".genome",$genome,"genome");
+    }
+    #Note, the save operation above will have updated the reference for the genome
+    $mdl->genome_ref($genome->_reference());
+    #Now compute reaction probabilities if they are needed for gapfilling or probanno model building
+    if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogafill} == 1)) {
+    	$self->ComputeReactionProbabilities({
+    		genome => $genome->_reference(),
+    		output_path => $folder,
+    		output_file => $genome->id().".rxnprobs"
+    	});
     }
     $mdl->jobresult({
     	id => 0,
