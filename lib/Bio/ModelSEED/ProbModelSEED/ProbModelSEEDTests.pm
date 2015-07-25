@@ -85,18 +85,6 @@
 		#});
 		$output = $self->test_harness("list_models",undef);
 		$output = $self->test_harness("list_gapfill_solutions",{
-<<<<<<< HEAD
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel"
-		});
-		$output = $self->test_harness("list_fba_studies",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel"
-		});
-		$output = $self->test_harness("list_model_edits",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel"
-		});
-		$output = $self->test_harness("GapfillModel",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-=======
 			model => $model
 		});
 		$output = $self->test_harness("list_fba_studies",{
@@ -107,33 +95,15 @@
 		});
 		$output = $self->test_harness("GapfillModel",{
 			model => $model,
->>>>>>> fb5f8feb103a019bd52206cdaeb74ea3471bf08a
 			integrate_solution => "1",
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		});
 		$output = $self->test_harness("export_model",{
-<<<<<<< HEAD
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-=======
 			model => $model,
->>>>>>> fb5f8feb103a019bd52206cdaeb74ea3471bf08a
 			format => "sbml",
 			to_shock => 1
 		});
 		$output = $self->test_harness("FluxBalanceAnalysis",{
-<<<<<<< HEAD
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-		});
-		$output = $self->test_harness("FluxBalanceAnalysis",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
-		});
-		$output = $self->test_harness("list_gapfill_solutions",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel"
-		});
-		$output = $self->test_harness("manage_gapfill_solutions",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-=======
 			model => $model,
 		});
 		$output = $self->test_harness("FluxBalanceAnalysis",{
@@ -145,43 +115,27 @@
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
 			model => $model,
->>>>>>> fb5f8feb103a019bd52206cdaeb74ea3471bf08a
 			commands => {
 				"gf.0" => "u"
 			}
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
-<<<<<<< HEAD
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-=======
 			model => $model,
->>>>>>> fb5f8feb103a019bd52206cdaeb74ea3471bf08a
 			commands => {
 				"gf.0" => "i"
 			}
 		});
 		$output = $self->test_harness("manage_gapfill_solutions",{
-<<<<<<< HEAD
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-=======
 			model => $model,
->>>>>>> fb5f8feb103a019bd52206cdaeb74ea3471bf08a
 			commands => {
 				"gf.0" => "d"
 			}
 		});
 		$output = $self->test_harness("list_fba_studies",{
-<<<<<<< HEAD
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel"
-		});
-		$output = $self->test_harness("delete_fba_studies",{
-			model => "/".$self->{auth}->[0]->{username}."/home/models/TestModel",
-=======
 			model => $model
 		});
 		$output = $self->test_harness("delete_fba_studies",{
 			model => $model,
->>>>>>> fb5f8feb103a019bd52206cdaeb74ea3471bf08a
 			fbas => ["fba.0"]
 		});
 		done_testing($self->{testcount});

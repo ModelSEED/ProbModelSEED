@@ -58,9 +58,7 @@ sub get_model {
 sub get_genome {
 	my($self, $ref) = @_;
 	my $obj;
-	if ($ref =~ m/^\/public\/genomes\/(.+)$/) {
-		$obj = $self->retreive_reference_genome($1);
-	if ($refs->[$i] =~ m/^PATRICSOLR:(.+)/) {
+	if ($ref =~ m/^PATRICSOLR:(.+)/) {
     	return $self->retrieve_PATRIC_genome();
 	} else {
 		$obj = $self->get_object($ref);
