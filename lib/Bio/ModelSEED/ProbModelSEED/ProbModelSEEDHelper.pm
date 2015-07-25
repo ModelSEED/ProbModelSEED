@@ -615,7 +615,7 @@ sub ModelReconstruction {
     	genome => undef,
     	output_file => undef,
     	gapfill => 1,
-    	probannogafill => 1,
+    	probannogafill => 0,
     	probanno => 0,
     	predict_essentiality => 1,
     });
