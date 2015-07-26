@@ -1795,19 +1795,19 @@ sub get_feature
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["genome","feature"],{});
 
-    my $genome = $self->get_object($input->{genome},"Genome");
+    my $genome = $self->helper()->get_object($input->{genome},"genome");
     if(!$genome){
-	$self->error("Genome not found using reference ".$input->{genome}."!");
+	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
 
     my $found_ftr=undef;
     foreach my $ftr (@{$genome->{features}}){
-	if($ftr->id() eq $input->{feature}){
+	if($ftr->{data}{id} eq $input->{feature}){
 	    $found_ftr = $ftr;
 	}
     }
     if(!$found_ftr){
-	$self->error("Feature (".$input->{feature}.") not found in genome!");
+	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
 
     #I will introduce separate code for finding and parsing blocks of similarities once I've loaded them into a workspace separately.
