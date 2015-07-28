@@ -150,7 +150,8 @@ module ProbModelSEED {
 	typedef structure {
 		reaction_id id;
 		string name;
-		string definition;
+		list<tuple<float coefficient, compound_id id, compartment_id compartment, int compartment_index, string name>> stoichiometry;
+		string direction;
 		string gpr;
 		list<gene_id> genes;
 	} model_reaction;
