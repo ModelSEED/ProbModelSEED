@@ -41,9 +41,11 @@ sub save_object {
 sub get_object {
 	my($self, $ref,$type,$options) = @_;
 	my $object = $self->PATRICStore()->get_object($ref,$options);
-	my $meta = $self->PATRICStore()->object_meta($ref);
-	if (defined($type) && $meta->[1] ne $type) {
-		$self->error("Type retrieved (".$meta->[1].") does not match specified type (".$type.")!");
+	if (defined($type)) {
+		my $objtype = $self->PATRICStore()->get_object_type($ref);
+		if ($objtype ne $type) {
+			$self->error("Type retrieved (".$objtype.") does not match specified type (".$type.")!");
+		}
 	}
 	return $object;
 }
