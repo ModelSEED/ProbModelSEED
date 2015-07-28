@@ -137,11 +137,15 @@ sub _list_models {
 	my ($self,$input) = @_;
 	$input = $self->helper()->validate_args($input,[],{});
     my $list = $self->helper()->workspace_service()->ls({
-		paths => ["/".$self->user_id."/"],
+		paths => ["/".$self->user_id()."/"],
 		adminmode => $self->adminmode()
 	});
-	$list = $list->{"/".$self->user_id."/"};
 	my $output = {};
+	if (!defined($list->{"/".$self->user_id()."/"})) {
+		# Just return an empty list if there is no workspace for the user.
+		return $output;
+	}
+	$list = $list->{"/".$self->user_id()."/"};
 	for (my $i=0; $i < @{$list}; $i++) {
 		my $currentlist = $self->helper()->workspace_service()->ls({
 			paths => [$list->[$i]->[2].$list->[$i]->[0]],
