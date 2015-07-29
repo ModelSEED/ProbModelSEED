@@ -1265,7 +1265,7 @@ sub toCondensed {
 	my $ftrHash = $self->featureHash();
 	for (my $i=0; $i < @{$featureList}; $i++) {
 		my $ftr = $featureList->[$i];
-		my $element = { "id" => $ftr->id(), "reactions" => [] };
+		my $element = { "id" => $ftr->_reference(), "reactions" => [] }; #$ftr->id()
 		foreach my $rxnuuid (keys(%{$ftrHash->{$ftr->_reference()}})) {
 			push(@{$element->{reactions}},$ftrHash->{$ftr->_reference()}->{$rxnuuid}->id());
 		}
