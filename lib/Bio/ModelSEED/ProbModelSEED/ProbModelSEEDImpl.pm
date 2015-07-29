@@ -1819,16 +1819,44 @@ sub get_feature
     my $found_ftr=undef;
     foreach my $ftr (@{$genome->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
-	    $found_ftr = $ftr;
+	    $found_ftr = $ftr->{data};
 	}
     }
+
     if(!$found_ftr){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
 
-    #I will introduce separate code for finding and parsing blocks of similarities once I've loaded them into a workspace separately.
+    #Retrieve Minimal Genome object (unspecified type)
+    my @path = split(/\//, $input->{genome});
+    my ($root,$genome) = (join("/",@path[0 .. 2])."/",$path[$#path]);
+    my $min_genome = $root.".".$genome."/minimal_genome";
+    $min_genome = $self->helper()->get_object($min_genome,"unspecified");
+    $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
+
+    #Retrieve sims object containing hits for feature
+    my $sim_index = $min_genome->{similarities_index}{$input->{feature}};
     $found_ftr->{plant_similarities}=[];
     $found_ftr->{prokaryotic_similarities}=[];
+    if(!defined($sim_index)){
+	print STDERR ("Feature (".$input->{feature}.") doesn't have a sims index in minimal genome!\n");
+	return $found_ftr;
+    }
+
+    my $sim_file = $root.".".$genome."/Sims_".$sim_index;
+    $sim_file = $self->helper()->get_object($sim_file,"unspecified");
+    $sim_file = Bio::KBase::ObjectAPI::utilities::FROMJSON($sim_file);
+    
+    #Iterate through hits and separate them out into plant and prokaryote hits
+    #By rule, prokaryote hits still have their peg identifiers and plants dont
+    #percent_id|hit_id|bit_score|e_value
+    foreach my $hit (@{$sim_file->{$input->{feature}}}){
+	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/){
+	    push(@{$found_ftr->{prokaryotic_similarities}},$hit);
+	}else{
+	    push(@{$found_ftr->{plant_similarities}},$hit);
+	}
+    }
 
     return $found_ftr;
 
