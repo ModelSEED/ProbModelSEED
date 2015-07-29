@@ -1807,9 +1807,10 @@ sub get_feature
     my $found_ftr=undef;
     foreach my $ftr (@{$genome->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
-	    $found_ftr = $ftr;
+	    $found_ftr = $ftr->{data};
 	}
     }
+
     if(!$found_ftr){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
