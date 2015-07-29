@@ -1018,17 +1018,24 @@ model_data is a reference to a hash where the following keys are defined:
 model_reaction is a reference to a hash where the following keys are defined:
 	id has a value which is a reaction_id
 	name has a value which is a string
-	definition has a value which is a string
+	stoichiometry has a value which is a reference to a list where each element is a reference to a list containing 5 items:
+	0: (coefficient) a float
+	1: (id) a compound_id
+	2: (compartment) a compartment_id
+	3: (compartment_index) an int
+	4: (name) a string
+
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
+compound_id is a string
+compartment_id is a string
 gene_id is a string
 model_compound is a reference to a hash where the following keys are defined:
 	id has a value which is a compound_id
 	name has a value which is a string
 	formula has a value which is a string
 	charge has a value which is a float
-compound_id is a string
 model_gene is a reference to a hash where the following keys are defined:
 	id has a value which is a gene_id
 	reactions has a value which is a reference to a list where each element is a reaction_id
@@ -1037,7 +1044,6 @@ model_compartment is a reference to a hash where the following keys are defined:
 	name has a value which is a string
 	pH has a value which is a float
 	potential has a value which is a float
-compartment_id is a string
 model_biomass is a reference to a hash where the following keys are defined:
 	id has a value which is a biomass_id
 	compounds has a value which is a reference to a list where each element is a reference to a list containing 3 items:
@@ -1068,17 +1074,24 @@ model_data is a reference to a hash where the following keys are defined:
 model_reaction is a reference to a hash where the following keys are defined:
 	id has a value which is a reaction_id
 	name has a value which is a string
-	definition has a value which is a string
+	stoichiometry has a value which is a reference to a list where each element is a reference to a list containing 5 items:
+	0: (coefficient) a float
+	1: (id) a compound_id
+	2: (compartment) a compartment_id
+	3: (compartment_index) an int
+	4: (name) a string
+
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
+compound_id is a string
+compartment_id is a string
 gene_id is a string
 model_compound is a reference to a hash where the following keys are defined:
 	id has a value which is a compound_id
 	name has a value which is a string
 	formula has a value which is a string
 	charge has a value which is a float
-compound_id is a string
 model_gene is a reference to a hash where the following keys are defined:
 	id has a value which is a gene_id
 	reactions has a value which is a reference to a list where each element is a reaction_id
@@ -1087,7 +1100,6 @@ model_compartment is a reference to a hash where the following keys are defined:
 	name has a value which is a string
 	pH has a value which is a float
 	potential has a value which is a float
-compartment_id is a string
 model_biomass is a reference to a hash where the following keys are defined:
 	id has a value which is a biomass_id
 	compounds has a value which is a reference to a list where each element is a reference to a list containing 3 items:
@@ -3277,7 +3289,13 @@ num_compartments has a value which is an int
 a reference to a hash where the following keys are defined:
 id has a value which is a reaction_id
 name has a value which is a string
-definition has a value which is a string
+stoichiometry has a value which is a reference to a list where each element is a reference to a list containing 5 items:
+0: (coefficient) a float
+1: (id) a compound_id
+2: (compartment) a compartment_id
+3: (compartment_index) an int
+4: (name) a string
+
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
@@ -3290,7 +3308,13 @@ genes has a value which is a reference to a list where each element is a gene_id
 a reference to a hash where the following keys are defined:
 id has a value which is a reaction_id
 name has a value which is a string
-definition has a value which is a string
+stoichiometry has a value which is a reference to a list where each element is a reference to a list containing 5 items:
+0: (coefficient) a float
+1: (id) a compound_id
+2: (compartment) a compartment_id
+3: (compartment_index) an int
+4: (name) a string
+
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 

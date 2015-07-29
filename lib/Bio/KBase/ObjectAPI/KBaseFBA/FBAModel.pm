@@ -1244,7 +1244,13 @@ sub toCondensed {
 	my $reactionList = $self->modelreactions();
 	for (my $i=0; $i < @{$reactionList}; $i++) {
 		my $rxn = $reactionList->[$i];
-		push(@{$output->{reactions}},{ "id" => $rxn->id(), "name" => $rxn->name(), "definition" => $rxn->definition(), "gpr" => $rxn->gprString, "genes" => $rxn->featureUUIDs() });
+		my $stoich = [];
+		foreach my $reagent (split(/;/,$rxn->stoichiometry())) {
+			my ($coeff,$cpd,$cpt,$idx,$name) = split(/:/,$reagent);
+			$name =~ s/"//g; # Get rid of the extra quotes
+			push(@{$stoich}, [ $coeff*1.0, $cpd, $cpt, $idx*1, $name ] );
+		}
+		push(@{$output->{reactions}},{ "id" => $rxn->id(), "name" => $rxn->name(), "stoichiometry" => $stoich, "direction" => $rxn->direction, "gpr" => $rxn->gprString, "genes" => $rxn->featureUUIDs() });
 	}
 
 	$output->{compounds} = [];
@@ -1259,7 +1265,7 @@ sub toCondensed {
 	my $ftrHash = $self->featureHash();
 	for (my $i=0; $i < @{$featureList}; $i++) {
 		my $ftr = $featureList->[$i];
-		my $element = { "id" => $ftr->id(), "reactions" => [] };
+		my $element = { "id" => $ftr->_reference(), "reactions" => [] }; #$ftr->id()
 		foreach my $rxnuuid (keys(%{$ftrHash->{$ftr->_reference()}})) {
 			push(@{$element->{reactions}},$ftrHash->{$ftr->_reference()}->{$rxnuuid}->id());
 		}

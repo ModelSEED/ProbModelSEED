@@ -38,6 +38,7 @@ has genEquationCode => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass =
 has revGenEquationCode => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildgenrevequationcode' );
 has equationFormula => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildequationformula' );
 has complexString => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildcomplexString' );
+has stoichiometry => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildstoichiometry' );
 
 #***********************************************************************************************************
 # BUILDERS:
@@ -248,6 +249,10 @@ sub _buildcomplexString {
 	}
 	return $complexString;
 }
+sub _buildstoichiometry {
+	my ($self) = @_;
+	return $self->createEquation({format=>"id",stoichiometry=>1});
+}
 
 #***********************************************************************************************************
 # CONSTANTS:
@@ -342,7 +347,8 @@ sub createEquation {
 							 reverse=>0,
 							 direction=>1,
 							 protons => 1,
-							 generalized => 0}, $args);
+							 generalized => 0,
+							 stoichiometry => 0}, $args);
 	
 	my $rgts = $self->modelReactionReagents();
 	my $rgtHash;
@@ -370,6 +376,7 @@ sub createEquation {
 			$rgtHash->{$id}->{$rgt->modelcompound()->modelcompartment()->id()} = 0;
 		}
 		$rgtHash->{$id}->{$rgt->modelcompound()->modelcompartment()->id()} += $rgt->coefficient();
+		$rgtHash->{$id}->{"name"} = $rgt->modelcompound()->name();
 	}
 
     my @reactcode = ();
@@ -422,9 +429,9 @@ sub createEquation {
 		}
 		
 		if ($args->{indecies} == 0) {
-		    $compartment = "[".$compartment."]";
+		    $compartment = "[".$compartment."]" if !$args->{stoichiometry};
 		}else{
-		    $compartment = "[".$compartment.$index."]";
+		    $compartment = "[".$compartment.$index."]" if !$args->{stoichiometry};
 		}
 
 		$compartment= "" if !$args->{compts};
@@ -432,12 +439,21 @@ sub createEquation {
 		if ($rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]} < 0) {
 		    my $coef = -1*$rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
 		    my $reactcode = "(".$coef.") ".$printId.$compartment;
+			if($args->{stoichiometry}==1){
+		    	my $name = $rgtHash->{$sortedCpd->[$i]}->{name};
+			    $coef = $rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
+			    $reactcode = join(":",($coef,$printId,$compartment,'0',"\"".$name."\""));
+			}
 		    push(@reactcode,$reactcode);
 
 		} elsif ($rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]} > 0) {
 		    my $coef = $rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
 		    
 		    my $productcode .= "(".$coef.") ".$printId.$compartment;
+			if($args->{stoichiometry}==1){
+			    my $name = $rgtHash->{$sortedCpd->[$i]}->{name};
+			    $productcode = join(":",($coef,$printId,$compartment,'0',"\"".$name."\""));
+			}
 		    push(@productcode, $productcode);
 		}
 	    }
@@ -446,6 +462,10 @@ sub createEquation {
     
 
     my $reaction_string = join(" + ",@reactcode).$sign.join(" + ",@productcode);
+
+	if($args->{stoichiometry} == 1){
+		$reaction_string = join(";",@reactcode,@productcode);
+	}
 
     if($args->{reverse}==1){
 	$reaction_string = join(" + ",@productcode).$sign.join(" + ",@reactcode);
