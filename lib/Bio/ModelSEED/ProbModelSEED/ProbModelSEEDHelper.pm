@@ -61,7 +61,7 @@ sub get_genome {
 	my($self, $ref) = @_;
 	my $obj;
 	if ($ref =~ m/^PATRICSOLR:(.+)/) {
-    	return $self->retrieve_PATRIC_genome();
+    	return $self->retrieve_PATRIC_genome($1);
 	} else {
 		$obj = $self->get_object($ref);
 	    if (defined($obj) && ref($obj) ne "Bio::KBase::ObjectAPI::KBaseGenomes::Genome" && defined($obj->{output_files})) {
@@ -141,6 +141,10 @@ sub validate_args {
 sub error {
 	my($self,$msg) = @_;
 	Bio::KBase::ObjectAPI::utilities::error($msg);
+}
+sub config {
+	my($self) = @_;
+	$self->{_params};
 }
 
 #****************************************************************************
@@ -326,7 +330,7 @@ sub retrieve_PATRIC_genome {
 	my $loopcount = 0;
 	while ($start >= 0 && $loopcount < 100) {
 		$loopcount++;#Insurance that no matter what, this loop won't run for more than 100 iterations
-		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->config()->{data_api_url}."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => $self->workspace()->{token}},$params);
+		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->config()->{data_api_url}."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => $self->token()},$params);
 		if (defined($ftrdata) && @{$ftrdata} > 0) {
 			for (my $i=0; $i < @{$ftrdata}; $i++) {
 				$data = $ftrdata->[$i];
@@ -651,20 +655,19 @@ sub ModelReconstruction {
     if (!defined($template)) {
     	$self->error("template retrieval failed!");
     }
+    my $folder = $parameters->{output_path}.".".$parameters->{output_file};
+    my $outputfiles = [];
+   	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
+    #Only stash genome in model folder if it's not already a workspace genome (e.g. from RAST/PATRIC/KBase/SEED)
+    if ($parameters->{genome} =~ m/^PATRICSOLR:(.+)$/ || $parameters->{genome} =~ m/^RAST:(.+)$/ || $parameters->{genome} =~ m/^PUBSEED:(.+)$/ || $parameters->{genome} =~ m/^KBASE:(.+)$/) {
+    	$self->save_object($folder."/".$genome->id().".genome",$genome,"genome");
+    }
+    #Note, the save operation above will have updated the reference for the genome
     my $mdl = $template->buildModel({
 	    genome => $genome,
 	    modelid => $parameters->{output_file},
 	    fulldb => $parameters->{fulldb}
 	});
-	my $folder = $parameters->{output_path}.".".$parameters->{output_file};
-    my $outputfiles = [];
-   	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
-    #Only stash genome in model folder if it's not already a workspace genome (e.g. from RAST/PATRIC/KBase/SEED)
-    if ($genome->_reference() =~ m/^PATRICSTORE:(.+)$/ || $genome->_reference() =~ m/^RAST:(.+)$/ || $genome->_reference() =~ m/^PUBSEED:(.+)$/ || $genome->_reference() =~ m/^KBASE:(.+)$/) {
-    	$self->save_object($folder."/".$genome->id().".genome",$genome,"genome");
-    }
-    #Note, the save operation above will have updated the reference for the genome
-    $mdl->genome_ref($genome->_reference());
     #Now compute reaction probabilities if they are needed for gapfilling or probanno model building
     if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogafill} == 1)) {
     	$self->ComputeReactionProbabilities({
@@ -815,7 +818,6 @@ sub FluxBalanceAnalysis {
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED",
     });
-    print "comboDeletions:".$fba->comboDeletions()."\n";
     #Printing essential gene list as feature group and text list
     my $fbatbl = "ID\tName\tEquation\tFlux\tUpper bound\tLower bound\tMax\tMin\n";
     my $objs = $fba->FBABiomassVariables();

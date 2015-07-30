@@ -12,8 +12,6 @@ eval {
     $get_time = sub { Time::HiRes::gettimeofday() };
 };
 
-use Bio::KBase::AuthToken;
-
 # Client version should match Impl version
 # This is a Semantic Version number,
 # http://semver.org
@@ -85,21 +83,8 @@ sub new
     # We create an auth token, passing through the arguments that we were (hopefully) given.
 
     {
-	my $token = Bio::KBase::AuthToken->new(@args);
-	
-	if (!$token->error_message)
-	{
-	    $self->{token} = $token->token;
-	    $self->{client}->{token} = $token->token;
-	}
-        else
-        {
-	    #
-	    # All methods in this module require authentication. In this case, if we
-	    # don't have a token, we can't continue.
-	    #
-	    die "Authentication failed: " . $token->error_message;
-	}
+    $self->{token} = $args[1];
+	$self->{client}->{token} = $args[1];
     }
 
     my $ua = $self->{client}->ua;	 

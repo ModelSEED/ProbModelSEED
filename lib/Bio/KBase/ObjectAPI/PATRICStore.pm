@@ -277,15 +277,22 @@ sub save_objects {
     }
     my $listout = $self->workspace()->create($input);
     my $output = {};
-    for (my $i=0; $i < @{$listout}; $i++) {
-    	$output->{$reflist->[$i]} = $listout->[$i];
-    	$self->cache()->{$reflist->[$i]} = [$listout->[$i],$refobjhash->{$reflist->[$i]}->{object}];
-    	$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]} = [$listout->[$i],$refobjhash->{$reflist->[$i]}->{object}];
-    	$self->cache()->{$listout->[$i]->[4]} = [$listout->[$i],$refobjhash->{$reflist->[$i]}->{object}];
-    	if ($objecthash->{$reflist->[$i]} == 1) {
-    		$self->cache()->{$reflist->[$i]}->[1]->wsmeta($listout->[$i]);
-			$self->cache()->{$reflist->[$i]}->[1]->_reference($listout->[$i]->[2].$listout->[$i]->[0]."||");
-    	}
+    for (my $i=0; $i < @{$reflist}; $i++) {
+    	my $refinedref = $reflist->[$i];
+    	$refinedref =~ s/\/+/\//g;
+    	for (my $j=0; $j < @{$listout}; $j++) {
+    		if ($refinedref eq $listout->[$j]->[2].$listout->[$j]->[0]) {
+    			$output->{$reflist->[$i]} = $listout->[$j];
+    			$self->cache()->{$reflist->[$i]} = [$listout->[$j],$refobjhash->{$reflist->[$i]}->{object}];
+		    	$self->cache()->{$listout->[$j]->[2].$listout->[$j]->[0]} = [$listout->[$j],$refobjhash->{$reflist->[$i]}->{object}];
+		    	$self->cache()->{$listout->[$j]->[4]} = [$listout->[$j],$refobjhash->{$reflist->[$i]}->{object}];
+		    	if ($objecthash->{$reflist->[$i]} == 1) {
+		    		$self->cache()->{$reflist->[$i]}->[1]->wsmeta($listout->[$j]);
+					$self->cache()->{$reflist->[$i]}->[1]->_reference($listout->[$j]->[2].$listout->[$j]->[0]."||");
+		    	}
+		    	last;
+    		}
+    	}	
     }
     return $output; 
 }
