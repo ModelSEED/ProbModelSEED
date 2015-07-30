@@ -98,11 +98,11 @@ sub biochemistry {
 	if (defined($bio)) {
 		#In this case, the cache is being overwritten with an existing biochemistry object (e.g. ProbModelSEED servers will call this)
 		$self->{_cached_biochemistry} = $bio;
-		$self->PATRICStore()->cache()->{"/chenry/public/modelsupport/biochemistry/default.biochem"}->[0] = $bio->wsmeta();
-		$self->PATRICStore()->cache()->{"/chenry/public/modelsupport/biochemistry/default.biochem"}->[1] = $bio;
+		$self->PATRICStore()->cache()->{$self->{_params}->{biochemistry}}->[0] = $bio->wsmeta();
+		$self->PATRICStore()->cache()->{$self->{_params}->{biochemistry}}->[1] = $bio;
 	}
 	if (!defined($self->{_cached_biochemistry})) {
-		$self->{_cached_biochemistry} = $self->get_object("/chenry/public/modelsupport/biochemistry/default.biochem","biochemistry");		
+		$self->{_cached_biochemistry} = $self->get_object($self->{_params}->{biochemistry},"biochemistry");		
 	}
 	return $self->{_cached_biochemistry};
 }
@@ -610,7 +610,7 @@ sub ModelReconstruction {
     	$self->{_params}->{adminmode} = $parameters->{adminmode}
     }
     $parameters = $self->validate_args($parameters,[],{
-    	media => "/chenry/public/modelsupport/patric-media/Complete",
+    	media => $self->{_params}->{default_media},
     	template_model => undef,
     	fulldb => 0,
     	output_path => "/".$self->{_params}->{username}."/home/models/",
@@ -635,14 +635,14 @@ sub ModelReconstruction {
     my $template;
     if (!defined($parameters->{templatemodel})) {
     	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
-    		$template = $self->get_object("/chenry/public/modelsupport/templates/plant.modeltemplate","modeltemplate");
+    		$template = $self->get_object($self->{_params}->{template_dir}."plant.modeltemplate","modeltemplate");
     	} else {
-    		my $classifier_data = $self->get_object("/chenry/public/modelsupport/classifiers/gramclassifier.string","string");
+    		my $classifier_data = $self->get_object($self->{_params}->{classifier},"string");
     		my $class = $self->classify_genome($classifier_data,$genome);
     		if ($class eq "Gram positive") {
-	    		$template = $self->get_object("/chenry/public/modelsupport/templates/GramPositive.modeltemplate","modeltemplate");
+	    		$template = $self->get_object($self->{_params}->{template_dir}."GramPositive.modeltemplate","modeltemplate");
 	    	} elsif ($class eq "Gram negative") {
-	    		$template = $self->get_object("/chenry/public/modelsupport/templates/GramNegative.modeltemplate","modeltemplate");
+	    		$template = $self->get_object($self->{_params}->{template_dir}."GramNegative.modeltemplate","modeltemplate");
 	    	}
     	}
     } else {
@@ -744,7 +744,7 @@ sub FluxBalanceAnalysis {
     	$self->{_params}->{adminmode} = $parameters->{adminmode}
     }
 	$parameters = $self->validate_args($parameters,["model"],{
-		media => "/chenry/public/modelsupport/media/Complete",
+		media => $self->{_params}->{default_media},
 		fva => 0,
 		predict_essentiality => 0,
 		minimizeflux => 0,
@@ -900,7 +900,7 @@ sub GapfillModel {
     	$self->{_params}->{adminmode} = $parameters->{adminmode}
     }
     $parameters = $self->validate_args($parameters,["model"],{
-		media => "/chenry/public/modelsupport/media/Complete",
+		media => $self->{_params}->{default_media},
 		probanno => 0,
 		alpha => 0,
 		allreversible => 0,
@@ -1080,7 +1080,11 @@ sub new {
     	method => "unknown",
     	run_as_app => 0,
     	file_cache => undef,
-    	cache_targets => []
+    	cache_targets => [],
+    	biochemistry => "/chenry/public/modelsupport/biochemistry/default.biochem",
+    	default_media => "/chenry/public/modelsupport/patric-media/Complete",
+    	classifier => "/chenry/public/modelsupport/classifiers/gramclassifier.string",
+    	template_dir => "/chenry/public/modelsupport/templates/"
     });
     $self->{_params} = $parameters;
     if ($self->{_params}->{fbajobcache} ne "none") {
