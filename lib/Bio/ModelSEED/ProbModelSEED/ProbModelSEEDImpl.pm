@@ -206,7 +206,7 @@ sub _list_models {
 
 sub _list_gapfill_solutions {
 	my ($self,$input) = @_;
-	$input = $self->helper()->validate_args($input,["model"],{});
+	$input = $self->helper()->validate_args($input,["model"],{include_meta => 0});
     $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
     my $gflist = $self->helper()->workspace_service()->ls({
 		paths => [$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"],
@@ -244,7 +244,10 @@ sub _list_gapfill_solutions {
 						};
 					}
 				}
-			}			
+			}
+			if ($input->{include_meta}) {
+				$output->{$id}->{metadata} = $gflist->[$i]->[7];
+			}
 		}
 	}
 	return $output;
@@ -529,14 +532,14 @@ sub manage_gapfill_solutions
     #BEGIN manage_gapfill_solutions
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["model","commands"],{
-    	selected_solutions => {}
+    	selected_solutions => {},
+    	include_meta => 1
     });
     my $gflist = $self->_list_gapfill_solutions($input);
     my $rmlist = [];
     my $updatelist = [];
     $output = {};
     foreach my $gf (keys(%{$input->{commands}})) {
-    	$ctx->log_info("gapfill ".$gf." vs ".$gflist->{$gf});
     	if (defined($gflist->{$gf})) {
     		$output->{$gf} = $gflist->{$gf};
     		if (lc($input->{commands}->{$gf}) eq "d") {
@@ -552,7 +555,8 @@ sub manage_gapfill_solutions
     			push(@{$updatelist},[$gflist->{$gf}->{"ref"},{
     				integrated => 1,
     				integrated_solution => $input->{selected_solutions}->{$gf},
-    				media => $gflist->{$gf}->{media}
+    				media => $gflist->{$gf}->{metadata}->{media},
+    				solutiondata => $gflist->{$gf}->{metadata}->{solutiondata}
     			}]);
     		} elsif (lc($input->{commands}->{$gf}) eq "u") {
     			$ctx->log_debug("Unintegrating gapfill ".$gflist->{$gf}->{"ref"});
@@ -561,11 +565,13 @@ sub manage_gapfill_solutions
     			push(@{$updatelist},[$gflist->{$gf}->{"ref"},{
     				integrated => 0,
     				integrated_solution => -1,
-    				media => $gflist->{$gf}->{media}
+    				media => $gflist->{$gf}->{metadata}->{media},
+    				solutiondata => $gflist->{$gf}->{metadata}->{solutiondata}
     			}]);
     		} else {
     			$self->helper()->error("Specified command ".$input->{commands}->{$gf}." is not supported!");
     		}
+    		delete $output->{$gf}->{metadata};
     	} else {
     		$self->helper()->error("Specified gapfilling does not exist!");
     	}
