@@ -110,7 +110,7 @@ sub biochemistry {
 sub workspace_service {
 	my($self) = @_;
 	if (!defined($self->{_workspace_service})) {
-		$self->{_workspace_service} = Bio::P3::Workspace::WorkspaceClientExt->new($self->workspace_url(),token => $self->{_params}->{token});
+		$self->{_workspace_service} = Bio::P3::Workspace::WorkspaceClientExt->new($self->workspace_url(),token => $self->token());
 	}
 	return $self->{_workspace_service};
 }
@@ -662,7 +662,8 @@ sub ModelReconstruction {
     if ($parameters->{genome} =~ m/^PATRICSOLR:(.+)$/ || $parameters->{genome} =~ m/^RAST:(.+)$/ || $parameters->{genome} =~ m/^PUBSEED:(.+)$/ || $parameters->{genome} =~ m/^KBASE:(.+)$/) {
     	$self->save_object($folder."/".$genome->id().".genome",$genome,"genome");
     }
-    #Note, the save operation above will have updated the reference for the genome
+    # Note, the save operation above will have updated the reference for the genome which must be done
+    # before building the model.
     my $mdl = $template->buildModel({
 	    genome => $genome,
 	    modelid => $parameters->{output_file},
@@ -1062,7 +1063,7 @@ sub load_to_shock {
 	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
 	my $filename = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$data]);
-	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth ".$self->{_params}->{token}."\" -X POST -F 'upload=\@".$filename."' ".$self->shock_url()."/node");
+	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth ".$self->token()."\" -X POST -F 'upload=\@".$filename."' ".$self->shock_url()."/node");
 	$output = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$output}));
 	return $self->shock_url()."/node/".$output->{data}->{id};
 }
