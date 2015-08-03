@@ -1829,8 +1829,10 @@ sub get_feature
 
     #Retrieve Minimal Genome object (unspecified type)
     my @path = split(/\//, $input->{genome});
-    my ($root,$genome) = (join("/",@path[0 .. 2])."/",$path[$#path]);
+    my $genome = pop @path;
+    my $root = join("/",@path)."/";
     my $min_genome = $root.".".$genome."/minimal_genome";
+
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
     $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
 
