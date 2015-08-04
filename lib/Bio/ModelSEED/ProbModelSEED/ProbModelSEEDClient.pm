@@ -1,6 +1,6 @@
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 
-use JSON::RPC::Client;
+use JSON::RPC::Legacy::Client;
 use POSIX;
 use strict;
 use Data::Dumper;
@@ -11,6 +11,8 @@ eval {
     require Time::HiRes;
     $get_time = sub { Time::HiRes::gettimeofday() };
 };
+
+use Bio::KBase::AuthToken;
 
 # Client version should match Impl version
 # This is a Semantic Version number,
@@ -33,10 +35,6 @@ sub new
 {
     my($class, $url, @args) = @_;
     
-    if (!defined($url))
-    {
-	$url = 'http://p3.theseed.org/services/ProbModelSEED';
-    }
 
     my $self = {
 	client => Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient->new,
@@ -83,8 +81,21 @@ sub new
     # We create an auth token, passing through the arguments that we were (hopefully) given.
 
     {
-    $self->{token} = $args[1];
-	$self->{client}->{token} = $args[1];
+	my $token = Bio::KBase::AuthToken->new(@args);
+	
+	if (!$token->error_message)
+	{
+	    $self->{token} = $token->token;
+	    $self->{client}->{token} = $token->token;
+	}
+        else
+        {
+	    #
+	    # All methods in this module require authentication. In this case, if we
+	    # don't have a token, we can't continue.
+	    #
+	    die "Authentication failed: " . $token->error_message;
+	}
     }
 
     my $ua = $self->{client}->ua;	 
@@ -775,6 +786,7 @@ model_reaction is a reference to a hash where the following keys are defined:
 	3: (compartment_index) an int
 	4: (name) a string
 
+	direction has a value which is a string
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
@@ -831,6 +843,7 @@ model_reaction is a reference to a hash where the following keys are defined:
 	3: (compartment_index) an int
 	4: (name) a string
 
+	direction has a value which is a string
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
@@ -1568,6 +1581,133 @@ sub get_feature
         Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method get_feature",
 					    status_line => $self->{client}->status_line,
 					    method_name => 'get_feature',
+				       );
+    }
+}
+
+
+
+=head2 compare_regions
+
+  $output = $obj->compare_regions($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a get_feature_params
+$output is a regions_data
+get_feature_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+reference is a string
+feature_id is a string
+regions_data is a reference to a hash where the following keys are defined:
+	size has a value which is an int
+	number has a value which is an int
+	regions has a value which is a reference to a hash where the key is a string and the value is a region
+region is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	name has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+	features has a value which is a reference to a list where each element is a feature
+feature is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	type has a value which is a string
+	function has a value which is a string
+	aliases has a value which is a string
+	contig has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a get_feature_params
+$output is a regions_data
+get_feature_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+reference is a string
+feature_id is a string
+regions_data is a reference to a hash where the following keys are defined:
+	size has a value which is an int
+	number has a value which is an int
+	regions has a value which is a reference to a hash where the key is a string and the value is a region
+region is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	name has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+	features has a value which is a reference to a list where each element is a feature
+feature is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	type has a value which is a string
+	function has a value which is a string
+	aliases has a value which is a string
+	contig has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub compare_regions
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function compare_regions (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to compare_regions:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'compare_regions');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.compare_regions",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'compare_regions',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method compare_regions",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'compare_regions',
 				       );
     }
 }
@@ -3082,6 +3222,7 @@ stoichiometry has a value which is a reference to a list where each element is a
 3: (compartment_index) an int
 4: (name) a string
 
+direction has a value which is a string
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
@@ -3101,6 +3242,7 @@ stoichiometry has a value which is a reference to a list where each element is a
 3: (compartment_index) an int
 4: (name) a string
 
+direction has a value which is a string
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
@@ -3896,6 +4038,170 @@ feature has a value which is a feature_id
 
 
 
+=head2 feature
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+type has a value which is a string
+function has a value which is a string
+aliases has a value which is a string
+contig has a value which is a string
+begin has a value which is an int
+end has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+type has a value which is a string
+function has a value which is a string
+aliases has a value which is a string
+contig has a value which is a string
+begin has a value which is an int
+end has a value which is an int
+
+
+=end text
+
+=back
+
+
+
+=head2 region
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+name has a value which is a string
+begin has a value which is an int
+end has a value which is an int
+features has a value which is a reference to a list where each element is a feature
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+name has a value which is a string
+begin has a value which is an int
+end has a value which is an int
+features has a value which is a reference to a list where each element is a feature
+
+
+=end text
+
+=back
+
+
+
+=head2 regions_data
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+size has a value which is an int
+number has a value which is an int
+regions has a value which is a reference to a hash where the key is a string and the value is a region
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+size has a value which is an int
+number has a value which is an int
+regions has a value which is a reference to a hash where the key is a string and the value is a region
+
+
+=end text
+
+=back
+
+
+
+=head2 compare_regions_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: compare_regions
+DESCRIPTION: This function retrieves the data required to build the CompareRegions view
+
+REQUIRED INPUTS:
+reference genome - reference of genome that contains feature
+feature_id feature - identifier of feature to get
+
+OPTIONAL INPUTS:
+int region_size - width of regions (in bp) to cover. Defaults to 15000
+int number_regions - number of regions to show. Defaults to 10
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+region_size has a value which is an int
+number_regions has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+region_size has a value which is an int
+number_regions has a value which is an int
+
+
+=end text
+
+=back
+
+
+
 =head2 ModelReconstruction_params
 
 =over 4
@@ -4008,7 +4314,7 @@ model has a value which is a reference
 =cut
 
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient;
-use base 'JSON::RPC::Client';
+use base 'JSON::RPC::Legacy::Client';
 use POSIX;
 use strict;
 
@@ -4044,11 +4350,11 @@ sub call {
             return JSON::RPC::ServiceObject->new($result, $self->json);
         }
 
-        return JSON::RPC::ReturnObject->new($result, $self->json);
+        return JSON::RPC::Legacy::ReturnObject->new($result, $self->json);
     }
     elsif ($result->content_type eq 'application/json')
     {
-        return JSON::RPC::ReturnObject->new($result, $self->json);
+        return JSON::RPC::Legacy::ReturnObject->new($result, $self->json);
     }
     else {
         return;
@@ -4068,7 +4374,7 @@ sub _post {
             $self->id($obj->{id}) if ($obj->{id}); # if undef, it is notification.
         }
         else {
-            $obj->{id} = $self->id || ($self->id('JSON::RPC::Client'));
+            $obj->{id} = $self->id || ($self->id('JSON::RPC::Legacy::Client'));
         }
     }
     else {

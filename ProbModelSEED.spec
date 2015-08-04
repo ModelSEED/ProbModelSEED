@@ -429,6 +429,51 @@ module ProbModelSEED {
 	authentication required;
 	funcdef get_feature(get_feature_params input) returns (feature_data output);
 
+    typedef structure {
+    	string id;
+	string type;
+	string function;
+	string aliases;
+	string contig;
+	int begin;
+	int end;
+    } feature;
+
+    typedef structure {
+    	string id;
+	string name;
+	int begin;
+	int end;
+	list<feature> features;
+    } region;
+    
+    typedef structure {
+    	int size;
+	int number;
+	mapping<string region_id, region> regions;
+    } regions_data;
+
+	/*
+		FUNCTION: compare_regions
+		DESCRIPTION: This function retrieves the data required to build the CompareRegions view
+
+		REQUIRED INPUTS:
+		reference genome - reference of genome that contains feature
+		feature_id feature - identifier of feature to get
+
+		OPTIONAL INPUTS:
+		int region_size - width of regions (in bp) to cover. Defaults to 15000
+		int number_regions - number of regions to show. Defaults to 10
+	*/		
+	typedef structure {
+		reference genome;
+		feature_id feature;
+		int region_size;
+		int number_regions;
+	} compare_regions_params;
+	authentication required;
+	funcdef compare_regions(get_feature_params input) returns (regions_data output);
+
 	/*********************************************************************************
 	Functions corresponding to modeling apps
    	*********************************************************************************/
