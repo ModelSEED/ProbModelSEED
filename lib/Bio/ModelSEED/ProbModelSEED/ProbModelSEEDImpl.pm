@@ -4469,8 +4469,7 @@ FUNCTION: compare_regions
 DESCRIPTION: This function retrieves the data required to build the CompareRegions view
 
 REQUIRED INPUTS:
-reference genome - reference of genome that contains feature
-feature_id feature - identifier of feature to get
+list<string> similarities - list of peg identifiers
 
 OPTIONAL INPUTS:
 int region_size - width of regions (in bp) to cover. Defaults to 15000
@@ -4483,8 +4482,7 @@ int number_regions - number of regions to show. Defaults to 10
 
 <pre>
 a reference to a hash where the following keys are defined:
-genome has a value which is a reference
-feature has a value which is a feature_id
+similarities has a value which is a reference to a list where each element is a string
 region_size has a value which is an int
 number_regions has a value which is an int
 
@@ -4495,8 +4493,7 @@ number_regions has a value which is an int
 =begin text
 
 a reference to a hash where the following keys are defined:
-genome has a value which is a reference
-feature has a value which is a feature_id
+similarities has a value which is a reference to a list where each element is a string
 region_size has a value which is an int
 number_regions has a value which is an int
 

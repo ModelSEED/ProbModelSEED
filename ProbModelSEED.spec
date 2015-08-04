@@ -458,16 +458,14 @@ module ProbModelSEED {
 		DESCRIPTION: This function retrieves the data required to build the CompareRegions view
 
 		REQUIRED INPUTS:
-		reference genome - reference of genome that contains feature
-		feature_id feature - identifier of feature to get
+		list<string> similarities - list of peg identifiers
 
 		OPTIONAL INPUTS:
 		int region_size - width of regions (in bp) to cover. Defaults to 15000
 		int number_regions - number of regions to show. Defaults to 10
 	*/		
 	typedef structure {
-		reference genome;
-		feature_id feature;
+		list<string> similarities;
 		int region_size;
 		int number_regions;
 	} compare_regions_params;
