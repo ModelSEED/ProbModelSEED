@@ -1822,14 +1822,14 @@ sub get_feature
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
 
-    my $found_ftr=undef;
+    my $output=undef;
     foreach my $ftr (@{$genome->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
-	    $found_ftr = $ftr->{data};
+	    $output = $ftr->{data};
 	}
     }
 
-    if(!$found_ftr){
+    if(!$output){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
 
@@ -1844,11 +1844,11 @@ sub get_feature
 
     #Retrieve sims object containing hits for feature
     my $sim_index = $min_genome->{similarities_index}{$input->{feature}};
-    $found_ftr->{plant_similarities}=[];
-    $found_ftr->{prokaryotic_similarities}=[];
+    $output->{plant_similarities}=[];
+    $output->{prokaryotic_similarities}=[];
     if(!defined($sim_index)){
 	print STDERR ("Feature (".$input->{feature}.") doesn't have a sims index in minimal genome!\n");
-	return $found_ftr;
+	return $output;
     }
 
     my $sim_file = $root.".".$genome."/Sims_".$sim_index;
@@ -1860,13 +1860,11 @@ sub get_feature
     #percent_id|hit_id|bit_score|e_value
     foreach my $hit (@{$sim_file->{$input->{feature}}}){
 	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/){
-	    push(@{$found_ftr->{prokaryotic_similarities}},$hit);
+	    push(@{$output->{prokaryotic_similarities}},$hit);
 	}else{
-	    push(@{$found_ftr->{plant_similarities}},$hit);
+	    push(@{$output->{plant_similarities}},$hit);
 	}
     }
-
-    return $found_ftr;
 
     #END get_feature
     my @_bad_returns;
@@ -1875,6 +1873,201 @@ sub get_feature
 	my $msg = "Invalid returns passed to get_feature:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
 							       method_name => 'get_feature');
+    }
+    return($output);
+}
+
+
+
+
+=head2 compare_regions
+
+  $output = $obj->compare_regions($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a get_feature_params
+$output is a regions_data
+get_feature_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+reference is a string
+feature_id is a string
+regions_data is a reference to a hash where the following keys are defined:
+	size has a value which is an int
+	number has a value which is an int
+	regions has a value which is a reference to a hash where the key is a string and the value is a region
+region is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	name has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+	features has a value which is a reference to a list where each element is a feature
+feature is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	type has a value which is a string
+	function has a value which is a string
+	aliases has a value which is a string
+	contig has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a get_feature_params
+$output is a regions_data
+get_feature_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+reference is a string
+feature_id is a string
+regions_data is a reference to a hash where the following keys are defined:
+	size has a value which is an int
+	number has a value which is an int
+	regions has a value which is a reference to a hash where the key is a string and the value is a region
+region is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	name has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+	features has a value which is a reference to a list where each element is a feature
+feature is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	type has a value which is a string
+	function has a value which is a string
+	aliases has a value which is a string
+	contig has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub compare_regions
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to compare_regions:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'compare_regions');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN compare_regions
+    $input = $self->initialize_call($input);
+    $input = $self->helper()->validate_args($input,["similarities"],{number_regions=>10,region_size=>15000});
+
+    use Bio::ModelSEED::Client::SAP;
+    my $sapsvr = Bio::ModelSEED::Client::SAP->new();
+    
+    #The sims are already sorted
+    #1 Iterate through them and compress to same genomes
+    my %Regions = ();
+    my @Regions = ();
+    my $Half_Region_Size = int($input->{region_size}/2);
+
+    my %All_Ftrs = ();
+    foreach my $prokaryote (@{$input->{similarities}}){
+	last if $#Regions == $input->{number_regions};
+
+	my $prok_id = $prokaryote->{hit_id};
+	
+	my $genome_id = $prok_id;
+	$genome_id =~ s/\.peg\.\d+$//;
+	
+	my $sap_genome = $genome_id;
+	$sap_genome =~ s/^fig\|//;
+
+	if(!exists($Regions{$genome_id})){
+	    push(@Regions,$genome_id);
+
+	    $Regions{$genome_id}={ 'id' => $sap_genome, 'name' => '', 'order' => $#Regions, 'begin' => 0, 'end' => 0, 'features' => [] };
+
+	    #Retrieve genome name
+	    my $name = $sapsvr->genome_data({ -ids => [ $sap_genome ], -data => [ 'name' ] })->{$sap_genome}[0];
+	    $Regions{$genome_id}{'name'}=$name;
+	}
+
+	#Retrieve prokaryotes in region size
+	#Assuming only one contig here
+	my $location = $sapsvr->fid_locations({ -ids => [ $prok_id ] })->{$prok_id};
+	my ( $contig, $beg, $length ) = $location->[ 0] =~ /^\d+\.\d+:(\S+)_(\d+)([+-]\d+)$/;
+	my $end = $beg + $length;
+	( my $strand, $length) = $length =~ /^([+-])(\d+)$/;
+
+	if(!exists($All_Ftrs{$prok_id})){
+	    my $aliases = $sapsvr->fids_to_ids({ -ids => [ $prok_id ]})->{$prok_id};
+	    $aliases = join(";", map { my $key = $_; $key.":".join("|",@{$aliases->{$key}}) } grep { $_ ne "SEED" } keys %$aliases);
+	    my $function = $sapsvr->ids_to_functions({ -ids => [ $prok_id ], -genome => $sap_genome })->{$prok_id};    
+	    my ($type) = $prok_id =~ /^fig\|\d+\.\d+\.(\w+)\.\d+/; 
+
+	    $All_Ftrs{$prok_id}= {'id' => $prok_id, 'contig' => $contig, 'begin' => $beg, 'end' => $end,
+				  'strand' => $strand, 'aliases' => $aliases, 'function' => $function, 'type' => $type};
+	}
+	push(@{$Regions{$genome_id}{'features'}}, $All_Ftrs{$prok_id});
+
+	my $region_mid = int(($beg + $end)/2);
+	my $region_beg = $region_mid - $Half_Region_Size;
+	my $region_end = $region_mid + $Half_Region_Size;
+	$Regions{$genome_id}{'begin'}=$region_beg;
+	$Regions{$genome_id}{'end'}=$end;
+
+	my $Region_Location = $sap_genome.":".$contig."_".$region_beg."_".$region_end;
+	my $locs = $sapsvr->genes_in_region({ -locations => [ $Region_Location ], -includeLocation => 1 })->{$Region_Location};
+
+	foreach my $ftr (keys %$locs){
+	    if(!exists($All_Ftrs{$ftr})){
+		my $location = $locs->{$ftr};
+		my ( $contig, $beg, $length ) = $location->[ 0] =~ /^\d+\.\d+:(\S+)_(\d+)([+-]\d+)$/;
+		my $end = $beg + $length;
+		( my $strand, $length ) = $length =~ /^([+-])(\d+)$/;
+		
+		my $aliases = $sapsvr->fids_to_ids({ -ids => [ $ftr ]})->{$ftr};
+		$aliases = join(";", map { my $key = $_; $key.":".join("|",@{$aliases->{$key}}) } grep { $_ ne "SEED" } keys %$aliases);
+		my $function = $sapsvr->ids_to_functions({ -ids => [ $ftr ], -genome => $sap_genome })->{$ftr};    
+		my ($type) = $ftr =~ /^fig\|\d+\.\d+\.(\w+)\.\d+/; 
+		
+		$All_Ftrs{$ftr}= {'id'=>$ftr, 'contig' => $contig, 'begin' => $beg, 'end' => $end,
+				  'strand' => $strand, 'aliases' => $aliases, 'function' => $function, 'type' => $type};
+	    }
+	    push(@{$Regions{$genome_id}{'features'}}, $All_Ftrs{$ftr});
+	}
+    }
+
+    @Regions = map { $Regions{$_} } @Regions;
+    my $output = {'size' => $input->{region_size}, 'number' => $input->{number_regions}, 'regions' => \@Regions};
+
+    #END compare_regions
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to compare_regions:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'compare_regions');
     }
     return($output);
 }
@@ -4138,6 +4331,167 @@ feature has a value which is a feature_id
 a reference to a hash where the following keys are defined:
 genome has a value which is a reference
 feature has a value which is a feature_id
+
+
+=end text
+
+=back
+
+
+
+=head2 feature
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+type has a value which is a string
+function has a value which is a string
+aliases has a value which is a string
+contig has a value which is a string
+begin has a value which is an int
+end has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+type has a value which is a string
+function has a value which is a string
+aliases has a value which is a string
+contig has a value which is a string
+begin has a value which is an int
+end has a value which is an int
+
+
+=end text
+
+=back
+
+
+
+=head2 region
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+name has a value which is a string
+begin has a value which is an int
+end has a value which is an int
+features has a value which is a reference to a list where each element is a feature
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+name has a value which is a string
+begin has a value which is an int
+end has a value which is an int
+features has a value which is a reference to a list where each element is a feature
+
+
+=end text
+
+=back
+
+
+
+=head2 regions_data
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+size has a value which is an int
+number has a value which is an int
+regions has a value which is a reference to a hash where the key is a string and the value is a region
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+size has a value which is an int
+number has a value which is an int
+regions has a value which is a reference to a hash where the key is a string and the value is a region
+
+
+=end text
+
+=back
+
+
+
+=head2 compare_regions_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: compare_regions
+DESCRIPTION: This function retrieves the data required to build the CompareRegions view
+
+REQUIRED INPUTS:
+list<string> similarities - list of peg identifiers
+
+OPTIONAL INPUTS:
+int region_size - width of regions (in bp) to cover. Defaults to 15000
+int number_regions - number of regions to show. Defaults to 10
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+similarities has a value which is a reference to a list where each element is a string
+region_size has a value which is an int
+number_regions has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+similarities has a value which is a reference to a list where each element is a string
+region_size has a value which is an int
+number_regions has a value which is an int
 
 
 =end text

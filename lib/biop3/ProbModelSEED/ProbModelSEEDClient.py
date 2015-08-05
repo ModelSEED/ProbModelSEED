@@ -225,6 +225,11 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def compare_regions(self, input):
+        resp = self._call('ProbModelSEED.compare_regions',
+                          [input])
+        return resp[0]
+
     def ModelReconstruction(self, input):
         resp = self._call('ProbModelSEED.ModelReconstruction',
                           [input])
