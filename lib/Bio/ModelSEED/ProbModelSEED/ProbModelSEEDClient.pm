@@ -1,6 +1,6 @@
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 
-use JSON::RPC::Legacy::Client;
+use JSON::RPC::Client;
 use POSIX;
 use strict;
 use Data::Dumper;
@@ -11,8 +11,6 @@ eval {
     require Time::HiRes;
     $get_time = sub { Time::HiRes::gettimeofday() };
 };
-
-use Bio::KBase::AuthToken;
 
 # Client version should match Impl version
 # This is a Semantic Version number,
@@ -35,6 +33,10 @@ sub new
 {
     my($class, $url, @args) = @_;
     
+    if (!defined($url))
+    {
+	$url = 'http://p3.theseed.org/services/ProbModelSEED';
+    }
 
     my $self = {
 	client => Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient->new,
@@ -81,21 +83,8 @@ sub new
     # We create an auth token, passing through the arguments that we were (hopefully) given.
 
     {
-	my $token = Bio::KBase::AuthToken->new(@args);
-	
-	if (!$token->error_message)
-	{
-	    $self->{token} = $token->token;
-	    $self->{client}->{token} = $token->token;
-	}
-        else
-        {
-	    #
-	    # All methods in this module require authentication. In this case, if we
-	    # don't have a token, we can't continue.
-	    #
-	    die "Authentication failed: " . $token->error_message;
-	}
+    $self->{token} = $args[1];
+	$self->{client}->{token} = $args[1];
     }
 
     my $ua = $self->{client}->ua;	 
@@ -786,7 +775,6 @@ model_reaction is a reference to a hash where the following keys are defined:
 	3: (compartment_index) an int
 	4: (name) a string
 
-	direction has a value which is a string
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
@@ -843,7 +831,6 @@ model_reaction is a reference to a hash where the following keys are defined:
 	3: (compartment_index) an int
 	4: (name) a string
 
-	direction has a value which is a string
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
@@ -3222,7 +3209,6 @@ stoichiometry has a value which is a reference to a list where each element is a
 3: (compartment_index) an int
 4: (name) a string
 
-direction has a value which is a string
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
@@ -3242,7 +3228,6 @@ stoichiometry has a value which is a reference to a list where each element is a
 3: (compartment_index) an int
 4: (name) a string
 
-direction has a value which is a string
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
@@ -4311,7 +4296,7 @@ model has a value which is a reference
 =cut
 
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient;
-use base 'JSON::RPC::Legacy::Client';
+use base 'JSON::RPC::Client';
 use POSIX;
 use strict;
 
@@ -4347,11 +4332,11 @@ sub call {
             return JSON::RPC::ServiceObject->new($result, $self->json);
         }
 
-        return JSON::RPC::Legacy::ReturnObject->new($result, $self->json);
+        return JSON::RPC::ReturnObject->new($result, $self->json);
     }
     elsif ($result->content_type eq 'application/json')
     {
-        return JSON::RPC::Legacy::ReturnObject->new($result, $self->json);
+        return JSON::RPC::ReturnObject->new($result, $self->json);
     }
     else {
         return;
@@ -4371,7 +4356,7 @@ sub _post {
             $self->id($obj->{id}) if ($obj->{id}); # if undef, it is notification.
         }
         else {
-            $obj->{id} = $self->id || ($self->id('JSON::RPC::Legacy::Client'));
+            $obj->{id} = $self->id || ($self->id('JSON::RPC::Client'));
         }
     }
     else {
