@@ -1701,6 +1701,115 @@ sub compare_regions
 
 
 
+=head2 plant_annotation_overview
+
+  $output = $obj->plant_annotation_overview($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a plant_annotation_overview_params
+$output is an annotation_overview
+plant_annotation_overview_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+reference is a string
+annotation_overview is a reference to a hash where the following keys are defined:
+	role has a value which is a string
+	features has a value which is a reference to a list where each element is a feature
+feature is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	type has a value which is a string
+	function has a value which is a string
+	aliases has a value which is a string
+	contig has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a plant_annotation_overview_params
+$output is an annotation_overview
+plant_annotation_overview_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+reference is a string
+annotation_overview is a reference to a hash where the following keys are defined:
+	role has a value which is a string
+	features has a value which is a reference to a list where each element is a feature
+feature is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	type has a value which is a string
+	function has a value which is a string
+	aliases has a value which is a string
+	contig has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub plant_annotation_overview
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function plant_annotation_overview (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to plant_annotation_overview:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'plant_annotation_overview');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.plant_annotation_overview",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'plant_annotation_overview',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method plant_annotation_overview",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'plant_annotation_overview',
+				       );
+    }
+}
+
+
+
 =head2 ModelReconstruction
 
   $output = $obj->ModelReconstruction($input)
@@ -4176,6 +4285,77 @@ a reference to a hash where the following keys are defined:
 similarities has a value which is a reference to a list where each element is a string
 region_size has a value which is an int
 number_regions has a value which is an int
+
+
+=end text
+
+=back
+
+
+
+=head2 annotation_overview
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+role has a value which is a string
+features has a value which is a reference to a list where each element is a feature
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+role has a value which is a string
+features has a value which is a reference to a list where each element is a feature
+
+
+=end text
+
+=back
+
+
+
+=head2 plant_annotation_overview_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: plant_annotation_overview
+DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome's PlantSEED annotation
+
+REQUIRED INPUTS:
+reference genome - annotated genome to explore
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
 
 
 =end text

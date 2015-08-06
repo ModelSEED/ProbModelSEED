@@ -472,6 +472,23 @@ module ProbModelSEED {
 	authentication required;
 	funcdef compare_regions(get_feature_params input) returns (regions_data output);
 
+    typedef structure {
+    	mapping<string role, list<feature>> roles;    
+    } annotation_overview;
+
+	/*
+		FUNCTION: plant_annotation_overview
+		DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome's PlantSEED annotation
+
+		REQUIRED INPUTS:
+		reference genome - annotated genome to explore
+	*/		
+	typedef structure {
+		reference genome;
+	} plant_annotation_overview_params;
+	authentication required;
+	funcdef plant_annotation_overview(plant_annotation_overview_params input) returns (annotation_overview output);
+
 	/*********************************************************************************
 	Functions corresponding to modeling apps
    	*********************************************************************************/
