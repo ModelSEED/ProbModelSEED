@@ -2075,6 +2075,128 @@ sub compare_regions
 
 
 
+=head2 plant_annotation_overview
+
+  $output = $obj->plant_annotation_overview($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a plant_annotation_overview_params
+$output is an annotation_overview
+plant_annotation_overview_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+reference is a string
+annotation_overview is a reference to a hash where the following keys are defined:
+	role has a value which is a string
+	features has a value which is a reference to a list where each element is a feature
+feature is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	type has a value which is a string
+	function has a value which is a string
+	aliases has a value which is a string
+	contig has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a plant_annotation_overview_params
+$output is an annotation_overview
+plant_annotation_overview_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+reference is a string
+annotation_overview is a reference to a hash where the following keys are defined:
+	role has a value which is a string
+	features has a value which is a reference to a list where each element is a feature
+feature is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	type has a value which is a string
+	function has a value which is a string
+	aliases has a value which is a string
+	contig has a value which is a string
+	begin has a value which is an int
+	end has a value which is an int
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub plant_annotation_overview
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to plant_annotation_overview:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'plant_annotation_overview');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN plant_annotation_overview
+    $input = $self->helper()->validate_args($input,["genome"],{});
+
+    my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
+    if(!$genome_obj){
+        $self->helper()->error("Genome not found using reference ".$input->{genome}."!");
+    }
+
+    #Collect Genome annotation
+    foreach my $ftr (@{$genome_obj->{features}}){
+	foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{data}{function})){
+	    $output->{$role}{$ftr->{data}{id}}=1;
+	}
+    }
+
+    #Find Missing annotation
+    my $annotation = $self->helper()->get_object("/plantseed/Genomes/annotation_overview","unspecified");
+    $annotation = decode_json($annotation);
+
+    foreach my $row (@{$annotation}){
+	if(!exists($output->{$row->{role}})){
+	    $output->{$row->{role}}={};
+	}
+    }
+
+    foreach my $role (keys %$output){
+	$output->{$role} = [sort keys %{$output->{$role}}];
+    }
+
+    #END plant_annotation_overview
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to plant_annotation_overview:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'plant_annotation_overview');
+    }
+    return($output);
+}
+
+
+
+
 =head2 ModelReconstruction
 
   $output = $obj->ModelReconstruction($input)
@@ -4492,6 +4614,77 @@ a reference to a hash where the following keys are defined:
 similarities has a value which is a reference to a list where each element is a string
 region_size has a value which is an int
 number_regions has a value which is an int
+
+
+=end text
+
+=back
+
+
+
+=head2 annotation_overview
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+role has a value which is a string
+features has a value which is a reference to a list where each element is a feature
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+role has a value which is a string
+features has a value which is a reference to a list where each element is a feature
+
+
+=end text
+
+=back
+
+
+
+=head2 plant_annotation_overview_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: plant_annotation_overview
+DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome's PlantSEED annotation
+
+REQUIRED INPUTS:
+reference genome - annotated genome to explore
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
 
 
 =end text

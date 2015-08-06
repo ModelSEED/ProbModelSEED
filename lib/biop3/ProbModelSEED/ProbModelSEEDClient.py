@@ -230,6 +230,11 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def plant_annotation_overview(self, input):
+        resp = self._call('ProbModelSEED.plant_annotation_overview',
+                          [input])
+        return resp[0]
+
     def ModelReconstruction(self, input):
         resp = self._call('ProbModelSEED.ModelReconstruction',
                           [input])
