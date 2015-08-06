@@ -2092,8 +2092,7 @@ plant_annotation_overview_params is a reference to a hash where the following ke
 	genome has a value which is a reference
 reference is a string
 annotation_overview is a reference to a hash where the following keys are defined:
-	role has a value which is a string
-	features has a value which is a reference to a list where each element is a feature
+	roles has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 feature is a reference to a hash where the following keys are defined:
 	id has a value which is a string
 	type has a value which is a string
@@ -2115,8 +2114,7 @@ plant_annotation_overview_params is a reference to a hash where the following ke
 	genome has a value which is a reference
 reference is a string
 annotation_overview is a reference to a hash where the following keys are defined:
-	role has a value which is a string
-	features has a value which is a reference to a list where each element is a feature
+	roles has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 feature is a reference to a hash where the following keys are defined:
 	id has a value which is a string
 	type has a value which is a string
@@ -2165,7 +2163,7 @@ sub plant_annotation_overview
     #Collect Genome annotation
     foreach my $ftr (@{$genome_obj->{features}}){
 	foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{data}{function})){
-	    $output->{$role}{$ftr->{data}{id}}=1;
+	    $output->{$role}{'kmer-features'}{$ftr->{data}{id}}=1;
 	}
     }
 
@@ -2173,14 +2171,37 @@ sub plant_annotation_overview
     my $annotation = $self->helper()->get_object("/plantseed/Genomes/annotation_overview","unspecified");
     $annotation = decode_json($annotation);
 
+    my %Exemplar_Roles=();
     foreach my $row (@{$annotation}){
+	foreach my $ftr (keys %{$row->{features}}){
+	    $Exemplar_Roles{$row->{role}}{$ftr}=1;
+	}
 	if(!exists($output->{$row->{role}})){
 	    $output->{$row->{role}}={};
 	}
     }
 
+    #Add exemplars found in BLAST results
+    #Stored in Minimal Genome object
+    my @path = split(/\//, $input->{genome});
+    my $genome = pop @path;
+    my $root = join("/",@path)."/";
+    my $min_genome = $root.".".$genome."/minimal_genome";
+
+    $min_genome = $self->helper()->get_object($min_genome,"unspecified");
+    $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
+    
     foreach my $role (keys %$output){
-	$output->{$role} = [sort keys %{$output->{$role}}];
+	foreach my $exemplar ( grep { exists($min_genome->{exemplars}{$_}) } keys %{$Exemplar_Roles{$role}}){
+	    foreach my $query (keys %{$min_genome->{exemplars}{$exemplar}}){
+		$output->{$role}{'blast-features'}{$query}=1;
+	    }
+	}
+    }
+
+    foreach my $role (keys %$output){
+	$output->{$role}{'kmer-features'} = [sort keys %{$output->{$role}{'kmer-features'}}];
+	$output->{$role}{'blast-features'} = [sort keys %{$output->{$role}{'blast-features'}}];
     }
 
     #END plant_annotation_overview
@@ -4634,8 +4655,7 @@ number_regions has a value which is an int
 
 <pre>
 a reference to a hash where the following keys are defined:
-role has a value which is a string
-features has a value which is a reference to a list where each element is a feature
+roles has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 
 </pre>
 
@@ -4644,8 +4664,7 @@ features has a value which is a reference to a list where each element is a feat
 =begin text
 
 a reference to a hash where the following keys are defined:
-role has a value which is a string
-features has a value which is a reference to a list where each element is a feature
+roles has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 
 
 =end text

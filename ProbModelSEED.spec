@@ -473,7 +473,7 @@ module ProbModelSEED {
 	funcdef compare_regions(get_feature_params input) returns (regions_data output);
 
     typedef structure {
-    	mapping<string role, list<feature>> roles;    
+    	mapping<string role, mapping<string, list<feature>>> roles;    
     } annotation_overview;
 
 	/*

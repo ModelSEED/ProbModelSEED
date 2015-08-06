@@ -1718,8 +1718,7 @@ plant_annotation_overview_params is a reference to a hash where the following ke
 	genome has a value which is a reference
 reference is a string
 annotation_overview is a reference to a hash where the following keys are defined:
-	role has a value which is a string
-	features has a value which is a reference to a list where each element is a feature
+	roles has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 feature is a reference to a hash where the following keys are defined:
 	id has a value which is a string
 	type has a value which is a string
@@ -1741,8 +1740,7 @@ plant_annotation_overview_params is a reference to a hash where the following ke
 	genome has a value which is a reference
 reference is a string
 annotation_overview is a reference to a hash where the following keys are defined:
-	role has a value which is a string
-	features has a value which is a reference to a list where each element is a feature
+	roles has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 feature is a reference to a hash where the following keys are defined:
 	id has a value which is a string
 	type has a value which is a string
@@ -4305,8 +4303,7 @@ number_regions has a value which is an int
 
 <pre>
 a reference to a hash where the following keys are defined:
-role has a value which is a string
-features has a value which is a reference to a list where each element is a feature
+roles has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 
 </pre>
 
@@ -4315,8 +4312,7 @@ features has a value which is a reference to a list where each element is a feat
 =begin text
 
 a reference to a hash where the following keys are defined:
-role has a value which is a string
-features has a value which is a reference to a list where each element is a feature
+roles has a value which is a reference to a hash where the key is a string and the value is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 
 
 =end text
