@@ -1880,6 +1880,119 @@ sub get_feature
 
 
 
+=head2 save_feature_function
+
+  $obj->save_feature_function($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a save_feature_function_params
+save_feature_function_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+	function has a value which is a string
+reference is a string
+feature_id is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a save_feature_function_params
+save_feature_function_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+	function has a value which is a string
+reference is a string
+feature_id is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub save_feature_function
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to save_feature_function:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'save_feature_function');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    #BEGIN save_feature_function
+    $input = $self->initialize_call($input);
+    $input = $self->helper()->validate_args($input,["genome","feature","function"],{});
+
+    my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
+    if(!$genome_obj){
+	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
+    }
+
+    my $found_ftr=undef;
+    foreach my $ftr (@{$genome_obj->{features}}){
+	if($ftr->{data}{id} eq $input->{feature}){
+	    $ftr->{data}{function} = $input->{function};
+	    $found_ftr = 1;
+	}
+    }
+
+    if(!$found_ftr){
+	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
+    }
+
+    #Retrieve Minimal Genome object (unspecified type)
+    my @path = split(/\//, $input->{genome});
+    my $genome = pop @path;
+    my $root = join("/",@path)."/";
+    my $min_genome = $root.".".$genome."/minimal_genome";
+
+    my $min_genome_obj = $self->helper()->get_object($min_genome,"unspecified");
+    $min_genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome_obj);
+
+    $found_ftr = undef;
+    foreach my $ftr (@{$min_genome_obj->{features}}){
+	if($ftr->{id} eq $input->{feature}){
+	    $ftr->{function} = $input->{function};
+	    $found_ftr=1;
+	}
+    }
+
+    if(!$found_ftr){
+	$self->helper()->error("Feature (".$input->{feature}.") not found in minimal genome!");
+    }
+
+    #Save objects
+    $self->helper->save_object($input->{genome},$genome_obj,"genome",{});
+    $self->helper->save_object($min_genome, $min_genome_obj,"unspecified",{});
+
+    #END save_feature_function
+    return();
+}
+
+
+
+
 =head2 compare_regions
 
   $output = $obj->compare_regions($input)
@@ -2092,8 +2205,7 @@ plant_annotation_overview_params is a reference to a hash where the following ke
 	genome has a value which is a reference
 reference is a string
 annotation_overview is a reference to a hash where the following keys are defined:
-	role has a value which is a string
-	features has a value which is a reference to a list where each element is a feature
+	roles has a value which is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 feature is a reference to a hash where the following keys are defined:
 	id has a value which is a string
 	type has a value which is a string
@@ -2115,8 +2227,7 @@ plant_annotation_overview_params is a reference to a hash where the following ke
 	genome has a value which is a reference
 reference is a string
 annotation_overview is a reference to a hash where the following keys are defined:
-	role has a value which is a string
-	features has a value which is a reference to a list where each element is a feature
+	roles has a value which is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 feature is a reference to a hash where the following keys are defined:
 	id has a value which is a string
 	type has a value which is a string
@@ -4461,6 +4572,52 @@ feature has a value which is a feature_id
 
 
 
+=head2 save_feature_function_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: save_feature_function
+DESCRIPTION: This function saves the newly assigned function in a feature
+             thereby updating the annotation of a genome
+
+REQUIRED INPUTS:
+reference genome - reference of genome that contains feature
+feature_id feature - identifier of feature to get
+string function - the new annotation to assign to a feature
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+function has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+function has a value which is a string
+
+
+=end text
+
+=back
+
+
+
 =head2 feature
 
 =over 4
@@ -4634,8 +4791,7 @@ number_regions has a value which is an int
 
 <pre>
 a reference to a hash where the following keys are defined:
-role has a value which is a string
-features has a value which is a reference to a list where each element is a feature
+roles has a value which is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 
 </pre>
 
@@ -4644,8 +4800,7 @@ features has a value which is a reference to a list where each element is a feat
 =begin text
 
 a reference to a hash where the following keys are defined:
-role has a value which is a string
-features has a value which is a reference to a list where each element is a feature
+roles has a value which is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 
 
 =end text

@@ -429,6 +429,25 @@ module ProbModelSEED {
 	authentication required;
 	funcdef get_feature(get_feature_params input) returns (feature_data output);
 
+	/*
+		FUNCTION: save_feature_function
+		DESCRIPTION: This function saves the newly assigned function in a feature
+			     thereby updating the annotation of a genome
+
+		REQUIRED INPUTS:
+		reference genome - reference of genome that contains feature
+		feature_id feature - identifier of feature to get
+		string function - the new annotation to assign to a feature
+
+	*/		
+	typedef structure {
+		reference genome;
+		feature_id feature;
+		string function;
+	} save_feature_function_params;
+	authentication required;
+	funcdef save_feature_function(save_feature_function_params input) returns ();
+
     typedef structure {
     	string id;
 	string type;
