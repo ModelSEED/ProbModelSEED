@@ -429,6 +429,85 @@ module ProbModelSEED {
 	authentication required;
 	funcdef get_feature(get_feature_params input) returns (feature_data output);
 
+	/*
+		FUNCTION: save_feature_function
+		DESCRIPTION: This function saves the newly assigned function in a feature
+			     thereby updating the annotation of a genome
+
+		REQUIRED INPUTS:
+		reference genome - reference of genome that contains feature
+		feature_id feature - identifier of feature to get
+		string function - the new annotation to assign to a feature
+
+	*/		
+	typedef structure {
+		reference genome;
+		feature_id feature;
+		string function;
+	} save_feature_function_params;
+	authentication required;
+	funcdef save_feature_function(save_feature_function_params input) returns ();
+
+    typedef structure {
+    	string id;
+	string type;
+	string function;
+	string aliases;
+	string contig;
+	int begin;
+	int end;
+    } feature;
+
+    typedef structure {
+    	string id;
+	string name;
+	int begin;
+	int end;
+	list<feature> features;
+    } region;
+    
+    typedef structure {
+    	int size;
+	int number;
+	mapping<string region_id, region> regions;
+    } regions_data;
+
+	/*
+		FUNCTION: compare_regions
+		DESCRIPTION: This function retrieves the data required to build the CompareRegions view
+
+		REQUIRED INPUTS:
+		list<string> similarities - list of peg identifiers
+
+		OPTIONAL INPUTS:
+		int region_size - width of regions (in bp) to cover. Defaults to 15000
+		int number_regions - number of regions to show. Defaults to 10
+	*/		
+	typedef structure {
+		list<string> similarities;
+		int region_size;
+		int number_regions;
+	} compare_regions_params;
+	authentication required;
+	funcdef compare_regions(get_feature_params input) returns (regions_data output);
+
+    typedef structure {
+    	mapping<string role, list<feature>> roles;    
+    } annotation_overview;
+
+	/*
+		FUNCTION: plant_annotation_overview
+		DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome's PlantSEED annotation
+
+		REQUIRED INPUTS:
+		reference genome - annotated genome to explore
+	*/		
+	typedef structure {
+		reference genome;
+	} plant_annotation_overview_params;
+	authentication required;
+	funcdef plant_annotation_overview(plant_annotation_overview_params input) returns (annotation_overview output);
+
 	/*********************************************************************************
 	Functions corresponding to modeling apps
    	*********************************************************************************/

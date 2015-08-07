@@ -225,6 +225,20 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def save_feature_function(self, input):
+        self._call('ProbModelSEED.save_feature_function',
+                   [input])
+
+    def compare_regions(self, input):
+        resp = self._call('ProbModelSEED.compare_regions',
+                          [input])
+        return resp[0]
+
+    def plant_annotation_overview(self, input):
+        resp = self._call('ProbModelSEED.plant_annotation_overview',
+                          [input])
+        return resp[0]
+
     def ModelReconstruction(self, input):
         resp = self._call('ProbModelSEED.ModelReconstruction',
                           [input])

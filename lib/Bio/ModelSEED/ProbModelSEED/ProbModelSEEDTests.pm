@@ -13,7 +13,7 @@
 	sub new {
 	    my($class,$bin) = @_;
 	    my $c = Config::Simple->new();
-		$c->read($bin."test.cfg");
+		$c->read($bin."/test.cfg");
 	    my $self = {
 			testcount => 0,
 			dumpoutput => $c->param("ProbModelSEEDTest.dumpoutput"),
@@ -227,7 +227,7 @@
 		},"Deleting ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1);
 		$output = $self->test_harness("list_fba_studies",{
 			model => $model
-		},"List ".$model_name." FBA studies after running additional FBA",[["keys(%{$output}) == 3","Model should have three FBAs"]],0,"FBA of ".$model_name." in minimal media",1);
+		},"List ".$model_name." FBA studies after running additional FBA",[["length(\$output) == 3","Model should have three FBAs"]],0,"FBA of ".$model_name." in minimal media",1);
 		$output = $self->test_harness("delete_fba_studies",{
 			model => $model,
 			fbas => ["fba.0"]
