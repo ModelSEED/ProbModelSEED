@@ -1025,6 +1025,7 @@ model_reaction is a reference to a hash where the following keys are defined:
 	3: (compartment_index) an int
 	4: (name) a string
 
+	direction has a value which is a string
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
@@ -1081,6 +1082,7 @@ model_reaction is a reference to a hash where the following keys are defined:
 	3: (compartment_index) an int
 	4: (name) a string
 
+	direction has a value which is a string
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
@@ -3324,6 +3326,7 @@ stoichiometry has a value which is a reference to a list where each element is a
 3: (compartment_index) an int
 4: (name) a string
 
+direction has a value which is a string
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
@@ -3343,6 +3346,7 @@ stoichiometry has a value which is a reference to a list where each element is a
 3: (compartment_index) an int
 4: (name) a string
 
+direction has a value which is a string
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
