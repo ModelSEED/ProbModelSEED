@@ -97,7 +97,11 @@ sub helper {
 			adminmode => $self->adminmode(),
 			method => $self->current_method(),
 			file_cache => $self->config()->{file_cache},
-			cache_targets => $targets
+			cache_targets => $targets,
+			biochemistry => $self->config()->{biochemistry},
+			default_media => $self->config()->{default_media},
+			classifier => $self->config()->{classifier},
+			template_dir => $self->config()->{template_dir}
 		});
 	}
 	return $CallContext->{_helper};
