@@ -1574,6 +1574,97 @@ sub get_feature
 
 
 
+=head2 save_feature_function
+
+  $obj->save_feature_function($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a save_feature_function_params
+save_feature_function_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+	function has a value which is a string
+reference is a string
+feature_id is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a save_feature_function_params
+save_feature_function_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+	function has a value which is a string
+reference is a string
+feature_id is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub save_feature_function
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function save_feature_function (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to save_feature_function:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'save_feature_function');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.save_feature_function",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'save_feature_function',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return;
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method save_feature_function",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'save_feature_function',
+				       );
+    }
+}
+
+
+
 =head2 compare_regions
 
   $output = $obj->compare_regions($input)
@@ -1718,8 +1809,7 @@ plant_annotation_overview_params is a reference to a hash where the following ke
 	genome has a value which is a reference
 reference is a string
 annotation_overview is a reference to a hash where the following keys are defined:
-	role has a value which is a string
-	features has a value which is a reference to a list where each element is a feature
+	roles has a value which is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 feature is a reference to a hash where the following keys are defined:
 	id has a value which is a string
 	type has a value which is a string
@@ -1741,8 +1831,7 @@ plant_annotation_overview_params is a reference to a hash where the following ke
 	genome has a value which is a reference
 reference is a string
 annotation_overview is a reference to a hash where the following keys are defined:
-	role has a value which is a string
-	features has a value which is a reference to a list where each element is a feature
+	roles has a value which is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 feature is a reference to a hash where the following keys are defined:
 	id has a value which is a string
 	type has a value which is a string
@@ -4132,6 +4221,52 @@ feature has a value which is a feature_id
 
 
 
+=head2 save_feature_function_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: save_feature_function
+DESCRIPTION: This function saves the newly assigned function in a feature
+             thereby updating the annotation of a genome
+
+REQUIRED INPUTS:
+reference genome - reference of genome that contains feature
+feature_id feature - identifier of feature to get
+string function - the new annotation to assign to a feature
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+function has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+function has a value which is a string
+
+
+=end text
+
+=back
+
+
+
 =head2 feature
 
 =over 4
@@ -4305,8 +4440,7 @@ number_regions has a value which is an int
 
 <pre>
 a reference to a hash where the following keys are defined:
-role has a value which is a string
-features has a value which is a reference to a list where each element is a feature
+roles has a value which is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 
 </pre>
 
@@ -4315,8 +4449,7 @@ features has a value which is a reference to a list where each element is a feat
 =begin text
 
 a reference to a hash where the following keys are defined:
-role has a value which is a string
-features has a value which is a reference to a list where each element is a feature
+roles has a value which is a reference to a hash where the key is a string and the value is a reference to a list where each element is a feature
 
 
 =end text

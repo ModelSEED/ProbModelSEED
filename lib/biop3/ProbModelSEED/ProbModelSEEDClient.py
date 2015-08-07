@@ -225,6 +225,10 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def save_feature_function(self, input):
+        self._call('ProbModelSEED.save_feature_function',
+                   [input])
+
     def compare_regions(self, input):
         resp = self._call('ProbModelSEED.compare_regions',
                           [input])
