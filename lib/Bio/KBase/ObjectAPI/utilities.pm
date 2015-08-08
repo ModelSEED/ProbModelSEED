@@ -13,6 +13,7 @@ our $CONFIG = undef;
 our $keggmaphash = undef;
 our $report = {};
 our $globalparams = {"gapfill name" => "none"};
+our $startime = undef;
 
 =head1 Bio::KBase::ObjectAPI::utilities
 
@@ -1100,6 +1101,13 @@ sub load_to_shock {
 	my $json = JSON::XS->new;
 	my $data = $json->decode(join("\n",@{$output}));
 	return $data->{data}->{id};
+}
+
+sub elaspedtime {
+	if (!defined($startime)) {
+		$startime = time();
+	}
+	return time()-$startime;
 }
 
 1;

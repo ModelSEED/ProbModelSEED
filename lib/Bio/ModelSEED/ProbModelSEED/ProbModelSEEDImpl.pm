@@ -60,6 +60,7 @@ sub adminmode {
 #Initialization function for call
 sub initialize_call {
 	my ($self,$params) = @_;
+	Bio::KBase::ObjectAPI::utilities::elaspedtime();
 	if (defined($params->{adminmode})) {
 		$CallContext->{_adminmode} = $params->{adminmode};
 	}
@@ -1151,8 +1152,12 @@ sub get_model
     my($output);
     #BEGIN get_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{});
-    $output = $self->helper()->get_model_data($input->{model});
+    $input = $self->helper()->validate_args($input,["model"],{to => 0});
+    if ($input->{to} == 1) {
+    	$output = $self->helper()->get_model($input->{model})->serializeToDB();
+    } else {
+    	$output = $self->helper()->get_model_data($input->{model});
+    }
     #END get_model
     my @_bad_returns;
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
