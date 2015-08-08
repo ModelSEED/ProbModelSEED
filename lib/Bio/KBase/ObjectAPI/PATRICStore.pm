@@ -154,9 +154,7 @@ sub get_objects {
 	}
 	#Pulling objects from workspace
 	if (@{$newrefs} > 0) {
-		print "Getting ".$newrefs->[0]."\t".Bio::KBase::ObjectAPI::utilities::elaspedtime()."\n";
 		my $objdatas = $self->workspace()->get({adminmode => $self->adminmode(),objects => $newrefs});
-		print "Done getting ".$newrefs->[0]."\t".Bio::KBase::ObjectAPI::utilities::elaspedtime()."\n";
 		my $object;
 		for (my $i=0; $i < @{$objdatas}; $i++) {
 			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1]);
@@ -369,12 +367,9 @@ sub transform_genome_to_ws {
 
 sub transform_model_from_ws {
 	my ($self,$data,$meta) = @_;
-	print "Parsing model JSON\t".Bio::KBase::ObjectAPI::utilities::elaspedtime()."\n";
 	$data = Bio::KBase::ObjectAPI::utilities::FROMJSON($data);
-	print "Creating moose object\t".Bio::KBase::ObjectAPI::utilities::elaspedtime()."\n";
 	my $obj = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new($data);
 	$obj->parent($self);
-	print "Listing gapfilling\t".Bio::KBase::ObjectAPI::utilities::elaspedtime()."\n";
 	my $gflist = $self->workspace()->ls({
 		adminmode => $self->adminmode(),
 		paths => [$meta->[2].".".$meta->[0]."/gapfilling"],
@@ -383,7 +378,6 @@ sub transform_model_from_ws {
 		recursive => 1,
 		query => {type => "fba"}
 	});
-	print "Loading gapfilling\t".Bio::KBase::ObjectAPI::utilities::elaspedtime()."\n";
 	if (defined($gflist->{$meta->[2].".".$meta->[0]."/gapfilling"})) {
 		$gflist = $gflist->{$meta->[2].".".$meta->[0]."/gapfilling"};
 		for (my $i=0; $i < @{$gflist}; $i++) {
@@ -447,7 +441,6 @@ sub transform_model_from_ws {
 			}
 		}
 	}
-	print "Done loading model\t".Bio::KBase::ObjectAPI::utilities::elaspedtime()."\n";
 	return $obj;
 }
 

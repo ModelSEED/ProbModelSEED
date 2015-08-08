@@ -17,4 +17,4 @@ my $JSON = JSON->new->utf8(1);
 if ($opt->{pretty} == 1) {
 	$JSON->pretty(1);
 }
-#print $JSON->encode($output);
+print $JSON->encode($output);
