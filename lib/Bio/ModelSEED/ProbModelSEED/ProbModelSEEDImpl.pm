@@ -2153,7 +2153,7 @@ sub compare_regions
 	my $region_beg = $region_mid - $Half_Region_Size;
 	my $region_end = $region_mid + $Half_Region_Size;
 	$Regions{$genome_id}{'begin'}=$region_beg;
-	$Regions{$genome_id}{'end'}=$end;
+	$Regions{$genome_id}{'end'}=$region_end;
 
 	my $Region_Location = $sap_genome.":".$contig."_".$region_beg."_".$region_end;
 	my $locs = $sapsvr->genes_in_region({ -locations => [ $Region_Location ], -includeLocation => 1 })->{$Region_Location};
