@@ -160,28 +160,19 @@ Description:
 =cut
 sub delete_model {
 	my($self,$model) = @_;
-	my $metas = $self->workspace_service()->get({
-		objects => [$model],
-		metadata_only => 1,
-		adminmode => $self->adminmode()
-	});
 	my $modelfolder;
 	if ($model =~ m/^(.+\/)([^\/]+)$/) {
 		$modelfolder = $1.".".$2;
 	}
+	# Not quite sure what will happen if the model or modelfolder does not exist 
 	my $output = $self->workspace_service()->delete({
-		objects => [$model],
+		objects => [$model, $modelfolder],
 		deleteDirectories => 1,
 		force => 1,
 		adminmode => $self->adminmode()
 	});
-	push(@{$output},$self->workspace_service()->delete({
-		objects => [$modelfolder],
-		deleteDirectories => 1,
-		force => 1,
-		adminmode => $self->adminmode()
-	}));
-	return $output;
+	# Only return metadata on model object.
+	return $output->[0];
 }
 
 =head3 get_model_data
