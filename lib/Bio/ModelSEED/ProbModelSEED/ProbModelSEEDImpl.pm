@@ -1844,7 +1844,6 @@ sub get_feature
     my $ftr_lu = $self->helper()->get_object("/plantseed/Genomes/feature_lookup","unspecified");
     $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
 
-    print join("|",keys %{$ftr_lu->{$output->{id}}}),"\n";
     $output->{subsystems} = $ftr_lu->{$output->{id}}{'subsystems'};
     $output->{aliases}={'SEED' => $ftr_lu->{$output->{id}}{'seed'}};
     $output->{aliases}{'transcript'} = $ftr_lu->{$output->{id}}{'transcript'} if exists($ftr_lu->{$output->{id}}{'transcript'});
@@ -1897,6 +1896,44 @@ sub get_feature
 	my $Obj = { hit_id => $plant->{hit_id}, percent_id => $plant->{percent_id},
 		    genome => $ftr_lu->{$plant->{hit_id}}{genome}, aliases => { 'SEED' => $ftr_lu->{$plant->{hit_id}}{'seed'} },
 		    function => $ftr_lu->{$plant->{hit_id}}{function} };
+	push(@{$output->{plant_similarities}},$Obj);
+    }
+
+    use Bio::ModelSEED::Client::SAP;
+    my $sapsvr = Bio::ModelSEED::Client::SAP->new();
+
+    my @Proks = @{$output->{prokaryotic_similarities}};
+    undef(@{$output->{plant_similarities}});
+    
+    #Collect Bulk
+    my %Prok_Genomes = ();
+    my %Prok_IDs = ();
+    foreach my $prok (@Proks){
+	$Prok_IDs{$prok->{hit_id}}=1;
+
+	my $genome_id = $prok->{hit_id};
+	$genome_id =~ s/\.peg\.\d+$//;
+	$genome_id =~ s/^fig\|//;
+	$Prok_Genomes{$genome_id}{$prok->{hit_id}}=1;
+    }
+
+    my $names = $sapsvr->genome_data({ -ids => [ keys %Prok_Genomes ], -data => [ 'name' ] });
+    my $functions = $sapsvr->ids_to_functions({ -ids => [ keys %Prok_IDs ] });
+
+    foreach my $prok (@Proks){
+	my $Obj = { hit_id => $prok->{hit_id}, percent_id => $prok->{percent_id},
+		    genome => '', aliases => {}, function => '' };
+
+	my $genome_id = $prok->{hit_id};
+	$genome_id =~ s/\.peg\.\d+$//;
+	$genome_id =~ s/^fig\|//;
+	
+	my $name = $names->{$genome_id}[0];
+	$Obj->{genome}=$name;
+	
+	my $function = $functions->{$prok->{hit_id}};
+	$Obj->{function}=$function;
+	
 	push(@{$output->{plant_similarities}},$Obj);
     }
 
