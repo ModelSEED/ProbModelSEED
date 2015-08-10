@@ -1869,12 +1869,30 @@ sub get_feature
     #Iterate through hits and separate them out into plant and prokaryote hits
     #By rule, prokaryote hits still have their peg identifiers and plants dont
     #percent_id|hit_id|bit_score|e_value
+    my ($plant_count,$prokaryotic_count)=(0,0);
     foreach my $hit (@{$sim_file->{$input->{feature}}}){
-	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/){
+	last if $plant_count>=10 && $prokaryotic_count>=10;
+
+	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/ && $prokaryotic_count<10){
 	    push(@{$output->{prokaryotic_similarities}},$hit);
-	}else{
+	    $prokaryotic_count++;
+	}elsif($plant_count<10){
 	    push(@{$output->{plant_similarities}},$hit);
+	    $plant_count++;
 	}
+    }
+
+    #Retrieve details for plants
+    my $ftr_lu = $self->helper()->get_object("/plantseed/Genomes/feature_lookup","unspecified");
+    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
+
+    my @Plants = @{$output->{plant_similarities}};
+    undef(@{$output->{plant_similarities}});
+    foreach my $plant ( @Plants ){
+	my $Obj = { hit_id => $plant->{hit_id}, percent_id => $plant->{percent_id},
+		    genome => $ftr_lu->{$plant->{hit_id}}{genome}, aliases => { 'SEED' => $ftr_lu->{$plant->{hit_id}}{'seed'} },
+		    function => $ftr_lu->{$plant->{hit_id}}{function} };
+	push(@{$output->{plant_similarities}},$Obj);
     }
 
     #END get_feature
