@@ -1840,6 +1840,15 @@ sub get_feature
 	}
     }
 
+    #Retrieve details for plants
+    my $ftr_lu = $self->helper()->get_object("/plantseed/Genomes/feature_lookup","unspecified");
+    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
+
+    print join("|",keys %{$ftr_lu->{$output->{id}}}),"\n";
+    $output->{subsystems} = $ftr_lu->{$output->{id}}{'subsystems'};
+    $output->{aliases}={'SEED' => $ftr_lu->{$output->{id}}{'seed'}};
+    $output->{aliases}{'transcript'} = $ftr_lu->{$output->{id}}{'transcript'} if exists($ftr_lu->{$output->{id}}{'transcript'});
+
     if(!$output){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
@@ -1881,10 +1890,6 @@ sub get_feature
 	    $plant_count++;
 	}
     }
-
-    #Retrieve details for plants
-    my $ftr_lu = $self->helper()->get_object("/plantseed/Genomes/feature_lookup","unspecified");
-    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
 
     my @Plants = @{$output->{plant_similarities}};
     undef(@{$output->{plant_similarities}});
