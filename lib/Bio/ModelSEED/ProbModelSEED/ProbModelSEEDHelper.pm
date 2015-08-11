@@ -628,7 +628,7 @@ sub copy_genome {
     if (!defined($input->{destination})) {
     	$input->{destination} = "/".$self->{_params}->{username}."/modelseed/genomes/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/genomes/";
+    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/Genomes/";
     	}
     }
     if (!defined($input->{destname})) {
@@ -660,7 +660,7 @@ sub copy_model {
     if (!defined($input->{destination})) {
     	$input->{destination} = "/".$self->{_params}->{username}."/home/models/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/models/";
+    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/Models/";
     	}
     }
     if (!defined($input->{destname})) {
@@ -674,8 +674,8 @@ sub copy_model {
     }
     if ($input->{copy_genome} == 1) {
     	$self->copy_genome({
-    		genome => $model->genome_ref()
-    		#destination => $input->{destination}.".".$input->{destname}."/"
+    		genome => $model->genome_ref(),
+    		plantseed => $input->{plantseed}
     	});
     	$model->genome_ref($model->genome()->_reference());
     }
