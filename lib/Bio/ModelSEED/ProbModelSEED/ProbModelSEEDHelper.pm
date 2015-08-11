@@ -217,7 +217,6 @@ sub get_model_summary {
 		recursive => 0,
 		query => {type => "fba"}
 	});
-	my $output = {};
 	if (defined($list->{$modelmeta->[2].".".$modelmeta->[0]."/fba"})) {
 		$list = $list->{$modelmeta->[2].".".$modelmeta->[0]."/fba"};
 		$output->{fba_count} = @{$list};
