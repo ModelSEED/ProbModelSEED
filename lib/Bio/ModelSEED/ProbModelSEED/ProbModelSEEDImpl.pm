@@ -2344,13 +2344,6 @@ sub plant_annotation_overview
         $self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
 
-    #Collect Genome annotation
-    foreach my $ftr (@{$genome_obj->{features}}){
-	foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{data}{function})){
-	    $output->{$role}{'kmer-features'}{$ftr->{data}{id}}=1;
-	}
-    }
-
     #Find Missing annotation
     my $annotation = $self->helper()->get_object("/plantseed/Genomes/annotation_overview","unspecified");
     $annotation = decode_json($annotation);
@@ -2362,6 +2355,14 @@ sub plant_annotation_overview
 	}
 	if(!exists($output->{$row->{role}})){
 	    $output->{$row->{role}}={};
+	}
+    }
+
+    #Collect Genome annotation
+    foreach my $ftr (@{$genome_obj->{features}}){
+	foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{data}{function})){
+	    next unless exists($output->{$role});
+	    $output->{$role}{'kmer-features'}{$ftr->{data}{id}}=1;
 	}
     }
 
