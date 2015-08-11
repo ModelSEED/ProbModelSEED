@@ -107,10 +107,12 @@ if __name__ == '__main__':
 
     # Create the rxnprobs object in the workspace.
     try:
+        data = dict()
+        data['reaction_probabilities'] = reactionProbs
         input = dict()
         input['objects'] = list()
         input['overwrite'] = 1
-        input['objects'].append( [ args.rxnprobsref, 'unspecified', { }, reactionProbs ])
+        input['objects'].append( [ args.rxnprobsref, 'unspecified', { }, data ]) # 'rxnprobs' when workspace is updated
         wsClient.create(input)
 
     except WorkspaceServerError as e:

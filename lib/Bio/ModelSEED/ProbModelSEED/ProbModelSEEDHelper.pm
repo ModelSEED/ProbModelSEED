@@ -37,6 +37,7 @@ sub adminmode {
 sub save_object {
 	my($self, $ref,$data,$type,$metadata) = @_;
 	my $object = $self->PATRICStore()->save_object($data,$ref,$metadata,$type,1);
+	return $object;
 }
 sub get_object {
 	my($self, $ref,$type,$options) = @_;
@@ -566,18 +567,21 @@ sub ComputeReactionProbabilities {
     }
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
     $log->info("Started computing reaction probabilities for genome ".$parameters->{genome});
-	my $genome = $self->get_genome($parameters->{genome});
 	if (!defined($parameters->{output_file})) {
+		my $genome = $self->get_genome($parameters->{genome});
 		$parameters->{output_file} = $genome->wsmeta()->[0].".rxnprobs";
 	}
 	my $rxnprobsref = $parameters->{output_path}.$parameters->{output_file};
-    my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$genome->_reference()." ".$rxnprobsref." --token '".$self->token()."'";
+    my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$parameters->{genome}." ".$rxnprobsref." --token '".$self->token()."'";
     $log->info("Calculating reaction likelihoods with command: ".$cmd);
     system($cmd);
     if ($? != 0) {
     	$self->error("Calculating reaction likelihoods failed!");
     }
-    my $rxnprob = $self->get_object($rxnprobsref,"rxnprob");
+    # Waiting for workspace service to support rxnprobs type.
+    # my $rxnprob = $self->get_object($rxnprobsref,"rxnprobs");
+    my $data = $self->get_object($rxnprobsref,"unspecified"); # Replace with above line
+    my $rxnprob = Bio::KBase::ObjectAPI::utilities::FROMJSON($data); # Delete this line
 	$rxnprob->{jobresult} = {
 	   	id => 0,
 		app => {
@@ -595,7 +599,7 @@ sub ComputeReactionProbabilities {
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED"
 	};
-	return $self->save_object($parameters->{output_path}.$parameters->{output_file},$rxnprob,"rxnprob");
+	return $self->save_object($parameters->{output_path}.$parameters->{output_file},$rxnprob,"unspecified"); # "rxnprobs" when workspace updated
 }
 
 sub ModelReconstruction {
@@ -612,7 +616,7 @@ sub ModelReconstruction {
     	genome => undef,
     	output_file => undef,
     	gapfill => 1,
-    	probannogafill => 0,
+    	probannogapfill => 0,
     	probanno => 0,
     	predict_essentiality => 1,
     });
@@ -661,9 +665,11 @@ sub ModelReconstruction {
 	    fulldb => $parameters->{fulldb}
 	});
     #Now compute reaction probabilities if they are needed for gapfilling or probanno model building
-    if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogafill} == 1)) {
+    if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
+    	my $genomeref = $genome->_reference();
+    	$genomeref =~ s/\|\|$//; # Remove the extraneous || at the end of the reference
     	$self->ComputeReactionProbabilities({
-    		genome => $genome->_reference(),
+    		genome => $genomeref,
     		output_path => $folder,
     		output_file => $genome->id().".rxnprobs"
     	});
