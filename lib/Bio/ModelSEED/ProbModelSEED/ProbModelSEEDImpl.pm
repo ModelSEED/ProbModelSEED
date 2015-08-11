@@ -1844,7 +1844,7 @@ sub get_feature
     my $ftr_lu = $self->helper()->get_object("/plantseed/Genomes/feature_lookup","unspecified");
     $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
 
-    $output->{subsystems} = $ftr_lu->{$output->{id}}{'subsystems'};
+    $output->{subsystems} = [keys %{$ftr_lu->{$output->{id}}{'subsystems'}}];
     $output->{aliases}={'SEED' => $ftr_lu->{$output->{id}}{'seed'}};
     $output->{aliases}{'transcript'} = $ftr_lu->{$output->{id}}{'transcript'} if exists($ftr_lu->{$output->{id}}{'transcript'});
 
