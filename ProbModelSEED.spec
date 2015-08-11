@@ -350,11 +350,75 @@ module ProbModelSEED {
     	DESCRIPTION: This function lists all models owned by the user
     	
     	REQUIRED INPUTS:
-
+		
+		OPTIONAL INPUTS:
+		reference path;
 		
 	*/
+	typedef structure {
+		reference path;
+    } list_models_params;
     authentication required;
-    funcdef list_models() returns (list<ModelStats> output);
+    funcdef list_models(list_models_params input) returns (list<ModelStats> output);
+    
+    /* 
+    	FUNCTION: copy_model
+    	DESCRIPTION: This function copies the specified model to another location or even workspace
+    	
+    	REQUIRED INPUTS:
+		reference model - reference to model to copy
+		
+		OPTIONAL INPUTS:
+		reference destination - location where the model should be copied to
+		bool copy_genome - set this to copy the genome associated with the model
+		bool to_kbase - set to one to copy the model to KBase
+		string workspace_url - URL of workspace to which data should be copied
+		string kbase_username - kbase username for copying models to kbase
+		string kbase_password - kbase password for copying models to kbase
+		
+		
+	*/
+    typedef structure {
+		reference model;
+		reference destination;
+		string destname;
+		bool copy_genome;
+		bool to_kbase;
+		string workspace_url;
+		string kbase_username;
+		string kbase_password;
+		bool plantseed;
+    } copy_model_params;
+    authentication required;
+    funcdef copy_model(copy_model_params input) returns (ModelStats output);
+    
+    /* 
+    	FUNCTION: copy_genome
+    	DESCRIPTION: This function copies the specified genome to another location or even workspace
+    	
+    	REQUIRED INPUTS:
+		reference genome - reference to genome to copy
+		
+		OPTIONAL INPUTS:
+		reference destination - location where the genome should be copied to
+		bool to_kbase - set to one to copy the genome to KBase
+		string workspace_url - URL of workspace to which data should be copied
+		string kbase_username - kbase username for copying models to kbase
+		string kbase_password - kbase password for copying models to kbase
+		
+	*/
+    typedef structure {
+		reference genome;
+		reference destination;
+		string destname;
+		bool to_kbase;
+		string workspace_url;
+		string kbase_username;
+		string kbase_password;
+		bool plantseed;
+    } copy_genome_params;
+    authentication required;
+    funcdef copy_genome(copy_genome_params input) returns (ObjectMeta output);
 	
 	/*********************************************************************************
     Functions for editing models

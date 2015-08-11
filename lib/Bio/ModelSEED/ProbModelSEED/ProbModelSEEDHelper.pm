@@ -38,6 +38,15 @@ sub save_object {
 	my($self, $ref,$data,$type,$metadata) = @_;
 	my $object = $self->PATRICStore()->save_object($data,$ref,$metadata,$type,1);
 }
+sub copy_object {
+	my($self,$ref,$destination,$recursive) = @_;
+	return $self->workspace_service()->copy({
+		objects => [[$ref,$destination]],
+		adminmode => $self->{_params}->{adminmode},
+		overwrite => 1,
+		recursive => $recursive,
+	});
+}
 sub get_object {
 	my($self, $ref,$type,$options) = @_;
 	my $object = $self->PATRICStore()->get_object($ref,$options);
@@ -187,6 +196,55 @@ sub get_model_data {
 	my ($self,$modelref) = @_;
 	my $model = $self->get_model($modelref);
 	return $model->export({format => "condensed"});
+}
+
+sub get_model_summary {
+	my ($self,$modelmeta) = @_;
+	my $output = $modelmeta->[8];
+	$output->{rundate} = $modelmeta->[3];
+	$output->{id} = $modelmeta->[0];
+	$output->{"ref"} = $modelmeta->[2].$modelmeta->[0];
+	$output->{gene_associated_reactions} = ($output->{$modelmeta->[2].$modelmeta->[0]}->{num_reactions} - 22);
+	$output->{gapfilled_reactions} = 0;
+	$output->{fba_count} = 0;
+	$output->{integrated_gapfills} = 0;
+	$output->{unintegrated_gapfills} = 0;
+	my $list = $self->workspace_service()->ls({
+		paths => [$modelmeta->[2].".".$modelmeta->[0]."/fba"],
+		excludeDirectories => 1,
+		excludeObjects => 0,
+		recursive => 0,
+		query => {type => "fba"}
+	});
+	my $output = {};
+	if (defined($list->{$modelmeta->[2].".".$modelmeta->[0]."/fba"})) {
+		$list = $list->{$modelmeta->[2].".".$modelmeta->[0]."/fba"};
+		$output->{fba_count} = @{$list};
+	}
+	my $list = $self->workspace_service()->ls({
+		paths => [$modelmeta->[2].".".$modelmeta->[0]."/gapfilling"],
+		excludeDirectories => 1,
+		excludeObjects => 0,
+		recursive => 0,
+		query => {type => "fba"}
+	});
+	if (defined($list->{$modelmeta->[2].".".$modelmeta->[0]."/gapfilling"})) {
+		$list = $list->{$modelmeta->[2].".".$modelmeta->[0]."/gapfilling"};
+		for (my $k=0; $k < @{$list}; $k++) {
+			my $item = $list->[$k];
+			if ($item->[7]->{integrated} == 1) {
+				$output->{$modelmeta->[2].$modelmeta->[0]}->{integrated_gapfills}++;
+			} else {
+				$output->{$modelmeta->[2].$modelmeta->[0]}->{unintegrated_gapfills}++;
+			}
+		}
+	}
+	delete $output->{reactions};
+	delete $output->{genes};
+	delete $output->{biomasses};		
+	$output->{num_biomass_compounds} = split(/\//,$output->{biomasscpds});
+	delete $output->{biomasscpds};
+	return $output;
 }
 
 =head3 classify_genome
@@ -549,6 +607,79 @@ sub build_fba_object {
 #Probanno functions
 #****************************************************************************
 
+
+#****************************************************************************
+#Non-APP API Call Implementations
+#****************************************************************************
+sub copy_genome {
+	my($self,$input) = @_;
+	$input = $self->validate_args($input,["genome"],{
+    	destination => undef,
+    	destname => undef,
+		to_kbase => 0,
+		workspace_url => undef,
+		kbase_username => undef,
+		kbase_password => undef,
+		kbase_token => undef,
+		plantseed => 0,
+    });
+    my $genome = $self->get_genome($input->{genome});
+    if (!defined($input->{destination})) {
+    	$input->{destination} = "/".$self->{_params}->{username}."/modelseed/genomes/";
+    	if ($input->{plantseed} == 1) {
+    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/genomes/";
+    	}
+    }
+    if (!defined($input->{destname})) {
+    	$input->{destname} = $genome->wsmeta()->[0];
+    }
+    if ($input->{destination}.$input->{destname} eq $input->{genome}) {
+    	$self->error("Copy source and destination identical! Aborting!");
+    }
+    if (defined($self->get_model_meta($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0]))) {
+    	$self->copy_object($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0],$input->{destination}.".".$input->{destname});
+    }
+    
+    return $self->save_object($input->{destination}.$input->{destname},$genome,"genome");
+}
+sub copy_model {
+	my($self,$input) = @_;
+	$input = $self->validate_args($input,["model"],{
+    	destination => undef,
+		destname => undef,
+		to_kbase => 0,
+		copy_genome => 1,
+		workspace_url => undef,
+		kbase_username => undef,
+		kbase_password => undef,
+		kbase_token => undef,
+		plantseed => 0,
+    });
+    my $model = $self->get_model($input->{model});
+    if (!defined($input->{destination})) {
+    	$input->{destination} = "/".$self->{_params}->{username}."/home/models/";
+    	if ($input->{plantseed} == 1) {
+    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/models/";
+    	}
+    }
+    if (!defined($input->{destname})) {
+    	$input->{destname} = $model->wsmeta()->[0];
+    }
+    if ($input->{destination}.$input->{destname} eq $input->{model}) {
+    	$self->error("Copy source and destination identical! Aborting!");
+    }
+    if (defined($self->get_model_meta($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]))) {
+    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname});
+    }
+    if ($input->{copy_genome} == 1) {
+    	$self->copy_genome({
+    		genome => $model->genome_ref()
+    		#destination => $input->{destination}.".".$input->{destname}."/"
+    	});
+    	$model->genome_ref($model->genome()->_reference());
+    }
+    return $self->get_model_summary($self->save_object($input->{destination}.$input->{destname},$model,"model"));
+}
 #****************************************************************************
 #Apps
 #****************************************************************************

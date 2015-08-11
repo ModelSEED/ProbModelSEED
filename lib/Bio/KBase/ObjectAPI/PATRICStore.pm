@@ -141,6 +141,9 @@ sub get_objects {
 	#Checking cache for objects
 	my $newrefs = [];
 	for (my $i=0; $i < @{$refs}; $i++) {
+		if ($refs->[$i] =~ m/(.+)\|\|$/) {
+			$refs->[$i] = $1;
+		}
 		$refs->[$i] =~ s/\/+/\//g;
 		if (!defined($self->cache()->{$refs->[$i]}) || defined($options->{refreshcache})) {
     		#Checking file cache for object
@@ -154,6 +157,7 @@ sub get_objects {
 	}
 	#Pulling objects from workspace
 	if (@{$newrefs} > 0) {
+#		print "Objects:".Data::Dumper->Dump([{adminmode => $self->adminmode(),objects => $newrefs}])."\n";
 		my $objdatas = $self->workspace()->get({adminmode => $self->adminmode(),objects => $newrefs});
 		my $object;
 		for (my $i=0; $i < @{$objdatas}; $i++) {
