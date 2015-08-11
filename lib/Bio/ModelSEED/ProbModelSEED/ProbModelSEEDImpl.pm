@@ -2146,7 +2146,7 @@ sub get_feature
     my $ftr_lu = $self->helper()->get_object("/plantseed/Genomes/feature_lookup","unspecified");
     $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
 
-    $output->{subsystems} = $ftr_lu->{$output->{id}}{'subsystems'};
+    $output->{subsystems} = [keys %{$ftr_lu->{$output->{id}}{'subsystems'}}];
     $output->{aliases}={'SEED' => $ftr_lu->{$output->{id}}{'seed'}};
     $output->{aliases}{'transcript'} = $ftr_lu->{$output->{id}}{'transcript'} if exists($ftr_lu->{$output->{id}}{'transcript'});
 
@@ -2205,7 +2205,7 @@ sub get_feature
     my $sapsvr = Bio::ModelSEED::Client::SAP->new();
 
     my @Proks = @{$output->{prokaryotic_similarities}};
-    undef(@{$output->{plant_similarities}});
+    undef(@{$output->{prokaryotic_similarities}});
     
     #Collect Bulk
     my %Prok_Genomes = ();
@@ -2236,7 +2236,7 @@ sub get_feature
 	my $function = $functions->{$prok->{hit_id}};
 	$Obj->{function}=$function;
 	
-	push(@{$output->{plant_similarities}},$Obj);
+	push(@{$output->{prokaryotic_similarities}},$Obj);
     }
 
     #END get_feature
@@ -2315,7 +2315,7 @@ sub save_feature_function
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     #BEGIN save_feature_function
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["genome","feature","function"],{});
+    $input = $self->helper()->validate_args($input,["genome","feature","function"],{"user"=>undef});
 
     my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
     if(!$genome_obj){
@@ -2327,6 +2327,13 @@ sub save_feature_function
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $ftr->{data}{function} = $input->{function};
 	    $found_ftr = 1;
+
+	    if(defined($input->{user})){
+		my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
+		push(@{$ftr->{data}{annotations}},\@Annotation);
+	    }
+
+	    last;
 	}
     }
 
@@ -2348,6 +2355,7 @@ sub save_feature_function
 	if($ftr->{id} eq $input->{feature}){
 	    $ftr->{function} = $input->{function};
 	    $found_ftr=1;
+	    last;
 	}
     }
 
@@ -2646,13 +2654,6 @@ sub plant_annotation_overview
         $self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
 
-    #Collect Genome annotation
-    foreach my $ftr (@{$genome_obj->{features}}){
-	foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{data}{function})){
-	    $output->{$role}{'kmer-features'}{$ftr->{data}{id}}=1;
-	}
-    }
-
     #Find Missing annotation
     my $annotation = $self->helper()->get_object("/plantseed/Genomes/annotation_overview","unspecified");
     $annotation = decode_json($annotation);
@@ -2664,6 +2665,14 @@ sub plant_annotation_overview
 	}
 	if(!exists($output->{$row->{role}})){
 	    $output->{$row->{role}}={};
+	}
+    }
+
+    #Collect Genome annotation
+    foreach my $ftr (@{$genome_obj->{features}}){
+	foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{data}{function})){
+	    next unless exists($output->{$role});
+	    $output->{$role}{'kmer-features'}{$ftr->{data}{id}}=1;
 	}
     }
 
