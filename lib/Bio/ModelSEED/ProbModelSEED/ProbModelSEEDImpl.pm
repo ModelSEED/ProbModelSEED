@@ -1903,7 +1903,7 @@ sub get_feature
     my $sapsvr = Bio::ModelSEED::Client::SAP->new();
 
     my @Proks = @{$output->{prokaryotic_similarities}};
-    undef(@{$output->{plant_similarities}});
+    undef(@{$output->{prokaryotic_similarities}});
     
     #Collect Bulk
     my %Prok_Genomes = ();
@@ -1934,7 +1934,7 @@ sub get_feature
 	my $function = $functions->{$prok->{hit_id}};
 	$Obj->{function}=$function;
 	
-	push(@{$output->{plant_similarities}},$Obj);
+	push(@{$output->{prokaryotic_similarities}},$Obj);
     }
 
     #END get_feature
