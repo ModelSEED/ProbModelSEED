@@ -2013,7 +2013,7 @@ sub save_feature_function
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     #BEGIN save_feature_function
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["genome","feature","function"],{});
+    $input = $self->helper()->validate_args($input,["genome","feature","function"],{"user"=>undef});
 
     my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
     if(!$genome_obj){
@@ -2025,6 +2025,13 @@ sub save_feature_function
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $ftr->{data}{function} = $input->{function};
 	    $found_ftr = 1;
+
+	    if(defined($input->{user})){
+		my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
+		push(@{$ftr->{data}{annotations}},\@Annotation);
+	    }
+
+	    last;
 	}
     }
 
@@ -2046,6 +2053,7 @@ sub save_feature_function
 	if($ftr->{id} eq $input->{feature}){
 	    $ftr->{function} = $input->{function};
 	    $found_ftr=1;
+	    last;
 	}
     }
 
