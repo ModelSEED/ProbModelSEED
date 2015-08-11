@@ -1400,7 +1400,7 @@ sub list_models
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN list_models
-    my $input = $self->initialize_call({});
+    $input = $self->initialize_call($input);
     my $hash = $self->_list_models($input);
 	my $output = [];
 	foreach my $key (keys(%{$hash})) {

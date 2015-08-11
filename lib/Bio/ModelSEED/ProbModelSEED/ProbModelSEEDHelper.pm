@@ -679,7 +679,10 @@ sub copy_model {
     	});
     	$model->genome_ref($model->genome()->_reference());
     }
-    return $self->get_model_summary($self->save_object($input->{destination}.$input->{destname},$model,"model"));
+    my $oldautometa = $model->wsmeta()->[8];
+    my $meta = $self->save_object($input->{destination}.$input->{destname},$model,"model");
+    $meta->[8] = $oldautometa;
+    return $self->get_model_summary($meta);
 }
 #****************************************************************************
 #Apps
