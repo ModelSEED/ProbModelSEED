@@ -627,7 +627,7 @@ sub copy_genome {
     if (!defined($input->{destination})) {
     	$input->{destination} = "/".$self->{_params}->{username}."/modelseed/genomes/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/Genomes/";
+    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/genomes/";
     	}
     }
     if (!defined($input->{destname})) {
@@ -659,7 +659,7 @@ sub copy_model {
     if (!defined($input->{destination})) {
     	$input->{destination} = "/".$self->{_params}->{username}."/home/models/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/Models/";
+    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/models/";
     	}
     }
     if (!defined($input->{destname})) {
@@ -745,7 +745,7 @@ sub ModelReconstruction {
     	media => $self->{_params}->{default_media},
     	template_model => undef,
     	fulldb => 0,
-    	output_path => "/".$self->{_params}->{username}."/home/models/",
+    	output_path => undef,
     	genome => undef,
     	output_file => undef,
     	gapfill => 1,
@@ -753,9 +753,6 @@ sub ModelReconstruction {
     	probanno => 0,
     	predict_essentiality => 1,
     });
-    if (substr($parameters->{output_path},-1,1) ne "/") {
-    	$parameters->{output_path} .= "/";
-    }
 
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
     $log->info("Started model reconstruction for genome ".$parameters->{genome});
@@ -767,8 +764,14 @@ sub ModelReconstruction {
     my $template;
     if (!defined($parameters->{templatemodel})) {
     	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
+    		if (!defined($parameters->{output_path})) {
+    			$parameters->{output_path} = "/".$self->{_params}->{username}."/home/plantseed/models/";
+    		}
     		$template = $self->get_object($self->{_params}->{template_dir}."plant.modeltemplate","modeltemplate");
     	} else {
+    		if (!defined($parameters->{output_path})) {
+    			$parameters->{output_path} = "/".$self->{_params}->{username}."/home/models/";
+    		}
     		my $classifier_data = $self->get_object($self->{_params}->{classifier},"string");
     		my $class = $self->classify_genome($classifier_data,$genome);
     		if ($class eq "Gram positive") {
@@ -782,6 +785,9 @@ sub ModelReconstruction {
     }
     if (!defined($template)) {
     	$self->error("template retrieval failed!");
+    }
+    if (substr($parameters->{output_path},-1,1) ne "/") {
+    	$parameters->{output_path} .= "/";
     }
     my $folder = $parameters->{output_path}.".".$parameters->{output_file};
     my $outputfiles = [];
