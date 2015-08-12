@@ -1437,11 +1437,13 @@ $output is a ModelStats
 copy_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 	destination has a value which is a reference
+	destname has a value which is a string
 	copy_genome has a value which is a bool
 	to_kbase has a value which is a bool
 	workspace_url has a value which is a string
 	kbase_username has a value which is a string
 	kbase_password has a value which is a string
+	plantseed has a value which is a bool
 reference is a string
 bool is an int
 ModelStats is a reference to a hash where the following keys are defined:
@@ -1478,11 +1480,13 @@ $output is a ModelStats
 copy_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 	destination has a value which is a reference
+	destname has a value which is a string
 	copy_genome has a value which is a bool
 	to_kbase has a value which is a bool
 	workspace_url has a value which is a string
 	kbase_username has a value which is a string
 	kbase_password has a value which is a string
+	plantseed has a value which is a bool
 reference is a string
 bool is an int
 ModelStats is a reference to a hash where the following keys are defined:
@@ -1580,10 +1584,12 @@ $output is an ObjectMeta
 copy_genome_params is a reference to a hash where the following keys are defined:
 	genome has a value which is a reference
 	destination has a value which is a reference
+	destname has a value which is a string
 	to_kbase has a value which is a bool
 	workspace_url has a value which is a string
 	kbase_username has a value which is a string
 	kbase_password has a value which is a string
+	plantseed has a value which is a bool
 reference is a string
 bool is an int
 ObjectMeta is a reference to a list containing 12 items:
@@ -1621,10 +1627,12 @@ $output is an ObjectMeta
 copy_genome_params is a reference to a hash where the following keys are defined:
 	genome has a value which is a reference
 	destination has a value which is a reference
+	destname has a value which is a string
 	to_kbase has a value which is a bool
 	workspace_url has a value which is a string
 	kbase_username has a value which is a string
 	kbase_password has a value which is a string
+	plantseed has a value which is a bool
 reference is a string
 bool is an int
 ObjectMeta is a reference to a list containing 12 items:
@@ -4842,11 +4850,13 @@ REQUIRED INPUTS:
 a reference to a hash where the following keys are defined:
 model has a value which is a reference
 destination has a value which is a reference
+destname has a value which is a string
 copy_genome has a value which is a bool
 to_kbase has a value which is a bool
 workspace_url has a value which is a string
 kbase_username has a value which is a string
 kbase_password has a value which is a string
+plantseed has a value which is a bool
 
 </pre>
 
@@ -4857,11 +4867,13 @@ kbase_password has a value which is a string
 a reference to a hash where the following keys are defined:
 model has a value which is a reference
 destination has a value which is a reference
+destname has a value which is a string
 copy_genome has a value which is a bool
 to_kbase has a value which is a bool
 workspace_url has a value which is a string
 kbase_username has a value which is a string
 kbase_password has a value which is a string
+plantseed has a value which is a bool
 
 
 =end text
@@ -4900,10 +4912,12 @@ REQUIRED INPUTS:
 a reference to a hash where the following keys are defined:
 genome has a value which is a reference
 destination has a value which is a reference
+destname has a value which is a string
 to_kbase has a value which is a bool
 workspace_url has a value which is a string
 kbase_username has a value which is a string
 kbase_password has a value which is a string
+plantseed has a value which is a bool
 
 </pre>
 
@@ -4914,10 +4928,12 @@ kbase_password has a value which is a string
 a reference to a hash where the following keys are defined:
 genome has a value which is a reference
 destination has a value which is a reference
+destname has a value which is a string
 to_kbase has a value which is a bool
 workspace_url has a value which is a string
 kbase_username has a value which is a string
 kbase_password has a value which is a string
+plantseed has a value which is a bool
 
 
 =end text
