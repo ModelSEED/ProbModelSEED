@@ -12,6 +12,8 @@ eval {
     $get_time = sub { Time::HiRes::gettimeofday() };
 };
 
+use Bio::KBase::AuthToken;
+
 # Client version should match Impl version
 # This is a Semantic Version number,
 # http://semver.org
@@ -33,10 +35,6 @@ sub new
 {
     my($class, $url, @args) = @_;
     
-    if (!defined($url))
-    {
-	$url = 'http://p3.theseed.org/services/ProbModelSEED';
-    }
 
     my $self = {
 	client => Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient->new,
@@ -83,8 +81,21 @@ sub new
     # We create an auth token, passing through the arguments that we were (hopefully) given.
 
     {
-    $self->{token} = $args[1];
-	$self->{client}->{token} = $args[1];
+	my $token = Bio::KBase::AuthToken->new(@args);
+	
+	if (!$token->error_message)
+	{
+	    $self->{token} = $token->token;
+	    $self->{client}->{token} = $token->token;
+	}
+        else
+        {
+	    #
+	    # All methods in this module require authentication. In this case, if we
+	    # don't have a token, we can't continue.
+	    #
+	    die "Authentication failed: " . $token->error_message;
+	}
     }
 
     my $ua = $self->{client}->ua;	 
@@ -775,6 +786,7 @@ model_reaction is a reference to a hash where the following keys are defined:
 	3: (compartment_index) an int
 	4: (name) a string
 
+	direction has a value which is a string
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
@@ -831,6 +843,7 @@ model_reaction is a reference to a hash where the following keys are defined:
 	3: (compartment_index) an int
 	4: (name) a string
 
+	direction has a value which is a string
 	gpr has a value which is a string
 	genes has a value which is a reference to a list where each element is a gene_id
 reaction_id is a string
@@ -1052,7 +1065,7 @@ sub delete_model
 
 =head2 list_models
 
-  $output = $obj->list_models()
+  $output = $obj->list_models($input)
 
 =over 4
 
@@ -1061,7 +1074,11 @@ sub delete_model
 =begin html
 
 <pre>
+$input is a list_models_params
 $output is a reference to a list where each element is a ModelStats
+list_models_params is a reference to a hash where the following keys are defined:
+	path has a value which is a reference
+reference is a string
 ModelStats is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a string
@@ -1084,7 +1101,6 @@ ModelStats is a reference to a hash where the following keys are defined:
 	num_biomass_compounds has a value which is an int
 	num_compartments has a value which is an int
 Timestamp is a string
-reference is a string
 
 </pre>
 
@@ -1092,7 +1108,11 @@ reference is a string
 
 =begin text
 
+$input is a list_models_params
 $output is a reference to a list where each element is a ModelStats
+list_models_params is a reference to a hash where the following keys are defined:
+	path has a value which is a reference
+reference is a string
 ModelStats is a reference to a hash where the following keys are defined:
 	rundate has a value which is a Timestamp
 	id has a value which is a string
@@ -1115,17 +1135,13 @@ ModelStats is a reference to a hash where the following keys are defined:
 	num_biomass_compounds has a value which is an int
 	num_compartments has a value which is an int
 Timestamp is a string
-reference is a string
 
 
 =end text
 
 =item Description
 
-FUNCTION: list_models
-DESCRIPTION: This function lists all models owned by the user
 
-REQUIRED INPUTS:
 
 =back
 
@@ -1137,10 +1153,21 @@ sub list_models
 
 # Authentication: required
 
-    if ((my $n = @args) != 0)
+    if ((my $n = @args) != 1)
     {
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function list_models (received $n, expecting 0)");
+							       "Invalid argument count for function list_models (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to list_models:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'list_models');
+	}
     }
 
     my $result = $self->{client}->call($self->{url}, $self->{headers}, {
@@ -1161,6 +1188,304 @@ sub list_models
         Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method list_models",
 					    status_line => $self->{client}->status_line,
 					    method_name => 'list_models',
+				       );
+    }
+}
+
+
+
+=head2 copy_model
+
+  $output = $obj->copy_model($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a copy_model_params
+$output is a ModelStats
+copy_model_params is a reference to a hash where the following keys are defined:
+	model has a value which is a reference
+	destination has a value which is a reference
+	destname has a value which is a string
+	copy_genome has a value which is a bool
+	to_kbase has a value which is a bool
+	workspace_url has a value which is a string
+	kbase_username has a value which is a string
+	kbase_password has a value which is a string
+	plantseed has a value which is a bool
+reference is a string
+bool is an int
+ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	ref has a value which is a reference
+	genome_ref has a value which is a reference
+	template_ref has a value which is a reference
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
+Timestamp is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a copy_model_params
+$output is a ModelStats
+copy_model_params is a reference to a hash where the following keys are defined:
+	model has a value which is a reference
+	destination has a value which is a reference
+	destname has a value which is a string
+	copy_genome has a value which is a bool
+	to_kbase has a value which is a bool
+	workspace_url has a value which is a string
+	kbase_username has a value which is a string
+	kbase_password has a value which is a string
+	plantseed has a value which is a bool
+reference is a string
+bool is an int
+ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	ref has a value which is a reference
+	genome_ref has a value which is a reference
+	template_ref has a value which is a reference
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
+Timestamp is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub copy_model
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function copy_model (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to copy_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'copy_model');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.copy_model",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'copy_model',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method copy_model",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'copy_model',
+				       );
+    }
+}
+
+
+
+=head2 copy_genome
+
+  $output = $obj->copy_genome($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a copy_genome_params
+$output is an ObjectMeta
+copy_genome_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	destination has a value which is a reference
+	destname has a value which is a string
+	to_kbase has a value which is a bool
+	workspace_url has a value which is a string
+	kbase_username has a value which is a string
+	kbase_password has a value which is a string
+	plantseed has a value which is a bool
+reference is a string
+bool is an int
+ObjectMeta is a reference to a list containing 12 items:
+	0: an ObjectName
+	1: an ObjectType
+	2: a FullObjectPath
+	3: (creation_time) a Timestamp
+	4: an ObjectID
+	5: (object_owner) a Username
+	6: an ObjectSize
+	7: a UserMetadata
+	8: an AutoMetadata
+	9: (user_permission) a WorkspacePerm
+	10: (global_permission) a WorkspacePerm
+	11: (shockurl) a string
+ObjectName is a string
+ObjectType is a string
+FullObjectPath is a string
+Timestamp is a string
+ObjectID is a string
+Username is a string
+ObjectSize is an int
+UserMetadata is a reference to a hash where the key is a string and the value is a string
+AutoMetadata is a reference to a hash where the key is a string and the value is a string
+WorkspacePerm is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a copy_genome_params
+$output is an ObjectMeta
+copy_genome_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	destination has a value which is a reference
+	destname has a value which is a string
+	to_kbase has a value which is a bool
+	workspace_url has a value which is a string
+	kbase_username has a value which is a string
+	kbase_password has a value which is a string
+	plantseed has a value which is a bool
+reference is a string
+bool is an int
+ObjectMeta is a reference to a list containing 12 items:
+	0: an ObjectName
+	1: an ObjectType
+	2: a FullObjectPath
+	3: (creation_time) a Timestamp
+	4: an ObjectID
+	5: (object_owner) a Username
+	6: an ObjectSize
+	7: a UserMetadata
+	8: an AutoMetadata
+	9: (user_permission) a WorkspacePerm
+	10: (global_permission) a WorkspacePerm
+	11: (shockurl) a string
+ObjectName is a string
+ObjectType is a string
+FullObjectPath is a string
+Timestamp is a string
+ObjectID is a string
+Username is a string
+ObjectSize is an int
+UserMetadata is a reference to a hash where the key is a string and the value is a string
+AutoMetadata is a reference to a hash where the key is a string and the value is a string
+WorkspacePerm is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub copy_genome
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function copy_genome (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to copy_genome:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'copy_genome');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.copy_genome",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'copy_genome',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method copy_genome",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'copy_genome',
 				       );
     }
 }
@@ -1568,6 +1893,97 @@ sub get_feature
         Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method get_feature",
 					    status_line => $self->{client}->status_line,
 					    method_name => 'get_feature',
+				       );
+    }
+}
+
+
+
+=head2 save_feature_function
+
+  $obj->save_feature_function($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a save_feature_function_params
+save_feature_function_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+	function has a value which is a string
+reference is a string
+feature_id is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a save_feature_function_params
+save_feature_function_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+	feature has a value which is a feature_id
+	function has a value which is a string
+reference is a string
+feature_id is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub save_feature_function
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function save_feature_function (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to save_feature_function:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'save_feature_function');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.save_feature_function",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'save_feature_function',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return;
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method save_feature_function",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'save_feature_function',
 				       );
     }
 }
@@ -3316,6 +3732,7 @@ stoichiometry has a value which is a reference to a list where each element is a
 3: (compartment_index) an int
 4: (name) a string
 
+direction has a value which is a string
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
@@ -3335,6 +3752,7 @@ stoichiometry has a value which is a reference to a list where each element is a
 3: (compartment_index) an int
 4: (name) a string
 
+direction has a value which is a string
 gpr has a value which is a string
 genes has a value which is a reference to a list where each element is a gene_id
 
@@ -3921,6 +4339,170 @@ model has a value which is a reference
 
 
 
+=head2 list_models_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: list_models
+DESCRIPTION: This function lists all models owned by the user
+
+REQUIRED INPUTS:
+    
+    OPTIONAL INPUTS:
+    reference path;
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+path has a value which is a reference
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+path has a value which is a reference
+
+
+=end text
+
+=back
+
+
+
+=head2 copy_model_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: copy_model
+DESCRIPTION: This function copies the specified model to another location or even workspace
+
+REQUIRED INPUTS:
+    reference model - reference to model to copy
+    
+    OPTIONAL INPUTS:
+    reference destination - location where the model should be copied to
+    bool copy_genome - set this to copy the genome associated with the model
+    bool to_kbase - set to one to copy the model to KBase
+    string workspace_url - URL of workspace to which data should be copied
+    string kbase_username - kbase username for copying models to kbase
+    string kbase_password - kbase password for copying models to kbase
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+model has a value which is a reference
+destination has a value which is a reference
+destname has a value which is a string
+copy_genome has a value which is a bool
+to_kbase has a value which is a bool
+workspace_url has a value which is a string
+kbase_username has a value which is a string
+kbase_password has a value which is a string
+plantseed has a value which is a bool
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+model has a value which is a reference
+destination has a value which is a reference
+destname has a value which is a string
+copy_genome has a value which is a bool
+to_kbase has a value which is a bool
+workspace_url has a value which is a string
+kbase_username has a value which is a string
+kbase_password has a value which is a string
+plantseed has a value which is a bool
+
+
+=end text
+
+=back
+
+
+
+=head2 copy_genome_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: copy_genome
+DESCRIPTION: This function copies the specified genome to another location or even workspace
+
+REQUIRED INPUTS:
+    reference genome - reference to genome to copy
+    
+    OPTIONAL INPUTS:
+    reference destination - location where the genome should be copied to
+    bool to_kbase - set to one to copy the genome to KBase
+    string workspace_url - URL of workspace to which data should be copied
+    string kbase_username - kbase username for copying models to kbase
+    string kbase_password - kbase password for copying models to kbase
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+destination has a value which is a reference
+destname has a value which is a string
+to_kbase has a value which is a bool
+workspace_url has a value which is a string
+kbase_username has a value which is a string
+kbase_password has a value which is a string
+plantseed has a value which is a bool
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+destination has a value which is a reference
+destname has a value which is a string
+to_kbase has a value which is a bool
+workspace_url has a value which is a string
+kbase_username has a value which is a string
+kbase_password has a value which is a string
+plantseed has a value which is a bool
+
+
+=end text
+
+=back
+
+
+
 =head2 list_model_edits_params
 
 =over 4
@@ -4122,6 +4704,52 @@ feature has a value which is a feature_id
 a reference to a hash where the following keys are defined:
 genome has a value which is a reference
 feature has a value which is a feature_id
+
+
+=end text
+
+=back
+
+
+
+=head2 save_feature_function_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: save_feature_function
+DESCRIPTION: This function saves the newly assigned function in a feature
+             thereby updating the annotation of a genome
+
+REQUIRED INPUTS:
+reference genome - reference of genome that contains feature
+feature_id feature - identifier of feature to get
+string function - the new annotation to assign to a feature
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+function has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+feature has a value which is a feature_id
+function has a value which is a string
 
 
 =end text
