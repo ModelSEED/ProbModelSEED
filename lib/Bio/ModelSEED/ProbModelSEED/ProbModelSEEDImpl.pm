@@ -144,7 +144,7 @@ sub _list_models {
     my $list;
     my $output = {};
     if (defined($input->{path})) {
-    	$list = ["",undef,$input->{path}];
+    	$list = [["",undef,$input->{path}]];
     } else {
     	$list = $self->helper()->workspace_service()->ls({
 			paths => ["/".$self->user_id()."/"],
