@@ -1917,7 +1917,25 @@ sub integrateGapfillSolution {
 	if (!defined($gfmeta)) {
 		Bio::KBase::ObjectAPI::utilities::error("Gapfill ".$args->{gapfill}." not found!");
 	}
-	my $gf = $gfmeta->gapfill();
+	my $gf;
+	if (defined($gfmeta->gapfill_ref())) {
+		$gf = $gfmeta->gapfill();
+	} else {
+		$gf = $gfmeta->fba();
+	}
+	if (!defined($args->{solution})) {
+		$args->{solution} = $gf->gapfillingSolutions()->[0]->id();
+	}
+	$gfmeta->integrated(1);
+	$gfmeta->integrated_solution($args->{solution});
+	$args->{gapfill} = $gf;
+	return $self->integrateGapfillSolutionFromObject($args);
+}
+
+sub integrateGapfillSolutionFromObject {
+	my $self = shift;
+	my $args = Bio::KBase::ObjectAPI::utilities::args(["gapfill"], { solution => undef,rxnProbGpr => undef }, @_);
+	my $gf = $args->{gapfill};
 	my $sol;
 	if (!defined($args->{solution})) {
 		$args->{solution} = $gf->gapfillingSolutions()->[0]->id();
@@ -1926,8 +1944,6 @@ sub integrateGapfillSolution {
 	if (!defined($sol)) {
 		Bio::KBase::ObjectAPI::utilities::error("Solution ".$args->{solution}." not found in gapfill ".$args->{gapfill}."!");
 	}
-	$gfmeta->integrated(1);
-	$gfmeta->integrated_solution($args->{solution});
 	my $IntegrationReport = {
 		added => [],
 		reversed => []

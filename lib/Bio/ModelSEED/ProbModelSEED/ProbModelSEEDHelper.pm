@@ -742,7 +742,7 @@ sub ModelReconstruction {
     	$self->{_params}->{adminmode} = $parameters->{adminmode}
     }
     $parameters = $self->validate_args($parameters,[],{
-    	media => $self->{_params}->{default_media},
+    	media => undef,
     	template_model => undef,
     	fulldb => 0,
     	output_path => undef,
@@ -761,11 +761,19 @@ sub ModelReconstruction {
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $genome->id()."_model";	
     }
+    if (!defined($parameters->{media})) {
+		if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
+			$parameters->{media} = "/chenry/public/modelsupport/media/PlantHeterotrophicMedia";
+		} else {
+			$parameters->{media} = $self->{_params}->{default_media};
+		}
+	}
+    
     my $template;
     if (!defined($parameters->{templatemodel})) {
     	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
     		if (!defined($parameters->{output_path})) {
-    			$parameters->{output_path} = "/".$self->{_params}->{username}."/home/plantseed/models/";
+    			$parameters->{output_path} = "/".$self->{_params}->{username}."/plantseed/models/";
     		}
     		$template = $self->get_object($self->{_params}->{template_dir}."plant.modeltemplate","modeltemplate");
     	} else {
@@ -838,7 +846,8 @@ sub ModelReconstruction {
     		model => $parameters->{output_path}."/".$parameters->{output_file},
     		media => $parameters->{media},
     		integrate_solution => 1,
-    		probanno => $parameters->{probanno}
+    		probanno => $parameters->{probanno},
+    		update_files => 0
     	});    	
     	if ($parameters->{predict_essentiality} == 1) {
     		Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
@@ -1076,6 +1085,7 @@ sub GapfillModel {
 		fva => 0,
 		minimizeflux => 0,
 		findminmedia => 0,
+		update_files => 1
 	});
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
     $log->info("Starting gap fill for model ".$parameters->{model}." on media ".$parameters->{media});
@@ -1199,6 +1209,36 @@ sub GapfillModel {
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED",
     });
+    if ($parameters->{update_files} == 1) {
+    	my $report = $model->integrateGapfillSolutionFromObject({
+			gapfill => $fba
+		});
+    	$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".sbml",$model->export({format => "sbml"}),"string",{
+		   description => "SBML version of model data for use in COBRA toolbox and other applications",
+		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
+		});
+		my $mdlcpds = $model->modelcompounds();
+		my $cpdtbl = "ID\tName\tFormula\tCharge\tCompartment\n";
+		for (my $i=0; $i < @{$mdlcpds}; $i++) {
+			$cpdtbl .= $mdlcpds->[$i]->id()."\t".$mdlcpds->[$i]->name()."\t".$mdlcpds->[$i]->formula()."\t".$mdlcpds->[$i]->compound()->defaultCharge()."\t".$mdlcpds->[$i]->modelcompartment()->label()."\n";
+		}
+		print $model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".cpdtbl\n";
+		$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".cpdtbl",$cpdtbl,"string",{
+		   description => "Tab delimited table containing data on compounds in metabolic model",
+		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
+		});
+		my $mdlrxns = $model->modelreactions();
+		my $rxntbl = "ID\tName\tEquation\tDefinition\tGenes\n";
+		for (my $i=0; $i < @{$mdlrxns}; $i++) {
+			$rxntbl .= $mdlrxns->[$i]->id()."\t".$mdlrxns->[$i]->name()."\t".$mdlrxns->[$i]->equation()."\t".$mdlrxns->[$i]->definition()."\t".$mdlrxns->[$i]->gprString()."\n";
+		}
+		print $model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".rxntbl\n";
+		$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".rxntbl",$rxntbl,"string",{
+		   description => "Tab delimited table containing data on reactions in metabolic model",
+		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
+		});
+    }
+    
     Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
 	return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
 		integrated_solution => 0,
