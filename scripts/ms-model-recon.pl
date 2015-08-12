@@ -27,8 +27,8 @@ $paths = Bio::P3::Workspace::ScriptHelpers::process_paths($paths);
 my $input = {
 	genome => $paths->[0],
 };
-if (defined($paths->[1])) {
-	$input->{media} = $paths->[1];
+if (defined($paths->[2])) {
+	$input->{media} = $paths->[2];
 }
 if (defined($opt->{solver})) {
 	$input->{solver} = $opt->{solver};
@@ -42,11 +42,14 @@ if (defined($opt->{ess})) {
 if (defined($opt->{nogapfill})) {
 	$input->{gapfill} = 0;
 }
-if (defined($paths->[2])) {
-	$input->{output_path} = $paths->[2];
+if (defined($paths->[1])) {
+	$input->{output_path} = $paths->[1];
 }
 if (defined($paths->[3])) {
 	$input->{template_model} = $paths->[3];
+}
+if (defined($opt->{admin})) {
+	$input->{adminmode} = $opt->{admin};
 }
 if (!defined($opt->{name})) {
 	$input->{output_file} = $input->{genome};

@@ -14,6 +14,10 @@ my $input = {
 if (defined($opt->{plantseed})) {
 	$input->{plantseed} = $opt->{plantseed};
 }
+if (defined($opt->{admin})) {
+	$input->{adminmode} = $opt->{admin};
+}
+print Data::Dumper->Dump([$input]);
 my $output = $client->copy_genome($input);
 my $JSON = JSON->new->utf8(1);
 if ($opt->{pretty} == 1) {

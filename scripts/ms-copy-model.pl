@@ -19,6 +19,9 @@ if (defined($opt->{nogenome})) {
 if (defined($opt->{plantseed})) {
 	$input->{plantseed} = $opt->{plantseed};
 }
+if (defined($opt->{admin})) {
+	$input->{adminmode} = $opt->{admin};
+}
 my $output = $client->copy_model($input);
 my $JSON = JSON->new->utf8(1);
 if ($opt->{pretty} == 1) {
