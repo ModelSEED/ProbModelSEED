@@ -878,7 +878,7 @@ sub FluxBalanceAnalysis {
     	$self->{_params}->{adminmode} = $parameters->{adminmode}
     }
 	$parameters = $self->validate_args($parameters,["model"],{
-		media => $self->{_params}->{default_media},
+		media => undef,
 		fva => 1,
 		predict_essentiality => 0,
 		minimizeflux => 1,
@@ -902,6 +902,13 @@ sub FluxBalanceAnalysis {
 
     my $model = $self->get_model($parameters->{model});
     $parameters->{model} = $model->_reference();
+    if (!defined($parameters->{media})) {
+		if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
+			$parameters->{media} = "/chenry/public/modelsupport/media/PlantHeterotrophicMedia";
+		} else {
+			$parameters->{media} = $self->{_params}->{default_media};
+		}
+	}
     
     #Setting output path based on model and then creating results folder
     $parameters->{output_path} = $model->wsmeta()->[2].".".$model->wsmeta()->[0]."/fba";
