@@ -1750,8 +1750,8 @@ bool Reaction::IsBiomassReaction() {
 	if (GetData("DATABASE",STRING).length() == 8 && GetData("DATABASE",STRING).compare("bio") == 0) {
 		return true;
 	}
-	for (int i=0; i < FNumReactants(); i++) {
-		if (GetReactant(i)->GetData("DATABASE",STRING).compare("cpd11416") == 0) {
+	for (int i=0; i < FNumReactants(PRODUCTS_AND_REACTANTS); i++) {
+	  if (GetReactant(i)->GetData("DATABASE",STRING).compare(0,8,"cpd11416") == 0) {
 			return true;
 		}
 	}
@@ -3189,12 +3189,12 @@ void Reaction::BuildReactionConstraints(OptimizationParameter* InParameters,MFAP
 				fluxvar = this->GetMFAVar(FLUX);
 			}
 			if (fluxvar != NULL) {
-				NewConstraint->Coefficient.push_back(1000);
+				NewConstraint->Coefficient.push_back(SLACK_FLUX_COEFFICIENT);
 				NewConstraint->Variables.push_back(fluxvar);
 			}
 			fluxvar = this->GetMFAVar(REVERSE_FLUX);
 			if (fluxvar != NULL) {
-				NewConstraint->Coefficient.push_back(1000);
+				NewConstraint->Coefficient.push_back(SLACK_FLUX_COEFFICIENT);
 				NewConstraint->Variables.push_back(fluxvar);
 			}
 			NewConstraint->Coefficient.push_back(1);
@@ -3208,17 +3208,17 @@ void Reaction::BuildReactionConstraints(OptimizationParameter* InParameters,MFAP
 					NewConstraint->Coefficient.push_back(1);
 					NewConstraint->Variables.push_back(fluxvar);
 				}
-				NewConstraint->Coefficient.push_back(-10000);
+				NewConstraint->Coefficient.push_back(-1000);
 				NewConstraint->Variables.push_back(this->GetMFAVar(FORWARD_REACTION));
 				InProblem->AddConstraint(NewConstraint);
-				NewConstraint = InitializeLinEquation("Associating reverse flux to FORWARD_REACTION",10000,LESS);
+				NewConstraint = InitializeLinEquation("Associating reverse flux to FORWARD_REACTION",1000,LESS);
 				NewConstraint->AssociatedReaction = this;
 				fluxvar = this->GetMFAVar(REVERSE_FLUX);
 				if (fluxvar != NULL) {
 					NewConstraint->Coefficient.push_back(1);
 					NewConstraint->Variables.push_back(fluxvar);
 				}
-				NewConstraint->Coefficient.push_back(10000);
+				NewConstraint->Coefficient.push_back(1000);
 				NewConstraint->Variables.push_back(this->GetMFAVar(FORWARD_REACTION));
 				InProblem->AddConstraint(NewConstraint);
 			}
