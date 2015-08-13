@@ -637,7 +637,7 @@ sub copy_genome {
     	$self->error("Copy source and destination identical! Aborting!");
     }
     if (defined($self->get_model_meta($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0]))) {
-    	$self->copy_object($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0],$input->{destination}.".".$input->{destname});
+    	$self->copy_object($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
     }
     
     return $self->save_object($input->{destination}.$input->{destname},$genome,"genome");
@@ -669,7 +669,7 @@ sub copy_model {
     	$self->error("Copy source and destination identical! Aborting!");
     }
     if (defined($self->get_model_meta($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]))) {
-    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname});
+    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
     }
     if ($input->{copy_genome} == 1) {
     	$self->copy_genome({
