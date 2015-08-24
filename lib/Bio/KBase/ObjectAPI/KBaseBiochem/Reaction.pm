@@ -909,7 +909,12 @@ sub checkReactionMassChargeBalance {
     my $args = Bio::KBase::ObjectAPI::utilities::args([], {rebalanceProtons => 0,rebalanceWater => 0, saveStatus => 0}, @_);
     my $atomHash;
     my $netCharge = 0;
-    my @status = ("OK");
+    my @status;
+    if ($self->status() eq "unknown") {
+    	@status = ("OK");
+    } else {
+    	@status = split(/\|/,$self->status());
+    }
 
     #Adding up atoms and charge from all reagents
     my $rgts = $self->reagents();
