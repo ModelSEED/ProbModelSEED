@@ -935,7 +935,8 @@ sub addReactionFromHash {
 	    enzymes => [],
 	    autoadd => 0,
 	    addmergealias => 0,
-	    balancedonly => 0}, $arguments);
+	    balancedonly => 0,
+	    findmatch=>1}, $arguments);
 
 	# Remove names that are too long
 	#$arguments->{names} = [ grep { length($_) < 255 } @{$arguments->{names}} ];
@@ -957,6 +958,7 @@ sub addReactionFromHash {
 		}
 		return $rxn;
 	}
+
 	# Checking for id uniqueness within scope of another aliasType, if passed
         foreach my $aliasType (@{$arguments->{mergeto}}){
 	    $rxn = $self->getObjectByAlias("reactions",$arguments->{id},$aliasType);
@@ -1012,6 +1014,7 @@ sub addReactionFromHash {
 	    #Bio::KBase::ObjectAPI::utilities::verbose("Reaction ".$arguments->{id}." passed: ".$rxn->equationCode());
 	}
 
+    if($arguments->{findmatch}){
 	# Generate equation search string and check to see if reaction not already in database
 	my $code = $rxn->equationCode();
 	my $searchRxn = $self->queryObject("reactions",{equationCode => $code});
@@ -1054,6 +1057,7 @@ sub addReactionFromHash {
 	    }
 	    return $searchRxn;
 	}
+    }
 
     #if balancerxn option checked
     #then do $rxn->checkReactionMassChargeBalance()
