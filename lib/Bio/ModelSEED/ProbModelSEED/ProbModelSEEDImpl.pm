@@ -2946,7 +2946,15 @@ sub FluxBalanceAnalysis
     my($output);
     #BEGIN FluxBalanceAnalysis
     $input = $self->initialize_call($input);
-    $output = $self->helper()->FluxBalanceAnalysis($input);
+    my $fbaoutput = $self->helper()->FluxBalanceAnalysis($input);
+    $output = {
+    	rundate => $fbaoutput->[3],
+    	id => $fbaoutput->[0],
+    	"ref" => $fbaoutput->[2].$fbaoutput->[0],
+    	media_ref => $fbaoutput->[7]->{media},
+		objective => $fbaoutput->[7]->{objective},
+		objective_function => ""
+    };
     #END FluxBalanceAnalysis
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
