@@ -3170,6 +3170,22 @@ sub parseGapfillingOutput {
 					}
 					my $cmp = $self->biochemistry()->searchForCompartment($3);
 					my $rxn = $self->biochemistry()->searchForReaction($2);
+                                        if (!defined($rxn)) {
+					    if (defined($self->{_source_model})) {
+                                                $rxn = $self->{_source_model}->searchForReaction($2."_".$3.$4);
+					    }
+                                            if (!defined $rxn) {
+                                                print "Skipping gapfilling ".$array->[$i]."\n";
+                                                next;
+                                            }
+                                        }
+                                        if(!defined $cmp){
+                                            $cmp = $self->fbamodel()->searchForCompartment($3.$4);
+                                            if(!defined($cmp)){
+                                                print "Skipping gapfilling ".$array->[$i]."\n";
+                                                next;
+                                            }
+                                        }
 					push(@{$solution->{gapfillingSolutionReactions}},{
 						round => $round+0,
 						reaction_ref => $rxn->_reference(),
@@ -3209,6 +3225,20 @@ sub parseGapfillingOutput {
 					}
 					my $cmp = $self->biochemistry()->searchForCompartment($3);
 					my $rxn = $self->biochemistry()->searchForReaction($2);
+					if (!defined $rxn) {
+                                            $rxn = $self->fbamodel()->searchForReaction($2."_".$3.$4);
+                                            if (!defined $rxn) {
+                                                print "Skipping candidate ".$array->[$i]."\n";
+                                                next;
+                                            }
+                                        }
+                                        if(!defined $cmp){
+                                            $cmp = $self->fbamodel()->searchForCompartment($3.$4);
+                                            if(!defined($cmp)){
+                                                print "Skipping candidate ".$array->[$i]."\n";
+                                                next;
+                                            }
+                                        }
 					push(@{$solution->{rejectedCandidates}},{
 						round => $round+0,
 						reaction_ref => $rxn->_reference(),
