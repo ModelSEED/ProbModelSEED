@@ -2733,33 +2733,32 @@ sub plant_annotation_overview
 
 <pre>
 $input is a ModelReconstruction_params
-$output is an ObjectMeta
+$output is a ModelStats
 ModelReconstruction_params is a reference to a hash where the following keys are defined:
 	genome has a value which is a reference
 reference is a string
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
+ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	ref has a value which is a reference
+	genome_ref has a value which is a reference
+	template_ref has a value which is a reference
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
 Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
 
 </pre>
 
@@ -2768,33 +2767,32 @@ WorkspacePerm is a string
 =begin text
 
 $input is a ModelReconstruction_params
-$output is an ObjectMeta
+$output is a ModelStats
 ModelReconstruction_params is a reference to a hash where the following keys are defined:
 	genome has a value which is a reference
 reference is a string
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
+ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	ref has a value which is a reference
+	genome_ref has a value which is a reference
+	template_ref has a value which is a reference
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
 Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
 
 
 =end text
@@ -2829,7 +2827,7 @@ sub ModelReconstruction
     $output = $self->helper()->ModelReconstruction($input);
     #END ModelReconstruction
     my @_bad_returns;
-    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to ModelReconstruction:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -2853,33 +2851,19 @@ sub ModelReconstruction
 
 <pre>
 $input is a FluxBalanceAnalysis_params
-$output is an ObjectMeta
+$output is a fba_data
 FluxBalanceAnalysis_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
+fba_data is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a fba_id
+	ref has a value which is a reference
+	objective has a value which is a float
+	media_ref has a value which is a reference
+	objective_function has a value which is a string
 Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
+fba_id is a string
 
 </pre>
 
@@ -2888,33 +2872,19 @@ WorkspacePerm is a string
 =begin text
 
 $input is a FluxBalanceAnalysis_params
-$output is an ObjectMeta
+$output is a fba_data
 FluxBalanceAnalysis_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
+fba_data is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a fba_id
+	ref has a value which is a reference
+	objective has a value which is a float
+	media_ref has a value which is a reference
+	objective_function has a value which is a string
 Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
+fba_id is a string
 
 
 =end text
@@ -2957,7 +2927,7 @@ sub FluxBalanceAnalysis
     };
     #END FluxBalanceAnalysis
     my @_bad_returns;
-    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to FluxBalanceAnalysis:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -2981,33 +2951,32 @@ sub FluxBalanceAnalysis
 
 <pre>
 $input is a GapfillModel_params
-$output is an ObjectMeta
+$output is a ModelStats
 GapfillModel_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
+ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	ref has a value which is a reference
+	genome_ref has a value which is a reference
+	template_ref has a value which is a reference
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
 Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
 
 </pre>
 
@@ -3016,33 +2985,32 @@ WorkspacePerm is a string
 =begin text
 
 $input is a GapfillModel_params
-$output is an ObjectMeta
+$output is a ModelStats
 GapfillModel_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-ObjectMeta is a reference to a list containing 12 items:
-	0: an ObjectName
-	1: an ObjectType
-	2: a FullObjectPath
-	3: (creation_time) a Timestamp
-	4: an ObjectID
-	5: (object_owner) a Username
-	6: an ObjectSize
-	7: a UserMetadata
-	8: an AutoMetadata
-	9: (user_permission) a WorkspacePerm
-	10: (global_permission) a WorkspacePerm
-	11: (shockurl) a string
-ObjectName is a string
-ObjectType is a string
-FullObjectPath is a string
+ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	ref has a value which is a reference
+	genome_ref has a value which is a reference
+	template_ref has a value which is a reference
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
 Timestamp is a string
-ObjectID is a string
-Username is a string
-ObjectSize is an int
-UserMetadata is a reference to a hash where the key is a string and the value is a string
-AutoMetadata is a reference to a hash where the key is a string and the value is a string
-WorkspacePerm is a string
 
 
 =end text
@@ -3077,7 +3045,7 @@ sub GapfillModel
     $output = $self->helper()->GapfillModel($input);
     #END GapfillModel
     my @_bad_returns;
-    (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to GapfillModel:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
