@@ -583,7 +583,7 @@ module ProbModelSEED {
 		reference genome;
     } ModelReconstruction_params;
     authentication required;
-	funcdef ModelReconstruction(ModelReconstruction_params input) returns (ObjectMeta output);
+	funcdef ModelReconstruction(ModelReconstruction_params input) returns (ModelStats output);
 	
 	/* 
 		FUNCTION: FluxBalanceAnalysis
@@ -593,7 +593,7 @@ module ProbModelSEED {
 		reference model;
     } FluxBalanceAnalysis_params;
     authentication required;
-	funcdef FluxBalanceAnalysis(FluxBalanceAnalysis_params input) returns (ObjectMeta output);
+	funcdef FluxBalanceAnalysis(FluxBalanceAnalysis_params input) returns (fba_data output);
 	
 	/* 
 		FUNCTION: GapfillModel
@@ -603,5 +603,5 @@ module ProbModelSEED {
 		reference model;
     } GapfillModel_params;
     authentication required;
-	funcdef GapfillModel(GapfillModel_params input) returns (ObjectMeta output);
+	funcdef GapfillModel(GapfillModel_params input) returns (ModelStats output);
 };

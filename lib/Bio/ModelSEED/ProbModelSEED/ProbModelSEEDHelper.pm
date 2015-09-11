@@ -883,7 +883,7 @@ sub ModelReconstruction {
 	   description => "Tab delimited table containing data on reactions in metabolic model",
 	   model => $parameters->{output_path}."/".$parameters->{output_file}
 	});
-    return $output;
+    return $self->get_model_summary($output);
 }
 
 sub FluxBalanceAnalysis {
@@ -1240,13 +1240,13 @@ sub GapfillModel {
     }
     
     Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
-	return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
+	return $self->get_model_summary($self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
 		integrated_solution => 0,
 		solutiondata => $solutiondata,
 		integratedindex => 0,
 		media => $parameters->{media},
 		integrated => $parameters->{integrate_solution}
-	});
+	}));
 }
 
 sub load_to_shock {
@@ -1274,8 +1274,8 @@ sub new {
     	adminmode => 0,
     	method => "unknown",
     	run_as_app => 0,
-    	file_cache => undef,
-    	cache_targets => [],
+    	file_cache => "/disks/p3/fba/filecache/",
+    	cache_targets => ["/chenry/public/modelsupport/biochemistry/default.biochem"],
     	biochemistry => "/chenry/public/modelsupport/biochemistry/default.biochem",
     	default_media => "/chenry/public/modelsupport/patric-media/Complete",
     	classifier => "/chenry/public/modelsupport/classifiers/gramclassifier.string",
