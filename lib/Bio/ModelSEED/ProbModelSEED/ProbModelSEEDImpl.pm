@@ -801,8 +801,8 @@ sub delete_fba_studies
     for (my $i=0; $i < @{$input->{fbas}}; $i++) {
     	if (defined($fbalist->{$input->{fbas}->[$i]})) {
     		$output->{$input->{fbas}->[$i]} = $fbalist->{$input->{fbas}->[$i]};
-    		push(@{$rmlist},$input->{model_meta}->[2]."fba/".$input->{fbas}->[$i]);#Deleting job result object
-    		push(@{$rmlist},$input->{model_meta}->[2]."fba/.".$input->{fbas}->[$i]);#Deleting job result directory
+    		push(@{$rmlist},$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba/".$input->{fbas}->[$i]);
+    		push(@{$rmlist},$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba/".$input->{fbas}->[$i].".fluxtbl");
     	} else {
     		$self->helper()->error("Specified FBA does not exist!");
     	}

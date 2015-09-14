@@ -35,7 +35,7 @@
 		});
 	    $ENV{KB_INTERACTIVE} = 1;
 	    if (defined($c->param("ProbModelSEEDTest.serverconfig"))) {
-	    	$ENV{KB_DEPLOYMENT_CONFIG} = $bin.$c->param("ProbModelSEEDTest.serverconfig");
+	    	$ENV{KB_DEPLOYMENT_CONFIG} = $bin."/".$c->param("ProbModelSEEDTest.serverconfig");
 	    }
 	    if (!defined($self->{url}) || $self->{url} eq "impl") {
 	    	print "Loading server with this config: ".$ENV{KB_DEPLOYMENT_CONFIG}."\n";
@@ -153,7 +153,7 @@
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
 			to_shock => 1,
 		},"media export test",[],0,undef,1);
-		$output = $self->test_harness("list_models",undef,,"initial list models test",[],0,undef,1);
+		$output = $self->test_harness("list_models",{},,"initial list models test",[],0,undef,1);
 		for(my $i=0; $i < @{$output}; $i++) {
 			if ($output->[$i]->{ref} eq $model_dir."/TestModel") {
 				my $output = $self->test_harness("delete_model",{
@@ -191,7 +191,7 @@
 			model => $model,
 			integrate_solution => "1",
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
-		},"Gapfill ".$model_name." in minimal media",[["length(\$output->[7]->{solutiondata}) > 0","Gapfilling should have been successful"]],0,"Reconstruct from workspace genome test",1);
+		},"Gapfill ".$model_name." in minimal media",[],0,"Reconstruct from workspace genome test",1);
 		$output = $self->test_harness("export_model",{
 			model => $model,
 			format => "sbml",
@@ -199,11 +199,11 @@
 		},"Export ".$model_name." as SBML",[],0,"Reconstruct from workspace genome test",1);
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => $model,
-		},"FBA of ".$model_name." in complete media",[["\$output->[7]->{objective} >= 0.0001","Model should grow in Complete media"]],0,"Reconstruct from workspace genome test",1);
+		},"FBA of ".$model_name." in complete media",[["\$output->{objective} >= 0.0001","Model should grow in Complete media"]],0,"Reconstruct from workspace genome test",1);
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => $model,
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
-		},"FBA of ".$model_name." in minimal media",[["\$output->[7]->{objective} >= 0.0001","Model should grow in minimal media"]],0,"Gapfill ".$model_name." in minimal media",1);
+		},"FBA of ".$model_name." in minimal media",[["\$output->{objective} >= 0.0001","Model should grow in minimal media"]],0,"Gapfill ".$model_name." in minimal media",1);
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => $model
 		},"List ".$model_name." gapfill solutions again",[["defined(\$output->[1])","Model should have two gapfillings"]],0,"Gapfill ".$model_name." in minimal media",1);
@@ -231,7 +231,7 @@
 		$output = $self->test_harness("delete_fba_studies",{
 			model => $model,
 			fbas => ["fba.0"]
-		},"Deleting ".$model_name." FBA",[],0,"Reconstruct from workspace genome test",1);
+		},"Deleting ".$model_name." FBA",[],0,undef,1);
 		done_testing($self->{completetestcount});
 	}
 }	

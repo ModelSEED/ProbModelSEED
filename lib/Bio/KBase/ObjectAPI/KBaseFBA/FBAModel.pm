@@ -1983,6 +1983,7 @@ sub integrateGapfillSolutionFromObject {
 				"Making ".$mdlrxn->id()." reversible."
 			);
 			push(@{$IntegrationReport->{reversed}},$rxn->reaction()->id()."_".$rxn->compartment()->id().$rxn->compartmentIndex());
+			$mdlrxn->gapfill_data()->{$gf->_reference()} = "reversed:".$mdlrxn->direction();
 			$mdlrxn->direction("=");
 		} else {
 			Bio::KBase::ObjectAPI::utilities::verbose(
@@ -1994,6 +1995,7 @@ sub integrateGapfillSolutionFromObject {
 					$self->add("modelcompartments",$rxn->reaction()->modelcompartment()->cloneObject());
 				}
 				$mdlrxn = $self->add("modelreactions",$rxn->reaction()->cloneObject());
+				$mdlrxn->gapfill_data()->{$gf->_reference()} = "added:".$rxn->direction();
 				$mdlrxn->parent($rxn->reaction()->parent());
 				my $prots = $mdlrxn->modelReactionProteins();
 				for (my $m=0; $m < @{$prots}; $m++) {
@@ -2017,6 +2019,7 @@ sub integrateGapfillSolutionFromObject {
 					direction => $rxn->direction(),
 					overrideCompartment => $mdlcmp
 				});
+				$mdlrxn->gapfill_data()->{$gf->_reference()} = "added:".$rxn->direction();
 			}
 			# If RxnProbs object is defined, use it to assign GPRs to the integrated reactions.
 			if (defined($args->{rxnProbGpr}) && defined($args->{rxnProbGpr}->{$rxnid})) {

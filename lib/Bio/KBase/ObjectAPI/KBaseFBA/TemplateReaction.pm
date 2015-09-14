@@ -19,6 +19,8 @@ has complexIDs => ( is => 'rw', isa => 'ArrayRef',printOrder => '-1', type => 'm
 has isBiomassTransporter => ( is => 'rw', isa => 'Bool',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildisBiomassTransporter' );
 has inSubsystem => ( is => 'rw', isa => 'Bool',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildinSubsystem' );
 has reactionID => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildreactionID' );
+has name => (is => 'rw', isa => 'Str', printOrder => '5', default => 'none', type => 'attribute', metaclass => 'Typed');
+has definition => (is => 'rw', isa => 'Str', printOrder => '5', default => 'none', type => 'attribute', metaclass => 'Typed');
 
 #***********************************************************************************************************
 # BUILDERS:

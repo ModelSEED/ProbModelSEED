@@ -67,6 +67,35 @@ sub get_model {
     }
 	return $model;
 }
+sub save_model {
+	my($self,$model,$ref,$meta,$write_files) = @_;
+	my $summary = $self->get_model_summary($self->save_object($ref,$model,"model",$meta));
+	if ($write_files == 1) {
+		$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".sbml",$model->export({format => "sbml"}),"string",{
+		   description => "SBML version of model data for use in COBRA toolbox and other applications",
+		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
+		});
+		my $mdlcpds = $model->modelcompounds();
+		my $cpdtbl = "ID\tName\tFormula\tCharge\tCompartment\n";
+		for (my $i=0; $i < @{$mdlcpds}; $i++) {
+			$cpdtbl .= $mdlcpds->[$i]->id()."\t".$mdlcpds->[$i]->name()."\t".$mdlcpds->[$i]->formula()."\t".$mdlcpds->[$i]->compound()->defaultCharge()."\t".$mdlcpds->[$i]->modelcompartment()->label()."\n";
+		}
+		$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".cpdtbl",$cpdtbl,"string",{
+		   description => "Tab delimited table containing data on compounds in metabolic model",
+		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
+		});
+		my $mdlrxns = $model->modelreactions();
+		my $rxntbl = "ID\tName\tEquation\tDefinition\tGenes\n";
+		for (my $i=0; $i < @{$mdlrxns}; $i++) {
+			$rxntbl .= $mdlrxns->[$i]->id()."\t".$mdlrxns->[$i]->name()."\t".$mdlrxns->[$i]->equation()."\t".$mdlrxns->[$i]->definition()."\t".$mdlrxns->[$i]->gprString()."\n";
+		}
+		$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".rxntbl",$rxntbl,"string",{
+		   description => "Tab delimited table containing data on reactions in metabolic model",
+		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
+		});
+	}
+	return $summary;
+}
 sub get_genome {
 	my($self, $ref) = @_;
 	my $obj;
@@ -841,49 +870,25 @@ sub ModelReconstruction {
     $self->save_object($folder."/fba",undef,"folder");
     $self->save_object($folder."/gapfilling",undef,"folder");
     my $output = $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$mdl,"model");
+    my $summary;
     if ($parameters->{gapfill} == 1) {
-    	my $gfmeta = $self->GapfillModel({
+    	$summary = $self->GapfillModel({
     		model => $parameters->{output_path}."/".$parameters->{output_file},
     		media => $parameters->{media},
     		integrate_solution => 1,
     		probanno => $parameters->{probanno},
-    		update_files => 0
     	});    	
     	if ($parameters->{predict_essentiality} == 1) {
-    		Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
     		$self->FluxBalanceAnalysis({
 	    		model => $parameters->{output_path}."/".$parameters->{output_file},
 	    		media => $parameters->{media},
 	    		predict_essentiality => 1
 	    	});
     	}	
+    } else {
+    	$summary = $self->save_model($mdl,$parameters->{output_path}."/".$parameters->{output_file},{},1);
     }
-    $mdl = $self->get_model($parameters->{output_path}."/".$parameters->{output_file});
-    $self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".sbml",$mdl->export({format => "sbml"}),"string",{
-	   description => "SBML version of model data for use in COBRA toolbox and other applications",
-	   model => $parameters->{output_path}."/".$parameters->{output_file}
-	});
-	my $mdlcpds = $mdl->modelcompounds();
-	my $cpdtbl = "ID\tName\tFormula\tCharge\tCompartment\n";
-	for (my $i=0; $i < @{$mdlcpds}; $i++) {
-		$cpdtbl .= $mdlcpds->[$i]->id()."\t".$mdlcpds->[$i]->name()."\t".$mdlcpds->[$i]->formula()."\t".$mdlcpds->[$i]->compound()->defaultCharge()."\t".$mdlcpds->[$i]->modelcompartment()->label()."\n";
-	}
-	print $parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".cpdtbl\n";
-	$self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".cpdtbl",$cpdtbl,"string",{
-	   description => "Tab delimited table containing data on compounds in metabolic model",
-	   model => $parameters->{output_path}."/".$parameters->{output_file}
-	});
-	my $mdlrxns = $mdl->modelreactions();
-	my $rxntbl = "ID\tName\tEquation\tDefinition\tGenes\n";
-	for (my $i=0; $i < @{$mdlrxns}; $i++) {
-		$rxntbl .= $mdlrxns->[$i]->id()."\t".$mdlrxns->[$i]->name()."\t".$mdlrxns->[$i]->equation()."\t".$mdlrxns->[$i]->definition()."\t".$mdlrxns->[$i]->gprString()."\n";
-	}
-	print $parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".rxntbl\n";
-	$self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$parameters->{output_file}.".rxntbl",$rxntbl,"string",{
-	   description => "Tab delimited table containing data on reactions in metabolic model",
-	   model => $parameters->{output_path}."/".$parameters->{output_file}
-	});
-    return $self->get_model_summary($output);
+    return $summary;
 }
 
 sub FluxBalanceAnalysis {
@@ -1084,8 +1089,7 @@ sub GapfillModel {
 		integrate_solution => 0,
 		fva => 0,
 		minimizeflux => 0,
-		findminmedia => 0,
-		update_files => 1
+		findminmedia => 0
 	});
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
     $log->info("Starting gap fill for model ".$parameters->{model}." on media ".$parameters->{media});
@@ -1144,6 +1148,7 @@ sub GapfillModel {
 	if (@{$fba->gapfillingSolutions()->[0]->gapfillingSolutionReactions()} == 0) {
 		$self->error("No gapfilling needed on specified condition!");
 	}
+	
 	my $gfsols = [];
 	my $gftbl = "Solution\tID\tName\tEquation\tDirection\n";
 	for (my $i=0; $i < @{$fba->gapfillingSolutions()}; $i++) {
@@ -1154,13 +1159,38 @@ sub GapfillModel {
 			$gfsols->[$i]->[$j] = $fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()->[$j]->serializeToDB();
 		}
 	}
+	my $solutiondata = Bio::KBase::ObjectAPI::utilities::TOJSON($gfsols);
+	
+	$fba->jobresult({
+    	id => 0,
+		app => {
+			"id"=>"GapfillModel",
+			"script"=>"App-GapfillModel",
+			"label"=>"Gapfill metabolic model",
+			"description"=>"Run gapfilling on model.",
+			"parameters"=>[]
+		},
+		parameters => $parameters,
+		start_time => $starttime,
+		end_time => time(),
+		elapsed_time => time()-$starttime,
+		output_files => [[ $parameters->{output_path}."/".$parameters->{output_file}]],
+		job_output => "",
+		hostname => "https://p3.theseed.org/services/ProbModelSEED",
+    });
+	$self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
+		integrated_solution => 0,
+		solutiondata => $solutiondata,
+		integratedindex => 0,
+		media => $parameters->{media},
+		integrated => $parameters->{integrate_solution}
+	});
 	$self->save_object($parameters->{output_path}."/".$parameters->{output_file}.".gftbl",$gftbl,"string",{
 	   description => "Tab delimited table of reactions gapfilled in metabolic model",
 	   fba => $parameters->{output_file},
 	   media => $parameters->{media},
 	   model => $parameters->{model}
 	});
-	my $solutiondata = Bio::KBase::ObjectAPI::utilities::TOJSON($gfsols);
 	my $fbatbl = "ID\tName\tEquation\tFlux\tUpper bound\tLower bound\tMax\tMin\n";
     my $objs = $fba->FBABiomassVariables();
     for (my $i=0; $i < @{$objs}; $i++) {
@@ -1192,61 +1222,23 @@ sub GapfillModel {
 	   media => $parameters->{media},
 	   model => $parameters->{model}
 	});
-	$fba->jobresult({
-    	id => 0,
-		app => {
-			"id"=>"GapfillModel",
-			"script"=>"App-GapfillModel",
-			"label"=>"Gapfill metabolic model",
-			"description"=>"Run gapfilling on model.",
-			"parameters"=>[]
-		},
-		parameters => $parameters,
-		start_time => $starttime,
-		end_time => time(),
-		elapsed_time => time()-$starttime,
-		output_files => [[ $parameters->{output_path}."/".$parameters->{output_file}]],
-		job_output => "",
-		hostname => "https://p3.theseed.org/services/ProbModelSEED",
-    });
-    if ($parameters->{update_files} == 1) {
-    	my $report = $model->integrateGapfillSolutionFromObject({
+	$model->add("gapfillings",{
+		id => $fba->id(),
+		gapfill_id => $fba->id(),
+		fba_ref => $fba->_reference(),
+		integrated => $parameters->{integrate_solution},
+		integrated_solution => 0,
+		media_ref => $parameters->{media},
+	});
+	my $write_files = 0;
+	if ($parameters->{integrate_solution}) {
+		my $report = $model->integrateGapfillSolutionFromObject({
 			gapfill => $fba
 		});
-    	$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".sbml",$model->export({format => "sbml"}),"string",{
-		   description => "SBML version of model data for use in COBRA toolbox and other applications",
-		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
-		});
-		my $mdlcpds = $model->modelcompounds();
-		my $cpdtbl = "ID\tName\tFormula\tCharge\tCompartment\n";
-		for (my $i=0; $i < @{$mdlcpds}; $i++) {
-			$cpdtbl .= $mdlcpds->[$i]->id()."\t".$mdlcpds->[$i]->name()."\t".$mdlcpds->[$i]->formula()."\t".$mdlcpds->[$i]->compound()->defaultCharge()."\t".$mdlcpds->[$i]->modelcompartment()->label()."\n";
-		}
-		print $model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".cpdtbl\n";
-		$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".cpdtbl",$cpdtbl,"string",{
-		   description => "Tab delimited table containing data on compounds in metabolic model",
-		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
-		});
-		my $mdlrxns = $model->modelreactions();
-		my $rxntbl = "ID\tName\tEquation\tDefinition\tGenes\n";
-		for (my $i=0; $i < @{$mdlrxns}; $i++) {
-			$rxntbl .= $mdlrxns->[$i]->id()."\t".$mdlrxns->[$i]->name()."\t".$mdlrxns->[$i]->equation()."\t".$mdlrxns->[$i]->definition()."\t".$mdlrxns->[$i]->gprString()."\n";
-		}
-		print $model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".rxntbl\n";
-		$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".rxntbl",$rxntbl,"string",{
-		   description => "Tab delimited table containing data on reactions in metabolic model",
-		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
-		});
-    }
-    
+		$write_files = 1;
+	}
     Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
-	return $self->get_model_summary($self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
-		integrated_solution => 0,
-		solutiondata => $solutiondata,
-		integratedindex => 0,
-		media => $parameters->{media},
-		integrated => $parameters->{integrate_solution}
-	}));
+	return $self->save_model($model,$model->wsmeta()->[2].$model->wsmeta()->[0],{},$write_files);
 }
 
 sub load_to_shock {

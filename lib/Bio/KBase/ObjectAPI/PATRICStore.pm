@@ -84,9 +84,6 @@ my $transform = {
 	genome => {
 		in => "transform_genome_from_ws",
 		out => "transform_genome_to_ws"
-	},
-	model => {
-		in => "transform_model_from_ws"
 	}
 };
 my $jsontypes = {
@@ -367,85 +364,6 @@ sub transform_genome_from_ws {
 sub transform_genome_to_ws {
 	my ($self,$object,$meta) = @_;
 	return $object->export( { format => "json" } );
-}
-
-sub transform_model_from_ws {
-	my ($self,$data,$meta) = @_;
-	$data = Bio::KBase::ObjectAPI::utilities::FROMJSON($data);
-	my $obj = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new($data);
-	$obj->parent($self);
-	my $gflist = $self->workspace()->ls({
-		adminmode => $self->adminmode(),
-		paths => [$meta->[2].".".$meta->[0]."/gapfilling"],
-		excludeDirectories => 1,
-		excludeObjects => 0,
-		recursive => 1,
-		query => {type => "fba"}
-	});
-	if (defined($gflist->{$meta->[2].".".$meta->[0]."/gapfilling"})) {
-		$gflist = $gflist->{$meta->[2].".".$meta->[0]."/gapfilling"};
-		for (my $i=0; $i < @{$gflist}; $i++) {
-			if ($gflist->[$i]->[0] ne Bio::KBase::ObjectAPI::utilities::get_global("gapfill name")) {
-				if ($gflist->[$i]->[7]->{integrated} == 1) {
-					if (defined($gflist->[$i]->[7]->{solutiondata})) {
-						my $soldata = Bio::KBase::ObjectAPI::utilities::FROMJSON($gflist->[$i]->[7]->{solutiondata});
-						if (defined($soldata->[$gflist->[$i]->[7]->{integratedindex}])) {
-							my $sol = $soldata->[$gflist->[$i]->[7]->{integratedindex}];
-							for (my $j=0; $j < @{$sol}; $j++) {
-								my $rxnobj = $obj->getLinkedObject($sol->[$j]->{reaction_ref});
-								my $cmpobj = $obj->getLinkedObject($sol->[$j]->{compartment_ref});
-								if (ref($rxnobj) eq "Bio::KBase::ObjectAPI::KBaseBiochem::Reaction") {
-									my $mdlrxn = $obj->getObject("modelreactions",$rxnobj->id()."_".$cmpobj->id().$sol->[$j]->{compartmentIndex});
-									if (defined($mdlrxn)) {
-										if ($mdlrxn->direction() eq ">" && $sol->[$j]->{direction} eq "<") {
-											$mdlrxn->direction("=");
-										} elsif ($mdlrxn->direction() eq "<" && $sol->[$j]->{direction} eq ">") {
-											$mdlrxn->direction("=");
-										}
-									} else {
-										my $mdlcmp = $obj->addCompartmentToModel({compartment => $cmpobj,pH => 7,potential => 0,compartmentIndex => $sol->[$j]->{compartmentIndex}});
-										$mdlrxn = $obj->addReactionToModel({
-											reaction => $rxnobj,
-											direction => $sol->[$j]->{direction},
-											overrideCompartment => $mdlcmp
-										});
-									}
-								} else {
-									my $mdlrxn = $obj->getObject("modelreactions",$rxnobj->id());
-									if (defined($mdlrxn)) {
-										if ($mdlrxn->direction() eq ">" && $sol->[$j]->{direction} eq "<") {
-											$mdlrxn->direction("=");
-										} elsif ($mdlrxn->direction() eq "<" && $sol->[$j]->{direction} eq ">") {
-											$mdlrxn->direction("=");
-										}
-									} else {
-										$mdlrxn = $rxnobj->cloneObject();
-										$obj->add("modelreactions",$mdlrxn);
-										$mdlrxn->parent($rxnobj->parent());
-										my $prots = $mdlrxn->modelReactionProteins();
-										for (my $m=0; $m < @{$prots}; $m++) {
-											$mdlrxn->remove("modelReactionProteins",$prots->[$m]);
-										}
-										my $rgts = $mdlrxn->modelReactionReagents();
-										for (my $m=0; $m < @{$rgts}; $m++) {
-											if (!defined($obj->getObject("modelcompounds",$rgts->[$m]->modelcompound()->id()))) {
-												$obj->add("modelcompounds",$rgts->[$m]->modelcompound()->cloneObject());		
-												if (!defined($obj->getObject("modelcompartments",$rgts->[$m]->modelcompound()->modelcompartment()->id()))) {
-													$obj->add("modelcompartments",$rgts->[$m]->modelcompound()->modelcompartment()->cloneObject());
-												}
-											}
-										}
-										$mdlrxn->parent($obj);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return $obj;
 }
 
 sub transform_media_from_ws {
