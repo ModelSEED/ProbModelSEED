@@ -77,6 +77,87 @@ sub _buildfeatureHash {
 #***********************************************************************************************************
 # FUNCTIONS:
 #***********************************************************************************************************
+sub gene_count {
+	my $self = shift;
+	my $ftrhash = {};
+	my $rxns = $self->modelreactions();
+	for (my $i=0; $i < @{$rxns};$i++) {
+		my $rxn = $rxns->[$i];
+		my $ftrs = $rxn->featureUUIDs();
+		foreach my $ftr (@{$ftrs}) {
+			$ftrhash->{$ftr}->{$rxn->_reference()} = $rxn;
+		}
+	}
+	my $count = keys(%{$ftrhash});
+	return $count;
+}
+
+sub gapfilled_reaction_count {
+	my $self = shift;
+	my $reactions = $self->modelreactions();
+	my $count = 0;
+	for (my $i=0; $i < @{$reactions}; $i++) {
+		my $gfhash = $reactions->[$i]->gapfill_data();
+		foreach my $key (keys(%{$gfhash})) {
+			if ($gfhash->{$key} =~ m/added/) {
+				$count++;
+			}
+		}
+	}
+	return $count;
+}
+
+sub gene_associated_reaction_count {
+	my $self = shift;
+	my $reactions = $self->modelreactions();
+	my $count = 0;
+	for (my $i=0; $i < @{$reactions}; $i++) {
+		my $rxnprots = $reactions->[$i]->modelReactionProteins();
+		if (@{$rxnprots} > 0) {
+			$count++;
+		}
+	}
+	return $count;
+}
+
+sub biomass_compound_count {
+	my $self = shift;
+	my $bios = $self->biomasses();
+	my $biohash;
+	for (my $i=0; $i < @{$bios}; $i++) {
+		my $biocpds = $bios->[$i]->biomasscompounds();
+		for (my $j=0; $j < @{$biocpds}; $j++) {
+			$biohash->{$biocpds->[$j]->modelcompound_ref()} = 1;
+		}
+	}
+	my $count = keys(%{$biohash});
+	return $count;
+}
+
+sub integrated_gapfill_count {
+	my $self = shift;
+	my $gfs = $self->gapfillings();
+	my $count = 0;
+	for (my $i=0; $i < @{$gfs}; $i++) {
+		if ($gfs->[$i]->integrated() == 1) {
+			$count++;
+		}
+	}
+	return $count;
+}
+
+sub unintegrated_gapfill_count {
+	my $self = shift;
+	my $gfs = $self->gapfillings();
+	my $count = 0;
+	for (my $i=0; $i < @{$gfs}; $i++) {
+		if ($gfs->[$i]->integrated() == 0) {
+			$count++;
+		}
+	}
+	return $count;
+}
+
 sub biochemistry {
 	my $self = shift;
 	return $self->template()->biochemistry();

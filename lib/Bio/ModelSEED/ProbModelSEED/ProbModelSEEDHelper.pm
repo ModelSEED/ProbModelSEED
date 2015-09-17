@@ -69,7 +69,8 @@ sub get_model {
 }
 sub save_model {
 	my($self,$model,$ref,$meta,$write_files) = @_;
-	my $summary = $self->get_model_summary($self->save_object($ref,$model,"model",$meta));
+	$self->save_object($ref,$model,"model",$meta);
+	my $summary = $self->get_model_summary($model);
 	if ($write_files == 1) {
 		$self->save_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]."/".$model->wsmeta()->[0].".sbml",$model->export({format => "sbml"}),"string",{
 		   description => "SBML version of model data for use in COBRA toolbox and other applications",
@@ -229,16 +230,36 @@ sub get_model_data {
 }
 
 sub get_model_summary {
-	my ($self,$modelmeta) = @_;
-	my $output = $modelmeta->[8];
-	$output->{rundate} = $modelmeta->[3];
-	$output->{id} = $modelmeta->[0];
-	$output->{"ref"} = $modelmeta->[2].$modelmeta->[0];
-	$output->{gene_associated_reactions} = ($output->{$modelmeta->[2].$modelmeta->[0]}->{num_reactions} - 22);
-	$output->{gapfilled_reactions} = 0;
-	$output->{fba_count} = 0;
-	$output->{integrated_gapfills} = 0;
-	$output->{unintegrated_gapfills} = 0;
+	my ($self,$model) = @_;
+	my $modelmeta = $model->wsmeta();
+	my $numcpds = @{$model->modelcompounds()};
+	my $numrxns = @{$model->modelreactions()};
+	my $numcomps = @{$model->modelcompartments()};
+	my $numbio = @{$model->biomasses()};
+	my $output = {
+		id => $modelmeta->[0],
+		source => $model->source(),
+		source_id => $modelmeta->[0],
+		name => $model->name(),
+		type => $model->type(),
+		genome_ref => $model->genome_ref(),
+		template_ref => $model->template_ref(),
+		num_compounds => $numcpds,
+		num_reactions => $numrxns,
+		num_compartments => $numcomps,
+		num_biomasses => $numbio,
+		num_genes => $model->gene_count(),
+		rundate => $modelmeta->[3],
+		"ref" => $modelmeta->[2].$modelmeta->[0],
+		gene_associated_reactions => $model->gene_associated_reaction_count(),
+		gapfilled_reactions => $model->gapfilled_reaction_count(),
+		fba_count => 0,
+		num_biomass_compounds => $model->biomass_compound_count(),
+		integrated_gapfills => $model->integrated_gapfill_count(),
+		unintegrated_gapfills => $model->unintegrated_gapfill_count()
+	};
+	$output->{genome_ref} =~ s/\|\|//;
+	$output->{template_ref} =~ s/\|\|//;
 	my $list = $self->workspace_service()->ls({
 		paths => [$modelmeta->[2].".".$modelmeta->[0]."/fba"],
 		excludeDirectories => 1,
@@ -250,29 +271,6 @@ sub get_model_summary {
 		$list = $list->{$modelmeta->[2].".".$modelmeta->[0]."/fba"};
 		$output->{fba_count} = @{$list};
 	}
-	my $list = $self->workspace_service()->ls({
-		paths => [$modelmeta->[2].".".$modelmeta->[0]."/gapfilling"],
-		excludeDirectories => 1,
-		excludeObjects => 0,
-		recursive => 0,
-		query => {type => "fba"}
-	});
-	if (defined($list->{$modelmeta->[2].".".$modelmeta->[0]."/gapfilling"})) {
-		$list = $list->{$modelmeta->[2].".".$modelmeta->[0]."/gapfilling"};
-		for (my $k=0; $k < @{$list}; $k++) {
-			my $item = $list->[$k];
-			if ($item->[7]->{integrated} == 1) {
-				$output->{$modelmeta->[2].$modelmeta->[0]}->{integrated_gapfills}++;
-			} else {
-				$output->{$modelmeta->[2].$modelmeta->[0]}->{unintegrated_gapfills}++;
-			}
-		}
-	}
-	delete $output->{reactions};
-	delete $output->{genes};
-	delete $output->{biomasses};		
-	$output->{num_biomass_compounds} = split(/\//,$output->{biomasscpds});
-	delete $output->{biomasscpds};
 	return $output;
 }
 
@@ -710,7 +708,7 @@ sub copy_model {
     my $oldautometa = $model->wsmeta()->[8];
     my $meta = $self->save_object($input->{destination}.$input->{destname},$model,"model");
     $meta->[8] = $oldautometa;
-    return $self->get_model_summary($meta);
+    return $self->get_model_summary($model);
 }
 #****************************************************************************
 #Apps
