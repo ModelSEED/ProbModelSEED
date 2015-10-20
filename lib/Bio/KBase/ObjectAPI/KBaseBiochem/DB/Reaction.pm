@@ -22,10 +22,10 @@ has status => (is => 'rw', isa => 'Str', printOrder => '10', default => 'unknown
 has thermoReversibility => (is => 'rw', isa => 'Str', printOrder => '6', default => '=', type => 'attribute', metaclass => 'Typed');
 has name => (is => 'rw', isa => 'Str', printOrder => '1', default => '', type => 'attribute', metaclass => 'Typed');
 has cues => (is => 'rw', isa => 'HashRef', printOrder => '-1', default => sub{return {};}, type => 'attribute', metaclass => 'Typed');
-has defaultProtons => (is => 'rw', isa => 'Num', printOrder => '7', type => 'attribute', metaclass => 'Typed');
 has direction => (is => 'rw', isa => 'Str', printOrder => '5', default => '=', type => 'attribute', metaclass => 'Typed');
+has aliases => (is => 'rw', isa => 'HashRef', printOrder => '-1', default => sub {return {};}, type => 'attribute', metaclass => 'Typed');
 has abstractReaction_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
+has id => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has abbreviation => (is => 'rw', isa => 'Str', printOrder => '2', default => '', type => 'attribute', metaclass => 'Typed');
 has md5 => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has deltaGErr => (is => 'rw', isa => 'Num', printOrder => '9', type => 'attribute', metaclass => 'Typed');
@@ -102,20 +102,19 @@ my $attributes = [
           },
           {
             'req' => 0,
-            'printOrder' => 7,
-            'name' => 'defaultProtons',
-            'default' => undef,
-            'type' => 'Num',
-            'description' => undef,
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
             'printOrder' => 5,
             'name' => 'direction',
             'default' => '=',
             'type' => 'Str',
             'description' => undef,
+            'perm' => 'rw'
+          },
+          {
+            'req' => 0,
+            'printOrder' => -1,
+            'name' => 'aliases',
+            'default' => 'sub {return {};}',
+            'type' => 'HashRef',
             'perm' => 'rw'
           },
           {
@@ -128,8 +127,8 @@ my $attributes = [
             'perm' => 'rw'
           },
           {
-            'req' => 1,
-            'printOrder' => 0,
+            'req' => 0,
+            'printOrder' => -1,
             'name' => 'id',
             'type' => 'Str',
             'perm' => 'rw'
@@ -161,7 +160,7 @@ my $attributes = [
           }
         ];
 
-my $attribute_map = {deltaG => 0, status => 1, thermoReversibility => 2, name => 3, cues => 4, defaultProtons => 5, direction => 6, abstractReaction_ref => 7, id => 8, abbreviation => 9, md5 => 10, deltaGErr => 11};
+my $attribute_map = {deltaG => 0, status => 1, thermoReversibility => 2, name => 3, cues => 4, direction => 5, aliases => 6, abstractReaction_ref => 7, id => 8, abbreviation => 9, md5 => 10, deltaGErr => 11};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {

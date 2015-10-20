@@ -23,12 +23,13 @@ has pkbs => (is => 'rw', isa => 'HashRef', printOrder => '-1', default => sub{re
 has formula => (is => 'rw', isa => 'Str', printOrder => '3', default => '', type => 'attribute', metaclass => 'Typed');
 has mass => (is => 'rw', isa => 'Num', printOrder => '4', type => 'attribute', metaclass => 'Typed');
 has pkas => (is => 'rw', isa => 'HashRef', printOrder => '-1', default => sub{return {};}, type => 'attribute', metaclass => 'Typed');
-has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
+has id => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has unchargedFormula => (is => 'rw', isa => 'Str', printOrder => '-1', default => '', type => 'attribute', metaclass => 'Typed');
 has deltaGErr => (is => 'rw', isa => 'Num', printOrder => '7', type => 'attribute', metaclass => 'Typed');
 has name => (is => 'rw', isa => 'Str', printOrder => '1', default => '', type => 'attribute', metaclass => 'Typed');
 has cues => (is => 'rw', isa => 'HashRef', printOrder => '-1', default => sub{return {};}, type => 'attribute', metaclass => 'Typed');
-has structure_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has structure => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has aliases => (is => 'rw', isa => 'HashRef', printOrder => '-1', default => sub {return {};}, type => 'attribute', metaclass => 'Typed');
 has abbreviation => (is => 'rw', isa => 'Str', printOrder => '2', default => '', type => 'attribute', metaclass => 'Typed');
 has md5 => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has abstractCompound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
@@ -36,7 +37,6 @@ has comprisedOfCompound_refs => (is => 'rw', isa => 'ArrayRef', printOrder => '-
 
 
 # LINKS:
-has structure => (is => 'rw', type => 'link(BiochemistryStructures,structures,structure_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_structure', clearer => 'clear_structure', isa => 'Bio::KBase::ObjectAPI::KBaseBiochem::CompoundStructure', weak_ref => 1);
 has abstractCompound => (is => 'rw', type => 'link(Biochemistry,compounds,abstractCompound_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_abstractCompound', clearer => 'clear_abstractCompound', isa => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compound', weak_ref => 1);
 has comprisedOfCompounds => (is => 'rw', type => 'link(Biochemistry,compounds,comprisedOfCompound_refs)', metaclass => 'Typed', lazy => 1, builder => '_build_comprisedOfCompounds', clearer => 'clear_comprisedOfCompounds', isa => 'ArrayRef');
 
@@ -44,10 +44,6 @@ has comprisedOfCompounds => (is => 'rw', type => 'link(Biochemistry,compounds,co
 # BUILDERS:
 sub _build_reference { my ($self) = @_;return $self->parent()->_reference().'/compounds/id/'.$self->id(); }
 sub _build_uuid { my ($self) = @_;return $self->_reference(); }
-sub _build_structure {
-	 my ($self) = @_;
-	 return $self->getLinkedObject($self->structure_ref());
-}
 sub _build_abstractCompound {
 	 my ($self) = @_;
 	 return $self->getLinkedObject($self->abstractCompound_ref());
@@ -129,8 +125,8 @@ my $attributes = [
             'perm' => 'rw'
           },
           {
-            'req' => 1,
-            'printOrder' => 0,
+            'req' => 0,
+            'printOrder' => -1,
             'name' => 'id',
             'type' => 'Str',
             'perm' => 'rw'
@@ -174,8 +170,16 @@ my $attributes = [
           {
             'req' => 0,
             'printOrder' => -1,
-            'name' => 'structure_ref',
+            'name' => 'structure',
             'type' => 'Str',
+            'perm' => 'rw'
+          },
+          {
+            'req' => 0,
+            'printOrder' => -1,
+            'name' => 'aliases',
+            'default' => 'sub {return {};}',
+            'type' => 'HashRef',
             'perm' => 'rw'
           },
           {
@@ -214,7 +218,7 @@ my $attributes = [
           }
         ];
 
-my $attribute_map = {defaultCharge => 0, isCofactor => 1, deltaG => 2, pkbs => 3, formula => 4, mass => 5, pkas => 6, id => 7, unchargedFormula => 8, deltaGErr => 9, name => 10, cues => 11, structure_ref => 12, abbreviation => 13, md5 => 14, abstractCompound_ref => 15, comprisedOfCompound_refs => 16};
+my $attribute_map = {defaultCharge => 0, isCofactor => 1, deltaG => 2, pkbs => 3, formula => 4, mass => 5, pkas => 6, id => 7, unchargedFormula => 8, deltaGErr => 9, name => 10, cues => 11, structure => 12, aliases => 13, abbreviation => 14, md5 => 15, abstractCompound_ref => 16, comprisedOfCompound_refs => 17};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -230,16 +234,6 @@ sub _attributes {
 }
 
 my $links = [
-          {
-            'parent' => 'BiochemistryStructures',
-            'name' => 'structure',
-            'attribute' => 'structure_ref',
-            'clearer' => 'clear_structure',
-            'class' => 'Bio::KBase::ObjectAPI::KBaseBiochem::CompoundStructure',
-            'method' => 'structures',
-            'module' => 'KBaseBiochem',
-            'field' => 'id'
-          },
           {
             'parent' => 'Biochemistry',
             'name' => 'abstractCompound',
@@ -263,7 +257,7 @@ my $links = [
           }
         ];
 
-my $link_map = {structure => 0, abstractCompound => 1, comprisedOfCompounds => 2};
+my $link_map = {abstractCompound => 0, comprisedOfCompounds => 1};
 sub _links {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {

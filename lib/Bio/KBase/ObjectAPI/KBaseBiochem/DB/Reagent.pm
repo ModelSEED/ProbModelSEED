@@ -18,23 +18,18 @@ has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass =>
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
 has isCofactor => (is => 'rw', isa => 'Bool', printOrder => '0', default => '0', type => 'attribute', metaclass => 'Typed');
 has compound_ref => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
-has compartment_ref => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
+has compartment_index => (is => 'rw', isa => 'Int', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has coefficient => (is => 'rw', isa => 'Num', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
 has compound => (is => 'rw', type => 'link(Biochemistry,compounds,compound_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_compound', clearer => 'clear_compound', isa => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compound', weak_ref => 1);
-has compartment => (is => 'rw', type => 'link(Biochemistry,compartments,compartment_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_compartment', clearer => 'clear_compartment', isa => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compartment', weak_ref => 1);
 
 
 # BUILDERS:
 sub _build_compound {
 	 my ($self) = @_;
 	 return $self->getLinkedObject($self->compound_ref());
-}
-sub _build_compartment {
-	 my ($self) = @_;
-	 return $self->getLinkedObject($self->compartment_ref());
 }
 
 
@@ -64,12 +59,10 @@ my $attributes = [
             'perm' => 'rw'
           },
           {
-            'req' => 1,
-            'printOrder' => 0,
-            'name' => 'compartment_ref',
-            'default' => undef,
-            'type' => 'Str',
-            'description' => undef,
+            'req' => 0,
+            'printOrder' => -1,
+            'name' => 'compartment_index',
+            'type' => 'Int',
             'perm' => 'rw'
           },
           {
@@ -83,7 +76,7 @@ my $attributes = [
           }
         ];
 
-my $attribute_map = {isCofactor => 0, compound_ref => 1, compartment_ref => 2, coefficient => 3};
+my $attribute_map = {isCofactor => 0, compound_ref => 1, compartment_index => 2, coefficient => 3};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -108,20 +101,10 @@ my $links = [
             'method' => 'compounds',
             'module' => 'KBaseBiochem',
             'field' => 'id'
-          },
-          {
-            'parent' => 'Biochemistry',
-            'name' => 'compartment',
-            'attribute' => 'compartment_ref',
-            'clearer' => 'clear_compartment',
-            'class' => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compartment',
-            'method' => 'compartments',
-            'module' => 'KBaseBiochem',
-            'field' => 'id'
           }
         ];
 
-my $link_map = {compound => 0, compartment => 1};
+my $link_map = {compound => 0};
 sub _links {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {

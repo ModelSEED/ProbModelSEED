@@ -758,7 +758,6 @@ sub createJobDirectory {
 		$compindecies->{$comps->[$i]->compartmentIndex()}->{$comps->[$i]->compartment()->id()} = 1;
 	}
 	#We add all gapfill candidates to an input file
-	$self->fbamodel()->template()->calculatePenalties();
 	my $actcoef = {};
 	my $gfcoef = {};
 	my $additionalrxn = [];

@@ -16,36 +16,27 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
-has compound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', required => 1, type => 'attribute', metaclass => 'Typed');
 has linked_compound_refs => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
-has compartment_ref => (is => 'rw', isa => 'Str', printOrder => '-1', required => 1, type => 'attribute', metaclass => 'Typed');
 has coefficient => (is => 'rw', isa => 'Num', printOrder => '4', default => '1', type => 'attribute', metaclass => 'Typed');
 has link_coefficients => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
-has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
+has templatecompcompound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has class => (is => 'rw', isa => 'Str', printOrder => '1', default => '0', type => 'attribute', metaclass => 'Typed');
 has coefficientType => (is => 'rw', isa => 'Str', printOrder => '3', default => '0', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
-has compound => (is => 'rw', type => 'link(Biochemistry,compounds,compound_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_compound', clearer => 'clear_compound', isa => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compound', weak_ref => 1);
-has linked_compounds => (is => 'rw', type => 'link(Biochemistry,compounds,linked_compound_refs)', metaclass => 'Typed', lazy => 1, builder => '_build_linked_compounds', clearer => 'clear_linked_compounds', isa => 'ArrayRef');
-has compartment => (is => 'rw', type => 'link(Biochemistry,compartments,compartment_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_compartment', clearer => 'clear_compartment', isa => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compartment', weak_ref => 1);
+has linked_compounds => (is => 'rw', type => 'link(TemplateModel,compcompounds,linked_compound_refs)', metaclass => 'Typed', lazy => 1, builder => '_build_linked_compounds', clearer => 'clear_linked_compounds', isa => 'ArrayRef');
+has templatecompcompound => (is => 'rw', type => 'link(TemplateModel,compcompounds,templatecompcompound_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_templatecompcompound', clearer => 'clear_templatecompcompound', isa => 'Ref', weak_ref => 1);
 
 
 # BUILDERS:
-sub _build_reference { my ($self) = @_;return $self->parent()->_reference().'/templateBiomassComponents/id/'.$self->id(); }
-sub _build_uuid { my ($self) = @_;return $self->_reference(); }
-sub _build_compound {
-	 my ($self) = @_;
-	 return $self->getLinkedObject($self->compound_ref());
-}
 sub _build_linked_compounds {
 	 my ($self) = @_;
 	 return $self->getLinkedObjectArray($self->linked_compound_refs());
 }
-sub _build_compartment {
+sub _build_templatecompcompound {
 	 my ($self) = @_;
-	 return $self->getLinkedObject($self->compartment_ref());
+	 return $self->getLinkedObject($self->templatecompcompound_ref());
 }
 
 
@@ -57,29 +48,11 @@ sub _top { return 0; }
 
 my $attributes = [
           {
-            'req' => 1,
-            'printOrder' => -1,
-            'name' => 'compound_ref',
-            'default' => undef,
-            'type' => 'Str',
-            'description' => undef,
-            'perm' => 'rw'
-          },
-          {
             'req' => 0,
             'printOrder' => -1,
             'name' => 'linked_compound_refs',
             'default' => 'sub {return [];}',
             'type' => 'ArrayRef',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 1,
-            'printOrder' => -1,
-            'name' => 'compartment_ref',
-            'default' => undef,
-            'type' => 'Str',
-            'description' => undef,
             'perm' => 'rw'
           },
           {
@@ -100,9 +73,9 @@ my $attributes = [
             'perm' => 'rw'
           },
           {
-            'req' => 1,
-            'printOrder' => 0,
-            'name' => 'id',
+            'req' => 0,
+            'printOrder' => -1,
+            'name' => 'templatecompcompound_ref',
             'type' => 'Str',
             'perm' => 'rw'
           },
@@ -126,7 +99,7 @@ my $attributes = [
           }
         ];
 
-my $attribute_map = {compound_ref => 0, linked_compound_refs => 1, compartment_ref => 2, coefficient => 3, link_coefficients => 4, id => 5, class => 6, coefficientType => 7};
+my $attribute_map = {linked_compound_refs => 0, coefficient => 1, link_coefficients => 2, templatecompcompound_ref => 3, class => 4, coefficientType => 5};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -143,39 +116,29 @@ sub _attributes {
 
 my $links = [
           {
-            'parent' => 'Biochemistry',
-            'name' => 'compound',
-            'attribute' => 'compound_ref',
-            'clearer' => 'clear_compound',
-            'class' => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compound',
-            'method' => 'compounds',
-            'module' => 'KBaseBiochem',
-            'field' => 'id'
-          },
-          {
-            'parent' => 'Biochemistry',
+            'parent' => 'TemplateModel',
             'name' => 'linked_compounds',
             'attribute' => 'linked_compound_refs',
             'array' => 1,
             'clearer' => 'clear_linked_compounds',
-            'class' => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compound',
-            'method' => 'compounds',
-            'module' => 'KBaseBiochem',
+            'class' => 'TemplateModel',
+            'method' => 'compcompounds',
+            'module' => undef,
             'field' => 'id'
           },
           {
-            'parent' => 'Biochemistry',
-            'name' => 'compartment',
-            'attribute' => 'compartment_ref',
-            'clearer' => 'clear_compartment',
-            'class' => 'Bio::KBase::ObjectAPI::KBaseBiochem::Compartment',
-            'method' => 'compartments',
-            'module' => 'KBaseBiochem',
+            'parent' => 'TemplateModel',
+            'name' => 'templatecompcompound',
+            'attribute' => 'templatecompcompound_ref',
+            'clearer' => 'clear_templatecompcompound',
+            'class' => 'TemplateModel',
+            'method' => 'compcompounds',
+            'module' => undef,
             'field' => 'id'
           }
         ];
 
-my $link_map = {compound => 0, linked_compounds => 1, compartment => 2};
+my $link_map = {linked_compounds => 0, templatecompcompound => 1};
 sub _links {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {

@@ -15,3 +15,7 @@ SETUP
 
 If the server doesn't start up correctly, check /var/log/syslog 
 for debugging information.
+
+RUNNING SERVERS
+Dev server on twig: https://p3c.theseed.org/dev1/services/ProbModelSEED
+Production server on beech: https://p3.theseed.org/services/ProbModelSEED

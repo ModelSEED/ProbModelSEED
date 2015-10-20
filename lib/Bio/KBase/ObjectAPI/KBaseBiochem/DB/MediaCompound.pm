@@ -20,7 +20,8 @@ has compound_ref => (is => 'rw', isa => 'Str', printOrder => '0', required => 1,
 has concentration => (is => 'rw', isa => 'Num', printOrder => '0', default => '0.001', type => 'attribute', metaclass => 'Typed');
 has maxFlux => (is => 'rw', isa => 'Num', printOrder => '0', default => '100', type => 'attribute', metaclass => 'Typed');
 has minFlux => (is => 'rw', isa => 'Num', printOrder => '0', default => '-100', type => 'attribute', metaclass => 'Typed');
-has name => (is => 'rw', isa => 'Str', printOrder => '0', default => 'unknown', type => 'attribute', metaclass => 'Typed');
+has id => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has type => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
@@ -28,6 +29,8 @@ has compound => (is => 'rw', type => 'link(Biochemistry,compounds,compound_ref)'
 
 
 # BUILDERS:
+sub _build_reference { my ($self) = @_;return $self->parent()->_reference().'/mediacompounds/id/'.$self->id(); }
+sub _build_uuid { my ($self) = @_;return $self->_reference(); }
 sub _build_compound {
 	 my ($self) = @_;
 	 return $self->getLinkedObject($self->compound_ref());
@@ -46,15 +49,6 @@ my $attributes = [
             'printOrder' => 0,
             'name' => 'compound_ref',
             'default' => undef,
-            'type' => 'Str',
-            'description' => undef,
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => 0,
-            'name' => 'name',
-            'default' => 'unknown',
             'type' => 'Str',
             'description' => undef,
             'perm' => 'rw'
@@ -85,10 +79,24 @@ my $attributes = [
             'type' => 'Num',
             'description' => undef,
             'perm' => 'rw'
+          },
+          {
+            'req' => 0,
+            'printOrder' => -1,
+            'name' => 'id',
+            'type' => 'Str',
+            'perm' => 'rw'
+          },
+          {
+            'req' => 0,
+            'printOrder' => -1,
+            'name' => 'type',
+            'type' => 'Str',
+            'perm' => 'rw'
           }
         ];
 
-my $attribute_map = {compound_ref => 0,name => 1, concentration => 2, maxFlux => 3, minFlux => 4};
+my $attribute_map = {compound_ref => 0, concentration => 1, maxFlux => 2, minFlux => 3, id => 4, type => 5};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
