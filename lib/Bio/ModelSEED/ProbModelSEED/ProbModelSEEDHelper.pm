@@ -1239,6 +1239,214 @@ sub GapfillModel {
 	return $self->save_model($model,$model->wsmeta()->[2].$model->wsmeta()->[0],{},$write_files);
 }
 
+sub MergeModels {
+	my($self,$parameters) = @_;
+	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
+	my $starttime = time();
+    if (defined($parameters->{adminmode})) {
+    	$self->{_params}->{adminmode} = $parameters->{adminmode}
+    }
+    $parameters = $self->validate_args($parameters,["models"],{
+    	output_path => "/".$self->{_params}->{username}."/home/models/",
+    	output_file => "CommunityModel",
+    });
+    $log->info("Started merging models!");
+	#Pulling first model to obtain biochemistry ID
+	my $model = $self->get_model($parameters->{models}->[0]->[0]);
+	my $genomeObj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new({
+		id => $parameters->{output_file}."Genome",
+		scientific_name => $parameters->{output_file}."Genome",
+		domain => "Community",
+		genetic_code => 11,
+		dna_size => 0,
+		num_contigs => 0,
+		contig_lengths => [],
+		contig_ids => [],
+		source => "PATRIC",
+		source_id => $parameters->{output_file}."Genome",
+		md5 => "",
+		taxonomy => "Community",
+		gc_content => 0,
+		complete => 0,
+		publications => [],
+		features => [],
+    });
+    $genomeObj->parent($self->PATRICStore());
+	#Creating new community model
+	my $commdl = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new({
+		source_id => $parameters->{output_file},
+		source => "PATRIC",
+		id => $parameters->{output_file},
+		type => "CommunityModel",
+		name => $parameters->{output_file},
+		template_ref => $model->template_ref(),
+		template_refs => [$model->template_ref()],
+		modelreactions => [],
+		modelcompounds => [],
+		modelcompartments => [],
+		biomasses => [],
+		gapgens => [],
+		gapfillings => [],
+	});
+	$commdl->parent($self->PATRICStore());
+	my $cmpsHash = {
+		e => $commdl->addCompartmentToModel({
+			compartment => $model->template()->biochemistry()->getObject("compartments","e"),
+			pH => 7,
+			potential => 0,
+			compartmentIndex => 0
+		}),
+		c => $commdl->addCompartmentToModel({
+			compartment => $model->template()->biochemistry()->getObject("compartments","c"),
+			pH => 7,
+			potential => 0,
+			compartmentIndex => 0
+		})
+	};
+	my $totalAbundance = 0;
+	for (my $i=0; $i < @{$parameters->{models}}; $i++) {
+		$totalAbundance += $parameters->{models}->[$i]->[1];
+	}
+	my $biocount = 1;
+	my $primbio = $commdl->add("biomasses",{
+		id => "bio1",
+		name => "bio1",
+		other => 1,
+		dna => 0,
+		rna => 0,
+		protein => 0,
+		cellwall => 0,
+		lipid => 0,
+		cofactor => 0,
+		energy => 0
+	});
+	my $biomassCompound = $model->template()->biochemistry()->getObject("compounds","cpd11416");
+	my $biocpd = $commdl->add("modelcompounds",{
+		id => $biomassCompound->id()."_".$cmpsHash->{c}->id(),
+		compound_ref => $biomassCompound->_reference(),
+		charge => 0,
+		modelcompartment_ref => "~/modelcompartments/id/".$cmpsHash->{c}->id()
+	});
+	$primbio->add("biomasscompounds",{
+		modelcompound_ref => "~/modelcompounds/id/".$biocpd->id(),
+		coefficient => 1
+	});
+	for (my $i=0; $i < @{$parameters->{models}}; $i++) {
+		print "Loading model ".$parameters->{models}->[$i]->[0]."\n";
+		if ($i > 0) {
+			$model = $self->get_model($parameters->{models}->[$i]->[0]);
+		}
+		my $biomassCpd = $model->getObject("modelcompounds","cpd11416_c0");
+		#Adding genome, features, and roles to master mapping and annotation
+		my $mdlgenome = $model->genome();
+		$genomeObj->dna_size($genomeObj->dna_size()+$mdlgenome->dna_size());
+		$genomeObj->num_contigs($genomeObj->num_contigs()+$mdlgenome->num_contigs());
+		$genomeObj->gc_content($genomeObj->gc_content()+$mdlgenome->dna_size()*$mdlgenome->gc_content());
+		push(@{$genomeObj->{contig_lengths}},@{$mdlgenome->{contig_lengths}});
+		push(@{$genomeObj->{contig_ids}},@{$mdlgenome->{contig_ids}});	
+		print "Loading features\n";
+		for (my $j=0; $j < @{$mdlgenome->features()}; $j++) {
+			if (!defined($mdlgenome->features()->[$j]->quality())) {
+				$mdlgenome->features()->[$j]->quality({});
+			}
+			$genomeObj->add("features",$mdlgenome->features()->[$j]);
+		}
+		$commdl->template_refs()->[$i+1] = $model->template_ref();
+		#Adding compartments to community model
+		my $cmps = $model->modelcompartments();
+		print "Loading compartments\n";
+		for (my $j=0; $j < @{$cmps}; $j++) {
+			if ($cmps->[$j]->compartment()->id() ne "e") {
+				$cmpsHash->{$cmps->[$j]->compartment()->id()} = $commdl->addCompartmentToModel({
+					compartment => $cmps->[$j]->compartment(),
+					pH => 7,
+					potential => 0,
+					compartmentIndex => ($i+1)
+				});
+			}
+		}
+		#Adding compounds to community model
+		my $translation = {};
+		$log->info("Loading compounds");
+		my $cpds = $model->modelcompounds();
+		for (my $j=0; $j < @{$cpds}; $j++) {
+			my $cpd = $cpds->[$j];
+			my $rootid = $cpd->compound()->id();
+			if ($cpd->id() =~ m/(.+)_([a-zA-Z]\d+)/) {
+				$rootid = $1;
+			}
+			my $comcpd = $commdl->getObject("modelcompounds",$rootid."_".$cmpsHash->{$cpd->modelcompartment()->compartment()->id()}->id());
+			if (!defined($comcpd)) {
+				$comcpd = $commdl->add("modelcompounds",{
+					id => $rootid."_".$cmpsHash->{$cpd->modelcompartment()->compartment()->id()}->id(),
+					compound_ref => $cpd->compound_ref(),
+					charge => $cpd->charge(),
+					formula => $cpd->formula(),
+					modelcompartment_ref => "~/modelcompartments/id/".$cmpsHash->{$cpd->modelcompartment()->compartment()->id()}->id(),
+				});
+			}
+			$translation->{$cpd->id()} = $comcpd->id();
+		}
+		$log->info("Loading reactions");
+		#Adding reactions to community model
+		my $rxns = $model->modelreactions();
+		for (my $j=0; $j < @{$rxns}; $j++) {
+			my $rxn = $rxns->[$j];
+			my $rootid = $rxn->reaction()->id();
+			if ($rxn->id() =~ m/(.+)_([a-zA-Z]\d+)/) {
+				$rootid = $1;
+			}
+			my $originalcmpid = $rxn->modelcompartment()->compartment()->id();
+			if ($originalcmpid eq "e0") {
+				$originalcmpid = "c0";
+			}
+			if (!defined($commdl->getObject("modelreactions",$rootid."_".$cmpsHash->{$originalcmpid}->id()))) {
+				my $comrxn = $commdl->add("modelreactions",{
+					id => $rootid."_".$cmpsHash->{$originalcmpid}->id(),
+					reaction_ref => $rxn->reaction_ref(),
+					direction => $rxn->direction(),
+					protons => $rxn->protons(),
+					modelcompartment_ref => "~/modelcompartments/id/".$cmpsHash->{$originalcmpid}->id(),
+					probability => $rxn->probability()
+				});
+				for (my $k=0; $k < @{$rxn->modelReactionProteins()}; $k++) {
+					$comrxn->add("modelReactionProteins",$rxn->modelReactionProteins()->[$k]);
+				}
+				for (my $k=0; $k < @{$rxn->modelReactionReagents()}; $k++) {
+					$comrxn->add("modelReactionReagents",{
+						modelcompound_ref => "~/modelcompounds/id/".$translation->{$rxn->modelReactionReagents()->[$k]->modelcompound()->id()},
+						coefficient => $rxn->modelReactionReagents()->[$k]->coefficient()
+					});
+				}
+			}
+		}
+		$log->info("Loading biomass");
+		#Adding biomass to community model
+		my $bios = $model->biomasses();
+		for (my $j=0; $j < @{$bios}; $j++) {
+			my $bio = $bios->[$j]->cloneObject();
+			$bio->parent($commdl);
+			for (my $k=0; $k < @{$bio->biomasscompounds()}; $k++) {
+				$bio->biomasscompounds()->[$k]->modelcompound_ref("~/modelcompounds/id/".$translation->{$bios->[$j]->biomasscompounds()->[$k]->modelcompound()->id()});
+			}
+			$bio = $commdl->add("biomasses",$bio);
+			$biocount++;
+			$bio->id("bio".$biocount);
+			$bio->name("bio".$biocount);
+		}
+		$log->info("Loading primary biomass");
+		#Adding biomass component to primary composite biomass reaction
+		$primbio->add("biomasscompounds",{
+			modelcompound_ref => "~/modelcompounds/id/".$translation->{$biomassCpd->id()},
+			coefficient => -1*$parameters->{models}->[$i]->[1]/$totalAbundance
+		});
+	}
+	$log->info("Merge complete!");	
+	$self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$genomeObj->id(),$genomeObj,"genome",{});
+	$commdl->genome_ref($genomeObj->_reference());	
+	return $self->save_model($commdl,$parameters->{output_path}."/".$parameters->{output_file},{},1);
+}
+
 sub load_to_shock {
 	my($self,$data) = @_;
 	my $uuid = Data::UUID->new()->create_str();

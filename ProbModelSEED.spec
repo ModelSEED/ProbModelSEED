@@ -604,4 +604,16 @@ module ProbModelSEED {
     } GapfillModel_params;
     authentication required;
 	funcdef GapfillModel(GapfillModel_params input) returns (ModelStats output);
+	
+	/* 
+		FUNCTION: MergeModels
+		DESCRIPTION: This function combines multiple FBA models into a single community model
+	*/
+    typedef structure {
+		list<tuple<reference model,float abundance>> models;
+		string output_file;
+		string output_path;
+    } MergeModels_params;
+    authentication required;
+	funcdef MergeModels(MergeModels_params input) returns (ModelStats output);
 };

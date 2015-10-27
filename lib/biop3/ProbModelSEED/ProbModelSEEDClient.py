@@ -263,3 +263,8 @@ class ProbModelSEED(object):
         resp = self._call('ProbModelSEED.GapfillModel',
                           [input])
         return resp[0]
+
+    def MergeModels(self, input):
+        resp = self._call('ProbModelSEED.MergeModels',
+                          [input])
+        return resp[0]

@@ -3057,6 +3057,134 @@ sub GapfillModel
 
 
 
+=head2 MergeModels
+
+  $output = $obj->MergeModels($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a MergeModels_params
+$output is a ModelStats
+MergeModels_params is a reference to a hash where the following keys are defined:
+	input_models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+	0: (model) a reference
+	1: (abundance) a float
+
+	output_file has a value which is a string
+	output_path has a value which is a string
+reference is a string
+ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	ref has a value which is a reference
+	genome_ref has a value which is a reference
+	template_ref has a value which is a reference
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
+Timestamp is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a MergeModels_params
+$output is a ModelStats
+MergeModels_params is a reference to a hash where the following keys are defined:
+	input_models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+	0: (model) a reference
+	1: (abundance) a float
+
+	output_file has a value which is a string
+	output_path has a value which is a string
+reference is a string
+ModelStats is a reference to a hash where the following keys are defined:
+	rundate has a value which is a Timestamp
+	id has a value which is a string
+	source has a value which is a string
+	source_id has a value which is a string
+	name has a value which is a string
+	type has a value which is a string
+	ref has a value which is a reference
+	genome_ref has a value which is a reference
+	template_ref has a value which is a reference
+	fba_count has a value which is an int
+	integrated_gapfills has a value which is an int
+	unintegrated_gapfills has a value which is an int
+	gene_associated_reactions has a value which is an int
+	gapfilled_reactions has a value which is an int
+	num_genes has a value which is an int
+	num_compounds has a value which is an int
+	num_reactions has a value which is an int
+	num_biomasses has a value which is an int
+	num_biomass_compounds has a value which is an int
+	num_compartments has a value which is an int
+Timestamp is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub MergeModels
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to MergeModels:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'MergeModels');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN MergeModels
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->MergeModels($input);
+    #END MergeModels
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to MergeModels:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'MergeModels');
+    }
+    return($output);
+}
+
+
+
+
 =head2 version 
 
   $return = $obj->version()
@@ -5504,6 +5632,52 @@ model has a value which is a reference
 
 a reference to a hash where the following keys are defined:
 model has a value which is a reference
+
+
+=end text
+
+=back
+
+
+
+=head2 MergeModels_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: MergeModels
+DESCRIPTION: This function combines multiple FBA models into a single community model
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+input_models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+0: (model) a reference
+1: (abundance) a float
+
+output_file has a value which is a string
+output_path has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+input_models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+0: (model) a reference
+1: (abundance) a float
+
+output_file has a value which is a string
+output_path has a value which is a string
 
 
 =end text

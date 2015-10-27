@@ -152,7 +152,7 @@
 		my $output = $self->test_harness("export_media",{
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
 			to_shock => 1,
-		},"media export test",[],0,undef,1);
+		},"media export test",[],0,undef,1);	
 		$output = $self->test_harness("list_models",{},,"initial list models test",[],0,undef,1);
 		for(my $i=0; $i < @{$output}; $i++) {
 			if ($output->[$i]->{ref} eq $model_dir."/TestModel") {
@@ -165,6 +165,11 @@
 					model => $model_dir."/PubGenomeModel",
 				},"Clear PubGenomeModel test",[],0,undef,1);
 			}
+			if ($output->[$i]->{ref} eq $model_dir."/TestCommunityModel") {
+				my $output = $self->test_harness("delete_model",{
+					model => $model_dir."/TestCommunityModel",
+				},"Clear TestCommunityModel test",[],0,undef,1);
+			}
 		}
 		$output = $self->test_harness("ModelReconstruction",{
 			genome => "/".$self->{user}."/genomes/test/.Buchnera_aphidicola/Buchnera_aphidicola.genome",
@@ -172,6 +177,11 @@
 			output_path => $model_dir,
 			output_file => $model_name
 		},"Reconstruct from workspace genome test",[],0,undef,1);
+		$output = $self->test_harness("MergeModels",{
+			models => [[$model,1],[$model,1]],
+			output_path => $model_dir,
+			output_file => "TestCommunityModel"
+		},"Merging model test",[],0,undef,1);
 		$output = $self->test_harness("ModelReconstruction",{
 			genome => "PATRICSOLR:83333.84",
 			fulldb => "0",
