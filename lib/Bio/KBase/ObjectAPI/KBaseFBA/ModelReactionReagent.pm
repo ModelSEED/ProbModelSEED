@@ -28,10 +28,8 @@ sub _buildisCofactor {
 	my $rgts = $rxn->reagents();
 	for (my $i=0; $i < @{$rgts}; $i++) {
 		my $rgt = $rgts->[$i];
-		if ($rgt->compound() eq $self->modelcompound()->compound()) {
-			if ($rgt->compartment() eq $self->modelcompound()->modelcompartment()->compartment()) {
-				return $rgt->isCofactor();
-			} elsif ($rxn->compartment() eq $rgt->compartment() && $self->modelcompound()->modelcompartment()->compartment() eq $self->parent()->modelcompartment()->compartment()) {
+		if ($rgt->templatecompcompound()->templatecompound() eq $self->modelcompound()->compound()) {
+			if ($rgt->templatecompcompound()->templatecompartment() eq $self->modelcompound()->modelcompartment()->compartment()) {
 				return $rgt->isCofactor();
 			}
 		}

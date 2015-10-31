@@ -287,7 +287,7 @@ sub adjustBiomassReaction {
 	    	}
 	    	my $mdlcmp = $self->getObject("modelcompartments",$args->{compartment}.$args->{compartmentIndex});
 	    	if (!defined($mdlcmp)) {
-	    		my $cmp = $self->template()->biochemistry()->searchForCompartment($args->{compartment});
+	    		my $cmp = $self->template()->searchForCompartment($args->{compartment});
 		    	if (!defined($cmp)) {
 		    		Bio::KBase::ObjectAPI::utilities::error("Unrecognized compartment in equation:".$args->{compartment}."!");
 		    	}
@@ -454,18 +454,17 @@ sub addModelReaction {
     	$args->{compartment} = $1;
     	$args->{compartmentIndex} = $2;
     }
-    my $bio = $self->template()->biochemistry();
-	my $cmp = $bio->searchForCompartment($args->{compartment});
+	my $cmp = $self->template()->searchForCompartment($args->{compartment});
     if (!defined($cmp)) {
     	Bio::KBase::ObjectAPI::utilities::error("Unrecognized compartment ".$args->{compartment}." in reaction: ".$args->{reaction});
     }
     #Fetching or adding model compartment
     my $mdlcmp = $self->addCompartmentToModel({compartment => $cmp,pH => 7,potential => 0,compartmentIndex => $args->{compartmentIndex}});
 	#Finding reaction reference
-	my $reference = $bio->_reference()."/reactions/id/rxn00000";
+	my $reference = $self->template()->_reference()."/reactions/id/rxn00000_c";
 	my $coefhash = {};
 	if ($rootid =~ m/^rxn\d+$/) {
-		my $rxnobj = $bio->searchForReaction($rootid);
+		my $rxnobj = $self->template()->searchForReaction($rootid);
 		if (!defined($rxnobj) && !defined($eq)) {
 			Bio::KBase::ObjectAPI::utilities::error("Specified reaction ".$rootid." not found and no equation provided!");
 		} else {
@@ -473,7 +472,7 @@ sub addModelReaction {
 			my $rgts = $rxnobj->reagents();
 			my $cmpchange = 0;
 			for (my $i=0; $i < @{$rgts}; $i++) {
-				if ($rgts->[$i]->compartment()->id() ne "c") {
+				if ($rgts->[$i]->templatecompcompound()->templatecompartment()->id() ne "c") {
 					$cmpchange = 1;
 					last;
 				}
@@ -482,11 +481,11 @@ sub addModelReaction {
 				my $rgt = $rgts->[$i];
 				my $rgtcmp = $mdlcmp;
 				if ($cmpchange == 1) {
-					$rgtcmp = $self->addCompartmentToModel({compartment => $rgt->compartment(),pH => 7,potential => 0,compartmentIndex => 0});
+					$rgtcmp = $self->addCompartmentToModel({compartment => $rgt->templatecompcompound()->templatecompartment(),pH => 7,potential => 0,compartmentIndex => 0});
 				}
 				my $coefficient = $rgt->coefficient();
 				my $mdlcpd = $self->addCompoundToModel({
-					compound => $rgt->compound(),
+					compound => $rgt->templatecompcompound()->templatecompound(),
 					modelCompartment => $rgtcmp,
 				});
 				$coefhash->{"~/modelcompounds/id/".$mdlcpd->id()} = $coefficient;
@@ -546,7 +545,6 @@ sub LoadExternalReactionEquation {
     } else {
 		Bio::KBase::ObjectAPI::utilities::error("No equal sign in ".$args->{equation}."!");
 	}
-	my $bio = $self->template()->biochemistry();
     #print "Reference:".$bio->_reference()."\n";
     my $compoundhash = {};
     for (my $i=0; $i < @{$array}; $i++) {
@@ -586,26 +584,26 @@ sub LoadExternalReactionEquation {
 	    				$compartment = $2;
 	    				$name = $1;
 	    			}
-	    			$cpdobj = $bio->searchForCompound($name);
+	    			$cpdobj = $self->template()->searchForCompound($name);
 	    			if (!defined($cpdobj) && defined($args->{compounds}->{$cpd}->[4])) {
 	    				my $aliases = [split(/\|/,$args->{compounds}->{$cpd}->[4])];
 	    				foreach my $alias (@{$aliases}) {
 	    					if ($alias =~ m/^(.+):(.+)/) {
 	    						$alias = $2;
 	    					}
-	    					$cpdobj = $bio->searchForCompound($alias);
+	    					$cpdobj = $self->template()->searchForCompound($alias);
 	    					if (defined($cpdobj)) {
 	    						last;
 	    					}
 	    				}
 	    			}
 	    			if (!defined($cpdobj)) {
-	    				$cpdobj = $bio->searchForCompound($cpd);
+	    				$cpdobj = $self->template()->searchForCompound($cpd);
 	    			}
 	    		} else {
-	    			$cpdobj = $bio->searchForCompound($cpd);
+	    			$cpdobj = $self->template()->searchForCompound($cpd);
 	    		}
-	    		my $cmp = $bio->searchForCompartment($compartment);
+	    		my $cmp = $self->template()->searchForCompartment($compartment);
 	    		if (!defined($cmp)) {
 	    			Bio::KBase::ObjectAPI::utilities::error("Unrecognized compartment in equation:".$compartment."!");
 	    		}
@@ -1036,10 +1034,6 @@ sub integrateGapfillSolutionFromObject {
 	if (!defined($sol)) {
 		Bio::KBase::ObjectAPI::utilities::error("Solution ".$args->{solution}." not found in gapfill ".$args->{gapfill}."!");
 	}
-	my $IntegrationReport = {
-		added => [],
-		reversed => []
-	};
 	#Integrating biomass removals into model
 	if (defined($sol->biomassRemovals()) && @{$sol->biomassRemovals()} > 0) {
 		my $removals = $sol->biomassRemovals();
@@ -1061,28 +1055,26 @@ sub integrateGapfillSolutionFromObject {
 	my $rxns = $sol->gapfillingSolutionReactions();
 	for (my $i=0; $i < @{$rxns}; $i++) {
 		my $rxn = $rxns->[$i];
-		my $rxnid = $rxn->reaction()->id();#REFACTOR NEEDED HERE
+		my $rxnid = $rxn->reaction()->id();
 		my $mdlrxn;
 		my $ismdlrxn = 0;
 		if ($rxnid =~ m/.+_[a-zA-Z]\d+$/) {
 			$ismdlrxn = 1;
 			$mdlrxn = $self->getObject("modelreactions",$rxnid);
 		} else {
-			$mdlrxn = $self->getObject("modelreactions",$rxnid."_".$rxn->compartment()->id().$rxn->compartmentIndex());
+			$mdlrxn = $self->getObject("modelreactions",$rxnid.$rxn->compartmentIndex());
 		}
 		if (defined($mdlrxn) && $rxn->direction() ne $mdlrxn->direction()) {
 			Bio::KBase::ObjectAPI::utilities::verbose(
 				"Making ".$mdlrxn->id()." reversible."
 			);
-			push(@{$IntegrationReport->{reversed}},$rxn->reaction()->id()."_".$rxn->compartment()->id().$rxn->compartmentIndex());
 			$mdlrxn->gapfill_data()->{$gf->_reference()} = "reversed:".$mdlrxn->direction();
 			$mdlrxn->direction("=");
 		} else {
 			Bio::KBase::ObjectAPI::utilities::verbose(
-				"Adding ".$rxn->reaction()->id()."_".$rxn->compartment()->id().$rxn->compartmentIndex()." to model in ".$rxn->direction()." direction."
+				"Adding ".$rxnid.$rxn->compartmentIndex()." to model in ".$rxn->direction()." direction."
 			);
 			if ($ismdlrxn == 1) {
-				push(@{$IntegrationReport->{added}},$rxn->reaction()->id());
 				if (!defined($self->getObject("modelcompartments",$rxn->reaction()->modelcompartment()->id()))) {
 					$self->add("modelcompartments",$rxn->reaction()->modelcompartment()->cloneObject());
 				}
@@ -1104,8 +1096,7 @@ sub integrateGapfillSolutionFromObject {
 				}
 				$mdlrxn->parent($self);
 			} else {
-				push(@{$IntegrationReport->{added}},$rxn->reaction()->id()."_".$rxn->compartment()->id().$rxn->compartmentIndex());
-				my $mdlcmp = $self->addCompartmentToModel({compartment => $rxn->compartment(),pH => 7,potential => 0,compartmentIndex => $rxn->compartmentIndex()});
+				my $mdlcmp = $self->addCompartmentToModel({compartment => $rxn->reaction()->templatecompartment(),pH => 7,potential => 0,compartmentIndex => $rxn->compartmentIndex()});
 				$mdlrxn = $self->addReactionToModel({#This function is gone now
 					reaction => $rxn->reaction(),
 					direction => $rxn->direction(),
@@ -1120,7 +1111,7 @@ sub integrateGapfillSolutionFromObject {
 		}
 	}
 	#Checking if gapfilling formulation is in the unintegrated list 
-	return $IntegrationReport;
+	return {};
 }
 
 =head3 searchForCompound

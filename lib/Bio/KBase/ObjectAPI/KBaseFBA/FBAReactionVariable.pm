@@ -22,11 +22,11 @@ has reactionName => ( is => 'rw', isa => 'Str',printOrder => '2', type => 'msdat
 #***********************************************************************************************************
 sub _buildreactionID {
 	my ($self) = @_;
-	return $self->modelreaction()->reaction()->id();
+	return $self->modelreaction()->reaction()->msid();
 }
 sub _buildreactionName {
 	my ($self) = @_;
-	return $self->modelreaction()->reaction()->name();
+	return $self->modelreaction()->reaction()->msname();
 }
 
 #***********************************************************************************************************

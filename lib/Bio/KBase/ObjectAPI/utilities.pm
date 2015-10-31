@@ -12,6 +12,7 @@ our $VERBOSE = undef; # A GLOBAL Reference to print verbose() calls to, or undef
 our $CONFIG = undef;
 our $keggmaphash = undef;
 our $report = {};
+our $source = undef;
 our $globalparams = {"gapfill name" => "none"};
 our $startime = undef;
 
@@ -634,6 +635,24 @@ sub FinalJobCache {
 		$ENV{KBFBA_FinalJobCache} = $input;
 	}
 	return $ENV{KBFBA_FinalJobCache};
+}
+
+=head3 source
+
+Definition:
+	string = Bio::KBase::ObjectAPI::utilities::source(string input);
+Description:
+	Getter setter for the source reported for reconstructed models
+Example:
+
+=cut
+
+sub source {
+	my ($input) = @_;
+	if (defined($input)) {
+		$source = $input;
+	}
+	return $source;
 }
 
 =head3 parseArrayString

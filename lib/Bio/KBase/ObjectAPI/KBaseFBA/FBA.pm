@@ -525,8 +525,8 @@ sub PrepareForGapfilling {
 		my $rxnmdlrxnhash = {};
 		my $rxns = $self->fbamodel()->modelreactions();
 		for (my $i=0; $i < @{$rxns}; $i++) {
-			$rxnfoundhash->{$rxns->[$i]->reaction()->id()} = 0;	
-			$rxnmdlrxnhash->{$rxns->[$i]->reaction()->id()}{$rxns->[$i]->id()}=1;	
+			$rxnfoundhash->{$rxns->[$i]->reaction()->msid()} = 0;	
+			$rxnmdlrxnhash->{$rxns->[$i]->reaction()->msid()}->{$rxns->[$i]->id()} = 1;	
 		}
 		my $priorities = $self->reactionPriorities();
 		for (my $i=0; $i < @{$priorities}; $i++) {
@@ -538,7 +538,7 @@ sub PrepareForGapfilling {
 			}
 		}
 		for (my $i=0; $i < @{$rxns}; $i++) {
-			if ($rxnfoundhash->{$rxns->[$i]->reaction()->id()} == 0) {
+			if ($rxnfoundhash->{$rxns->[$i]->reaction()->msid()} == 0) {
 				push(@{$args->{target_reactions}},$rxns->[$i]->id());
 			}	
 		}
@@ -612,7 +612,7 @@ sub SetupApprovedCompartmentList {
 	for (my $i=0; $i < @{$cmps}; $i++) {
 		$approvedHash->{$cmps->[$i]->compartment()->id()} = 1;	
 	}
-	$cmps = $self->biochemistry()->compartments();
+	$cmps = $self->template()->compartments();
 	for (my $i=0; $i < @{$cmps}; $i++) {
 		if (!defined($approvedHash->{$cmps->[$i]->id()})) {
 			push(@{$badCompList},$cmps->[$i]->id());
@@ -772,27 +772,17 @@ sub createJobDirectory {
 		if ($direction eq ">") {
 			$rxndir = "=>";
 			if (defined($self->parameters()->{make_model_rxns_reversible}) && $self->parameters()->{make_model_rxns_reversible} == 1) {
-				my $tmprxn = $self->fbamodel()->template()->searchForReaction($rxn->id());
-				if (!defined($tmprxn) || $tmprxn->GapfillDirection() eq "<" || $tmprxn->GapfillDirection() eq "=") {
+				if ($rxn->reaction()->id() eq "rxn00000_c" || $rxn->reaction()->GapfillDirection() eq "<" || $rxn->reaction()->GapfillDirection() eq "=") {
 					$rxndir = "<=>";
-					if (defined($tmprxn)) {
-						$gfcoef->{$rxn->id()} = {"reverse" => 1,tag => "MDLRXN"};
-					} else {
-						$gfcoef->{$rxn->id()} = {"reverse" => 1,tag => "MDLRXN"};
-					}
+					$gfcoef->{$rxn->id()} = {"reverse" => 1,tag => "MDLRXN"};
 				}
 			}
 		} elsif ($direction eq "<") {
 			$rxndir = "<=";
 			if (defined($self->parameters()->{make_model_rxns_reversible}) && $self->parameters()->{make_model_rxns_reversible} == 1) {
-				my $tmprxn = $self->fbamodel()->template()->searchForReaction($rxn->id());
-				if (!defined($tmprxn) || $tmprxn->GapfillDirection() eq ">" || $tmprxn->GapfillDirection() eq "=") {
+				if ($rxn->reaction()->id() eq "rxn00000_c" || $rxn->reaction()->GapfillDirection() eq ">" || $rxn->reaction()->GapfillDirection() eq "=") {
 					$rxndir = "<=>";
-					if (defined($tmprxn)) {
-						$gfcoef->{$rxn->id()} = {forward => 1,tag => "MDLRXN"};
-					} else {
-						$gfcoef->{$rxn->id()} = {forward => 1,tag => "MDLRXN"};
-					}
+					$gfcoef->{$rxn->id()} = {forward => 1,tag => "MDLRXN"};
 				}
 			}
 		}
@@ -882,7 +872,7 @@ sub createJobDirectory {
 					$comprxn->{$cpd->modelcompound()->compound()->id()}->{totalmass} = 0.001*$cpd->modelcompound()->compound()->mass();
 					my $coprods = $cpd->modelcompound()->compound()->biomass_coproducts();
 					foreach my $cocpd (@{$coprods}) {
-						my $cpdobj = $self->biochemistry()->searchForCompound($cocpd->[0]);
+						my $cpdobj = $self->template()->searchForCompound($cocpd->[0]);
 						$comprxn->{$cpd->modelcompound()->compound()->id()}->{compounds}->{$cpdobj->id()} = $cocpd->[1];
 						$comprxn->{$cpd->modelcompound()->compound()->id()}->{totalmass} += 0.001*$cpdobj->mass()*$cocpd->[1];
 					}
@@ -895,7 +885,7 @@ sub createJobDirectory {
 					$comprxn->{$component}->{totalmass} += $cpd->coefficient()*0.001*$cpd->modelcompound()->compound()->mass();
 					my $coprods = $cpd->modelcompound()->compound()->biomass_coproducts();
 					foreach my $cocpd (@{$coprods}) {
-						my $cpdobj = $self->biochemistry()->searchForCompound($cocpd->[0]);
+						my $cpdobj = $self->template()->searchForCompound($cocpd->[0]);
 						$comprxn->{$component}->{compounds}->{$cpdobj->id()} = $cpd->coefficient()*$cocpd->[1];
 						$comprxn->{$component}->{totalmass} += 0.001*$cpd->coefficient()*$cpdobj->mass()*$cocpd->[1];
 					}
@@ -961,27 +951,18 @@ sub createJobDirectory {
 					}
 				}
 			}
-			my $tmprxns = $tmp->templateReactions();
+			my $tmprxns = $tmp->reactions();
 			for (my $i=0; $i < @{$tmprxns}; $i++) {
 				my $tmprxn = $tmprxns->[$i];
-				my $cmpid = $tmprxn->compartment()->id();
-				if ($cmpid eq "e") {
-					$cmpid = "c";
-				}
-				my $tmpid = $tmprxn->reaction()->id()."_".$cmpid.$compindex;
+				my $tmpid = $tmprxn->id().$compindex;
 				my $rxndir = "<=>";
 				if ($tmprxn->direction() eq ">") {
 					$rxndir = "=>";
 				} elsif ($tmprxn->direction() eq "<") {
 					$rxndir = "<=";
 				}
-				if ($tmprxn->reaction()->thermoReversibility() eq ">") {
-					$rxndir = "=>";
-				} elsif ($tmprxn->reaction()->thermoReversibility() eq "<") {
-					$rxndir = "<=";
-				}
 				if (!defined($rxnhash->{$tmpid})) {
-					if (defined($gauranteed->{$tmprxn->reaction()->id()}) || !defined($blacklist->{$tmprxn->reaction()->id()})) {
+					if (defined($gauranteed->{$tmprxn->msid()}) || !defined($blacklist->{$tmprxn->msid()})) {
 						push(@{$additionalrxn},$tmpid."\t".$tmprxn->GapfillDirection()."\tGFDB");
 						$gfcoef->{$tmpid} = {tag => "GFDB"};
 						if ($tmprxn->GapfillDirection() eq ">" || $tmprxn->GapfillDirection() eq "=") {
@@ -991,41 +972,37 @@ sub createJobDirectory {
 							$gfcoef->{$tmpid}->{"reverse"} = 1;#$tmprxn->reverse_penalty();
 						}
 					}
-					my $rxn = $tmprxn->reaction();
 					$rxnhash->{$tmpid} = 1;
 					my $reactants = "";
 					my $products = "";
-					my $rgts = $rxn->reagents();
+					my $rgts = $tmprxn->templateReactionReagents();
 					my $multcomp = 0;
 					for (my $j=1;$j < @{$rgts}; $j++) {
-						if ($rgts->[0]->compartment()->id() ne $rgts->[$j]->compartment()->id()) {
+						if ($rgts->[0]->templatecompcompound()->templatecompartment()->id() ne $rgts->[$j]->templatecompcompound()->templatecompartment()->id()) {
 							$multcomp = 1;
+							last;
 						}
 					}
 					for (my $j=0;$j < @{$rgts}; $j++) {
 						my $rgt = $rgts->[$j];
-						my $comp = $rgt->compartment()->id();
-						if ($multcomp == 0) {
-							$comp = $tmprxn->compartment()->id()
+						my $suffix = $compindex;
+						if ($rgt->templatecompcompound()->templatecompartment()->id() eq "e") {
+							$suffix = "0";
 						}
-						my $suffix = "_".$comp.$compindex;
-						if ($comp eq "e") {
-							$suffix = "_".$comp."0";
-						}
-						$gfcpdhash->{$rgt->compound()->id().$suffix} = $rgt->compound();
-						if ($rgt->compartment()->id() eq "e") {
+						$gfcpdhash->{$rgt->templatecompcompound()->id().$suffix} = $rgt->templatecompcompound()->templatecompound();
+						if ($rgt->templatecompcompound()->templatecompartment()->id() eq "e") {
 							$suffix .= "[e]";
 						}
 						if ($rgt->coefficient() < 0) {
 							if (length($reactants) > 0) {
 								$reactants .= " + ";
 							}
-							$reactants .= "(".abs($rgt->coefficient()).") ".$rgt->compound()->id().$suffix;
+							$reactants .= "(".abs($rgt->coefficient()).") ".$rgt->templatecompcompound()->id().$suffix;
 						} elsif ($rgt->coefficient() > 0) {
 							if (length($products) > 0) {
 								$products .= " + ";
 							}
-							$products .= "(".$rgt->coefficient().") ".$rgt->compound()->id().$suffix;
+							$products .= "(".$rgt->coefficient().") ".$rgt->templatecompcompound()->id().$suffix;
 						}
 					}
 					my $equation = $reactants." ".$rxndir." ".$products;
@@ -1551,7 +1528,7 @@ sub createJobDirectory {
 									$type = $array->[1];
 									$compname = $array->[0];
 								}
-								my $comp = $self->biochemistry()->searchForCompound($compname);
+								my $comp = $self->template()->searchForCompound($compname);
 								if (!defined($comp)) {
 									print STDERR "Could not find compound stimuli ".$compname."!\n";
 									$genereg->{$tfs->[$m]->locus_tag()}->{stimuli}->{$compname} = $sign;
@@ -1584,7 +1561,7 @@ sub createJobDirectory {
 									$type = $array->[1];
 									$compname = $array->[0];
 								}
-								my $comp = $self->biochemistry()->searchForCompound($compname);
+								my $comp = $self->template()->searchForCompound($compname);
 								if (!defined($comp)) {
 									print STDERR "Could not find compound stimuli ".$compname."!\n";
 									$genereg->{$genes->[$k]->locus_tag()}->{stimuli}->{$compname} = $esign*$sign;

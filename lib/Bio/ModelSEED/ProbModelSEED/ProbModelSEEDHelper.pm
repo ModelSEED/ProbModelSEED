@@ -459,6 +459,7 @@ sub retrieve_PATRIC_genome {
 	return $genome;
 }
 
+
 =head3 build_fba_object
 
 Definition:
