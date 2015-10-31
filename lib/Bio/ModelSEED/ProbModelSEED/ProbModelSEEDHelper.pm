@@ -10,6 +10,8 @@ use Data::Dumper;
 use Log::Log4perl;
 use Bio::KBase::ObjectAPI::utilities;
 use Bio::KBase::ObjectAPI::PATRICStore;
+use ModelSEED::Client::SAP;
+use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
 
 #****************************************************************************
 #Getter setters for parameters
@@ -102,6 +104,10 @@ sub get_genome {
 	my $obj;
 	if ($ref =~ m/^PATRICSOLR:(.+)/) {
     	return $self->retrieve_PATRIC_genome($1);
+	} elsif ($ref =~ m/^PUBSEED:(.+)/) {
+    	return $self->retrieve_SEED_genome($1);
+	} elsif ($ref =~ m/^RAST:(.+)/) {
+    	return $self->retrieve_RAST_genome($1);
 	} else {
 		$obj = $self->get_object($ref);
 	    if (defined($obj) && ref($obj) ne "Bio::KBase::ObjectAPI::KBaseGenomes::Genome" && defined($obj->{output_files})) {
@@ -458,7 +464,284 @@ sub retrieve_PATRIC_genome {
 	$genome->parent($self->PATRICStore());
 	return $genome;
 }
+=head3 retrieve_SEED_genome
 
+Definition:
+	Genome = $self->retrieve_SEED_genome(string genome);
+Description:
+	Returns typed object for genome in SEED reference database
+		
+=cut
+sub retrieve_SEED_genome {
+	my($self,$id) = @_;
+	my $sapsvr = ModelSEED::Client::SAP->new();
+	my $data = $sapsvr->genome_data({
+		-ids => [$id],
+		-data => [qw(gc-content dna-size name taxonomy domain genetic-code)]
+	});
+	if (!defined($data->{$id})) {
+    	$self->error("PubSEED genome ".$id." not found!");
+    }
+    my $genomeObj = {
+		id => $id,
+		scientific_name => $data->{$id}->[2],
+		domain => $data->{$id}->[4],
+		genetic_code => $data->{$id}->[5],
+		dna_size => $data->{$id}->[1],
+		num_contigs => 0,
+		contig_lengths => [],
+		contig_ids => [],
+		source => "PubSEED",
+		source_id => $id,
+		taxonomy => $data->{$id}->[3],
+		gc_content => $data->{$id}->[0]/100,
+		complete => 1,
+		publications => [],
+		features => [],
+    };
+    my $contigset = {
+		name => $genomeObj->{scientific_name},
+		source_id => $genomeObj->{source_id},
+		source => $genomeObj->{source},
+		type => "Organism",
+		contigs => []
+    };
+	my $featureHash = $sapsvr->all_features({-ids => $id});
+	my $genomeHash = $sapsvr->genome_contigs({
+		-ids => [$id]
+	});
+	my $featureList = $featureHash->{$id};
+	my $contigList = $genomeHash->{$id};
+	my $functions = $sapsvr->ids_to_functions({-ids => $featureList});
+	my $locations = $sapsvr->fid_locations({-ids => $featureList});
+	my $sequences = $sapsvr->fids_to_proteins({-ids => $featureList,-sequence => 1});
+	my $contigHash = $sapsvr->contig_sequences({
+		-ids => $contigList
+	});
+	foreach my $key (keys(%{$contigHash})) {
+		$genomeObj->{num_contigs}++;
+		push(@{$genomeObj->{contig_ids}},$key);
+		push(@{$genomeObj->{contig_lengths}},length($contigHash->{$key}));
+		push(@{$contigset->{contigs}},{
+			id => $key,
+			"length" => length($contigHash->{$key}),
+			md5 => Digest::MD5::md5_hex($contigHash->{$key}),
+			sequence => $contigHash->{$key},
+			name => $key
+		});
+	}
+	my $sortedcontigs = [sort { $a->{sequence} cmp $b->{sequence} } @{$contigset->{contigs}}];
+	my $str = "";
+	for (my $i=0; $i < @{$sortedcontigs}; $i++) {
+		if (length($str) > 0) {
+			$str .= ";";
+		}
+		$str .= $sortedcontigs->[$i]->{sequence};	
+	}
+	$genomeObj->{md5} = Digest::MD5::md5_hex($str);
+	$contigset->{md5} = $genomeObj->{md5};
+	$contigset->{id} = $id.".contigs";
+	for (my $i=0; $i < @{$featureList}; $i++) {
+		my $feature = {
+  			id => $featureList->[$i],
+			type => "peg",
+			publications => [],
+			subsystems => [],
+			protein_families => [],
+			aliases => [],
+			annotations => [],
+			subsystem_data => [],
+			regulon_data => [],
+			atomic_regulons => [],
+			coexpressed_fids => [],
+			co_occurring_fids => []
+  		};
+  		if ($featureList->[$i] =~ m/\.([^\.]+)\.\d+$/) {
+  			$feature->{type} = $1;
+  		}
+		if (defined($functions->{$featureList->[$i]})) {
+			$feature->{function} = $functions->{$featureList->[$i]};
+		}
+		if (defined($sequences->{$featureList->[$i]})) {
+			$feature->{protein_translation} = $sequences->{$featureList->[$i]};
+			$feature->{protein_translation_length} = length($feature->{protein_translation});
+  			$feature->{dna_sequence_length} = 3*$feature->{protein_translation_length};
+  			$feature->{md5} = Digest::MD5::md5_hex($feature->{protein_translation});
+		}
+  		if (defined($locations->{$featureList->[$i]}->[0])) {
+			for (my $j=0; $j < @{$locations->{$featureList->[$i]}}; $j++) {
+				my $loc = $locations->{$featureList->[$i]}->[$j];
+				if ($loc =~ m/^(.+)_(\d+)([\+\-])(\d+)$/) {
+					my $array = [split(/:/,$1)];
+					if ($3 eq "-" || $3 eq "+") {
+						$feature->{location}->[$j] = [$array->[1],$2,$3,$4];
+					} elsif ($2 > $4) {
+						$feature->{location}->[$j] = [$array->[1],$2,"-",($2-$4)];
+					} else {
+						$feature->{location}->[$j] = [$array->[1],$2,"+",($4-$2)];
+					}
+					$feature->{location}->[$j]->[1] = $feature->{location}->[$j]->[1]+0;
+					$feature->{location}->[$j]->[3] = $feature->{location}->[$j]->[3]+0;
+				}
+			}
+			
+		}
+  		push(@{$genomeObj->{features}},$feature);	
+	}
+	my $ContigObj = Bio::KBase::ObjectAPI::KBaseGenomes::ContigSet->new($contigset);
+	$genomeObj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genomeObj);
+	$genomeObj->contigs($ContigObj);
+	return $genomeObj;
+}
+=head3 retrieve_RAST_genome
+
+Definition:
+	Genome = $self->retrieve_RAST_genome(string genome);
+Description:
+	Returns typed object for genome in RAST reference database
+		
+=cut
+sub retrieve_RAST_genome {
+	my($self,$id,$username,$password) = @_;
+	my $mssvr = Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient->new($self->{_params}->{"mssserver-url"});
+	print $self->token()."\n";
+	$mssvr->{token} = $self->token();
+	$mssvr->{client}->{token} = $self->token();
+	my $data = $mssvr->getRastGenomeData({
+		genome => $id,
+		username => $username,
+		password => $password,
+		getSequences => 1,
+		getDNASequence => 1
+	});
+    if (!defined($data->{owner})) {
+    	$self->_error("RAST genome ".$id." not found!",'get_genomeobject');
+    }
+	my $genomeObj = {
+		id => $id,
+		scientific_name => $data->{name},
+		domain => $data->{taxonomy},
+		genetic_code => 11,
+		dna_size => $data->{size},
+		num_contigs => 0,
+		contig_lengths => [],
+		contig_ids => [],
+		source => "RAST",
+		source_id => $id,
+		taxonomy => $data->{taxonomy},
+		gc_content => 0.5,
+		complete => 1,
+		publications => [],
+		features => [],
+    };
+    my $contigset = {
+		name => $genomeObj->{scientific_name},
+		source_id => $genomeObj->{source_id},
+		source => $genomeObj->{source},
+		type => "Organism",
+		contigs => []
+    };
+    my $contighash = {};
+	for (my $i=0; $i < @{$data->{features}}; $i++) {
+		my $ftr = $data->{features}->[$i];
+		my $feature = {
+  			id => $ftr->{ID}->[0],
+			type => "peg",
+			publications => [],
+			subsystems => [],
+			protein_families => [],
+			aliases => [],
+			annotations => [],
+			subsystem_data => [],
+			regulon_data => [],
+			atomic_regulons => [],
+			coexpressed_fids => [],
+			co_occurring_fids => [],
+			protein_translation_length => 0,
+			protein_translation => "",
+			dna_sequence_length => 0,
+			md5 => ""
+  		};
+  		if ($ftr->{ID}->[0] =~ m/\.([^\.]+)\.\d+$/) {
+  			$feature->{type} = $1;
+  		}
+  		if (defined($ftr->{SEQUENCE})) {
+			$feature->{protein_translation} = $ftr->{SEQUENCE}->[0];
+			$feature->{protein_translation_length} = length($feature->{protein_translation});
+  			$feature->{dna_sequence_length} = 3*$feature->{protein_translation_length};
+  			$feature->{md5} = Digest::MD5::md5_hex($feature->{protein_translation});
+		}
+		if (defined($ftr->{ROLES})) {
+			$feature->{function} = join(" / ",@{$ftr->{ROLES}});
+		}
+  		if (defined($ftr->{LOCATION}->[0]) && $ftr->{LOCATION}->[0] =~ m/^(.+)_(\d+)([\+\-_])(\d+)$/) {
+			my $contigData = $1;
+			if (!defined($contighash->{$contigData})) {
+				$contighash->{$contigData} = $2;
+			} elsif ($2 > $contighash->{$contigData}) {
+				$contighash->{$contigData} = $2;
+			}
+			if ($3 eq "-" || $3 eq "+") {
+				$feature->{location} = [[$contigData,$2,$3,$4]];
+			} elsif ($2 > $4) {
+				$feature->{location} = [[$contigData,$2,"-",($2-$4)]];
+			} else {
+				$feature->{location} = [[$contigData,$2,"+",($4-$2)]];
+			}
+			$feature->{location}->[0]->[1] = $feature->{location}->[0]->[1]+0;
+			$feature->{location}->[0]->[3] = $feature->{location}->[0]->[3]+0;
+		}
+  		push(@{$genomeObj->{features}},$feature);
+	}
+	my $ContigObj;
+	if (defined($data->{DNAsequence}->[0])) {
+    	my $gccount = 0;
+    	my $size = 0;
+    	for (my $i=0; $i < @{$data->{DNAsequence}}; $i++) {
+    		my $closest;
+    		foreach my $key (keys(%{$contighash})) {
+    			my $dist = abs(length($data->{DNAsequence}->[$i]) - $contighash->{$key});
+    			my $closestdist = abs(length($data->{DNAsequence}->[$i]) - $contighash->{$closest});
+    			if (!defined($closest) || $dist < $closestdist) {
+    				$closest = $key;
+    			}
+    		}
+    		push(@{$contigset->{contigs}},{
+    			id => $closest,
+				"length" => length($data->{DNAsequence}->[$i]),
+				md5 => Digest::MD5::md5_hex($data->{DNAsequence}->[$i]),
+				sequence => $data->{DNAsequence}->[$i],
+				name => $closest
+    		});
+    		push(@{$genomeObj->{contig_lengths}},length($data->{DNAsequence}->[$i]));
+    		$size += length($data->{DNAsequence}->[$i]);
+    		push(@{$genomeObj->{contig_ids}},$closest);
+			for ( my $j = 0 ; $j < length($data->{DNAsequence}->[$i]) ; $j++ ) {
+				if ( substr( $data->{DNAsequence}->[$i], $j, 1 ) =~ m/[gcGC]/ ) {
+					$gccount++;
+				}
+			}
+    	}
+    	if ($size > 0) {
+			$genomeObj->{gc_content} = $$gccount/$size;
+		}
+		my $sortedcontigs = [sort { $a->{sequence} cmp $b->{sequence} } @{$contigset->{contigs}}];
+		my $str = "";
+		for (my $i=0; $i < @{$sortedcontigs}; $i++) {
+			if (length($str) > 0) {
+				$str .= ";";
+			}
+			$str .= $sortedcontigs->[$i]->{sequence};	
+		}
+		$genomeObj->{md5} = Digest::MD5::md5_hex($str);
+		$contigset->{md5} = $genomeObj->{md5};
+		$contigset->{id} = $id.".contigs";
+    	$ContigObj = Bio::KBase::ObjectAPI::KBaseGenomes::ContigSet->new($contigset);
+	}
+	$genomeObj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genomeObj);
+	$genomeObj->contigs($ContigObj);
+	return $genomeObj;
+}
 =head3 build_fba_object
 
 Definition:
@@ -1467,6 +1750,7 @@ sub new {
     bless $self, $class;
     $parameters = $self->validate_args($parameters,["token","username","fbajobcache","fbajobdir","mfatoolkitbin",],{
     	data_api_url => "https://www.patricbrc.org/api/",
+    	"mssserver-url" => "http://bio-data-1.mcs.anl.gov/services/ms_fba",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
     	"shock-url" => "http://p3.theseed.org/services/shock_api",
     	adminmode => 0,
