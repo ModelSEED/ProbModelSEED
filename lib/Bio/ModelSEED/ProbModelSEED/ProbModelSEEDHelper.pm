@@ -10,7 +10,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Bio::KBase::ObjectAPI::utilities;
 use Bio::KBase::ObjectAPI::PATRICStore;
-use ModelSEED::Client::SAP;
+use Bio::ModelSEED::Client::SAP;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
 
 #****************************************************************************
@@ -474,7 +474,7 @@ Description:
 =cut
 sub retrieve_SEED_genome {
 	my($self,$id) = @_;
-	my $sapsvr = ModelSEED::Client::SAP->new();
+	my $sapsvr = Bio::ModelSEED::Client::SAP->new();
 	my $data = $sapsvr->genome_data({
 		-ids => [$id],
 		-data => [qw(gc-content dna-size name taxonomy domain genetic-code)]
