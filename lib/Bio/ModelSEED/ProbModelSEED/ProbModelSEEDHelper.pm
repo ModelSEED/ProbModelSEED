@@ -267,6 +267,7 @@ sub get_model_summary {
 	$output->{genome_ref} =~ s/\|\|//;
 	$output->{template_ref} =~ s/\|\|//;
 	my $list = $self->workspace_service()->ls({
+		adminmode => $self->adminmode(),
 		paths => [$modelmeta->[2].".".$modelmeta->[0]."/fba"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
@@ -1215,6 +1216,7 @@ sub FluxBalanceAnalysis {
     $parameters->{output_path} = $model->wsmeta()->[2].".".$model->wsmeta()->[0]."/fba";
     if (!defined($parameters->{output_file})) {
 	    my $list = $self->workspace_service()->ls({
+			adminmode => $self->adminmode(),
 			paths => [$parameters->{output_path}],
 			excludeDirectories => 1,
 			excludeObjects => 0,
