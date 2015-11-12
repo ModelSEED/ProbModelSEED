@@ -16,8 +16,8 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
-has templatecompcompound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has coefficient => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has templatecompcompound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
@@ -39,22 +39,22 @@ sub _top { return 0; }
 
 my $attributes = [
           {
-            'req' => 0,
+            'name' => 'coefficient',
             'printOrder' => -1,
-            'name' => 'templatecompcompound_ref',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'perm' => 'rw',
+            'type' => 'Num',
+            'req' => 0
           },
           {
             'req' => 0,
+            'name' => 'templatecompcompound_ref',
             'printOrder' => -1,
-            'name' => 'coefficient',
-            'type' => 'Num',
-            'perm' => 'rw'
+            'perm' => 'rw',
+            'type' => 'Str'
           }
         ];
 
-my $attribute_map = {templatecompcompound_ref => 0, coefficient => 1};
+my $attribute_map = {coefficient => 0, templatecompcompound_ref => 1};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -71,14 +71,14 @@ sub _attributes {
 
 my $links = [
           {
-            'parent' => 'TemplateModel',
-            'name' => 'templatecompcompound',
-            'attribute' => 'templatecompcompound_ref',
-            'clearer' => 'clear_templatecompcompound',
-            'class' => 'TemplateModel',
             'method' => 'compcompounds',
+            'field' => 'id',
+            'clearer' => 'clear_templatecompcompound',
+            'attribute' => 'templatecompcompound_ref',
+            'class' => 'TemplateModel',
             'module' => undef,
-            'field' => 'id'
+            'name' => 'templatecompcompound',
+            'parent' => 'TemplateModel'
           }
         ];
 

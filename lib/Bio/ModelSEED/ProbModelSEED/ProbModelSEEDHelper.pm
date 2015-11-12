@@ -1259,6 +1259,7 @@ sub new {
     my $self = {};
     bless $self, $class;
     $parameters = $self->validate_args($parameters,["token","username","fbajobcache","fbajobdir","mfatoolkitbin",],{
+    	source => "PATRIC",
     	data_api_url => "https://www.patricbrc.org/api/",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
     	"shock-url" => "http://p3.theseed.org/services/shock_api",
@@ -1276,6 +1277,8 @@ sub new {
     if ($self->{_params}->{fbajobcache} ne "none") {
     	Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
     }
+    Bio::KBase::ObjectAPI::utilities::default_biochemistry($self->{_params}->{biochemistry});
+    Bio::KBase::ObjectAPI::utilities::source($self->{_params}->{source});
     Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($self->{_params}->{fbajobdir});
     Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($self->{_params}->{mfatoolkitbin});
     if (!-e Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf") {

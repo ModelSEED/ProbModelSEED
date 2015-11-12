@@ -16,13 +16,13 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
-has source => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has source_id => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has templatereaction_refs => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
 has name => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
 has broadClassification => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has midClassification => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
+has source => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has templatereaction_refs => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
+has source_id => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
@@ -46,58 +46,58 @@ sub _top { return 0; }
 
 my $attributes = [
           {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'source',
             'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'source_id',
-            'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'templatereaction_refs',
-            'default' => 'sub {return [];}',
-            'type' => 'ArrayRef',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
+            'perm' => 'rw',
             'printOrder' => -1,
             'name' => 'name',
-            'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'broadClassification',
-            'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'midClassification',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'req' => 0
           },
           {
             'req' => 1,
-            'printOrder' => 0,
-            'name' => 'id',
             'type' => 'Str',
+            'perm' => 'rw',
+            'name' => 'id',
+            'printOrder' => 0
+          },
+          {
+            'req' => 0,
+            'type' => 'Str',
+            'printOrder' => -1,
+            'name' => 'broadClassification',
             'perm' => 'rw'
+          },
+          {
+            'perm' => 'rw',
+            'name' => 'midClassification',
+            'printOrder' => -1,
+            'type' => 'Str',
+            'req' => 0
+          },
+          {
+            'req' => 0,
+            'perm' => 'rw',
+            'name' => 'source',
+            'printOrder' => -1,
+            'type' => 'Str'
+          },
+          {
+            'req' => 0,
+            'name' => 'templatereaction_refs',
+            'printOrder' => -1,
+            'perm' => 'rw',
+            'type' => 'ArrayRef',
+            'default' => 'sub {return [];}'
+          },
+          {
+            'type' => 'Str',
+            'printOrder' => -1,
+            'name' => 'source_id',
+            'perm' => 'rw',
+            'req' => 0
           }
         ];
 
-my $attribute_map = {source => 0, source_id => 1, templatereaction_refs => 2, name => 3, broadClassification => 4, midClassification => 5, id => 6};
+my $attribute_map = {name => 0, id => 1, broadClassification => 2, midClassification => 3, source => 4, templatereaction_refs => 5, source_id => 6};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -114,15 +114,15 @@ sub _attributes {
 
 my $links = [
           {
+            'clearer' => 'clear_templatereactions',
+            'field' => 'id',
+            'array' => 1,
+            'method' => 'reactions',
             'parent' => 'TemplateModel',
             'name' => 'templatereactions',
             'attribute' => 'templatereaction_refs',
-            'array' => 1,
-            'clearer' => 'clear_templatereactions',
-            'class' => 'TemplateModel',
-            'method' => 'reactions',
             'module' => undef,
-            'field' => 'id'
+            'class' => 'TemplateModel'
           }
         ];
 

@@ -17,8 +17,8 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
 has templatecompartment_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has maxuptake => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has templatecompound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has maxuptake => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has charge => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has formula => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
@@ -50,50 +50,50 @@ sub _top { return 0; }
 
 my $attributes = [
           {
-            'req' => 0,
+            'perm' => 'rw',
             'printOrder' => -1,
             'name' => 'templatecompartment_ref',
             'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'maxuptake',
-            'type' => 'Num',
-            'perm' => 'rw'
+            'req' => 0
           },
           {
             'req' => 0,
             'printOrder' => -1,
             'name' => 'templatecompound_ref',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'perm' => 'rw',
+            'type' => 'Str'
           },
           {
             'req' => 0,
+            'perm' => 'rw',
             'printOrder' => -1,
-            'name' => 'charge',
-            'type' => 'Num',
-            'perm' => 'rw'
+            'name' => 'maxuptake',
+            'type' => 'Num'
           },
           {
             'req' => 0,
+            'type' => 'Num',
+            'perm' => 'rw',
+            'name' => 'charge',
+            'printOrder' => -1
+          },
+          {
+            'req' => 0,
+            'perm' => 'rw',
             'printOrder' => -1,
             'name' => 'formula',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'type' => 'Str'
           },
           {
             'req' => 1,
-            'printOrder' => 0,
+            'perm' => 'rw',
             'name' => 'id',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'printOrder' => 0,
+            'type' => 'Str'
           }
         ];
 
-my $attribute_map = {templatecompartment_ref => 0, maxuptake => 1, templatecompound_ref => 2, charge => 3, formula => 4, id => 5};
+my $attribute_map = {templatecompartment_ref => 0, templatecompound_ref => 1, maxuptake => 2, charge => 3, formula => 4, id => 5};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -110,24 +110,24 @@ sub _attributes {
 
 my $links = [
           {
-            'parent' => 'TemplateModel',
-            'name' => 'templatecompartment',
             'attribute' => 'templatecompartment_ref',
-            'clearer' => 'clear_templatecompartment',
-            'class' => 'TemplateModel',
-            'method' => 'compartments',
             'module' => undef,
+            'class' => 'TemplateModel',
+            'name' => 'templatecompartment',
+            'parent' => 'TemplateModel',
+            'method' => 'compartments',
+            'clearer' => 'clear_templatecompartment',
             'field' => 'id'
           },
           {
-            'parent' => 'TemplateModel',
             'name' => 'templatecompound',
+            'parent' => 'TemplateModel',
             'attribute' => 'templatecompound_ref',
-            'clearer' => 'clear_templatecompound',
-            'class' => 'TemplateModel',
-            'method' => 'compounds',
             'module' => undef,
-            'field' => 'id'
+            'class' => 'TemplateModel',
+            'clearer' => 'clear_templatecompound',
+            'field' => 'id',
+            'method' => 'compounds'
           }
         ];
 

@@ -24,9 +24,18 @@ has formula  => ( is => 'rw', isa => 'Str',printOrder => '2', type => 'msdata', 
 has msid => ( is => 'rw', isa => 'Str',printOrder => '2', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildmsid' );
 has msname => ( is => 'rw', isa => 'Str',printOrder => '2', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildmsname' );
 
+has compound => (is => 'rw', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_build_compound', clearer => 'clear_compound', isa => 'Ref', weak_ref => 1);
+
 #***********************************************************************************************************
 # BUILDERS:
 #***********************************************************************************************************
+sub _build_compound {
+	 my ($self) = @_;
+	 my $array = [split(/\//,$self->compound_ref())];
+	 my $compoundid = pop(@{$array});
+	 $self->compound_ref($self->parent()->template()->_reference()."/compounds/id/".$compoundid);
+	 return $self->getLinkedObject($self->compound_ref());
+}
 sub _buildid {
 	my ($self) = @_;
 	return $self->compound()->id()."_".$self->modelCompartmentLabel();

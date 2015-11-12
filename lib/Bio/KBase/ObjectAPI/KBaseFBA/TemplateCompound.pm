@@ -147,7 +147,47 @@ sub _build_biomass_coproducts {
 #***********************************************************************************************************
 # FUNCTIONS:
 #***********************************************************************************************************
+=head3 nameToSearchname
 
+Definition:
+	string:searchname = nameToSearchname(string:name);
+Description:
+	Converts input name into standard formated searchname
+
+=cut
+
+sub nameToSearchname {
+	my ($self,$InName) = @_;
+	if (!defined($InName) && !ref($self) && $self ne "Bio::KBase::ObjectAPI::KBaseFBA::TemplateCompound") {
+		$InName = $self;
+	}
+	my $OriginalName = $InName;
+	my $ending = "";
+	if ($InName =~ m/-$/) {
+		$ending = "-";
+	}
+	$InName = lc($InName);
+	$InName =~ s/\s//g;
+	$InName =~ s/,//g;
+	$InName =~ s/-//g;
+	$InName =~ s/_//g;
+	$InName =~ s/\(//g;
+	$InName =~ s/\)//g;
+	$InName =~ s/\{//g;
+	$InName =~ s/\}//g;
+	$InName =~ s/\[//g;
+	$InName =~ s/\]//g;
+	$InName =~ s/\://g;
+	$InName =~ s/’//g;
+	$InName =~ s/'//g;
+	$InName =~ s/\;//g;
+	$InName .= $ending;
+	$InName =~ s/icacid/ate/g;
+	if($OriginalName =~ /^an? /){
+		$InName =~ s/^an?(.*)$/$1/;
+	}
+	return $InName;
+}
 
 __PACKAGE__->meta->make_immutable;
 1;

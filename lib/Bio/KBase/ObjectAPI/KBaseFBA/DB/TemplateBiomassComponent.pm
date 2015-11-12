@@ -16,12 +16,12 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
-has linked_compound_refs => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
 has coefficient => (is => 'rw', isa => 'Num', printOrder => '4', default => '1', type => 'attribute', metaclass => 'Typed');
-has link_coefficients => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
-has templatecompcompound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has class => (is => 'rw', isa => 'Str', printOrder => '1', default => '0', type => 'attribute', metaclass => 'Typed');
-has coefficientType => (is => 'rw', isa => 'Str', printOrder => '3', default => '0', type => 'attribute', metaclass => 'Typed');
+has linked_compound_refs => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
+has link_coefficients => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
+has coefficient_type => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has templatecompcompound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
@@ -49,57 +49,55 @@ sub _top { return 0; }
 my $attributes = [
           {
             'req' => 0,
+            'type' => 'Num',
+            'default' => '1',
+            'perm' => 'rw',
+            'description' => undef,
+            'printOrder' => 4,
+            'name' => 'coefficient'
+          },
+          {
+            'req' => 0,
+            'default' => '0',
+            'type' => 'Str',
+            'description' => undef,
+            'perm' => 'rw',
+            'name' => 'class',
+            'printOrder' => 1
+          },
+          {
+            'perm' => 'rw',
             'printOrder' => -1,
             'name' => 'linked_compound_refs',
             'default' => 'sub {return [];}',
             'type' => 'ArrayRef',
-            'perm' => 'rw'
+            'req' => 0
           },
           {
-            'req' => 0,
-            'printOrder' => 4,
-            'name' => 'coefficient',
-            'default' => '1',
-            'type' => 'Num',
-            'description' => undef,
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
+            'type' => 'ArrayRef',
+            'default' => 'sub {return [];}',
             'printOrder' => -1,
             'name' => 'link_coefficients',
-            'default' => 'sub {return [];}',
-            'type' => 'ArrayRef',
-            'perm' => 'rw'
+            'perm' => 'rw',
+            'req' => 0
           },
           {
-            'req' => 0,
+            'type' => 'Str',
+            'name' => 'coefficient_type',
             'printOrder' => -1,
+            'perm' => 'rw',
+            'req' => 0
+          },
+          {
+            'req' => 0,
             'name' => 'templatecompcompound_ref',
-            'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => 1,
-            'name' => 'class',
-            'default' => '0',
-            'type' => 'Str',
-            'description' => undef,
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => 3,
-            'name' => 'coefficientType',
-            'default' => '0',
-            'type' => 'Str',
-            'description' => undef,
-            'perm' => 'rw'
+            'printOrder' => -1,
+            'perm' => 'rw',
+            'type' => 'Str'
           }
         ];
 
-my $attribute_map = {linked_compound_refs => 0, coefficient => 1, link_coefficients => 2, templatecompcompound_ref => 3, class => 4, coefficientType => 5};
+my $attribute_map = {coefficient => 0, class => 1, linked_compound_refs => 2, link_coefficients => 3, coefficient_type => 4, templatecompcompound_ref => 5};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -116,25 +114,25 @@ sub _attributes {
 
 my $links = [
           {
-            'parent' => 'TemplateModel',
-            'name' => 'linked_compounds',
-            'attribute' => 'linked_compound_refs',
             'array' => 1,
-            'clearer' => 'clear_linked_compounds',
-            'class' => 'TemplateModel',
             'method' => 'compcompounds',
+            'clearer' => 'clear_linked_compounds',
+            'field' => 'id',
+            'attribute' => 'linked_compound_refs',
+            'class' => 'TemplateModel',
             'module' => undef,
-            'field' => 'id'
+            'name' => 'linked_compounds',
+            'parent' => 'TemplateModel'
           },
           {
-            'parent' => 'TemplateModel',
             'name' => 'templatecompcompound',
-            'attribute' => 'templatecompcompound_ref',
-            'clearer' => 'clear_templatecompcompound',
+            'parent' => 'TemplateModel',
             'class' => 'TemplateModel',
-            'method' => 'compcompounds',
+            'attribute' => 'templatecompcompound_ref',
             'module' => undef,
-            'field' => 'id'
+            'clearer' => 'clear_templatecompcompound',
+            'field' => 'id',
+            'method' => 'compcompounds'
           }
         ];
 

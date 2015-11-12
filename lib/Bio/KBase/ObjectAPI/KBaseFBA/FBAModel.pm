@@ -654,7 +654,7 @@ sub LoadExternalReactionEquation {
 	    				if (!defined($mdlcpd)) {
 		    				$mdlcpd = $self->add("modelcompounds",{
 		    					id => $cpd."_".$compartment.$index,
-								compound_ref => $bio->_reference()."/compounds/id/cpd00000",
+								compound_ref => $self->template()->_reference()."/compounds/id/cpd00000",
 								name => $cpd."_".$compartment.$index,
 								charge => 0,
 								formula => "",

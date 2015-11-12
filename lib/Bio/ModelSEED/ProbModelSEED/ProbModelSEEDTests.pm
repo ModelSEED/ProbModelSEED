@@ -149,11 +149,7 @@
 		my $model_dir = "/".$self->{user}."/home/models";
 		my $model_name = "TestModel";
 		my $model = $model_dir."/".$model_name;
-		my $output = $self->test_harness("export_media",{
-			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
-			to_shock => 1,
-		},"media export test",[],0,undef,1);
-		$output = $self->test_harness("list_models",{},,"initial list models test",[],0,undef,1);
+		my $output = $self->test_harness("list_models",{},,"initial list models test",[],0,undef,1);
 		for(my $i=0; $i < @{$output}; $i++) {
 			if ($output->[$i]->{ref} eq $model_dir."/TestModel") {
 				my $output = $self->test_harness("delete_model",{
@@ -172,6 +168,11 @@
 			output_path => $model_dir,
 			output_file => $model_name
 		},"Reconstruct from workspace genome test",[],0,undef,1);
+		return;
+		$output = $self->test_harness("export_media",{
+			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
+			to_shock => 1,
+		},"media export test",[],0,undef,1);
 		$output = $self->test_harness("ModelReconstruction",{
 			genome => "PATRICSOLR:83333.84",
 			fulldb => "0",

@@ -1,10 +1,10 @@
 ########################################################################
-# Bio::KBase::ObjectAPI::KBaseFBA::DB::TemplateRole - This is the moose object corresponding to the KBaseFBA.TemplateRole object
+# Bio::KBase::ObjectAPI::KBaseFBA::DB::TemplateSubsystem - This is the moose object corresponding to the KBaseFBA.TemplateSubsystem object
 # Authors: Christopher Henry, Scott Devoid, Paul Frybarger
 # Contact email: chenry@mcs.anl.gov
 # Development location: Mathematics and Computer Science Division, Argonne National Lab
 ########################################################################
-package Bio::KBase::ObjectAPI::KBaseFBA::DB::TemplateRole;
+package Bio::KBase::ObjectAPI::KBaseFBA::DB::TemplateSubsystem;
 use Bio::KBase::ObjectAPI::BaseObject;
 use Moose;
 use namespace::autoclean;
@@ -16,35 +16,54 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
-has aliases => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
-has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
+has class => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has role_refs => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
 has name => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has source => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has features => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
+has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
+has subclass => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has type => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
+has roles => (is => 'rw', type => 'link(,,role_refs)', metaclass => 'Typed', lazy => 1, builder => '_build_roles', clearer => 'clear_roles', isa => 'ArrayRef');
 
 
 # BUILDERS:
-sub _build_reference { my ($self) = @_;return $self->parent()->_reference().'/roles/id/'.$self->id(); }
+sub _build_reference { my ($self) = @_;return $self->parent()->_reference().'/subsystems/id/'.$self->id(); }
 sub _build_uuid { my ($self) = @_;return $self->_reference(); }
+sub _build_roles {
+	 my ($self) = @_;
+	 return $self->getLinkedObjectArray($self->role_refs());
+}
 
 
 # CONSTANTS:
-sub _type { return 'KBaseFBA.TemplateRole'; }
+sub _type { return 'KBaseFBA.TemplateSubsystem'; }
 sub _module { return 'KBaseFBA'; }
-sub _class { return 'TemplateRole'; }
+sub _class { return 'TemplateSubsystem'; }
 sub _top { return 0; }
 
 my $attributes = [
           {
+            'printOrder' => -1,
+            'name' => 'class',
+            'perm' => 'rw',
+            'type' => 'Str',
+            'req' => 0
+          },
+          {
             'default' => 'sub {return [];}',
             'type' => 'ArrayRef',
-            'name' => 'aliases',
+            'perm' => 'rw',
+            'printOrder' => -1,
+            'name' => 'role_refs',
+            'req' => 0
+          },
+          {
+            'name' => 'name',
             'printOrder' => -1,
             'perm' => 'rw',
+            'type' => 'Str',
             'req' => 0
           },
           {
@@ -56,36 +75,21 @@ my $attributes = [
           },
           {
             'req' => 0,
-            'type' => 'Str',
             'printOrder' => -1,
-            'name' => 'name',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'type' => 'Str',
-            'perm' => 'rw',
-            'name' => 'source',
-            'printOrder' => -1
-          },
-          {
-            'perm' => 'rw',
-            'name' => 'features',
-            'printOrder' => -1,
-            'type' => 'ArrayRef',
-            'default' => 'sub {return [];}',
-            'req' => 0
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'type',
+            'name' => 'subclass',
             'perm' => 'rw',
             'type' => 'Str'
+          },
+          {
+            'req' => 0,
+            'type' => 'Str',
+            'printOrder' => -1,
+            'name' => 'type',
+            'perm' => 'rw'
           }
         ];
 
-my $attribute_map = {aliases => 0, id => 1, name => 2, source => 3, features => 4, type => 5};
+my $attribute_map = {class => 0, role_refs => 1, name => 2, id => 3, subclass => 4, type => 5};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -100,9 +104,21 @@ sub _attributes {
 	 }
 }
 
-my $links = [];
+my $links = [
+          {
+            'name' => 'roles',
+            'parent' => undef,
+            'module' => undef,
+            'attribute' => 'role_refs',
+            'class' => undef,
+            'clearer' => 'clear_roles',
+            'field' => undef,
+            'method' => undef,
+            'array' => 1
+          }
+        ];
 
-my $link_map = {};
+my $link_map = {roles => 0};
 sub _links {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {

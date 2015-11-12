@@ -16,18 +16,18 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
-has defaultCharge => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has isCofactor => (is => 'rw', isa => 'Bool', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has compound_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has deltaG => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has name => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has formula => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has mass => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has aliases => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
 has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
-has abbreviation => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has md5 => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has deltaGErr => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has isCofactor => (is => 'rw', isa => 'Bool', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has formula => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has abbreviation => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has name => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has md5 => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has defaultCharge => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has deltaG => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has mass => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
@@ -51,93 +51,93 @@ sub _top { return 0; }
 
 my $attributes = [
           {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'defaultCharge',
-            'type' => 'Num',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'isCofactor',
-            'type' => 'Bool',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
+            'type' => 'Str',
+            'perm' => 'rw',
             'name' => 'compound_ref',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'printOrder' => -1,
+            'req' => 0
           },
           {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'deltaG',
-            'type' => 'Num',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'name',
-            'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'formula',
-            'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'mass',
-            'type' => 'Num',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
+            'perm' => 'rw',
             'name' => 'aliases',
+            'printOrder' => -1,
             'default' => 'sub {return [];}',
             'type' => 'ArrayRef',
-            'perm' => 'rw'
+            'req' => 0
           },
           {
-            'req' => 1,
+            'type' => 'Str',
+            'perm' => 'rw',
             'printOrder' => 0,
             'name' => 'id',
-            'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'abbreviation',
-            'type' => 'Str',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'md5',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'req' => 1
           },
           {
             'req' => 0,
             'printOrder' => -1,
             'name' => 'deltaGErr',
+            'perm' => 'rw',
+            'type' => 'Num'
+          },
+          {
+            'type' => 'Bool',
+            'printOrder' => -1,
+            'name' => 'isCofactor',
+            'perm' => 'rw',
+            'req' => 0
+          },
+          {
+            'req' => 0,
+            'perm' => 'rw',
+            'name' => 'formula',
+            'printOrder' => -1,
+            'type' => 'Str'
+          },
+          {
+            'req' => 0,
+            'perm' => 'rw',
+            'printOrder' => -1,
+            'name' => 'abbreviation',
+            'type' => 'Str'
+          },
+          {
+            'type' => 'Str',
+            'printOrder' => -1,
+            'name' => 'name',
+            'perm' => 'rw',
+            'req' => 0
+          },
+          {
+            'perm' => 'rw',
+            'name' => 'md5',
+            'printOrder' => -1,
+            'type' => 'Str',
+            'req' => 0
+          },
+          {
+            'req' => 0,
             'type' => 'Num',
+            'printOrder' => -1,
+            'name' => 'defaultCharge',
             'perm' => 'rw'
+          },
+          {
+            'type' => 'Num',
+            'perm' => 'rw',
+            'name' => 'deltaG',
+            'printOrder' => -1,
+            'req' => 0
+          },
+          {
+            'name' => 'mass',
+            'printOrder' => -1,
+            'perm' => 'rw',
+            'type' => 'Num',
+            'req' => 0
           }
         ];
 
-my $attribute_map = {defaultCharge => 0, isCofactor => 1, compound_ref => 2, deltaG => 3, name => 4, formula => 5, mass => 6, aliases => 7, id => 8, abbreviation => 9, md5 => 10, deltaGErr => 11};
+my $attribute_map = {compound_ref => 0, aliases => 1, id => 2, deltaGErr => 3, isCofactor => 4, formula => 5, abbreviation => 6, name => 7, md5 => 8, defaultCharge => 9, deltaG => 10, mass => 11};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -154,14 +154,14 @@ sub _attributes {
 
 my $links = [
           {
-            'parent' => undef,
             'name' => 'compound',
-            'attribute' => 'compound_ref',
-            'clearer' => 'clear_compound',
-            'class' => undef,
-            'method' => undef,
+            'parent' => undef,
             'module' => undef,
-            'field' => undef
+            'attribute' => 'compound_ref',
+            'class' => undef,
+            'field' => undef,
+            'clearer' => 'clear_compound',
+            'method' => undef
           }
         ];
 

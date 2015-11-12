@@ -23,27 +23,31 @@ has msname => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', m
 has msabbreviation => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildmsabbreviation' );
 has isTransporter => ( is => 'rw', isa => 'Bool',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildisTransporter' );
 
+has reaction_ref => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildreaction_ref' );
+
 #***********************************************************************************************************
 # BUILDERS:
 #***********************************************************************************************************
+sub _buildreaction_ref {
+	my ($self) = @_;
+	my $array = [split(/_/,$self->id())];
+	return $self->parent()->biochemistry_ref()."/reactions/id/".$array->[0];
+}
 sub _buildmsid {
 	my ($self) = @_;
 	my $array = [split(/_/,$self->id())];
 	return $array->[0];
 }
-
 sub _buildmsname {
 	my ($self) = @_;
 	my $array = [split(/_/,$self->name())];
 	return $array->[0];
 }
-
 sub _buildmsabbreviation {
 	my ($self) = @_;
 	my $array = [split(/_/,$self->abbreviation())];
 	return $array->[0];
 }
-
 sub _buildcomplexIDs {
 	my ($self) = @_;
 	my $output = [];
@@ -195,11 +199,11 @@ sub addRxnToModel {
 						}
 					}
 					$subunits->{$cpxrole->templaterole()->name()}->{triggering} = $cpxrole->triggering();
-					$subunits->{$cpxrole->templaterole()->name()}->{optionalRole} = $cpxrole->optionalRole();
+					$subunits->{$cpxrole->templaterole()->name()}->{optional} = $cpxrole->optional();
 					if (!defined($roleFeatures->{$cpxrole->templaterole()->id()}->{$compartment}->[0])) {
 						$subunits->{$cpxrole->templaterole()->name()}->{note} = "Role-based-annotation";
 					} else {
-						foreach my $feature (@{$roleFeatures->{$cpxrole->role()->id()}->{$compartment}}) {
+						foreach my $feature (@{$roleFeatures->{$cpxrole->templaterole()->id()}->{$compartment}}) {
 							$subunits->{$cpxrole->templaterole()->name()}->{genes}->{$feature->_reference()} = $feature;	
 						}
 					}
@@ -209,9 +213,9 @@ sub addRxnToModel {
 		if ($present == 1) {
 			for (my $j=0; $j < @{$complexroles}; $j++) {
 				my $cpxrole = $complexroles->[$j];
-				if ($cpxrole->optionalRole() == 0 && !defined($subunits->{$cpxrole->templaterole()->name()})) {
+				if ($cpxrole->optional() == 0 && !defined($subunits->{$cpxrole->templaterole()->name()})) {
 					$subunits->{$cpxrole->templaterole()->name()}->{triggering} = $cpxrole->triggering();
-					$subunits->{$cpxrole->templaterole()->name()}->{optionalRole} = $cpxrole->optionalRole();
+					$subunits->{$cpxrole->templaterole()->name()}->{optional} = $cpxrole->optional();
 					$subunits->{$cpxrole->templaterole()->name()}->{note} = "Complex-based-gapfilling";
 				}
 			}
@@ -222,7 +226,6 @@ sub addRxnToModel {
 	if (@{$proteins} == 0 && $self->type() ne "universal" && $self->type() ne "spontaneous" && $args->{fulldb} == 0) {
 		return;
 	}
-
     my $mdlcmp = $mdl->addCompartmentToModel({compartment => $self->templatecompartment(),pH => 7,potential => 0,compartmentIndex => 0});
     my $mdlrxn = $mdl->getObject("modelreactions", $self->msid()."_".$mdlcmp->id());
     if(!$mdlrxn){

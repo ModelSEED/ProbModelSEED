@@ -16,11 +16,11 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
+has hierarchy => (is => 'rw', isa => 'Int', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has pH => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has aliases => (is => 'rw', isa => 'ArrayRef', printOrder => '-1', default => sub {return [];}, type => 'attribute', metaclass => 'Typed');
-has name => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
-has hierarchy => (is => 'rw', isa => 'Int', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has name => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
@@ -40,43 +40,43 @@ sub _top { return 0; }
 my $attributes = [
           {
             'req' => 0,
+            'perm' => 'rw',
+            'name' => 'hierarchy',
+            'printOrder' => -1,
+            'type' => 'Int'
+          },
+          {
+            'req' => 0,
             'printOrder' => -1,
             'name' => 'pH',
-            'type' => 'Num',
-            'perm' => 'rw'
+            'perm' => 'rw',
+            'type' => 'Num'
           },
           {
             'req' => 0,
-            'printOrder' => -1,
-            'name' => 'aliases',
-            'default' => 'sub {return [];}',
             'type' => 'ArrayRef',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
+            'default' => 'sub {return [];}',
+            'perm' => 'rw',
             'printOrder' => -1,
-            'name' => 'name',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'name' => 'aliases'
           },
           {
             'req' => 1,
             'printOrder' => 0,
             'name' => 'id',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'perm' => 'rw',
+            'type' => 'Str'
           },
           {
-            'req' => 0,
+            'name' => 'name',
             'printOrder' => -1,
-            'name' => 'hierarchy',
-            'type' => 'Int',
-            'perm' => 'rw'
+            'perm' => 'rw',
+            'type' => 'Str',
+            'req' => 0
           }
         ];
 
-my $attribute_map = {pH => 0, aliases => 1, name => 2, id => 3, hierarchy => 4};
+my $attribute_map = {hierarchy => 0, pH => 1, aliases => 2, id => 3, name => 4};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {

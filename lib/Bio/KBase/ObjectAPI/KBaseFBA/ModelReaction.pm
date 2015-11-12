@@ -40,9 +40,23 @@ has equationFormula => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass =
 has complexString => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildcomplexString' );
 has stoichiometry => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildstoichiometry' );
 
+has reaction => (is => 'rw', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_build_reaction', clearer => 'clear_reaction', isa => 'Ref', weak_ref => 1);
+
 #***********************************************************************************************************
 # BUILDERS:
 #***********************************************************************************************************
+sub _build_reaction {
+	 my ($self) = @_;
+	 if ($self->reaction_ref() !~ m/_[a-z]/) {
+	 	my $array = [split(/_/,$self->id())];
+	 	my $comp = pop(@{$array});
+	 	$comp =~ s/\d+//;
+	 	$array = [split(/\//,$self->reaction_ref())];
+	 	my $rxnid = pop(@{$array});
+	 	$self->reaction_ref($self->parent()->template()->_reference()."/reactions/id/".$rxnid."_".$comp);
+	 }
+	 return $self->getLinkedObject($self->reaction_ref());
+}
 sub _buildname {
 	my ($self) = @_;
 	return $self->reaction->msname()."_".$self->modelCompartmentLabel();

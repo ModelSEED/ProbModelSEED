@@ -16,11 +16,11 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
-has triggering => (is => 'rw', isa => 'Int', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has optionalRole => (is => 'rw', isa => 'Int', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
-has confidence => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has type => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has templaterole_ref => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has confidence => (is => 'rw', isa => 'Num', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has optional => (is => 'rw', isa => 'Int', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
+has triggering => (is => 'rw', isa => 'Int', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 
 
 # LINKS:
@@ -42,43 +42,43 @@ sub _top { return 0; }
 
 my $attributes = [
           {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'triggering',
-            'type' => 'Int',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'optionalRole',
-            'type' => 'Int',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
-            'printOrder' => -1,
-            'name' => 'confidence',
-            'type' => 'Num',
-            'perm' => 'rw'
-          },
-          {
-            'req' => 0,
             'printOrder' => -1,
             'name' => 'type',
+            'perm' => 'rw',
             'type' => 'Str',
+            'req' => 0
+          },
+          {
+            'req' => 0,
+            'name' => 'templaterole_ref',
+            'printOrder' => -1,
+            'perm' => 'rw',
+            'type' => 'Str'
+          },
+          {
+            'req' => 0,
+            'type' => 'Num',
+            'printOrder' => -1,
+            'name' => 'confidence',
             'perm' => 'rw'
           },
           {
             'req' => 0,
+            'name' => 'optional',
             'printOrder' => -1,
-            'name' => 'templaterole_ref',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'perm' => 'rw',
+            'type' => 'Int'
+          },
+          {
+            'req' => 0,
+            'type' => 'Int',
+            'perm' => 'rw',
+            'name' => 'triggering',
+            'printOrder' => -1
           }
         ];
 
-my $attribute_map = {triggering => 0, optionalRole => 1, confidence => 2, type => 3, templaterole_ref => 4};
+my $attribute_map = {type => 0, templaterole_ref => 1, confidence => 2, optional => 3, triggering => 4};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -95,14 +95,14 @@ sub _attributes {
 
 my $links = [
           {
-            'parent' => 'TemplateModel',
-            'name' => 'templaterole',
-            'attribute' => 'templaterole_ref',
+            'field' => 'id',
             'clearer' => 'clear_templaterole',
-            'class' => 'TemplateModel',
             'method' => 'roles',
-            'module' => undef,
-            'field' => 'id'
+            'name' => 'templaterole',
+            'parent' => 'TemplateModel',
+            'class' => 'TemplateModel',
+            'attribute' => 'templaterole_ref',
+            'module' => undef
           }
         ];
 

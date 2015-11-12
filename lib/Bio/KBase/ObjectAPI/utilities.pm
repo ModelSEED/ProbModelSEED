@@ -13,6 +13,7 @@ our $CONFIG = undef;
 our $keggmaphash = undef;
 our $report = {};
 our $source = undef;
+our $defbio = undef;
 our $globalparams = {"gapfill name" => "none"};
 our $startime = undef;
 
@@ -653,6 +654,14 @@ sub source {
 		$source = $input;
 	}
 	return $source;
+}
+
+sub default_biochemistry {
+	my ($input) = @_;
+	if (defined($input)) {
+		$defbio = $input;
+	}
+	return $defbio;
 }
 
 =head3 parseArrayString

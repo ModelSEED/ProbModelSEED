@@ -1,0 +1,76 @@
+Experiment{
+	media
+	temperature
+	ph
+	tissue
+	environment
+	description
+}
+
+ExpressionSeries{
+	list<> samples;
+	id
+	title
+	summary
+	source_id
+	source
+	design
+	publication
+}
+
+ExpressionSamples{
+	type
+	description
+	platform_id
+	protocol_id
+	int data_quality
+	source_id
+	id
+	list<> people
+	title
+	genome_id
+	experiment_id
+	list<tuple<feature_id,float value>> expression_levels
+	numerical_interpretation
+	strain_id
+	sample_annotation
+	list<> averaged_from
+	default_control
+	string data_quality_level
+	float original_media
+}
+
+RegulomeModel{
+	id
+	name
+	type
+	genome_id
+	list<Regulon> regulons
+}
+
+Regulon{
+	id
+	notes
+	name
+	abbreviation
+	list<wssubref> feature_ids
+	list<RegulonStimuli> simuli
+}
+
+RegulonStimuli{
+	stimuli_id
+	is_inhibitor
+	strength
+	minconcentration
+	maxconcentration
+	regulator_id
+}
+
+Stimuli{
+	id
+	name
+	abbreviation
+	description
+	type
+	list<wsubref> compound_ids
+}
