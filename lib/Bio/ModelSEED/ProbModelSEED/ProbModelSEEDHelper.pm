@@ -605,7 +605,6 @@ Description:
 sub retrieve_RAST_genome {
 	my($self,$id,$username,$password) = @_;
 	my $mssvr = Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient->new($self->{_params}->{"mssserver-url"});
-	print $self->token()."\n";
 	$mssvr->{token} = $self->token();
 	$mssvr->{client}->{token} = $self->token();
 	my $data = $mssvr->getRastGenomeData({
