@@ -469,7 +469,7 @@ sub addModelReaction {
 			Bio::KBase::ObjectAPI::utilities::error("Specified reaction ".$rootid." not found and no equation provided!");
 		} else {
 			$reference = $rxnobj->_reference();
-			my $rgts = $rxnobj->reagents();
+			my $rgts = $rxnobj->templateReactionReagents();
 			my $cmpchange = 0;
 			for (my $i=0; $i < @{$rgts}; $i++) {
 				if ($rgts->[$i]->templatecompcompound()->templatecompartment()->id() ne "c") {
@@ -524,7 +524,8 @@ sub addModelReaction {
     	enzyme => $args->{enzyme},
     	pathway => $args->{pathway},
     	reference => $args->{reference}
-	})
+	});
+	return $mdlrxn;
 }
 
 #REFACTOR NEEDED HERE
@@ -1096,11 +1097,11 @@ sub integrateGapfillSolutionFromObject {
 				}
 				$mdlrxn->parent($self);
 			} else {
-				my $mdlcmp = $self->addCompartmentToModel({compartment => $rxn->reaction()->templatecompartment(),pH => 7,potential => 0,compartmentIndex => $rxn->compartmentIndex()});
-				$mdlrxn = $self->addReactionToModel({#This function is gone now
-					reaction => $rxn->reaction(),
-					direction => $rxn->direction(),
-					overrideCompartment => $mdlcmp
+				$mdlrxn = $self->addModelReaction({
+					reaction => $rxn->reaction()->msid(),
+					compartment => $rxn->reaction()->templatecompartment()->id(),
+					compartmentIndex => $rxn->compartmentIndex(),
+					direction => $rxn->direction()
 				});
 				$mdlrxn->gapfill_data()->{$gf->_reference()} = "added:".$rxn->direction();
 			}

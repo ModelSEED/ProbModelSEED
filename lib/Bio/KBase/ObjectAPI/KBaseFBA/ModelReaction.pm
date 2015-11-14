@@ -275,6 +275,36 @@ sub _buildstoichiometry {
 #***********************************************************************************************************
 # FUNCTIONS:
 #***********************************************************************************************************
+sub kegg {
+    my ($self,$id) = @_;
+    if (defined($id)) {
+    	my $aliases = $self->aliases();
+    	for (my $i=0; $i < @{$aliases}; $i++) {
+    		if ($aliases->[$i] eq "KEGG:".$id) {
+    			return $id;
+    		}
+    	}
+    	push(@{$aliases},"KEGG:".$id);
+    }
+    my $aliases = $self->getAliases("KEGG");
+    return (@$aliases) ? $aliases->[0] : undef;
+}
+
+sub enzyme {
+    my ($self,$enzyme) = @_;
+    if (defined($enzyme)) {
+    	my $aliases = $self->aliases();
+    	for (my $i=0; $i < @{$aliases}; $i++) {
+    		if ($aliases->[$i] eq "EC:".$enzyme) {
+    			return $enzyme;
+    		}
+    	}
+    	push(@{$aliases},"EC:".$enzyme);
+    }
+    my $aliases = $self->getAliases("EC");
+    return (@$aliases) ? $aliases->[0] : undef;
+}
+
 sub getAlias {
     my ($self,$set) = @_;
     my $aliases = $self->getAliases($set);

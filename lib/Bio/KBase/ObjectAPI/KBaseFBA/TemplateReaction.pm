@@ -15,6 +15,8 @@ use Bio::KBase::ObjectAPI::utilities;
 #***********************************************************************************************************
 # ADDITIONAL ATTRIBUTES:
 #***********************************************************************************************************
+has equation => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildequation' );
+has definition => ( is => 'rw', isa => 'Str',printOrder => '3', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_builddefinition' );
 has complexIDs => ( is => 'rw', isa => 'ArrayRef',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildcomplexIDs' );
 has isBiomassTransporter => ( is => 'rw', isa => 'Bool',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildisBiomassTransporter' );
 has inSubsystem => ( is => 'rw', isa => 'Bool',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildinSubsystem' );
@@ -28,6 +30,14 @@ has reaction_ref => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msda
 #***********************************************************************************************************
 # BUILDERS:
 #***********************************************************************************************************
+sub _builddefinition {
+	my ($self) = @_;
+	return $self->createEquation({format=>"name"});
+}
+sub _buildequation {
+	my ($self) = @_;
+	return $self->createEquation({format=>"id"});
+}
 sub _buildreaction_ref {
 	my ($self) = @_;
 	my $array = [split(/_/,$self->id())];
@@ -111,6 +121,159 @@ sub _buildisTransporter {
 #***********************************************************************************************************
 # FUNCTIONS:
 #***********************************************************************************************************
+=head3 createEquation
+Definition:
+	string = Bio::KBase::ObjectAPI::KBaseFBA::ModelReaction->createEquation({
+		format => string(id),
+		hashed => 0/1(0)
+	});
+Description:
+	Creates an equation for the model reaction with compounds specified according to the input format
+
+=cut
+
+sub createEquation {
+    my ($self,$args) = @_;
+    $args = Bio::KBase::ObjectAPI::utilities::args([], { 
+    	indecies => 1,
+		format => 'id',
+        hashed => 0,
+        water => 1,
+		compts=>1,
+		reverse=>0,
+		direction=>1,
+		protons => 1,
+		generalized => 0,
+		stoichiometry => 0
+    }, $args);
+	
+	my $rgts = $self->templateReactionReagents();
+	my $rgtHash;
+    my $rxnCompID = $self->templatecompartment()->id();
+    my $hcpd = $self->parent()->checkForProton();
+ 	if (!defined($hcpd) && $args->{hashed}==1) {
+	    Bio::KBase::ObjectAPI::utilities::error("Could not find proton in biochemistry!");
+	}
+	my $wcpd = $self->parent()->checkForWater();
+ 	if (!defined($wcpd) && $args->{water}==1) {
+	    Bio::KBase::ObjectAPI::utilities::error("Could not find water in biochemistry!");
+	}
+	
+	for (my $i=0; $i < @{$rgts}; $i++) {
+		my $rgt = $rgts->[$i];
+		my $id = $rgt->templatecompcompound()->templatecompound()->id();
+		if ($id eq "cpd00000") {
+			$id = $rgt->templatecompcompound()->id();
+		}
+
+		next if $args->{protons} == 0 && $id eq $hcpd->id() && !$self->isTransporter();
+		next if $args->{water} == 0 && $id eq $wcpd->id();
+
+		if (!defined($rgtHash->{$id}->{$rgt->templatecompcompound()->templatecompartment()->id()})) {
+			$rgtHash->{$id}->{$rgt->templatecompcompound()->templatecompartment()->id()} = 0;
+		}
+		$rgtHash->{$id}->{$rgt->templatecompcompound()->templatecompartment()->id()} += $rgt->coefficient();
+		$rgtHash->{$id}->{"name"} = $rgt->templatecompcompound()->templatecompound()->name();
+	}
+
+    my @reactcode = ();
+    my @productcode = ();
+    my $sign = " <=> ";
+
+    if($args->{direction}==1){
+	$sign = " => " if $self->direction() eq ">";
+	$sign = " <= " if $self->direction() eq "<";
+    }
+	
+    my %FoundComps=();
+    my $CompCount=0;
+
+    my $sortedCpd = [sort(keys(%{$rgtHash}))];
+    for (my $i=0; $i < @{$sortedCpd}; $i++) {
+
+	#Cpds sorted on original modelseed identifiers
+	#But representative strings collected here (if not 'id')
+	my $printId=$sortedCpd->[$i];
+
+	if($args->{format} ne "id"){
+	    my $cpd = ( grep { $printId eq $_->templatecompcompound()->templatecompound()->id() } @{$self->templateReactionReagents()} )[0]->templatecompcompound()->templatecompound();
+	    if(!$cpd){
+		$cpd = ( grep { $printId eq $_->templatecompcompound()->id() } @{$self->templateReactionReagents()} )[0]->templatecompcompound()->templatecompound();
+	    }
+
+	    if($args->{format} eq "name"){
+		$printId = $cpd->name();
+	    } elsif($args->{format} ne "uuid" && $args->{format} ne "formula") {
+		$printId = $cpd->getAlias($args->{format});
+	    }elsif($args->{format} eq "formula"){
+		$printId = $cpd->formula();
+	    }
+	}
+
+	my $comps = [sort(keys(%{$rgtHash->{$sortedCpd->[$i]}}))];
+	for (my $j=0; $j < @{$comps}; $j++) {
+	    if ($comps->[$j] =~ m/([a-z])(\d+)/) {
+		my $comp = $1;
+		my $index = $2;
+		my $compartment = $comp;
+
+		if($args->{generalized} && !exists($FoundComps{$comp})){
+		    $compartment = $CompCount;
+		    $FoundComps{$comp}=$CompCount;
+		    $CompCount++;
+		}elsif($args->{generalized} && exists($FoundComps{$comp})){
+		    $compartment = $FoundComps{$comp};
+		}
+		
+		if ($args->{indecies} == 0) {
+		    $compartment = "[".$compartment."]" if !$args->{stoichiometry};
+		}else{
+		    $compartment = "[".$compartment.$index."]" if !$args->{stoichiometry};
+		}
+
+		$compartment= "" if !$args->{compts};
+
+		if ($rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]} < 0) {
+		    my $coef = -1*$rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
+		    my $reactcode = "(".$coef.") ".$printId.$compartment;
+			if($args->{stoichiometry}==1){
+		    	my $name = $rgtHash->{$sortedCpd->[$i]}->{name};
+			    $coef = $rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
+			    $reactcode = join(":",($coef,$printId,$compartment,'0',"\"".$name."\""));
+			}
+		    push(@reactcode,$reactcode);
+
+		} elsif ($rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]} > 0) {
+		    my $coef = $rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
+		    
+		    my $productcode .= "(".$coef.") ".$printId.$compartment;
+			if($args->{stoichiometry}==1){
+			    my $name = $rgtHash->{$sortedCpd->[$i]}->{name};
+			    $productcode = join(":",($coef,$printId,$compartment,'0',"\"".$name."\""));
+			}
+		    push(@productcode, $productcode);
+		}
+	    }
+	}
+    }
+    
+
+    my $reaction_string = join(" + ",@reactcode).$sign.join(" + ",@productcode);
+
+	if($args->{stoichiometry} == 1){
+		$reaction_string = join(";",@reactcode,@productcode);
+	}
+
+    if($args->{reverse}==1){
+	$reaction_string = join(" + ",@productcode).$sign.join(" + ",@reactcode);
+    }
+
+    if ($args->{hashed} == 1) {
+	return Digest::MD5::md5_hex($reaction_string);
+    }
+    return $reaction_string;
+}
+
 sub compute_penalties {
 	my $self = shift;
 	my $args = Bio::KBase::ObjectAPI::utilities::args([],{

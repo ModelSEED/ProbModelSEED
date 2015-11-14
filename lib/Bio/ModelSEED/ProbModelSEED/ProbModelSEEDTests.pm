@@ -168,7 +168,6 @@
 			output_path => $model_dir,
 			output_file => $model_name
 		},"Reconstruct from workspace genome test",[],0,undef,1);
-		return;
 		$output = $self->test_harness("export_media",{
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
 			to_shock => 1,

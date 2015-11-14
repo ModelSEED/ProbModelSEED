@@ -1628,6 +1628,7 @@ sub createJobDirectory {
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."genes.tbl",$genedata);
 	#Printing parameter file
 	my $paramData = [];
+	$parameters->{MFASolver} = "CPLEX";#TODO
 	foreach my $param (keys(%{$parameters})) {
 		push(@{$paramData},$param."|".$parameters->{$param}."|Specialized parameters");
 	}
@@ -2267,7 +2268,7 @@ sub parseFluxFiles {
 									if ($queryid =~ m/(.+)\d+$/) {
 										$queryid = $1;
 									}
-									my $tmprxn = $self->fbamodel()->template()->queryObject("templateReactions",{reactionID => $queryid});
+									my $tmprxn = $self->fbamodel()->template()->queryObject("reactions",{id => $queryid});
 									if (defined($tmprxn)) {
 										my $lower = -1*$self->defaultMaxFlux();
 										my $upper = $self->defaultMaxFlux();
@@ -3088,8 +3089,8 @@ sub parseGapfillingOutput {
 					} else {
 						$dir = "<";
 					}
-					my $cmp = $self->template()->searchForCompartment($3);
-					my $rxn = $self->template()->searchForReaction($2."_".$3);
+					my $cmp = $self->fbamodel()->template()->searchForCompartment($3);
+					my $rxn = $self->fbamodel()->template()->searchForReaction($2."_".$3);
 					if (!defined($rxn)) {
 						if (defined($self->{_source_model})) {
 					    	$rxn = $self->{_source_model}->searchForReaction($2."_".$3.$4);
@@ -3139,8 +3140,8 @@ sub parseGapfillingOutput {
 					} else {
 						$dir = "<";
 					}
-					my $cmp = $self->template()->searchForCompartment($3);
-					my $rxn = $self->template()->searchForReaction($2."_".$3);
+					my $cmp = $self->fbamodel()->template()->searchForCompartment($3);
+					my $rxn = $self->fbamodel()->template()->searchForReaction($2."_".$3);
 					if (!defined $rxn) {
 					    $rxn = $self->fbamodel()->searchForReaction($2."_".$3.$4);
 					    if (!defined $rxn) {
