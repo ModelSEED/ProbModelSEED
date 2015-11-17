@@ -1,0 +1,1510 @@
+id	name	aliases	charge	formula
+5mta	5-Methylthioadenosine	KEGG:C00170;CAS:2457-80-9;BIGG:bigg34127;	0	C11H15N5O3S
+dad-2	Deoxyadenosine	KEGG:C00559;CAS:958-09-8;BIGG:bigg35352;	0	C10H13N5O3
+dgdp	dGDP	KEGG:C00361;BIGG:bigg34741;	-3	C10H12N5O10P2
+dgtp	dGTP	KEGG:C00286;CAS:2564-35-4;BIGG:bigg34502;	-4	C10H12N5O13P3
+lys-L	L-Lysine	KEGG:C00047;CAS:56-87-1;BIGG:bigg33655;	1	C6H15N2O2
+Lfmkynr	L-Formylkynurenine	KEGG:C02700;CAS:1022-31-7;BIGG:bigg1445551;	0	C11H12N2O4
+dcacoa	Decanoyl-CoA (n-C10:0CoA)	KEGG:C05274;BIGG:bigg45478;	-4	C31H50N7O17P3S
+dolmanp_U	Dolichyl phosphate D-mannose, human uterine homolog	BIGG:bigg1809323;	-10	C1085H1780O90P10
+g2m8masn	(alpha-D-Glucosyl)2-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822369;	0	C82H137N2O65X
+g1m7masnB	glucosyl-(alpha-D-mannosyl)7-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine, isoform B (protein)	BIGG:bigg1838934;	0	C70H117N2O55X
+cholcoads	3alpha,7alpha,12alpha-Trihydroxy-5beta-cholest-24-enoyl-CoA	KEGG:C05460;CAS:67-97-0;BIGG:bigg45854;	-4	C48H74N7O20P3S
+5pmev	(R)-5-Phosphomevalonate	KEGG:C01107;BIGG:bigg36819;	-3	C6H10O7P
+carn	L-Carnosine	KEGG:C00386;CAS:305-84-0;BIGG:bigg1800369;	0	C9H14N4O3
+chlstol	Cholesta-7,24-dien-3beta-ol	KEGG:C05439;CAS:7488-99-5;BIGG:bigg45811;	0	C27H44O
+11docrtsl	11-Deoxycortisol	KEGG:C05488;CAS:152-58-9;BIGG:bigg45914;	0	C21H30O4
+pe_hs	phosphatidylethanolamine (homo sapiens)	BIGG:bigg2228931;	0	C5H12NO4PFULLRCO2FULLR2CO2
+atp	ATP	KEGG:C00002;CAS:56-65-5;BIGG:bigg33477;	-4	C10H12N5O13P3
+paps	3'-Phosphoadenylyl sulfate	KEGG:C00053;CAS:482-67-7;BIGG:bigg33679;	-4	C10H11N5O13P2S
+mem2emgacpail_hs	({[(mannosyl),(phosphoethanolaminyl)]-dimannosyl},{phosphoethanolaminyl})-mannosyl-glucosaminyl-acylphosphatidylinositol (M4B)	BIGG:bigg2289619;	0	C59H110N3O40P3FULLRCO2FULLR2CO2
+ksi_pre25	keratan sulfate I biosynthesis, precursor 25	BIGG:bigg2296843;	-8	C199H319N14O163S7X
+cs_e_pre2	chondroitin sulfate E (GalNAc4,6diS-GlcA), precursor 2	BIGG:bigg2300739;	-5	C31H45NO37S4X
+ps_hs	phosphatidylserine (homo sapiens)	BIGG:bigg2228948;	-1	C6H11NO6PFULLRCO2FULLR2CO2
+prostgf2	Prostaglandin F2alpha	KEGG:C00639;CAS:551-11-1;BIGG:bigg35568;	-1	C20H33O5
+bildglcur	Bilirubin beta-diglucuronide	KEGG:C05787;CAS:SE: COX;BIGG:bigg46500;	-2	C45H50N4O18
+1pipdn2c	delta1-Piperideine-2-carboxylate	KEGG:C04092;CAS:2365-40-4;BIGG:bigg43128;	0	C6H9NO2
+phytcoa	phytanyl coa	BIGG:bigg2364522;	-4	C41H70N7O17P3S
+cs_a_deg4	chondroitin sulfate A (GalNAc4S-GlcA), degradation product 4	BIGG:bigg2415893;	-2	C31H49NO29S
+galacglcgalgluside_hs	Lc4Cer	BIGG:bigg2419325;	0	C44H79N2O22FULLRCO
+strdnccrn	stearidonyl carnitine	BIGG:bigg2614432;	0	C25H41NO4
+fucfucfucgalacglc13galacglcgal14acglcgalgluside_hs	(Gal)4 (Glc)1 (GlcNAc)3 (LFuc)3 (Cer)1	BIGG:bigg2419458;	0	C90H155N4O54FULLRCO
+hcoumarin	hydroxy coumarin	BIGG:bigg2299830;	0	C9H6O3
+sgalside_hs	sulfatide galactocerebroside (homo sapiens)	BIGG:bigg2265466;	-1	C24H45NO10SFULLRCO
+gq1b_hs	GQ1b (homo sapiens)	BIGG:bigg2266620;	-4	C88H143N6O54FULLRCO
+digalsgalside_hs	Digalactosylceramidesulfate	KEGG:C06127;CAS:SE: P450;BIGG:bigg47460;	-1	C30H55NO15SFULLRCO
+mthgxl	Methylglyoxal	KEGG:C00546;CAS:78-98-8;BIGG:bigg35307;	0	C3H4O2
+asp-L	L-Aspartate	KEGG:C00049;CAS:56-84-8;BIGG:bigg33663;	-1	C4H6NO4
+uacgam	UDP-N-acetyl-D-glucosamine	KEGG:C00043;BIGG:bigg33638;	-2	C17H25N3O17P2
+ala-D	D-Alanine	KEGG:C00133;CAS:338-69-2;BIGG:bigg33977;	0	C3H7NO2
+fuc-L	L-Fucose	KEGG:C01019;CAS:2438-80-4;BIGG:bigg36636;	0	C6H12O5
+ocdca	octadecanoate (n-C18:0)	KEGG:C01530;CAS:57-11-4;BIGG:bigg37799;	-1	C18H35O2
+odecrn	octadecenoyl carnitine	BIGG:bigg1585902;	0	C25H47NO4
+ppcoa	Propanoyl-CoA	KEGG:C00100;CAS:317-66-8;BIGG:bigg33852;	-4	C24H36N7O17P3S
+dgmp	dGMP	KEGG:C00362;CAS:902-04-5;BIGG:bigg34744;	-2	C10H12N5O7P
+dolichol_L	Dolichol, human liver homolog	BIGG:bigg1809211;	0	C1080H1768O10
+naglc2p_L	N-Acetyl-D-glucosaminyldiphosphodolichol, human liver homolog	BIGG:bigg1809448;	-20	C1160H1898N10O120P20
+gudac	Guanidinoacetate	CAS:352-97-6;BIGG:bigg1594816;	0	C3H7N3O2
+dmpp	Dimethylallyl diphosphate	KEGG:C00235;CAS:358-71-4;BIGG:bigg131960;	-3	C5H9O7P2
+acald	Acetaldehyde	KEGG:C00084;CAS:75-07-0;BIGG:bigg33792;	0	C2H4O
+3hmp	3-Hydroxy-2-methylpropanoate	KEGG:C01188;BIGG:bigg37034;	-1	C4H7O3
+n4abutn	N4-Acetylaminobutanal	KEGG:C05936;BIGG:bigg1445987;	0	C6H11NO2
+acn23acngalgbside_hs	sialyl (2,3) sialyl (2,6) galactosylgloboside (homo sapiens)	BIGG:bigg2266497;	-2	C72H121N4O43FULLRCO
+gp1c_hs	GP1c (homo sapiens)	BIGG:bigg2266630;	-5	C99H159N7O62FULLRCO
+ecgon	ecgonine	CAS:481-37-8;BIGG:bigg2273742;	-1	C9H14NO3
+ksii_core2_pre10	keratan sulfate II biosynthesis, precursor 10	BIGG:bigg2296701;	-3	C81H130N6O64S2X
+ksi_pre6	keratan sulfate I biosynthesis, precursor 6	BIGG:bigg2296818;	-2	C107H174N7O80SX
+ksi_pre19	keratan sulfate I biosynthesis, precursor 19	BIGG:bigg2296834;	-6	C171H275N12O137S5X
+cs_d_pre3	chondroitin sulfate D (GlcNAc6S-GlcA2S), precursor 3	BIGG:bigg2300744;	-5	C37H53NO40S3X
+18harachd	18 hydroxy arachidonic acid	BIGG:bigg2300206;	-1	C20H31O3
+eaflatoxin	8,9 epxoy aflatoxin B1	BIGG:bigg2300011;	0	C17H12O7
+5thf	pentaglutamyl folate (THF)	BIGG:bigg2304175;	-6	C39H45N11O18
+6dhf	haxglutamyl folate (DHF)	BIGG:bigg2304240;	-7	C44H49N12O21
+pchol_hs	Phosphatidylcholine (homo sapiens)	BIGG:bigg2228933;	0	C8H18NO4PFULLRCO2FULLR2CO2
+tag_hs	triacylglycerol (homo sapiens)	BIGG:bigg2220582;	0	C3H5FULLRCO2FULLR2CO2FULLR3CO2
+lnlcACP	linoleic acid ACP (all cis)	BIGG:bigg2377664;	-1	C29H51N2O8PRS
+dhcholoylcoa	3alpha,7alpha-Dihydroxy-5beta-cholest-24-enoyl-CoA	KEGG:C05447;CAS:67-97-0;BIGG:bigg45830;	-4	C48H74N7O19P3S
+1glyc_hs	1 acyl phosphoglycerol	BIGG:bigg2389141;	-1	C6H13O7PFULLRCO2
+Rtotalcoa	R total Coenzyme A	BIGG:bigg2386329;	-4	CO2FULLRC21H31N7O15P3S
+cs_e_deg4	chondroitin sulfate E (GalNAc4,6diS-GlcA), degradation product 4	BIGG:bigg2416318;	-5	C31H46NO38S4
+ksi_deg39	keratan sulfate I, degradation product 39	BIGG:bigg2416955;	0	C48H81N3O36
+npthl	Naphthalene	KEGG:C00829;CAS:91-20-3;BIGG:bigg36137;	0	C10H8
+andrstandn	androstanedione	KEGG:C03772;CAS:1229-12-5;BIGG:bigg42505;	0	C19H28O2
+2pg	D-Glycerate 2-phosphate	KEGG:C00631;BIGG:bigg35542;	-3	C3H4O7P
+met-L	L-Methionine	KEGG:C00073;CAS:63-68-3;BIGG:bigg33753;	0	C5H11NO2S
+ins	Inosine	KEGG:C00294;CAS:58-63-9;BIGG:bigg34525;	0	C10H12N4O5
+dpcoa	Dephospho-CoA	KEGG:C00882;BIGG:bigg36283;	-2	C21H33N7O13P2S
+tre	Trehalose	KEGG:C01083;CAS:99-20-7;BIGG:bigg36774;	0	C12H22O11
+pydx	Pyridoxal	KEGG:C00250;CAS:66-72-8;BIGG:bigg34393;	0	C8H9NO3
+5aop	5-Amino-4-oxopentanoate	KEGG:C00430;CAS:106-60-5;BIGG:bigg34963;	0	C5H9NO3
+ppp9	Protoporphyrin	KEGG:C02191;CAS:553-12-8;BIGG:bigg39293;	-2	C34H32N4O4
+ttdca	tetradecanoate (n-C14:0)	KEGG:C06424;CAS:544-63-8;BIGG:bigg215851;	-1	C14H27O2
+methf	5,10-Methenyltetrahydrofolate	KEGG:C00445;BIGG:bigg34999;	-1	C20H20N7O6
+arachd	arachidonic acid	KEGG:C00219;CAS:506-32-1;BIGG:bigg1586189;	-1	C20H31O2
+bhb	(R)-3-Hydroxybutanoate	KEGG:C01089;BIGG:bigg36784;	-1	C4H7O3
+dolp_L	Dolichol phosphate, human liver homolog	BIGG:bigg1809214;	-20	C1080H1758O40P10
+acnam	N-Acetylneuraminate	KEGG:C00270;CAS:131-48-6;BIGG:bigg34458;	-1	C11H18NO9
+zymstnl	Zymostenol	KEGG:C03845;CAS:481-39-0;BIGG:bigg42633;	0	C27H46O
+itp	ITP	KEGG:C00081;CAS:132-06-9;BIGG:bigg33780;	-4	C10H11N4O14P3
+dhea	Dehydroepiandrosterone	CAS:53-43-0;BIGG:bigg37131;	0	C19H28O2
+11docrtstrn	11-Deoxycorticosterone	KEGG:C03205;CAS:64-85-7;BIGG:bigg41397;	0	C21H30O3
+cmpntm2amep	CMP-N-trimethyl-2-aminoethylphosphonate	KEGG:C05674;CAS:151-18-8;BIGG:bigg46255;	-1	C14H25N4O10P2
+prostgi2	Prostaglandin I2	KEGG:C01312;CAS:35121-78-9;BIGG:bigg37333;	-1	C20H31O5
+xylu-L	L-Xylulose	KEGG:C00312;CAS:527-50-4;BIGG:bigg34584;	0	C5H10O5
+glcr	D-Glucarate	KEGG:C00818;CAS:87-73-0;BIGG:bigg35926;	-2	C6H8O8
+hxdcal	Hexadecanal	KEGG:C00517;CAS:629-80-1;BIGG:bigg35223;	0	C16H32O
+crtsl	Cortisol	KEGG:C00735;CAS:50-23-7;BIGG:bigg35828;	0	C21H30O5
+cs_d_pre5	chondroitin sulfate D (GlcNAc6S-GlcA2S), precursor 5	BIGG:bigg2300746;	-6	C45H65N2O48S4X
+hs_pre1	heparan sulfate, precursor 1	BIGG:bigg2301796;	-1	C31H49NO25X
+retnglc	retinoyl glucuronide	BIGG:bigg2304843;	-1	C26H35O8
+o2s	Superoxide anion	KEGG:C00704;BIGG:bigg35743;	-1	O2
+ksii_core2_deg7	keratan sulfate II (core 2-linked), degradation product 7	BIGG:bigg2418062;	0	C44H73N4O30X
+fucgalacglcgal14acglcgalgluside_hs	VI2Fuc-nLc6	BIGG:bigg2419437;	0	C64H112N3O36FULLRCO
+5fthf	5-Formyltetrahydrofolate	KEGG:C03479;CAS:58-05-9;BIGG:bigg41929;	-2	C20H21N7O7
+lneldccrn	Linoelaidyl carnitine	BIGG:bigg2614390;	0	C25H45NO4
+leuktrB4wcooh	w-carboxy leukotriene B4	BIGG:bigg2706566;	-2	C20H28O6
+13-cis-retnglc	13-cis-retinoyl glucuronide	BIGG:bigg2430453;	-1	C26H35O8
+rbl-D	D-Ribulose	KEGG:C00309;CAS:488-84-6;BIGG:bigg34569;	0	C5H10O5
+f26bp	D-Fructose 2,6-bisphosphate	KEGG:C00665;BIGG:bigg35645;	-4	C6H10O12P2
+lgt-S	(R)-S-Lactoylglutathione	KEGG:C03451;CAS:59-85-8;BIGG:bigg41876;	-1	C13H20N3O8S
+cyst-L	L-Cystathionine	KEGG:C02291;CAS:56-88-2;BIGG:bigg39523;	0	C7H14N2O4S
+3mop	(S)-3-Methyl-2-oxopentanoate	KEGG:C00671;BIGG:bigg35662;	-1	C6H9O3
+dtdp4d6dg	dTDP-4-dehydro-6-deoxy-D-glucose	KEGG:C00687;BIGG:bigg35701;	-2	C16H22N2O15P2
+nrvnccoa	nervonyl coenzyme A	BIGG:bigg2218805;	-4	C45H76N7O17P3S
+dlnlcgcoa	dihomo-gamma-linolenyl coenzyme A	BIGG:bigg2218847;	-4	C41H64N7O17P3S
+adprbp	ADPribose 2'-phosphate	KEGG:C03246;BIGG:bigg41491;	-4	C15H20N5O17P3
+citmcoa-L	L-Citramalyl-CoA	KEGG:C01011;BIGG:bigg36606;	-5	C26H37N7O20P3S
+saccrp-L	L-Saccharopine	KEGG:C00449;CAS:997-68-2;BIGG:bigg1484994;	-1	C11H19N2O6
+2maacoa	2-Methyl-3-acetoacetyl-CoA	KEGG:C03344;BIGG:bigg41671;	-4	C26H38N7O18P3S
+galthcrm_hs	Gal-Gal-Gal-Glc-Cer (homo sapiens)	BIGG:bigg2266458;	0	C42H76NO22FULLRCO
+gm1b_hs	GM1b (homo sapiens)	BIGG:bigg2266536;	-1	C55H95N3O30FULLRCO
+vitd3	Vitamin D3	BIGG:bigg2288999;	0	C27H44O
+ksii_core2_pre5	keratan sulfate II biosynthesis, precursor 5	BIGG:bigg2296681;	-1	C61H99N5O43X
+onpthl	naphthalene epoxide	BIGG:bigg2299951;	0	C10H8O
+dhcholestanate	3alpha,7alpha-Dihydroxy-5beta-cholestanate	KEGG:C04554;CAS:652-69-7;BIGG:bigg44035;	-1	C27H45O4
+ksi_deg26	keratan sulfate I, degradation product 26	BIGG:bigg2416950;	-4	C110H179N7O93S4
+acgalfucgalacglcgalgluside_hs	Type IA glycolipid	BIGG:bigg2419346;	0	C58H102N3O31FULLRCO
+acgalfucgalacgalfuc12gal14acglcgalgluside_hs	Type IIIA glycolipid	BIGG:bigg2419401;	0	C78H135N4O45FULLRCO
+perillyl	Perillyl alcohol	KEGG:C02452;CAS:536-59-4;BIGG:bigg39849;	0	C10H16O
+din	Deoxyinosine	KEGG:C05512;CAS:890-38-0;BIGG:bigg45942;	0	C10H12N4O4
+4abutn	4-Aminobutanal	KEGG:C00555;BIGG:bigg35337;	1	C4H10NO
+2pglyc	2-Phosphoglycolate	KEGG:C00988;BIGG:bigg36550;	-3	C2H2O6P
+3hanthrn	3-Hydroxyanthranilate	KEGG:C00632;CAS:548-93-6;BIGG:bigg1485273;	0	C7H7NO3
+seln	Selenide	KEGG:C01528;CAS:531-44-2;BIGG:bigg37794;	-1	HSe
+acglu	N-Acetyl-L-glutamate	KEGG:C00624;CAS:1188-37-0;BIGG:bigg35520;	-2	C7H9NO5
+odecoa	Octadecenoyl-CoA (n-C18:1CoA)	KEGG:C00510;BIGG:bigg1451388;	-4	C39H64N7O17P3S
+cysam	Cysteamine	KEGG:C01678;CAS:60-23-1;BIGG:bigg1808054;	1	C2H8NS
+m5masnB2	(alpha-D-mannosyl)5-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822948;	0	C52H87N2O40X
+34dhmald	3,4-Dihydroxymandelaldehyde	KEGG:C05577;CAS:61-33-6;BIGG:bigg46056;	0	C8H8O4
+12ppd-R	(R)-Propane-1,2-diol	KEGG:C02912;CAS:4254-14-2;BIGG:bigg40801;	0	C3H8O2
+15HPET	15-Hydroperoxyeicosatetraenoic acid	KEGG:C05966;CAS:1189-11-3;BIGG:bigg47085;	-1	C20H31O4
+btamp	Biotinyl-5'-AMP	KEGG:C05921;BIGG:bigg46920;	-1	C20H27N7O9PS
+4tmeabutn	4-Trimethylammoniobutanoate	KEGG:C01181;BIGG:bigg53567;	0	C7H15NO2
+gt1c_hs	GT1c (homo sapiens)	BIGG:bigg2266626;	-3	C77H127N5O46FULLRCO
+ksi_pre35	keratan sulfate I biosynthesis, precursor 35	BIGG:bigg2296855;	-12	C241H384N17O205S11X
+cs_e_pre4	chondroitin sulfate E (GalNAc4,6diS-GlcA), precursor 4	BIGG:bigg2300741;	-6	C45H65N2O48S4X
+arach	Arachidic acid	KEGG:C06425;CAS:506-30-9;BIGG:bigg48230;	-1	C20H39O2
+xu1p-D	D-Xylulose 1-phosphate	BIGG:bigg2388820;	-2	C5H9O8P
+ptdcacoa	pentadecanoyl Coenzyme A	BIGG:bigg2415313;	-4	C36H60N7O17P3S
+cspg_c	chondroitin sulfate C (GalNAc6S-GlcA) proteoglycan	BIGG:bigg2300738;	-5	C45H66N2O45S3X
+cs_e_deg7	chondroitin sulfate E (GalNAc4,6diS-GlcA), degradation product 7	BIGG:bigg2416326;	-3	C23H35O27S2
+ksi_deg15	keratan sulfate I, degradation product 15	BIGG:bigg2416930;	-8	C160H257N11O140S8
+Nacasp	N-Acetyl-L-aspartate	KEGG:C01042;BIGG:bigg36685;	-2	C6H7NO5
+ksii_core4_deg4	keratan sulfate II (core 4-linked), degradation product 4	BIGG:bigg2418070;	-1	C66H108N6O48SX
+fuc12gal14acglcgalgluside_hs	Type IIH glycolipid	BIGG:bigg2419384;	0	C50H89N2O26FULLRCO
+acngal14acglcgalgluside_hs	Sialyl-3-paragloboside	BIGG:bigg2419369;	-1	C55H95N3O30FULLRCO
+fucfucgalacglc13galacglcgal14acglcgalgluside_hs	(Gal)4 (Glc)1 (GlcNAc)3 (LFuc)2 (Cer)1	BIGG:bigg2419457;	0	C84H145N4O50FULLRCO
+f6p	D-Fructose 6-phosphate	KEGG:C00085;CAS:643-13-0;BIGG:bigg33795;	-2	C6H11O9P
+5mdr1p	5-Methylthio-5-deoxy-D-ribose 1-phosphate	KEGG:C04188;BIGG:bigg43318;	-2	C6H11O7PS
+aps	Adenosine 5'-phosphosulfate	KEGG:C00224;BIGG:bigg34307;	-2	C10H12N5O10PS
+56dthm	5,6-Dihydrothymine	KEGG:C00906;CAS:696-04-8;BIGG:bigg36347;	0	C5H8N2O2
+amuco	2-Aminomuconate	KEGG:C02220;BIGG:bigg1445654;	-1	C6H6NO4
+3dsphgn	3-Dehydrosphinganine	KEGG:C02934;BIGG:bigg1453300;	1	C18H38NO2
+gdpmann	GDP-D-mannose	KEGG:C00096;BIGG:bigg1460457;	-2	C16H23N5O16P2
+dedoldp_U	Dehydrodolichol diphosphate, human uterine homolog	BIGG:bigg1814662;	-30	C1025H1650O70P20
+6hoxmelatn	6-Hydroxymelatonin	KEGG:C05643;CAS:2208-41-5;BIGG:bigg46185;	0	C13H16N2O3
+fna5moxam	Formyl-N-acetyl-5-methoxykynurenamine	KEGG:C05642;CAS:552-58-9;BIGG:bigg46183;	0	C13H16N2O4
+dttp	dTTP	KEGG:C00459;BIGG:bigg35032;	-4	C10H13N2O14P3
+akdhap_hs	1-alkyldihydroxyacetone phosphate	BIGG:bigg2255845;	-2	C3H4O6PFULLRC2H4
+pa_hs	phosphatidic acid (homo sapiens)	BIGG:bigg2220568;	-2	C3H5O4PFULLRCO2FULLR2CO2
+mi3p-D	1D-myo-Inositol 3-phosphate	KEGG:C04006;CAS:434-13-9;BIGG:bigg42948;	-2	C6H11O9P
+minohp	myo-Inositol hexakisphosphate	KEGG:C01204;BIGG:bigg37070;	-12	C6H6O24P6
+m2emgacpail_hs	(dimannosyl),(phosphoethanolaminyl)-mannosyl-glucosylaminyl-acylphosphatidylinositol (H6)	BIGG:bigg2288896;	0	C51H94N2O32P2FULLRCO2FULLR2CO2
+2425dhvitd3	24R,25-Dihydroxyvitamin D3	BIGG:bigg2289319;	0	C27H44O3
+ksi_pre8	keratan sulfate I biosynthesis, precursor 8	BIGG:bigg2296821;	-3	C115H186N8O88S2X
+ca2	Calcium	KEGG:C00076;CAS:7440-70-2;BIGG:bigg33764;	2	Ca
+dhcholestancoa	3alpha,7alpha-Dihydroxy-5beta-cholestanoyl-CoA	KEGG:C04644;CAS:2461-62-3;BIGG:bigg44249;	-4	C48H76N7O19P3S
+phyt2ohcoa	2-Hydroxyphytanoyl-CoA	BIGG:bigg2364545;	-4	C41H70N7O18P3S
+cs_e_deg1	chondroitin sulfate E (GalNAc4,6diS-GlcA), degradation product 1	BIGG:bigg2416310;	-7	C45H65N2O52S5
+ksi_deg17	keratan sulfate I, degradation product 17	BIGG:bigg2416947;	-7	C152H245N10O132S7
+ksi_deg32	keratan sulfate I, degradation product 32	BIGG:bigg2416952;	-2	C82H135N5O67S2
+ksi_deg16	keratan sulfate I, degradation product 16	BIGG:bigg2416939;	-7	C160H258N11O137S7
+fdp	D-Fructose 1,6-bisphosphate	KEGG:C00354;CAS:488-69-7;BIGG:bigg34717;	-4	C6H10O12P2
+fru	D-Fructose	KEGG:C00095;CAS:57-48-7;BIGG:bigg33835;	0	C6H12O6
+fuc1p-L	L-Fucose 1-phosphate	KEGG:C02985;BIGG:bigg40955;	-2	C6H11O8P
+dad-5	5'-Deoxyadenosine	KEGG:C05198;BIGG:bigg45324;	0	C10H13N5O3
+2c23dh56dhoxin	2-Carboxy-2,3-dihydro-5,6-dihydroxyindole	KEGG:C05604;CAS:102-29-4;BIGG:bigg46110;	-1	C9H8NO4
+nformanth	N-Formylanthranilate	KEGG:C05653;CAS:3342-77-6;BIGG:bigg46205;	-1	C8H6NO3
+ksi_pre20	keratan sulfate I biosynthesis, precursor 20	BIGG:bigg2296837;	-7	C171H274N12O140S6X
+ksii_core2_deg4	keratan sulfate II (core 2-linked), degradation product 4	BIGG:bigg2418059;	-1	C58H95N5O43SX
+retinol-cis-13	cis-13-retinol	BIGG:bigg2455099;	0	C20H30O
+vacccrn	Vaccenyl carnitine	BIGG:bigg2614385;	0	C25H47NO4
+m7masnC	(alpha-D-mannosyl)7-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine, isoform C (protein)	BIGG:bigg1822940;	0	C64H107N2O50X
+alkylR1oh	hydroxy alkyl chain	BIGG:bigg2255810;	0	C2H5OFULLR
+3moxtyr	3-Methoxytyramine	KEGG:C05587;CAS:306-08-1;BIGG:bigg46076;	1	C9H14NO2
+ksi_pre18	keratan sulfate I biosynthesis, precursor 18	BIGG:bigg2296833;	-6	C163H262N11O132S5X
+ksi_pre33	keratan sulfate I biosynthesis, precursor 33	BIGG:bigg2296852;	-11	C233H372N16O197S10X
+ksii_core4_pre6	keratan sulfate II biosynthesis, precursor 6	BIGG:bigg2299221;	-2	C69H111N6O51SX
+hnifedipine	hydroxy nifedipine	BIGG:bigg2299950;	0	C17H18N2O7
+acetol	Acetol	KEGG:C05235;CAS:116-09-6;BIGG:bigg45400;	0	C3H6O2
+ksi_deg24	keratan sulfate I, degradation product 24	BIGG:bigg2416933;	-5	C118H191N8O101S5
+pyr	Pyruvate	KEGG:C00022;CAS:127-17-3;BIGG:bigg33546;	-1	C3H3O3
+ala-L	L-Alanine	KEGG:C00041;CAS:56-41-7;BIGG:bigg33629;	0	C3H7NO2
+3php	3-Phosphohydroxypyruvate	KEGG:C03232;BIGG:bigg41453;	-3	C3H2O7P
+imp	IMP	KEGG:C00130;CAS:131-99-7;BIGG:bigg33960;	-2	C10H11N4O8P
+3uib	3-Ureidoisobutyrate	KEGG:C05100;BIGG:bigg45118;	-1	C5H9N2O3
+air	5-amino-1-(5-phospho-D-ribosyl)imidazole	KEGG:C03373;CAS:25635-88-5;BIGG:bigg41727;	-2	C8H12N3O7P
+pro-L	L-Proline	KEGG:C00148;CAS:147-85-3;BIGG:bigg34042;	0	C5H9NO2
+pydx5p	Pyridoxal 5'-phosphate	KEGG:C00018;CAS:54-47-7;BIGG:bigg33526;	-2	C8H8NO6P
+tsul	Thiosulfate	KEGG:C00320;BIGG:bigg34610;	-2	O3S2
+c226coa	cervonyl coenzyme A	BIGG:bigg1586042;	-4	C43H62N7O17P3S
+crvnc	cervonic acid, C22:6 n-3	CAS:1553-41-9;BIGG:bigg1586190;	-1	C22H31O2
+dolichol_U	Dolichol, human uterine homolog	BIGG:bigg1809212;	0	C1025H1680O10
+m8masn	(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822417;	0	C70H117N2O55X
+m7mpdol_U	(alpha-D-Mannosyl)7-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809517;	-20	C1665H2740N20O570P20
+g1m6masnB1	glucosyl-(alpha-D-mannosyl)6-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1838949;	0	C64H107N2O50X
+pheme	Protoheme	KEGG:C00032;CAS:14875-96-8;BIGG:bigg33586;	-2	C34H30FeN4O4
+ppi	Diphosphate	KEGG:C00013;CAS:206975;BIGG:bigg33511;	-3	HO7P2
+nmthsrtn	N-Methylserotonin	KEGG:C06212;CAS:90-02-8;BIGG:bigg47668;	1	C11H15N2O
+adpman	ADPmannose	BIGG:bigg2206034;	-2	C16H23N5O15P2
+dudp	dUDP	KEGG:C01346;BIGG:bigg37403;	-3	C9H11N2O11P2
+txa2	Thromboxane A2	KEGG:C02198;CAS:57576-52-0;BIGG:bigg39305;	-1	C20H31O5
+3padsel	3'-Phosphoadenylylselenate	KEGG:C05696;CAS:4408-78-0;BIGG:bigg46306;	-4	C10H11N5O13P2Se
+1p2cbxl	1-Pyrroline-2-carboxylate	KEGG:C03564;CAS:46495-39-0;BIGG:bigg42087;	-1	C5H6NO2
+tmlys	N6,N6,N6-Trimethyl-L-lysine	KEGG:C03793;CAS:6323-97-3;BIGG:bigg42542;	0	C9H20N2O2
+vitd2	Vitamin D2	BIGG:bigg2289183;	0	C28H44O
+estroneglc	estrone glucuronide	BIGG:bigg2304836;	0	C24H30O8
+prostge1	Prostaglandin E1	KEGG:C04741;CAS:745-65-3;BIGG:bigg44455;	-1	C20H33O5
+hxan	Hypoxanthine	KEGG:C00262;CAS:68-94-0;BIGG:bigg34434;	0	C5H4N4O
+xol7ah3	3alpha,7alpha,26-Trihydroxy-5beta-cholestane	KEGG:C05444;CAS:67-97-0;BIGG:bigg45823;	0	C27H48O3
+xol7ah2	3alpha,7alpha-Dihydroxy-5beta-cholestane	KEGG:C05452;CAS:67-97-0;BIGG:bigg45841;	0	C27H48O2
+adrn	adrenic acid	BIGG:bigg2218009;	-1	C22H35O2
+hs_deg2	heparan sulfate, degradation product 2	BIGG:bigg2303739;	-11	C79H116N5O96S10
+ksii_core4_deg1	keratan sulfate II (core 4-linked), degradation product 1	BIGG:bigg2418067;	-3	C78H126N6O64S3X
+sl-L	L-sulfolactate	KEGG:C11499;BIGG:bigg1885198;	-2	C3H4O6S
+hretn	4 hydroxy retinoic acid	BIGG:bigg2299866;	-1	C20H27O3
+dlnlcgcrn	dihomo-gamma-linolenyl carnitine	BIGG:bigg2614412;	0	C27H47NO4
+tettet6crn	Tetracosatetraenoyl carnitine	BIGG:bigg2614440;	0	C31H53NO4
+fucacngalacglcgalgluside_hs	IV3-a-Neu5Ac,III4-a-Fuc-Lc4Cer	BIGG:bigg2419343;	-1	C61H105N3O34FULLRCO
+aflatoxin	aflatoxin B1	BIGG:bigg2300004;	0	C17H12O6
+5adtststeroneglc	5alpha-Dihydrotestosterone glucuronide	BIGG:bigg2423365;	0	C25H38O8
+aldstrn	Aldosterone	KEGG:C01780;CAS:52-39-1;BIGG:bigg38397;	0	C21H28O5
+ptrc	Putrescine	KEGG:C00134;CAS:110-60-1;BIGG:bigg33980;	2	C4H14N2
+gbside_hs	globoside (homo sapiens)	BIGG:bigg2265482;	0	C44H79N2O22FULLRCO
+cit	Citrate	KEGG:C00158;CAS:77-92-9;BIGG:bigg34080;	-3	C6H5O7
+leu-L	L-Leucine	KEGG:C00123;CAS:61-90-5;BIGG:bigg33942;	0	C6H13NO2
+gly	Glycine	KEGG:C00037;CAS:56-40-6;BIGG:bigg33610;	0	C2H5NO2
+glyclt	Glycolate	KEGG:C00160;CAS:79-14-1;BIGG:bigg34090;	-1	C2H3O3
+sql	Squalene	KEGG:C00751;CAS:111-02-4;BIGG:bigg35878;	0	C30H50
+lpam	Lipoamide	KEGG:C00248;CAS:None;BIGG:bigg34384;	0	C8H15NOS2
+malACP	Malonyl-[acyl-carrier protein]	KEGG:C01209;CAS:None;BIGG:bigg132642;	-2	C14H22N2O10PRS
+sphgn	Sphinganine	KEGG:C00836;CAS:15639-50-6;BIGG:bigg36159;	1	C18H40NO2
+gdpfuc	GDP-L-fucose	KEGG:C00325;BIGG:bigg34623;	-2	C16H23N5O15P2
+n5m2masn	((N-acetyl-D-glucosaminyl)5-(alpha-D-mannosyl)2-beta-D-mannosyl-diacetylchitobiosyl)-L-asparagine (protein)	BIGG:bigg1830653;	0	C74H122N7O50X
+n2m2nm	n2m2nmasn (w/o peptide linkage)	BIGG:bigg1862874;	0	C58H97N5O41
+m2mn	(alpha-D-mannosyl)2-beta-D-mannosyl-N-acetylglucosamine	BIGG:bigg1862557;	0	C26H45NO21
+5hoxnfkyn	5-Hydroxy-N-formylkynurenine	KEGG:C05648;CAS:2208-41-5;BIGG:bigg46195;	0	C11H12N2O5
+lnlncgcoa	gamma-linolenoyl-CoA	KEGG:C03035;CAS:18172-33-3;BIGG:bigg41063;	-4	C39H60N7O17P3S
+lnlncg	gamma-linolenic acid	KEGG:C06426;CAS:506-26-3;BIGG:bigg48234;	-1	C18H29O2
+dopaqn	Dopaquinone	KEGG:C00822;CAS:4430-97-1;BIGG:bigg36114;	0	C9H9NO4
+sphings	Sphingosine	KEGG:C00319;CAS:123-78-4;BIGG:bigg34606;	1	C18H38NO2
+pd3	Previtamin D3	BIGG:bigg2288991;	0	C27H44O
+1a2425thvitd3	1-alpha,24R,25-Trihydroxyvitamin D3	BIGG:bigg2290333;	0	C27H44O4
+ksi_pre9	keratan sulfate I biosynthesis, precursor 9	BIGG:bigg2296822;	-3	C121H196N8O93S2X
+cs_e_pre3	chondroitin sulfate E (GalNAc4,6diS-GlcA), precursor 3	BIGG:bigg2300740;	-6	C37H52NO43S4X
+4hdebrisoquine	4 hydroxy debrisoquine	BIGG:bigg2299987;	1	C10H14N3O
+estriolglc	16-Glucuronide-estriol	KEGG:C05504;CAS:22348-64-7;BIGG:bigg45936;	0	C24H32O9
+Rtotal3coa	R total 3 Coenzyme A	BIGG:bigg2386334;	-4	CO2FULLR3C21H31N7O15P3S
+bz	Benzoate	KEGG:C00180;CAS:65-85-0;BIGG:bigg34156;	-1	C7H5O2
+fucfuc132galacglcgal14acglcgalgluside_hs	V3Fuc,III3Fuc-nLc6Cer	BIGG:bigg2419468;	0	C70H122N3O40FULLRCO
+ptdca	pentadecanoate	CAS:1002-84-2;BIGG:bigg215864;	-1	C15H29O2
+oretn	4-oxo-retonoic acid	BIGG:bigg2430195;	-1	C20H27O3
+strdnccoa	stearidonyl coenzyme A	BIGG:bigg2218848;	-4	C39H58N7O17P3S
+lnlncacrn	alpha-linolenyl carnitine	BIGG:bigg2614411;	0	C25H43NO4
+fucacngal14acglcgalgluside_hs	IV3-a-NeuAc,III3-a-Fuc-nLc4Cer	BIGG:bigg2419377;	-1	C61H105N3O34FULLRCO
+andrstrnglc	androsterone glucuronide	BIGG:bigg2304839;	0	C25H38O8
+pser-L	O-Phospho-L-serine	KEGG:C01005;CAS:407-41-0;BIGG:bigg36594;	-2	C3H6NO6P
+urea	Urea	KEGG:C00086;CAS:57-13-6;BIGG:bigg33799;	0	CH4N2O
+pnto-R	(R)-Pantothenate	KEGG:C00864;CAS:79-83-4;BIGG:bigg36234;	-1	C9H16NO5
+4hglusa	L-4-Hydroxyglutamate semialdehyde	KEGG:C05938;BIGG:bigg1447438;	0	C5H9NO4
+octa	octanoate (n-C8:0)	KEGG:C06423;CAS:124-07-2;BIGG:bigg48223;	-1	C8H15O2
+f1a	F1alpha	BIGG:bigg1886170;	0	C22H37N2O15X
+34dhoxmand	3,4-Dihydroxymandelate	KEGG:C05580;CAS:61-33-6;BIGG:bigg46062;	-1	C8H7O5
+thyox-L	L-Thyroxine	KEGG:C01829;CAS:51-48-9;BIGG:bigg38499;	0	C15H11I4NO4
+r5p	alpha-D-Ribose 5-phosphate	KEGG:C00117;CAS:4300-28-1;BIGG:bigg42420;	-2	C5H9O8P
+galt	Galactitol	KEGG:C01697;CAS:608-66-2;BIGG:bigg38183;	0	C6H14O6
+glygn5	glycogen, structure 5 (glycogenin-2[1,4-Glc])	BIGG:bigg2214399;	0	C12H21O11X
+strdnc	stearidonic acid C18:4, n-3	BIGG:bigg2218006;	-1	C18H27O2
+25hvitd2	25-Hydroxyvitamin D2	BIGG:bigg2289188;	0	C28H44O2
+2hyoxplac	2-Hydroxyphenylacetate	KEGG:C05852;CAS:91-64-5;BIGG:bigg46660;	-1	C8H7O3
+kynate	4-Hydroxy-2-quinolinecarboxylic acid	KEGG:C01717;CAS:492-27-3;BIGG:bigg38234;	-1	C10H6NO3
+pppi	Inorganic triphosphate	KEGG:C00536;BIGG:bigg41547;	-4	HO10P3
+leuktrC4	Leukotriene C4	BIGG:bigg2212273;	-2	C30H45N3O9S
+cs_e	chondroitin sulfate E (GalNAc4,6diS-GlcA), free chain	BIGG:bigg2415881;	-8	C45H64N2O55S6
+ksi_deg41	keratan sulfate I, degradation product 41	BIGG:bigg2416957;	0	C34H58N2O26
+dopasf	Dopamine 3-O-sulfate	KEGG:C13690;CAS:51317-41-0;BIGG:bigg2320809;	0	C8H11NO5S
+fuc14galacglcgalgluside_hs	Lea glycolipid	BIGG:bigg2419350;	0	C50H89N2O26FULLRCO
+h	H+	KEGG:C00080;CAS:12408-02-5;BIGG:bigg33778;	1	H
+gthox	Oxidized glutathione	KEGG:C00127;BIGG:bigg33951;	-2	C20H30N6O12S2
+dedoldp_L	Dehydrodolichol diphosphate, human liver homolog	BIGG:bigg1814660;	-30	C1080H1738O70P20
+meoh	Methanol	KEGG:C00132;CAS:67-56-1;BIGG:bigg33974;	0	CH4O1
+cmpacna	CMP-N-acetylneuraminate	KEGG:C00128;CAS:3063-71-6;BIGG:bigg33954;	-2	C20H29N4O16P
+mmcoa-R	(R)-Methylmalonyl-CoA	KEGG:C01213;BIGG:bigg37090;	-5	C25H35N7O19P3S
+xol25oh	25-Hydroxycholesterol	CAS:2140-46-7;BIGG:bigg2197441;	0	C27H46O2
+zymst	zymosterol	KEGG:C05437;CAS:7488-99-5;BIGG:bigg45806;	0	C27H44O
+estrone	Estrone	KEGG:C00468;CAS:53-16-7;BIGG:bigg35059;	0	C18H22O2
+prostgh2	Prostaglandin H2	KEGG:C00427;CAS:42935-17-1;BIGG:bigg34952;	-1	C20H31O5
+tetpent6coa	tetracosapentaenoyl coenzyme A, n-6	BIGG:bigg2219652;	-4	C45H68N7O17P3S
+cdpdag_hs	CDP diacylglycerol (homo sapiens)	BIGG:bigg2233147;	-2	C12H17N3O11P2FULLRCO2FULLR2CO2
+peracd	Perillic acid	CAS:7694-45-3;BIGG:bigg2266070;	-1	C10H13O2
+galgalthcrm_hs	Gal-Gal-Gal-Gal-Glc-Cer (homo sapiens)	BIGG:bigg2266461;	0	C48H86NO27FULLRCO
+sphs1p	Sphingosine 1-phosphate	KEGG:C06124;CAS:SE: P450;BIGG:bigg47453;	-1	C18H37NO5P
+dgpi_prot_hs	deacylated-glycophosphatidylinositol (GPI)-anchored protein	BIGG:bigg2289564;	0	C39H76N4O37P4FULLRCO2FULLR2CO2X
+nrpphr	Norepinephrine	KEGG:C00547;CAS:51-41-2;BIGG:bigg35313;	1	C8H12NO3
+gal14acglcgalgluside_hs	Lactoneotetraosylceramide	BIGG:bigg2419354;	0	C44H79N2O22FULLRCO
+hexccoa	Hexacosanoyl-CoA (n-C26:0CoA)	BIGG:bigg1453342;	-4	C47H82N7O17P3S
+tagat-D	D-Tagatose	KEGG:C00795;CAS:87-81-0;BIGG:bigg36022;	0	C6H12O6
+sucr	Sucrose	KEGG:C00089;CAS:57-50-1;BIGG:bigg33807;	0	C12H22O11
+ile-L	L-Isoleucine	KEGG:C00407;CAS:73-32-5;BIGG:bigg34887;	0	C6H13NO2
+dedol_L	Dehydrodolichol, human liver homolog	BIGG:bigg1821257;	0	C1080H1748O10
+m6masnC	(alpha-D-mannosyl)6-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822901;	0	C58H97N2O45X
+s2l2fn2m2masn	PA6	BIGG:bigg1830545;	-2	C90H145N6O65X
+5dpmev	(R)-5-Diphosphomevalonate	KEGG:C01143;BIGG:bigg36910;	-4	C6H10O10P2
+utp	UTP	KEGG:C00075;CAS:63-39-8;BIGG:bigg33760;	-4	C9H11N2O15P3
+17ahprgstrn	17alpha-Hydroxyprogesterone	CAS:68-96-2;BIGG:bigg36989;	0	C21H30O3
+adsel	Adenylylselenate	KEGG:C05686;CAS:4408-78-0;BIGG:bigg46285;	-2	C10H12N5O10PSe
+glygn4	glycogen, structure 4 (glycogenin-1,6-{2[1,4-Glc], [1,4-Glc]})	BIGG:bigg2214348;	0	C18H31O16X
+cspg_e	chondroitin sulfate E (GalNAc4,6diS-GlcA) proteoglycan	BIGG:bigg2300742;	-8	C45H63N2O54S6X
+cs_b_pre4	chondroitin sulfate B (IdoA2S-GalNAc4S), precursor 4	BIGG:bigg2301450;	-4	C45H67N2O42S2X
+hs_pre14	heparan sulfate, precursor 14	BIGG:bigg2303006;	-11	C79H115N5O95S10X
+oh1	hydroxide ion	KEGG:C01328;BIGG:bigg37371;	-1	HO
+cs_d	chondroitin sulfate D (GlcNAc6S-GlcA2S), free chain	BIGG:bigg2415879;	-7	C45H65N2O52S5
+ksi_deg1	keratan sulfate I, degradation product 1	BIGG:bigg2416915;	-13	C241H383N17O209S12X
+ksi_deg27	keratan sulfate I, degradation product 27	BIGG:bigg2416934;	-4	C104H169N7O88S4
+apoC	Apocarboxlase (no lys residue)	BIGG:bigg2421372;	0	XH
+ebastineoh	hydroxylated ebastine	BIGG:bigg2299767;	0	C32H39NO3
+arg-L	L-Arginine	KEGG:C00062;CAS:74-79-3;BIGG:bigg33707;	1	C6H15N4O2
+sprm	Spermine	KEGG:C00750;CAS:71-44-3;BIGG:bigg35875;	4	C10H30N4
+inost	myo-Inositol	KEGG:C00137;CAS:87-89-8;BIGG:bigg33990;	0	C6H12O6
+seasmet	Se-Adenosylselenomethionine	KEGG:C05691;CAS:4408-78-0;BIGG:bigg46296;	1	C15H23N6O5Se
+ap4a	P1,P4-Bis(5'-adenosyl) tetraphosphate	KEGG:C01260;BIGG:bigg1484745;	-4	C20H24N10O19P4
+dna5mtc	DNA 5-methylcytosine	KEGG:C02967;BIGG:bigg2217502;	0	C11H19O8PR2
+adhap_hs	acyl-dihydroxyacetone phosphate	BIGG:bigg2220549;	-2	C3H4O6PFULLRCO
+gm1a_hs	GM1alpha (homo sapiens)	BIGG:bigg2266551;	-1	C55H95N3O30FULLRCO
+oagt3_hs	9-O-Acetylated GT3 (homo sapiens)	BIGG:bigg2289933;	-3	C65H106N4O37FULLRCO
+ksi_pre11	keratan sulfate I biosynthesis, precursor 11	BIGG:bigg2296824;	-4	C129H208N9O101S3X
+tolbutamide	tolbutamide	BIGG:bigg2299988;	0	C12H18N2O3S
+hs	heparan sulfate, free chain	BIGG:bigg2304623;	-13	C79H114N5O102S12
+limnen	Limonene	KEGG:C06078;CAS:598-35-6;BIGG:bigg47361;	0	C10H16
+ksi_deg33	keratan sulfate I, degradation product 33	BIGG:bigg2416936;	-2	C76H125N5O62S2
+apoC-Lys_btn	Holocarboxylase (biotin covalent bound to Lys residue of apoC)	BIGG:bigg2421326;	0	C16H27N4O3SX
+htaxol	hydroxylated taxol	BIGG:bigg2299804;	0	C47H31NO15
+cmusa	2-Amino-3-carboxymuconate semialdehyde	KEGG:C04409;BIGG:bigg1445617;	-1	C7H6NO5
+ttccoa	tetracosanoyl-CoA  (n-C24:0CoA)	BIGG:bigg1453345;	-4	C45H78N7O17P3S
+ind3ac	Indole-3-acetate	KEGG:C00954;CAS:87-51-4;BIGG:bigg1485312;	-1	C10H8NO2
+1pyr5c	1-Pyrroline-5-carboxylate	KEGG:C03912;BIGG:bigg42766;	-1	C5H6NO2
+m6masnA	(alpha-D-mannosyl)6-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822944;	0	C58H97N2O45X
+glu5p	L-Glutamate 5-phosphate	KEGG:C03287;BIGG:bigg41564;	-2	C5H8NO7P
+2aobut	L-2-Amino-3-oxobutanoate	KEGG:C03508;BIGG:bigg41986;	0	C4H7NO3
+xol7ah	7alpha-Hydroxy-5beta-cholestan-3-one	KEGG:C05451;CAS:67-97-0;BIGG:bigg45839;	0	C27H46O2
+bamppald	beta-Aminopropion aldehyde	KEGG:C05665;CAS:608-07-1;BIGG:bigg46232;	1	C3H8NO
+dna	DNA	KEGG:C00039;BIGG:bigg2217500;	0	C10H17O8PR2
+vacccoa	vaccenyl coenzyme A	BIGG:bigg2218408;	-4	C39H64N7O17P3S
+2dpmhobq	2-Decaprenyl-3-methyl-5-hydroxy-6-methoxy-1,4-benzoquinone	BIGG:bigg2267627;	0	C58H88O4
+emem2gacpail_hs	(phosphoethanolaminyl-mannosyl),(phosphoethanolaminyl)-dimannosyl-glucosaminyl-acylphosphatidylinositol (H7')	BIGG:bigg2288941;	0	C53H100N3O35P3FULLRCO2FULLR2CO2
+cs_a,b_pre3	chondroitin sulfate A (GalNAc4S-GlcA) and B (IdoA2S-GalNAc4S), precursor 3	BIGG:bigg2300733;	-4	C45H67N2O42S2X
+chsterols	cholesterol sulfate	BIGG:bigg2705326;	-1	C27H45O4S
+e4p	D-Erythrose 4-phosphate	KEGG:C00279;CAS:585-18-2;BIGG:bigg34479;	-2	C4H7O7P
+5mdru1p	5-Methylthio-5-deoxy-D-ribulose 1-phosphate	KEGG:C04582;BIGG:bigg44103;	-2	C6H11O7PS
+cdpea	CDPethanolamine	KEGG:C00570;BIGG:bigg35382;	-1	C11H19N4O11P2
+tdeACP	cis-tetradec-7-enoyl-[acyl-carrier protein] (n-C14:1)	BIGG:bigg1437535;	-1	C25H45N2O8PRS
+m1mpdol_L	alpha-D-mannosyl-beta-D-mannosyl-diacylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809502;	-20	C1360H2228N20O270P20
+m6masnB2	(alpha-D-mannosyl)6-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822946;	0	C58H97N2O45X
+sT_antigen	sialyl-T antigen	BIGG:bigg1885367;	-1	C25H40N2O18X
+pecgoncoa	Pseudoecgonyl-CoA	BIGG:bigg2282543;	-3	C30H46N8O18P3S
+ksi_deg5	keratan sulfate I, degradation product 5	BIGG:bigg2416919;	-11	C222H356N15O194S11
+ha_deg1	hyaluronan degradation product 1	BIGG:bigg2418548;	-1	C22H33N2O16
+galacgalfuc12gal14acglcgalgluside_hs	(Gal)3 (GalNAc)1 (Glc)1 (GlcNAc)1 (LFuc)1 (Cer)1	BIGG:bigg2419398;	0	C64H112N3O36FULLRCO
+akg	2-Oxoglutarate	KEGG:C00026;CAS:328-50-7;BIGG:bigg33565;	-2	C5H4O5
+ala-B	beta-Alanine	KEGG:C00099;CAS:107-95-9;BIGG:bigg33848;	0	C3H7NO2
+co2	CO2	KEGG:C00011;CAS:124-38-9;BIGG:bigg33506;	0	CO2
+cytd	Cytidine	KEGG:C00475;CAS:65-46-3;BIGG:bigg35089;	0	C9H13N3O5
+ddcacoa	Dodecanoyl-CoA (n-C12:0CoA)	KEGG:C01832;CAS:6244-92-4;BIGG:bigg38504;	-4	C33H54N7O17P3S
+etha	Ethanolamine	KEGG:C00189;CAS:141-43-5;BIGG:bigg34189;	1	C2H8NO
+aacoa	Acetoacetyl-CoA	KEGG:C00332;CAS:1420-36-6;BIGG:bigg34646;	-4	C25H36N7O18P3S
+ddca	Dodecanoate (n-C12:0)	KEGG:C02679;CAS:143-07-7;BIGG:bigg40351;	-1	C12H23O2
+ocdcya	octadecadienoate (n-C18:2)	BIGG:bigg1451013;	-1	C18H31O2
+stcoa	Stearoyl-CoA (n-C18:0CoA)	KEGG:C00412;CAS:362-66-3;BIGG:bigg1451385;	-4	C39H66N7O17P3S
+mn	beta-1,4-mannose-N-acetylglucosamine	BIGG:bigg1862570;	0	C14H25NO11
+glygn1	glycogen, structure 1 (glycogenin-11[1,4-Glc])	BIGG:bigg2213909;	0	C66H111O56X
+q10h2	Ubiquinol-10	BIGG:bigg1585153;	0	C59H92O4
+13dampp	1,3-Diaminopropane	KEGG:C00986;CAS:109-76-2;BIGG:bigg36543;	2	C3H12N2
+pail45p_hs	phosphatidylinositol 4,5-bisphosphate (Homo sapiens)	BIGG:bigg2255621;	-5	C9H14O15P3FULLRCO2FULLR2CO2
+bdg2hc	cis-beta-D-Glucosyl-2-hydroxycinnamate	KEGG:C05839;CAS:63-37-6;BIGG:bigg46608;	0	C15H18O8
+ga2_hs	GA2 (homo sapiens)	BIGG:bigg2266532;	0	C38H69N2O17FULLRCO
+gt1alpha_hs	GT1aalpha (homo sapiens)	BIGG:bigg2266637;	-3	C77H127N5O46FULLRCO
+ksi_pre17	keratan sulfate I biosynthesis, precursor 17	BIGG:bigg2296832;	-6	C157H252N11O127S5X
+ksi_pre23	keratan sulfate I biosynthesis, precursor 23	BIGG:bigg2296840;	-8	C185H296N13O153S7X
+agm	Agmatine	KEGG:C00179;CAS:306-60-5;BIGG:bigg34153;	2	C5H16N4
+ebastine	ebastine	BIGG:bigg2299759;	0	C32H39NO2
+dmantipyrine	demethylated antipyrine	BIGG:bigg2299979;	0	C10H10N2O
+hs_pre15	heparan sulfate, precursor 15	BIGG:bigg2303007;	-12	C79H114N5O98S11X
+hs_deg21	heparan sulfate, degradation product 21	BIGG:bigg2303867;	-4	C37H55NO38S2
+5dhf	pentaglutamyl folate (DHF)	BIGG:bigg2304239;	-6	C39H43N11O18
+7dhf	heptaglutamyl folate (DHF)	BIGG:bigg2304241;	-8	C49H55N13O24
+asp-D	D-Aspartate	KEGG:C00402;CAS:1783-96-6;BIGG:bigg34874;	-1	C4H6NO4
+fald	Formaldehyde	KEGG:C00067;CAS:50-00-0;BIGG:bigg33726;	0	CH2O
+srtn	Serotonin	KEGG:C00780;CAS:50-67-9;BIGG:bigg35982;	1	C10H13N2O
+gchola	glycocholate	KEGG:C01921;CAS:475-31-0;BIGG:bigg38691;	0	C26H43NO6
+thcholstoic	3alpha,7alpha,12alpha-Trihydroxy-5beta-cholestanoate	KEGG:C04722;CAS:33964-75-9;BIGG:bigg44407;	-1	C27H45O5
+Rtotal2crn	R total 2 carnitine	BIGG:bigg2392272;	0	CO2FULLR2C7H14NO2
+Rtotal2coa	R total 2 coenzyme A	BIGG:bigg2386333;	-4	CO2FULLR2C21H31N7O15P3S
+cs_a_deg5	chondroitin sulfate A (GalNAc4S-GlcA), degradation product 5	BIGG:bigg2415895;	-2	C23H36O24S
+cspg_b	chondroitin sulfate B / dermatan sulfate (IdoA2S-GalNAc4S) proteoglycan	BIGG:bigg2301453;	-6	C45H65N2O48S4X
+ksii_core2_deg8	keratan sulfate II (core 2-linked), degradation product 8	BIGG:bigg2418063;	0	C36H60N3O25X
+fucgalfucgalacglcgalgluside_hs	(Gal)3 (Glc)1 (GlcNAc)1 (LFuc)2 (Cer)1	BIGG:bigg2419338;	0	C62H109N2O35FULLRCO
+fucgalacgalfucgalacglcgal14acglcgalgluside_hs	(Gal)4 (GalNAc)1 (Glc)1 (GlcNAc)2 (LFuc)2 (Cer)1	BIGG:bigg2419443;	0	C84H145N4O50FULLRCO
+acglcgalacglcgal14acglcgalgluside_hs	(Gal)3 (Glc)1 (GlcNAc)3 (Cer)1	BIGG:bigg2419409;	0	C66H115N4O37FULLRCO
+pristcoa	pristanoyl coa	BIGG:bigg2364529;	-4	C40H68N7O17P3S
+fucgalgbside_hs	fucosyl galactosylgloboside (homo sapiens)	BIGG:bigg2266521;	0	C56H99N2O31FULLRCO
+mercplaccys	3-mercaptolactate-cysteine disulfide	BIGG:bigg2742951;	-1	C6H10O5S2N
+dhap	Dihydroxyacetone phosphate	KEGG:C00111;CAS:57-04-5;BIGG:bigg33898;	-2	C3H5O6P
+trdox	Oxidized thioredoxin	KEGG:C00343;BIGG:bigg34679;	0	X
+dcamp	N6-(1,2-Dicarboxyethyl)-AMP	KEGG:C03794;BIGG:bigg42544;	-4	C14H14N5O11P
+25aics	(S)-2-[5-Amino-1-(5-phospho-D-ribosyl)imidazole-4-carboxamido]succinate	KEGG:C04823;BIGG:bigg44624;	-4	C13H15N4O12P
+thf	5,6,7,8-Tetrahydrofolate	KEGG:C00101;CAS:135-16-0;BIGG:bigg33856;	-2	C19H21N7O6
+nadh	Nicotinamide adenine dinucleotide - reduced	KEGG:C00004;CAS:58-68-4;BIGG:bigg33484;	-2	C21H27N7O14P2
+gtp	GTP	KEGG:C00044;CAS:86-01-1;BIGG:bigg33641;	-4	C10H12N5O14P3
+lac-L	L-Lactate	KEGG:C00186;CAS:79-33-4;BIGG:bigg34179;	-1	C3H5O3
+succ	Succinate	KEGG:C00042;CAS:110-15-6;BIGG:bigg33633;	-2	C4H4O4
+adn	Adenosine	KEGG:C00212;CAS:58-61-7;BIGG:bigg34273;	0	C10H13N5O4
+o2	O2	KEGG:C00007;CAS:7782-44-7;BIGG:bigg33493;	0	O2
+20ahchsterol	20alpha-hydroxy cholesterol	CAS:516-72-3;BIGG:bigg1443018;	0	C27H46O2
+pmtcoa	Palmitoyl-CoA (n-C16:0CoA)	KEGG:C00154;BIGG:bigg34063;	-4	C37H62N7O17P3S
+ascb-L	L-Ascorbate	KEGG:C00072;CAS:50-81-7;BIGG:bigg33747;	0	C6H8O6
+n2m2nmasn	N-Acetyl-beta-D-glucosaminyl-1,2-alpha-D-mannosyl-1,3-(N-acetyl-beta-D-glucosaminyl-1,2-alpha-D-mannosyl-1,6)-(N-acetyl-beta-D-glucosaminyl-1,4)-beta-D-mannosyl-1,4-N-acetyl-beta-D-glucosaminyl-R	KEGG:C04946;CAS:74863-84-6;BIGG:bigg45018;	0	C58H96N5O40X
+core7	Core 7	BIGG:bigg1886173;	0	C16H27N2O10X
+6pgl	6-phospho-D-glucono-1,5-lactone	KEGG:C01236;CAS:None;BIGG:bigg37157;	-2	C6H9O9P
+grdp	Geranyl diphosphate	KEGG:C00341;BIGG:bigg34675;	-3	C10H17O7P2
+prpncoa	Propenoyl-CoA	KEGG:C00894;BIGG:bigg36320;	-4	C24H34N7O17P3S
+estradiol	Estradiol	KEGG:C00951;CAS:50-28-2;BIGG:bigg36456;	0	C18H24O2
+camp	cAMP	KEGG:C00575;BIGG:bigg1484809;	-1	C10H11N5O6P
+eicostet	eicosatetranoic acid	BIGG:bigg2219623;	-1	C20H31O2
+pgp_hs	phosphatidyl glycerol phosphate (homo sapiens)	BIGG:bigg2262844;	-3	C6H11O9P2FULLRCO2FULLR2CO2
+5oxpro	5-Oxoproline	KEGG:C01879;CAS:98-79-3;BIGG:bigg1800372;	-1	C5H6NO3
+2coum	cis-2-Hydroxy cinnamate	KEGG:C05838;CAS:63-37-6;BIGG:bigg46605;	-1	C9H7O3
+gd3_hs	GD3 (homo sapiens)	BIGG:bigg2266610;	-2	C52H88N3O28FULLRCO
+m3gacpail_hs	trimannosyl-glucosaminyl-acylphosphatidylinositol (H4)	BIGG:bigg2288905;	0	C49H88NO29PFULLRCO2FULLR2CO2
+2425dhvitd2	24R,25-Dihyoxyvitamin D2	BIGG:bigg2289304;	0	C28H44O3
+ksii_core2_pre6	keratan sulfate II biosynthesis, precursor 6	BIGG:bigg2296689;	-2	C61H98N5O46SX
+hs_deg15	heparan sulfate, degradation product 15	BIGG:bigg2303861;	-7	C49H71N2O57S5
+hs_deg16	heparan sulfate, degradation product 16	BIGG:bigg2303862;	-6	C49H72N2O54S4
+dlnlcg	dihomo-gamma-linolenic acid (n-6)	KEGG:C03242;CAS:1783-84-2;BIGG:bigg41475;	-1	C20H33O2
+xoltriol	3alpha,7alpha,12alpha-Trihydroxy-5beta-cholestane	KEGG:C05454;CAS:67-97-0;BIGG:bigg45846;	0	C27H48O3
+cs_d_deg4	chondroitin sulfate D (GlcNAc6S-GlcA2S), degradation product 4	BIGG:bigg2416179;	-4	C31H47NO35S3
+ksi_deg2	keratan sulfate I, degradation product 2	BIGG:bigg2416916;	-13	C241H384N17O210S12
+ksii_core4	keratan sulfate II (core 4-linked)	BIGG:bigg2299365;	-4	C89H142N7O72S3X
+thbpt	Tetrahydrobiopterin	KEGG:C00272;CAS:17528-72-2;BIGG:bigg34464;	0	C9H15N5O3
+formcoa	Formyl-CoA	KEGG:C00798;BIGG:bigg36030;	0	C22H36N7O17P3S
+13-cis-retn	13-cis-retinoate	BIGG:bigg2430432;	-1	C20H27O2
+tetpent6crn	tetracosapentaenoyl carnitine	BIGG:bigg2614458;	0	C31H51NO4
+na1	Sodium	KEGG:C01330;CAS:7440-23-5;BIGG:bigg37376;	1	Na
+glyc-R	(R)-Glycerate	KEGG:C00258;CAS:473-81-4;BIGG:bigg34424;	-1	C3H5O4
+fol	Folate	KEGG:C00504;CAS:59-30-3;BIGG:bigg35180;	-1	C19H18N7O6
+xoldioloneh	7alpha,12alpha-Dihydroxy-5beta-cholestan-3-one	KEGG:C05453;CAS:67-97-0;BIGG:bigg45844;	0	C27H46O3
+4mzym_int1	4-Methylzymosterol intermediate 1	BIGG:bigg1454772;	0	C29H46O3
+didp	dIDP	KEGG:C01344;BIGG:bigg37395;	-3	C10H11N4O10P2
+nrvnc	nervonic acid	BIGG:bigg2218012;	-1	C24H45O2
+glx	Glyoxylate	KEGG:C00048;CAS:298-12-4;BIGG:bigg33659;	-1	C2H1O3
+R6coa_hs	R group 6 Coenzyme A homo sapiens	BIGG:bigg2298477;	-4	XCO2C21H31N7O15P3S
+hs_deg13	heparan sulfate, degradation product 13	BIGG:bigg2303859;	-6	C55H83N3O61S5
+lcts	Lactose	KEGG:C00243;CAS:63-42-3;BIGG:bigg34366;	0	C12H22O11
+spmd	Spermidine	KEGG:C00315;CAS:124-20-9;BIGG:bigg34593;	3	C7H22N3
+ocdcaACP	Octadecanoyl-ACP (n-C18:0ACP)	KEGG:C04088;BIGG:bigg1440358;	-1	C29H55N2O8PRS
+pram	5-Phospho-beta-D-ribosylamine	KEGG:C03090;BIGG:bigg41182;	-1	C5H11NO7P
+3mlda	3-Methylimidazoleacetic acid	KEGG:C05828;CAS:63-37-6;BIGG:bigg46587;	-1	C6H7N2O2
+adrnl	Adrenaline	KEGG:C00788;CAS:51-43-4;BIGG:bigg35997;	1	C9H14NO3
+glygn2	glycogen, structure 2 (glycogenin-1,6-{7[1,4-Glc], 4[1,4-Glc]})	BIGG:bigg2213926;	0	C66H111O56X
+tetpent3coa	tetracosapentaenoyl coenzyme A, n-3	BIGG:bigg2219656;	-4	C45H68N7O17P3S
+tethex3	tetracosahexaenoic acid, n-3	BIGG:bigg2219657;	-1	C24H35O2
+dhcrm_hs	dihydroceramide (homo sapiens)	BIGG:bigg2263543;	0	C18H38NO2FULLRCO
+gq1c_hs	GQ1c (homo sapiens)	BIGG:bigg2266628;	-4	C88H143N6O54FULLRCO
+hs_pre13	heparan sulfate, precursor 13	BIGG:bigg2301809;	-10	C79H116N5O92S9X
+6htststerone	6 beta hydroxy testosterone	BIGG:bigg2299953;	0	C19H28O3
+cholate	Cholate	KEGG:C00695;CAS:81-25-4;BIGG:bigg35720;	-1	C24H39O5
+Rtotal3	R total 3 position	BIGG:bigg2220401;	-1	CO2FULLR3
+tcynt	Thiocyanate	KEGG:C01755;CAS:463-56-9;BIGG:bigg38336;	-1	CNS
+cs_a_deg2	chondroitin sulfate A (GalNAc4S-GlcA), degradation product 2	BIGG:bigg2415888;	-4	C37H55NO38S2
+ksi_deg9	keratan sulfate I, degradation product 9	BIGG:bigg2416923;	-10	C188H301N13O166S10
+ksi_deg25	keratan sulfate I, degradation product 25	BIGG:bigg2416942;	-4	C118H192N8O98S4
+ksii_core2_deg9	keratan sulfate II (core 2-linked), degradation product 9	BIGG:bigg2418064;	0	C30H50N3O20X
+ha	hyaluronan	KEGG:C00518;CAS:9004-61-9;BIGG:bigg35227;	-2	C28H40N2O22
+prist	pristanic acid	BIGG:bigg2364527;	-1	C19H37O2
+ksii_core2	keratan sulfate II (core 2-linked)	BIGG:bigg2296702;	-4	C81H129N6O67S3X
+tethex3coa	tetracosahexaenoyl coenzyme A	BIGG:bigg2219658;	-4	C45H66N7O17P3S
+dcsptn1crn	docosa-4,7,10,13,16-pentaenoyl carnitine	BIGG:bigg2614452;	0	C29H47NO4
+g6p	D-Glucose 6-phosphate	KEGG:C00092;CAS:56-73-5;BIGG:bigg36977;	-2	C6H11O9P
+trdrd	Reduced thioredoxin	KEGG:C00342;BIGG:bigg34677;	0	XH2
+argsuc	N(omega)-(L-Arginino)succinate	KEGG:C03406;CAS:None;BIGG:bigg41790;	-1	C10H17N4O6
+nad	Nicotinamide adenine dinucleotide	KEGG:C00003;CAS:53-84-9;BIGG:bigg33480;	-1	C21H26N7O14P2
+fe3	Fe3+	KEGG:C14819;CAS:None;BIGG:bigg50061;	3	Fe
+ac	Acetate	KEGG:C00033;CAS:71-50-1;BIGG:bigg33590;	-1	C2H3O2
+L-dpchrm	L-Dopachrome	KEGG:C01693;CAS:97-77-8;BIGG:bigg1443253;	-1	C9H6NO4
+ptth	Pantetheine	KEGG:C00831;CAS:496-65-1;BIGG:bigg36144;	0	C11H22N2O4S
+g3m8masn	(alpha-D-Glucosyl)3-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1821532;	0	C88H147N2O70X
+34dhphe	3,4-Dihydroxy-L-phenylalanine	KEGG:C00355;CAS:59-92-7;BIGG:bigg34719;	0	C9H11NO4
+xol7a	7 alpha-Hydroxycholesterol	KEGG:C03594;CAS:838-07-3;BIGG:bigg42155;	0	C27H46O2
+xoltetrol	3alpha,7alpha,12alpha,26-Tetrahydroxy-5beta-cholestane	KEGG:C05449;CAS:67-97-0;BIGG:bigg45834;	0	C27H48O4
+xtp	XTP	KEGG:C00700;BIGG:bigg35735;	-4	C10H11N4O15P3
+selcyst	Selenocystathionine	KEGG:C05699;CAS:2148941;BIGG:bigg46314;	0	C7H14N2O4Se
+galside_hs	galactocerebroside (homo sapiens)	BIGG:bigg2265463;	0	C24H46NO7FULLRCO
+ts3	Tachysterol 3	BIGG:bigg2288996;	0	C27H44O
+ksii_core2_pre3	keratan sulfate II biosynthesis, precursor 3	BIGG:bigg2296401;	-1	C47H76N4O33X
+etfrd	Electron transfer flavoprotein reduced	BIGG:bigg2300968;	0	RH2
+hs_pre7	heparan sulfate, precursor 7	BIGG:bigg2301803;	-4	C73H109N4O58X
+hista	Histamine	KEGG:C00388;CAS:51-45-6;BIGG:bigg1810403;	1	C5H10N3
+hs_deg11	heparan sulfate, degradation product 11	BIGG:bigg2303857;	-8	C55H81N3O67S7
+ksi_deg23	keratan sulfate I, degradation product 23	BIGG:bigg2416949;	-5	C124H201N8O106S5
+alpa_hs	lysophosphatidic acid (homo sapiens)	BIGG:bigg2220567;	-2	C3H6O5PFULLRCO2
+dhf	7,8-Dihydrofolate	KEGG:C00415;CAS:4033-27-6;BIGG:bigg34911;	-2	C19H19N7O6
+arachdcrn	C20:4 carnitine	BIGG:bigg1586051;	0	C27H45NO4
+tetpent3	tetracosapentaenoic acid, n-3	BIGG:bigg2219655;	-1	C24H37O2
+3mgcoa	3-Methylglutaconyl-CoA	KEGG:C03231;BIGG:bigg41450;	-5	C27H37N7O19P3S
+galgbside_hs	galactosylgloboside (homo sapiens)	BIGG:bigg2266475;	0	C50H89N2O27FULLRCO
+crm_hs	ceramide (homo sapiens)	BIGG:bigg2263545;	0	C18H36NO2FULLRCO
+m3emgacpail_hs	(trimannosyl),(phosphoethanolaminyl)-mannosyl-glucosaminyl-acylphosphatidylinositol (M4C)	BIGG:bigg2289616;	0	C57H104N2O37P2FULLRCO2FULLR2CO2
+hs_pre9	heparan sulfate, precursor 9	BIGG:bigg2301805;	-5	C87H129N5O69X
+whhdca	omega hydroxy hexadecanoate (n-C16:0)	BIGG:bigg2304730;	-1	C16H31O3
+5htrp	5-Hydroxy-L-tryptophan	KEGG:C00643;CAS:56-69-9;BIGG:bigg36630;	0	C11H12N2O3
+dd3coa	3-dodecenoyl CoA	CAS:771-51-7;BIGG:bigg1724337;	-4	C33H52N7O17P3S
+fucfuc12gal14acglcgalgluside_hs	Ley glycolipid	BIGG:bigg2419391;	0	C56H99N2O30FULLRCO
+dmhptcrn	2,6 dimethylheptanoyl carnitine	BIGG:bigg2795022;	0	C16H35NO4
+ttdcrn	tetradecanoyl carnitine	BIGG:bigg2921083;	0	C21H41NO4
+2dr1p	2-Deoxy-D-ribose 1-phosphate	KEGG:C00672;BIGG:bigg35664;	-2	C5H9O7P
+frdp	Farnesyl diphosphate	KEGG:C00448;CAS:13058-04-3;BIGG:bigg35006;	-3	C15H25O7P2
+cdpchol	CDPcholine	KEGG:C00307;CAS:987-78-0;BIGG:bigg1485298;	-1	C14H25N4O11P2
+m7masnB	(alpha-D-mannosyl)7-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine, isoform B (protein)	BIGG:bigg1822900;	0	C64H107N2O50X
+core3	Core 3	BIGG:bigg1885370;	0	C16H27N2O10X
+mercplac	3-Mercaptolactate	KEGG:C05823;CAS:63-37-6;BIGG:bigg46576;	-1	C3H5O3S
+2mb2coa	trans-2-Methylbut-2-enoyl-CoA	KEGG:C03345;BIGG:bigg41674;	-4	C26H38N7O17P3S
+pail35p_hs	phosphatidylinositol-3,5-bisphosphate (Homo sapiens)	BIGG:bigg2266185;	-5	C9H14O15P3FULLRCO2FULLR2CO2
+1a2425thvitd2	1-alpha,24R,25-Trihydroxyvitamin D2	BIGG:bigg2290317;	0	C28H44O4
+ksi_pre21	keratan sulfate I biosynthesis, precursor 21	BIGG:bigg2296838;	-7	C177H284N12O145S6X
+hs_pre2	heparan sulfate, precursor 2	BIGG:bigg2301798;	-2	C37H56NO31X
+taxol	paclitaxel	BIGG:bigg2299793;	0	C47H31NO14
+hs_deg5	heparan sulfate, degradation product 5	BIGG:bigg2303791;	-11	C67H97N4O86S10
+thmpp	Thiamine diphosphate	KEGG:C00068;CAS:154-87-0;BIGG:bigg33732;	-2	C12H16N4O7P2S
+retinal-cis-13	cis-13-retinal	BIGG:bigg2455100;	0	C20H28O
+sbt-D	D-Sorbitol	KEGG:C00794;CAS:50-70-4;BIGG:bigg36018;	0	C6H14O6
+dedolp_L	Dehydrodolichol phosphate, human liver homolog	BIGG:bigg1817981;	-20	C1080H1738O40P10
+glutcoa	Glutaryl-CoA	KEGG:C00527;CAS:103192-48-9;BIGG:bigg35255;	-5	C26H37N7O19P3S
+3hpp	3-Hydroxypropanoate	KEGG:C01013;CAS:503-66-2;BIGG:bigg53188;	-1	C3H5O3
+ggn	primed glycogenin (glycogenin-8[1,4-Glc])	BIGG:bigg2213853;	0	C48H81O41X
+dxtrn	phosphorylase-limit dextrin (glycogenin-1,6{4[1,4-Glc], 4[1,4-Glc]})	BIGG:bigg2213934;	0	C48H81O41X
+mescoa	Mesaconyl-CoA	KEGG:C06028;CAS:598-35-6;BIGG:bigg47246;	-5	C26H35N7O19P3S
+ksi_pre3	keratan sulfate I biosynthesis, precursor 3	BIGG:bigg2296400;	-1	C93H152N6O67X
+ksi_pre15	keratan sulfate I biosynthesis, precursor 15	BIGG:bigg2296828;	-5	C149H240N10O119S4X
+nicrns	Nicotinate D-ribonucleoside	KEGG:C05841;BIGG:bigg46613;	0	C11H13NO6
+lneldcACP	linoelaidic acid ACP (all trans)	BIGG:bigg2377665;	-1	C29H51N2O8PRS
+cs_d_deg1	chondroitin sulfate D (GlcNAc6S-GlcA2S), degradation product 1	BIGG:bigg2416173;	-6	C45H66N2O49S4
+ksi_deg8	keratan sulfate I, degradation product 8	BIGG:bigg2416922;	-10	C194H311N13O171S10
+galacgalfucgalacglcgal14acglcgalgluside_hs	(Gal)4 (GalNAc)1 (Glc)1 (GlcNAc)2 (LFuc)1 (Cer)1	BIGG:bigg2419442;	0	C78H135N4O46FULLRCO
+3pg	3-Phospho-D-glycerate	KEGG:C00197;BIGG:bigg34230;	-3	C3H4O7P
+prpp	5-Phospho-alpha-D-ribose 1-diphosphate	KEGG:C00119;BIGG:bigg33926;	-5	C5H8O14P3
+glc-D	D-Glucose	KEGG:C00031;CAS:50-99-7;BIGG:bigg33582;	0	C6H12O6
+nadph	Nicotinamide adenine dinucleotide phosphate - reduced	KEGG:C00005;CAS:2646-71-1;BIGG:bigg33486;	-4	C21H26N7O17P3
+asn-L	L-Asparagine	KEGG:C00152;CAS:70-47-3;BIGG:bigg34055;	0	C4H8N2O3
+etoh	Ethanol	KEGG:C00469;CAS:64-17-5;BIGG:bigg35062;	0	C2H6O
+mmcoa-S	(S)-Methylmalonyl-CoA	KEGG:C00683;BIGG:bigg35689;	-5	C25H35N7O19P3S
+pac	Phenylacetic acid	KEGG:C07086;CAS:103-82-2;BIGG:bigg1486426;	-1	C8H7O2
+thmtp	Thiamin triphosphate	KEGG:C03028;CAS:15666-52-1 3475-65-8;BIGG:bigg41046;	-3	C12H16N4O10P3S
+dolp_U	Dolichol phosphate, human uterine homolog	BIGG:bigg1809216;	-20	C1025H1670O40P10
+creat	Creatine	KEGG:C00300;CAS:57-00-1;BIGG:bigg34543;	0	C4H9N3O2
+zym_int2	zymosterol intermediate 2	BIGG:bigg1454806;	0	C27H42O
+urate	Urate	KEGG:C00366;CAS:69-93-2;BIGG:bigg34768;	0	C5H4N4O3
+chol	Choline	KEGG:C00114;CAS:123-41-1;BIGG:bigg33910;	1	C5H14NO
+chtn	chitin	CAS:1398-61-4;BIGG:bigg2242111;	0	C24H41N3O16
+retinol	Retinol	KEGG:C00473;CAS:68-26-8;BIGG:bigg35081;	0	C20H30O
+gmp	GMP	KEGG:C00144;CAS:85-32-5;BIGG:bigg34024;	-2	C10H12N5O8P
+em3gacpail_hs	phosphoethanolaminyl-trimannosyl-glucosaminyl-acylphosphatidylinositol (H6')	BIGG:bigg2288928;	0	C51H94N2O32P2FULLRCO2FULLR2CO2
+ksii_core2_pre8	keratan sulfate II biosynthesis, precursor 8	BIGG:bigg2296698;	-2	C75H121N6O56SX
+xser	Xyl-L-Ser (protein)	BIGG:bigg2299700;	0	C5H9O4X
+cspg_a	chondroitin sulfate A (GalNAc4S-GlcA) proteoglycan	BIGG:bigg2300734;	-5	C45H66N2O45S3X
+whtststerone	w hydroxy testosterone	BIGG:bigg2299954;	0	C19H28O3
+Rtotalcrn	R total carnitine	BIGG:bigg2392271;	0	CO2FULLRC7H14NO2
+R3coa_hs	R group 3 Coenzyme A homo sapiens	BIGG:bigg2218050;	-4	XCO2C21H31N7O15P3S
+cs_c_deg3	chondroitin sulfate C (GalNAc6S-GlcA), degradation product 3	BIGG:bigg2416060;	-3	C31H48NO32S2
+Ntmelys	Protein N6,N6,N6-trimethyl-L-lysine	KEGG:C05546;CAS:52500-60-4;BIGG:bigg46001;	3	C3H10X
+apoC-Lys	Apocarboxylase (Lys residue)	BIGG:bigg2421325;	0	C6H13N2OX
+ak2lgchol_hs	1-alkyl 2-lysoglycerol 3-phosphocholine	BIGG:bigg2255865;	0	C10H21O5NPFULLR
+11-cis-retfa	fatty acid 11-cis-retinol	BIGG:bigg2430294;	0	C20H29OFULLR2CO
+lgnccoa	lignocericyl coenzyme A	BIGG:bigg2218833;	-4	C45H78N7O17P3S
+elaidcrn	Elaidic carnitine	BIGG:bigg2614377;	0	C25H47NO4
+acnacngal14acglcgalgluside_hs	3',8'-LD1	BIGG:bigg2419375;	-2	C66H111N4O38FULLRCO
+5homeprazole	5 hydroxy omeprazole	BIGG:bigg2299967;	0	C17H19N3O4S
+gq1balpha_hs	GQ1balpha (homo sapiens)	BIGG:bigg2266639;	-4	C88H143N6O54FULLRCO
+oagd3_hs	9-O-Acetylated GD3 (homo sapiens)	BIGG:bigg2289927;	-2	C54H90N3O29FULLRCO
+dctp	dCTP	KEGG:C00458;CAS:2056-98-6;BIGG:bigg35027;	-4	C9H12N3O13P3
+h2o	H2O	KEGG:C00001;CAS:7732-18-5;BIGG:bigg33474;	0	H2O
+thm	Thiamin	KEGG:C00378;CAS:67-03-8;BIGG:bigg34804;	1	C12H17N4OS
+lpro	Lipoylprotein	KEGG:C02051;BIGG:bigg38983;	0	S2X
+lanost	Lanosterol	KEGG:C01724;CAS:79-63-0;BIGG:bigg38253;	0	C30H50O
+q10	Ubiquinone-10	KEGG:C00399;CAS:303-98-0;BIGG:bigg34867;	0	C59H90O4
+5forthf	5-Formiminotetrahydrofolate	KEGG:C00664;BIGG:bigg35643;	-2	C20H22N8O6
+35diotyr	3,5-Diiodo-L-tyrosine	KEGG:C01060;CAS:300-39-0; 66-02-4;BIGG:bigg36719;	0	C9H9I2NO3
+3ityr-L	3-Iodo-L-tyrosine	KEGG:C02515;CAS:70-78-0;BIGG:bigg39998;	0	C9H10INO3
+dcyt	Deoxycytidine	KEGG:C00881;CAS:951-77-9;BIGG:bigg36280;	0	C9H13N3O4
+2ameph	(2-Aminoethyl)phosphonate	KEGG:C03557;CAS:46495-39-0;BIGG:bigg42076;	-1	C2H7NO3P
+1mncam	1-Methylnicotinamide	BIGG:bigg2226225;	1	C7H9N2O
+gluala	5-L-Glutamyl-L-alanine	KEGG:C03740;BIGG:bigg1446127;	-1	C8H13N2O5
+mi1346p	1D-myo-Inositol 1,3,4,6-tetrakisphosphate	KEGG:C04477;CAS:53-42-9;BIGG:bigg43890;	-8	C6H8O18P4
+mi1456p	1D-myo-Inositol 1,4,5,6-tetrakisphosphate	BIGG:bigg2264980;	-8	C6H8O18P4
+ksi_pre24	keratan sulfate I biosynthesis, precursor 24	BIGG:bigg2296841;	-8	C191H306N13O158S7X
+cs_d_deg3	chondroitin sulfate D (GlcNAc6S-GlcA2S), degradation product 3	BIGG:bigg2416177;	-5	C37H54NO41S3
+ksi_deg6	keratan sulfate I, degradation product 6	BIGG:bigg2416920;	-11	C210H336N15O184S11
+ksi_deg10	keratan sulfate I, degradation product 10	BIGG:bigg2416924;	-9	C188H302N13O163S9
+ksi_deg29	keratan sulfate I, degradation product 29	BIGG:bigg2416951;	-3	C96H157N6O80S3
+thbpt4acam	Tetrahydrobiopterin-4a-carbinolamine	BIGG:bigg2419181;	0	C9H15N5O4
+acngalacglcgal14acglcgalgluside_hs	VI3NeuAc-nLc6Cer	BIGG:bigg2419446;	-1	C69H118N4O40FULLRCO
+5mthf	5-Methyltetrahydrofolate	KEGG:C00440;BIGG:bigg34988;	-1	C20H24N7O6
+3aib-D	D-3-Amino-isobutanoate	KEGG:C03265;CAS:20312-37-2;BIGG:bigg41519;	0	C4H9NO2
+dgchol	Chenodeoxyglycocholate	KEGG:C05462;CAS:67-97-0;BIGG:bigg45858;	0	C26H43NO5
+glyc-S	(S)-Glycerate	BIGG:bigg2226325;	-1	C3H5O4
+ser-L	L-Serine	KEGG:C00065;CAS:56-45-1;BIGG:bigg33717;	0	C3H7NO3
+orn	Ornithine	KEGG:C01602;CAS:70-26-8;BIGG:bigg37976;	1	C5H13N2O2
+pyam5p	Pyridoxamine 5'-phosphate	KEGG:C00647;CAS:529-96-4;BIGG:bigg35609;	-1	C8H12N2O5P
+3otdcoa	3-Oxotetradecanoyl-CoA	KEGG:C05261;BIGG:bigg45449;	-4	C35H56N7O18P3S
+dsT_antigen	disialyl-T antigen	BIGG:bigg1885369;	-2	C36H56N3O26X
+melanin	Melanin	KEGG:C05606;CAS:8049-97-6;BIGG:bigg46115;	-1	C9H6NO4
+xoltri24	7-alpha,24(S)-Dihydroxycholesterol	BIGG:bigg2197802;	0	C27H46O3
+3hxkynam	3-Hydroxykynurenamine	KEGG:C05636;CAS:552-58-9;BIGG:bigg46169;	1	C9H13N2O2
+5hoxindoa	5-Hydroxyindoleacetate	KEGG:C05635;CAS:552-58-9;BIGG:bigg46167;	-1	C10H8NO3
+cholcoas	3alpha,7alpha,12alpha-Trihydroxy-5beta-cholestanoyl-CoA(S)	BIGG:bigg2198961;	-4	C48H76N7O20P3S
+ditp	dITP	KEGG:C01345;BIGG:bigg37399;	-4	C10H11N4O13P3
+leuktrA4	Leukotriene A4	KEGG:C00909;CAS:72059-45-1;BIGG:bigg36355;	-1	C20H29O3
+selcys	Selenocysteine	KEGG:C05688;CAS:4408-78-0;BIGG:bigg46290;	0	C3H7NO2Se
+sel	Selenate	KEGG:C05697;CAS:2148941;BIGG:bigg46309;	-2	O4Se
+thrnt	L-Threonate	KEGG:C01828;CAS:7306-96-9;BIGG:bigg38497;	-1	C4H7O5
+gm1_hs	ganglioside GM1 (homo sapiens)	BIGG:bigg2265479;	-1	C55H95N3O30FULLRCO
+ach	Acetylcholine	KEGG:C01996;CAS:51-84-3;BIGG:bigg38868;	1	C7H16NO2
+elaid	elaidic acid	KEGG:C01712;CAS:112-79-8;BIGG:bigg38213;	-1	C18H33O2
+acglc13galacglcgal14acglcgalgluside_hs	nLc7Cer	BIGG:bigg2419452;	0	C66H115N4O37FULLRCO
+aprgstrn	20alpha-Hydroxyprogesterone	KEGG:C04042;CAS:145-14-2;BIGG:bigg43018;	0	C21H32O2
+glu5sa	L-Glutamate 5-semialdehyde	KEGG:C01165;CAS:None;BIGG:bigg36962;	0	C5H9NO3
+nm2masn	(N-acetyl-D-glucosaminyl-(alpha-D-mannosyl)2-beta-D-mannosyl-diacetylchitobiosyl)-L-asparagine (protein)	KEGG:C05884;CAS:91-64-5;BIGG:bigg46752;	0	C42H70N3O30X
+prostgd2	Prostaglandin D2	KEGG:C00696;CAS:41598-07-6;BIGG:bigg35725;	-1	C20H31O5
+lnlnca	alpha-Linolenic acid, C18:3, n-3	KEGG:C06427;CAS:463-40-1;BIGG:bigg48237;	-1	C18H29O2
+5a2opntn	5-Amino-2-oxopentanoate	KEGG:C01110;BIGG:bigg36830;	0	C5H9NO3
+2mp2coa	2-Methylprop-2-enoyl-CoA	KEGG:C03460;BIGG:bigg41895;	-4	C25H36N7O17P3S
+mi145p	1D-myo-Inositol 1,4,5-trisphosphate	KEGG:C01245;CAS:88269-39-0;BIGG:bigg1485108;	-6	C6H9O15P3
+gd1c_hs	GD1c (homo sapiens)	BIGG:bigg2266540;	-2	C66H111N4O38FULLRCO
+pap	Adenosine 3',5'-bisphosphate	KEGG:C00054;CAS:1053-73-2;BIGG:bigg33684;	-4	C10H11N5O10P2
+hs_pre10	heparan sulfate, precursor 10	BIGG:bigg2301806;	-5	C79H121N5O77S4X
+cs_a_deg1	chondroitin sulfate A (GalNAc4S-GlcA), degradation product 1	BIGG:bigg2415875;	-4	C45H68N2O43S2
+retinol-cis-11	cis-11-retinol	BIGG:bigg2265508;	0	C20H30O
+mal-L	L-Malate	KEGG:C00149;CAS:97-67-6;BIGG:bigg34045;	-2	C4H4O5
+cys-L	L-Cysteine	KEGG:C00097;CAS:52-90-4;BIGG:bigg33843;	0	C3H7NO2S
+aprut	N-Acetylputrescine	KEGG:C02714;CAS:18233-70-0;BIGG:bigg1445791;	1	C6H15N2O
+4abut	4-Aminobutanoate	KEGG:C00334;CAS:56-12-2;BIGG:bigg34652;	0	C4H9NO2
+pacald	Phenylacetaldehyde	KEGG:C00601;CAS:122-78-1;BIGG:bigg35469;	0	C8H8O
+selnp	Selenophosphate	KEGG:C05172;BIGG:bigg45264;	-1	H2O3PSe
+fgam	N2-Formyl-N1-(5-phospho-D-ribosyl)glycinamide	KEGG:C04376;BIGG:bigg43690;	-2	C8H13N2O9P
+n2m2nmn	reducing GlcNAc removed form of n2m2nmasn (w/o peptide)	BIGG:bigg1862875;	0	C50H84N4O36
+glygn3	glycogen, structure 3 (glycogenin-7[1,4-Glc])	BIGG:bigg2213954;	0	C42H71O36X
+btcoa	Butanoyl-CoA	KEGG:C00136;BIGG:bigg33988;	-4	C25H38N7O17P3S
+mi3456p	1D-myo-Inositol 3,4,5,6-tetrakisphosphate	KEGG:C04520;CAS:652-69-7;BIGG:bigg43973;	-8	C6H8O18P4
+acgpail_hs	N-Acetyl-D-glucosaminylphosphatidylinositol	KEGG:C01288;BIGG:bigg53806;	-1	C17H29NO14PFULLRCO2FULLR2CO2
+gm3_hs	ganglioside GM3 (homo sapiens)	BIGG:bigg2265475;	-1	C41H72N2O20FULLRCO
+ksi_pre10	keratan sulfate I biosynthesis, precursor 10	BIGG:bigg2296823;	-3	C129H209N9O98S2X
+ksi_pre36	keratan sulfate I biosynthesis, precursor 36	BIGG:bigg2296856;	-12	C247H394N17O210S11X
+ksii_core4_pre3	keratan sulfate II biosynthesis, precursor 3	BIGG:bigg2299218;	-1	C55H89N5O38X
+ksii_core4_pre10	keratan sulfate II biosynthesis, precursor 10	BIGG:bigg2299225;	-3	C89H143N7O69S2X
+leuktrB4woh	w-hydroxyl leukotriene B4	BIGG:bigg2299755;	-1	C20H31O5
+nifedipine	nifedipine	BIGG:bigg2299939;	0	C17H18N2O6
+dcholcoa	chenodeoxycholoyl coenzyme a	KEGG:C05337;CAS:64-04-0;BIGG:bigg45602;	-4	C45H70N7O19P3S
+ksi_deg22	keratan sulfate I, degradation product 22	BIGG:bigg2416941;	-5	C132H214N9O111S5
+ksi_deg34	keratan sulfate I, degradation product 34	BIGG:bigg2416945;	-1	C76H126N5O59S1
+acglcgal14acglcgalgluside_hs	nLc5Cer	BIGG:bigg2419404;	0	C52H92N3O27FULLRCO
+spc_hs	sphingosylphosphorylcholine (homo sapiens)	BIGG:bigg2704995;	1	C23H50N2O5P
+cdp	CDP	KEGG:C00112;CAS:63-38-7;BIGG:bigg33901;	-3	C9H12N3O11P2
+2kmb	2-keto-4-methylthiobutyrate	BIGG:bigg228408;	-1	C5H7O3S
+ura	Uracil	KEGG:C00106;CAS:66-22-8;BIGG:bigg33879;	0	C4H4N2O2
+doldp_L	Dolichol diphosphate, human liver homolog	BIGG:bigg1809266;	-30	C1080H1758O70P20
+m3mpdol_U	(alpha-D-mannosyl)3-beta-D-mannosyl-diacetylchitodiphosphodolichol, human uterine homolog	BIGG:bigg1809508;	-20	C1425H2340N20O370P20
+fn2m2masn	N4-{N-Acetyl-beta-D-glucosaminyl-(1,2)-alpha-D-mannosyl-(1,3)-[N-acetyl-beta-D-glucosaminyl-(1,2)-alpha-D-mannosyl-(1,6)]-beta-D-mannosyl-(1,4)-N-acetyl-beta-D-glucosaminyl-(1,4)-[alpha-L-fucosyl-(1,6)]-N-acetyl-beta-D-glucosaminyl}asparagine	BIGG:bigg1830471;	0	C56H93N4O39X
+glc2man	(2)[glucose-1,3]-mannose oligosaccharide	BIGG:bigg1838689;	0	C18H32O16
+3mox4hoxm	3-Methoxy-4-hydroxymandelate	KEGG:C05584;CAS:306-08-1;BIGG:bigg46071;	-1	C9H9O5
+selhcys	Selenohomocysteine	KEGG:C05698;CAS:2148941;BIGG:bigg46312;	0	C4H9NO2Se
+dttOX	Oxidized dithiothreitol	KEGG:C01119;CAS:51621-02-4;BIGG:bigg36849;	0	C4H8O2S2
+tettet6coa	tetracosatetraenoyl coenzyme A	BIGG:bigg2219654;	-4	C45H70N7O17P3S
+coke	cocaine	KEGG:C01416;CAS:50-36-2;BIGG:bigg37546;	0	C17H21NO4
+so3	Sulfite	KEGG:C00094;CAS:7782-99-2;BIGG:bigg33833;	-2	O3S
+ksii_core4_pre8	keratan sulfate II biosynthesis, precursor 8	BIGG:bigg2299223;	-2	C83H134N7O61SX
+7thf	heptaglutamyl folate (THF)	BIGG:bigg2304198;	-8	C49H57N13O24
+whttdca	omega hydroxy tetradecanoate (n-C14:0)	BIGG:bigg2304728;	-1	C14H27O3
+cs_c_deg2	chondroitin sulfate C (GalNAc6S-GlcA), degradation product 2	BIGG:bigg2416058;	-4	C37H55NO38S2
+retn	Retinoate	KEGG:C00777;CAS:302-79-4;BIGG:bigg35948;	-1	C20H27O2
+xmp	Xanthosine 5'-phosphate	KEGG:C00655;CAS:523-98-8;BIGG:bigg35623;	-2	C10H11N4O9P
+homoval	Homovanillate	KEGG:C05582;CAS:306-08-1;BIGG:bigg46066;	-1	C9H9O4
+cholcoaone	3alpha,7alpha,12alpha-Trihydroxy-5beta-24-oxocholestanoyl-CoA	KEGG:C05467;CAS:67-97-0;BIGG:bigg45868;	-4	C48H74N7O21P3S
+acnamp	N-Acetylneuraminate 9-phosphate	KEGG:C06241;CAS:90-02-8;BIGG:bigg47736;	-3	C11H17NO12P
+retinal	Retinal	KEGG:C00376;CAS:116-31-4;BIGG:bigg34795;	0	C20H28O
+retinol-9-cis	9-cis-retinol	BIGG:bigg2265507;	0	C20H30O
+sphmyln_hs	sphingomyelin (homo sapiens)	BIGG:bigg2265472;	0	C23H48N2O5PFULLRCO
+ksi_pre26	keratan sulfate I biosynthesis, precursor 26	BIGG:bigg2296844;	-9	C199H318N14O166S8X
+hs_deg25	heparan sulfate, degradation product 25	BIGG:bigg2304588;	-1	C23H37O21
+hs_deg24	heparan sulfate, degradation product 24	BIGG:bigg2304600;	-1	C31H50NO26
+ksii_core4_deg2	keratan sulfate II (core 4-linked), degradation product 2	BIGG:bigg2418068;	-2	C78H127N6O61S2X
+acACP	Acetyl-ACP	KEGG:C03939;BIGG:bigg1436913;	-1	C13H23N2O8PRS
+2mop	2-Methyl-3-oxopropanoate	KEGG:C00349;BIGG:bigg34698;	-1	C4H5O3
+g3m8mpdol_L	(alpha-D-Glucosyl)3-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809525;	-20	C1960H3228N20O770P20
+g2m8mpdol_U	(alpha-D-Glucosyl)2-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809524;	-20	C1845H3040N20O720P20
+46dhoxquin	4,6-Dihydroxyquinoline	KEGG:C05639;CAS:552-58-9;BIGG:bigg46176;	0	C9H7NO2
+lthstrl	5alpha-Cholest-7-en-3beta-ol	KEGG:C01189;CAS:80-99-9;BIGG:bigg37036;	0	C27H46O
+peplys	Peptidyl-L-lysine	KEGG:C00592;BIGG:bigg52081;	0	XH
+acngalgbside_hs	sialyl galactosylgloboside (homo sapiens)	BIGG:bigg2266480;	-1	C61H105N3O35FULLRCO
+ksii_core4_pre1	keratan sulfate II biosynthesis, precursor 1	BIGG:bigg2299210;	0	C36H60N3O25X
+hs_pre3	heparan sulfate, precursor 3	BIGG:bigg2301799;	-2	C45H69N2O36X
+hs_pre6	heparan sulfate, precursor 6	BIGG:bigg2301802;	-4	C65H96N3O53X
+dgcholcoa	Chenodeoxyglycocholoyl-CoA	KEGG:C05461;CAS:67-97-0;BIGG:bigg45856;	-4	C45H70N7O19P3S
+cs_c	chondroitin sulfate C (GalNAc6S-GlcA), free chain	BIGG:bigg2415878;	-5	C45H67N2O46S3
+cs_c_deg1	chondroitin sulfate C (GalNAc6S-GlcA), degradation product 1	BIGG:bigg2416055;	-4	C45H68N2O43S2
+ksi_deg35	keratan sulfate I, degradation product 35	BIGG:bigg2416953;	-1	C68H113N4O54S1
+pi	Phosphate	KEGG:C00009;CAS:14265-44-2;BIGG:bigg33499;	-2	HO4P
+lac-D	D-Lactate	KEGG:C00256;CAS:10326-41-7;BIGG:bigg34414;	-1	C3H5O3
+cala	N-Carbamoyl-beta-alanine	KEGG:C02642;BIGG:bigg40270;	-1	C4H7N2O3
+rnam	N-Ribosylnicotinamide	KEGG:C03150;BIGG:bigg41300;	1	C11H15N2O5
+btn	Biotin	KEGG:C00120;CAS:58-85-5;BIGG:bigg33931;	-1	C10H15N2O3S
+Ssq23epx	(S)-Squalene-2,3-epoxide	KEGG:C01054;CAS:9029-62-3;BIGG:bigg36708;	0	C30H50O
+but	Butyrate (n-C4:0)	KEGG:C00246;CAS:107-92-6;BIGG:bigg34376;	-1	C4H7O2
+m2mpdol_L	(alpha-D-mannosyl)2-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809504;	-20	C1420H2328N20O320P20
+gdp	GDP	KEGG:C00035;CAS:146-91-8;BIGG:bigg33599;	-3	C10H12N5O11P2
+core5	Core 5	BIGG:bigg1886172;	0	C16H27N2O10X
+gncore2	GlcNAc-alpha-1,4-Core 2	BIGG:bigg1898456;	0	C30H50N3O20X
+im4ac	Imidazole-4-acetate	KEGG:C02835;CAS:7273-34-9;BIGG:bigg40666;	-1	C5H5N2O2
+adp	ADP	KEGG:C00008;CAS:58-64-0;BIGG:bigg33496;	-3	C10H12N5O10P2
+prgstrn	Progesterone	KEGG:C00410;CAS:57-83-0;BIGG:bigg34898;	0	C21H30O2
+vacc	vaccenic acid	BIGG:bigg2217962;	-1	C18H33O2
+pail5p_hs	1-Phosphatidyl-1D-myo-inositol 5-phosphate (Homo sapiens)	BIGG:bigg2263547;	-3	C9H15O12P2FULLRCO2FULLR2CO2
+ibcoa	Isobutyryl-CoA	KEGG:C00630;BIGG:bigg35538;	-4	C25H38N7O17P3S
+caro	beta-Carotene	BIGG:bigg2264935;	0	C40H56
+cholp	Choline phosphate	KEGG:C00588;CAS:107-73-3;BIGG:bigg1485300;	-1	C5H13NO4P
+avite2	alpha-Tocotrienol	BIGG:bigg2296493;	0	C29H44O2
+hs_deg17	heparan sulfate, degradation product 17	BIGG:bigg2303863;	-5	C43H65N2O48S4
+6thf	hexaglutamyl folate  (THF)	BIGG:bigg2304197;	-7	C44H51N12O21
+dheas	Dehydroepiandrosterone sulfate	KEGG:C04555;CAS:652-69-7;BIGG:bigg44038;	-1	C19H27O5S
+cs_b_deg1	chondroitin sulfate B / dermatan sulfate (IdoA2S-GalNAc4S), degradation product 1	BIGG:bigg2415980;	-5	C45H67N2O46S3
+3snpyr	3-Sulfinopyruvate	KEGG:C05527;CAS:28954-12-3;BIGG:bigg45969;	-2	C3H2O5S
+acgalfuc12gal14acglcgalgluside_hs	(Gal)2 (GalNAc)1 (Glc)1 (GlcNAc)1 (LFuc)1 (Cer)1	BIGG:bigg2419396;	0	C58H102N3O31FULLRCO
+cbp	Carbamoyl phosphate	KEGG:C00169;BIGG:bigg34125;	-2	CH2NO5P
+xoltri25	7-alpha,25-Dihydroxycholesterol	BIGG:bigg2197800;	0	C27H46O3
+ahandrostanglc	Etiocholan-3alpha-ol-17-one 3-glucuronide	BIGG:bigg2304848;	0	C25H38O8
+hestratriol	4,17 dihydroxy estradiol	BIGG:bigg2299837;	0	C18H24O3
+prgnlones	pregnenolone sulfate	BIGG:bigg2705327;	-1	C21H31O5S
+bilglcur	Bilirubin monoglucuronide	KEGG:C03374;CAS:25635-88-5;BIGG:bigg41733;	0	C39H44N4O12
+udpgal	UDPgalactose	KEGG:C00052;BIGG:bigg33675;	-2	C15H22N2O17P2
+so4	Sulfate	KEGG:C00059;CAS:7664-93-9;BIGG:bigg33697;	-2	O4S
+10fthf	10-Formyltetrahydrofolate	KEGG:C00234;BIGG:bigg34337;	-2	C20H21N7O7
+dgsn	Deoxyguanosine	KEGG:C00330;CAS:961-07-9;BIGG:bigg34637;	0	C10H13N5O4
+56dura	5,6-dihydrouracil	KEGG:C00429;CAS:504-07-4;BIGG:bigg34956;	0	C4H6N2O2
+cpppg3	Coproporphyrinogen III	KEGG:C03263;CAS:2624-63-7;BIGG:bigg41515;	-4	C36H40N4O8
+hdcoa	Hexadecenoyl-CoA (n-C16:1CoA)	KEGG:C05272;BIGG:bigg1451383;	-4	C37H60N7O17P3S
+octeACP	cis-octadec-11-enoyl-[acyl-carrier protein] (n-C18:1)	BIGG:bigg1437596;	-1	C29H53N2O8PRS
+m5masnB1	(alpha-D-mannosyl)5-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822947;	0	C52H87N2O40X
+ahdt	2-Amino-4-hydroxy-6-(erythro-1,2,3-trihydroxypropyl)dihydropteridine triphosphate	KEGG:C04895;BIGG:bigg44843;	-4	C9H12N5O13P3
+ppa	Propionate (n-C3:0)	KEGG:C00163;CAS:79-09-4;BIGG:bigg34098;	-1	C3H5O2
+xol27oh	27-Hydroxycholesterol	KEGG:C06340;CAS:59-31-4;BIGG:bigg48021;	0	C27H46O2
+cholcoa	Choloyl-CoA	KEGG:C01794;CAS:1406-65-1;BIGG:bigg38424;	-4	C45H70N7O20P3S
+Tyr-ggn	Tyr-194 of apo-glycogenin protein (primer for glycogen synthesis)	BIGG:bigg2213851;	0	XOH
+guln	L-Gulonate	KEGG:C00800;CAS:526-97-6;BIGG:bigg36035;	-1	C6H11O7
+adrncoa	adrenyl coenzyme A	BIGG:bigg2218769;	-4	C43H66N7O17P3S
+tmndnc	timnodonic acid C20:5, n-3	BIGG:bigg2218016;	-1	C20H29O2
+tetpent6	tetracosapentaenoic acid, n-6	BIGG:bigg2219649;	-1	C24H37O2
+pylald	Perillyl aldehyde	KEGG:C02576;CAS:2111-75-3;BIGG:bigg40121;	0	C10H14O
+gpail_hs	D-glucosaminylphosphatidylinositol	KEGG:C04248;CAS:128-33-6;BIGG:bigg43441;	0	C15H28NO13PFULLRCO2FULLR2CO2
+memgacpail_hs	(mannosyl),(phosphoethanolaminyl)-mannosyl-glucosylaminyl-acylphosphatidylinositol (B)	BIGG:bigg2288887;	0	C45H84N2O27P2FULLRCO2FULLR2CO2
+cca_d3	Calcitroic acid (D3)	BIGG:bigg2290389;	-1	C22H33O4
+ksi_pre4	keratan sulfate I biosynthesis, precursor 4	BIGG:bigg2296815;	-1	C101H165N7O72X
+cs_e_pre5b	chondroitin sulfate E (GalNAc4,6diS-GlcA), precursor 5b	BIGG:bigg2301395;	-7	C45H64N2O51S5X
+omeprazole	omeprazole	BIGG:bigg2299956;	0	C17H19N3O3S
+tchola	taurocholic acid	KEGG:C05122;CAS:81-24-3;BIGG:bigg45150;	0	C26H45NO7S
+12ppd-S	(S)-Propane-1,2-diol	KEGG:C02917;CAS:4254-14-3;BIGG:bigg40815;	0	C3H8O2
+hs_deg6	heparan sulfate, degradation product 6	BIGG:bigg2303802;	-10	C67H98N4O83S9
+cs_b_deg2	chondroitin sulfate B / dermatan sulfate (IdoA2S-GalNAc4S), degradation product 2	BIGG:bigg2415982;	-5	C37H54NO41S3
+ksii_core2_deg6	keratan sulfate II (core 2-linked), degradation product 6	BIGG:bigg2418061;	-1	C44H72N4O33SX
+dhbpt	6,7-Dihydrobiopterin	KEGG:C00268;BIGG:bigg34451;	0	C9H13N5O3
+10fthf7glu	10-formyltetrahydrofolate-[Glu](7)	BIGG:bigg2304245;	-8	C50H57N13O25
+andrstrn	Androsterone	KEGG:C00523;CAS:53-41-8;BIGG:bigg35244;	0	C19H30O2
+acgalfucgalacgalfucgalacglcgal14acglcgalgluside_hs	Type IIIAb	BIGG:bigg2419444;	0	C92H158N5O55FULLRCO
+acgbgbside_hs	beta GalNAc globoside (homo sapiens)	BIGG:bigg2266490;	0	C52H92N3O27FULLRCO
+gd1b2_hs	GD1beta (homo sapiens)	BIGG:bigg2266561;	-2	C66H111N4O38FULLRCO
+2mcit	2-Methylcitrate	KEGG:C02225;CAS:96-17-3;BIGG:bigg39369;	-3	C7H7O7
+gam	D-Glucosamine	KEGG:C00329;CAS:3416-24-8;BIGG:bigg34633;	1	C6H14NO5
+gln-L	L-Glutamine	KEGG:C00064;CAS:56-85-9;BIGG:bigg33714;	0	C5H10N2O3
+e4hglu	L-erythro-4-Hydroxyglutamate	KEGG:C05947;BIGG:bigg1447439;	-1	C5H8NO5
+pdx5p	Pyridoxine 5'-phosphate	KEGG:C00627;CAS:447-05-2;BIGG:bigg35527;	-2	C8H10NO6P
+amet	S-Adenosyl-L-methionine	KEGG:C00019;CAS:29908-03-0;BIGG:bigg33530;	1	C15H23N6O5S
+dtdp4d6dm	dTDP-4-dehydro-6-deoxy-L-mannose	KEGG:C00688;BIGG:bigg35704;	-2	C16H22N2O15P2
+hLkynr	3-Hydroxy-L-kynurenine	KEGG:C03227;BIGG:bigg1445574;	0	C10H12N2O4
+malttr	Maltotriose	KEGG:C01835;CAS:1109-28-0;BIGG:bigg38512;	0	C18H32O16
+glyb	Glycine betaine	KEGG:C00719;CAS:107-43-7;BIGG:bigg35786;	0	C5H11NO2
+itacon	Itaconate	KEGG:C00490;CAS:97-65-4;BIGG:bigg35130;	-2	C5H4O4
+fpram	2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine	KEGG:C04640;BIGG:bigg44236;	-1	C8H15N3O8P
+ficytC	Ferricytochrome c	KEGG:c00125;BIGG:bigg1595981;	3	C42H54FeN8O6S2
+chito2pdol_U	N,N'-Diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809478;	-20	C1185H1940N20O170P20
+nm4masn	(N-acetyl-D-glucosaminyl-(alpha-D-mannosyl)4-beta-D-mannosyl-diacetylchitobiosyl)-L-asparagine (protein)	KEGG:C05882;CAS:91-64-5;BIGG:bigg46746;	0	C54H90N3O40X
+l2fn2m2masn	{[galactosyl-(1,4)-N-Acetyl-glucosaminyl-(1,2)-mannosyl-(1,3)-],[N-acetyl-glucosaminyl-(1,2)-mannosyl-(1,6)-]mannosyl-(1,4)-N-acetyl-glucosaminyl-(1,4)-[fucosyl-(1,6)]-N-acetyl-glucosaminyl}asparagine	BIGG:bigg1830502;	0	C68H113N4O49X
+42A3HP24DB	4-(2-Amino-3-hydroxyphenyl)-2,4-dioxobutanoate	KEGG:C05645;CAS:2208-41-5;BIGG:bigg46189;	-1	C10H8NO5
+dimp	dIMP	KEGG:C06196;BIGG:bigg47635;	-2	C10H11N4O7P
+cmp2amep	CMP-2-aminoethylphosphonate	KEGG:C05673;CAS:151-18-8;BIGG:bigg46252;	-1	C11H19N4O10P2
+mi134p	1D-myo-Inositol 1,3,4-trisphosphate	KEGG:C01243;BIGG:bigg37172;	-6	C6H9O15P3
+4pyrdx	4-Pyridoxate	KEGG:C00847;CAS:82-82-6;BIGG:bigg36190;	0	C8H9NO4
+2dp6mobq	2-Decaprenyl-6-methoxy-1,4-benzoquinone	BIGG:bigg2267458;	0	C57H86O3
+ksi_pre16	keratan sulfate I biosynthesis, precursor 16	BIGG:bigg2296831;	-5	C157H253N11O124S4X
+cs_d_pre2	chondroitin sulfate D (GlcNAc6S-GlcA2S) precursor 2	BIGG:bigg2300743;	-4	C31H46NO34S3X
+ksi_deg14	keratan sulfate I, degradation product 14	BIGG:bigg2416928;	-8	C166H267N11O145S8
+for	Formate	KEGG:C00058;CAS:64-18-6;BIGG:bigg33693;	-1	CH1O2
+glc3man	glucose-1,2-(2)[glucose-1,3]-mannose oligosaccharide	BIGG:bigg1838658;	0	C24H42O21
+3dhguln	3-Dehydro-L-gulonate	KEGG:C00618;BIGG:bigg35509;	-1	C6H9O7
+gcald	Glycolaldehyde	KEGG:C00266;BIGG:bigg34446;	0	C2H4O2
+c2m26dcoa	cis-2-Methyl-5-isopropylhexa-2,5-dienoyl-CoA	BIGG:bigg2266110;	-4	C31H46N7O17P3S
+thcrm_hs	trihexosyl ceramide (homo sapiens)	BIGG:bigg2265481;	0	C36H66NO17FULLRCO
+3dpdhb_me	3-Decaprenyl-4-hydroxy-5-methoxybenzoate	BIGG:bigg2267128;	-1	C58H87O4
+2dp6mep	2-Decaprenyl-6-methoxyphenol	BIGG:bigg2267157;	0	C57H88O2
+gm2a_hs	GM2alpha (homo sapiens)	BIGG:bigg2266549;	-1	C49H85N3O25FULLRCO
+ksi_pre22	keratan sulfate I biosynthesis, precursor 22	BIGG:bigg2296839;	-7	C185H297N13O150S6X
+ksii_core4_pre7	keratan sulfate II biosynthesis, precursor 7	BIGG:bigg2299222;	-2	C75H121N6O56SX
+4nph	4-Nitrophenol	KEGG:C00870;CAS:100-02-7;BIGG:bigg36247;	0	C6H5NO3
+hs_deg23	heparan sulfate, degradation product 23	BIGG:bigg2303869;	-2	C31H49NO29S
+i	Iodide	KEGG:C00708;BIGG:bigg35753;	-1	I
+acetone	Acetone	KEGG:C00207;CAS:67-64-1;BIGG:bigg34257;	0	C3H6O
+thcholoylcoa	3alpha,7alpha,24-Trihydroxy-5beta-cholestanoyl-CoA	KEGG:C05448;CAS:67-97-0;BIGG:bigg45832;	-4	C48H76N7O20P3S
+dhocholoylcoa	3alpha,7alpha,12alpha,26-Tetrahydroxy-5beta-cholestane	KEGG:C05446;BIGG:bigg45828;	-4	C48H74N7O20P3S
+pristanal	pristanal	BIGG:bigg2364547;	0	C19H38O
+R5coa_hs	R group 5 Coenzyme A homo sapiens	BIGG:bigg2219198;	-4	XCO2C21H31N7O15P3S
+cs_a	chondroitin sulfate A (GalNAc4S-GlcA), free chain	BIGG:bigg2415876;	-5	C45H67N2O46S3
+ksii_core2_deg3	keratan sulfate II (core 2-linked), degradation product 3	BIGG:bigg2418058;	-2	C58H94N5O46S2X
+ha_pre1	hyaluronan biosynthesis, precursor 1	BIGG:bigg2418505;	-1	C14H20NO11
+acnacngalgbside_hs	disialyl galactosylgloboside (homo sapiens)	BIGG:bigg2266486;	-2	C72H121N4O43FULLRCO
+6pgc	6-Phospho-D-gluconate	KEGG:C00345;BIGG:bigg34686;	-3	C6H10O10P
+r1p	alpha-D-Ribose 1-phosphate	KEGG:C00442;CAS:58459-37-3;BIGG:bigg34994;	-2	C5H9O8P
+2obut	2-Oxobutanoate	KEGG:C00109;CAS:600-18-0;BIGG:bigg33889;	-1	C4H5O3
+pep	Phosphoenolpyruvate	KEGG:C00074;CAS:138-08-9;BIGG:bigg33756;	-3	C3H2O6P
+glyc3p	Glycerol 3-phosphate	KEGG:C00093;BIGG:bigg137383;	-2	C3H7O6P
+udpglcur	UDP-D-glucuronate	KEGG:C00167;BIGG:bigg34117;	-3	C15H19N2O18P2
+acac	Acetoacetate	KEGG:C00164;CAS:541-50-4;BIGG:bigg1485291;	-1	C4H5O3
+acorn	N2-Acetyl-L-ornithine	KEGG:C00437;CAS:None;BIGG:bigg34982;	0	C7H14N2O3
+alpam	S-aminomethyldihydrolipoamide	BIGG:bigg1444052;	1	C9H21N2OS2
+m5mpdol_U	(alpha-D-Mannosyl)5-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809512;	-20	C1545H2540N20O470P20
+n3m2masn	((N-acetyl-D-glucosaminyl)3-(alpha-D-mannosyl)2-beta-D-mannosyl-diacetylchitobiosyl)-L-asparagine (protein)	BIGG:bigg1830634;	0	C58H96N5O40X
+4hphac	4-Hydroxyphenylacetate	KEGG:C00642;CAS:156-38-7;BIGG:bigg35599;	-1	C8H7O3
+acgal1p	N-Acetyl-D-galactosamine 1-phosphate	KEGG:C18060;BIGG:bigg2241575;	-2	C8H14NO9P
+ak2gchol_hs	1-alkyl 2-acylglycerol 3-phosphocholine	BIGG:bigg2255863;	0	C10H20O5NPFULLRFULLR2CO
+clpn_hs	cardiolipin (homo sapiens)	BIGG:bigg2262847;	-2	C9H16O9P2FULLRCO2FULLR2CO2FULLRCO2FULLR2CO2
+pydam	Pyridoxamine	KEGG:C00534;CAS:85-87-0;BIGG:bigg35277;	1	C8H13N2O2
+1mpyr	1-Methylpyrrolinium	KEGG:C06178;CAS:76-57-3;BIGG:bigg47587;	1	C5H10N
+R1coa_hs	R group 1 Coenzyme A homo sapiens	BIGG:bigg2218044;	-4	XCO2C21H31N7O15P3S
+ksi_deg31	keratan sulfate I, degradation product 31	BIGG:bigg2416944;	-2	C90H148N6O72S2
+lgnccrn	lignoceryl carnitine	BIGG:bigg2614349;	0	C31H61NO4
+hpdca	heptadecanoate	CAS:506-12-7;BIGG:bigg215873;	-1	C17H33O2
+acmanap	N-Acetyl-D-mannosamine 6-phosphate	KEGG:C04257;CAS:157296-99-6;BIGG:bigg43459;	-2	C8H14NO9P
+myrsACP	Myristoyl-ACP (n-C14:0ACP)	KEGG:C05761;BIGG:bigg1437493;	-1	C25H47N2O8PRS
+naglc2p_U	N-Acetyl-D-glucosaminyldiphosphodolichol, human uterine homolog	BIGG:bigg1809451;	-20	C1105H1810N10O120P20
+m3mpdol_L	(alpha-D-mannosyl)3-beta-D-mannosyl-diacetylchitodiphosphodolichol, human liver homolog	BIGG:bigg1809507;	-20	C1480H2428N20O370P20
+mescon	Mesaconate	KEGG:C01732;CAS:498-24-8;BIGG:bigg38272;	-2	C5H4O4
+gd1b_hs	GD1b (homo sapiens)	BIGG:bigg2266615;	-2	C66H111N4O38FULLRCO
+m2gacpail_hs	dimannosyl-glucosaminyl-acylphosphatidylinositol (H3)	BIGG:bigg2282535;	0	C43H78NO24PFULLRCO2FULLR2CO2
+hs_pre4	heparan sulfate, precursor 4	BIGG:bigg2301800;	-3	C51H76N2O42X
+hs_deg18	heparan sulfate, degradation product 18	BIGG:bigg2303864;	-4	C43H66N2O45S3
+3oddcoa	3-Oxododecanoyl-CoA	KEGG:C05263;BIGG:bigg45453;	-4	C33H52N7O18P3S
+palmACP	Palmitoyl-ACP (n-C16:0ACP)	KEGG:C05764;BIGG:bigg1437566;	-1	C27H51N2O8PRS
+focytC	Ferrocytochrome C	KEGG:c00126;BIGG:bigg1595982;	2	C42H54FeN8O6S2
+3hibutcoa	(S)-3-Hydroxyisobutyryl-CoA	KEGG:C06000;BIGG:bigg47176;	-4	C25H38N7O18P3S
+ksii_core4_pre4	keratan sulfate II biosynthesis, precursor 4	BIGG:bigg2299219;	-1	C61H99N5O43X
+cs_c_pre2	chondroitin sulfate C (GalNAc6S-GlcA), precursor 2	BIGG:bigg2300736;	-4	C37H54NO37S2X
+dd2coa	trans-Dodec-2-enoyl-CoA	KEGG:C03221;BIGG:bigg41433;	-4	C33H52N7O17P3S
+cs_e_deg3	chondroitin sulfate E (GalNAc4,6diS-GlcA), degradation product 3	BIGG:bigg2416316;	-6	C37H53NO44S4
+antipyrene	antipyrene	BIGG:bigg2299968;	0	C11H12N2O
+tststerones	testosterone sulfate	BIGG:bigg2794968;	-1	C19H27O5S
+quln	Quinolinate	KEGG:C03722;CAS:89-00-9;BIGG:bigg42393;	-2	C7H3NO4
+lald-L	L-Lactaldehyde	KEGG:C00424;CAS:598-35-6;BIGG:bigg34941;	0	C3H6O2
+acg5p	N-Acetyl-L-glutamyl 5-phosphate	KEGG:C04133;BIGG:bigg43209;	-3	C7H9NO8P
+m1mpdol_U	alpha-D-mannosyl-beta-D-mannosyl-diacylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809503;	-20	C1305H2140N20O270P20
+sTn_antigen	sialyl-Tn antigen	BIGG:bigg1885276;	-1	C19H30N2O13X
+5g2oxpt	5-Guanidino-2-oxopentanoate	KEGG:C03771;CAS:14191-95-8;BIGG:bigg42500;	0	C6H11N3O3
+retpalm [deleted 10/09/2005  06:18:49 PM]	Retinyl palminate	BIGG:bigg2264863;	0	C36H60O2
+gd2_hs	GD2 (homo sapiens)	BIGG:bigg2266613;	-2	C60H101N4O33FULLRCO
+gt2_hs	GT2 (homo sapiens)	BIGG:bigg2266624;	-3	C71H117N5O41FULLRCO
+lxser	Gal-Xyl-L-Ser (protein)	BIGG:bigg2299744;	0	C11H19O9X
+cs,hs_linkage	chondroitin sulfate/heparan sulfate linkage region (GlcA-(Gal)2-Xyl-L-Ser (protein))	BIGG:bigg2300654;	-1	C23H36O20X
+12harachd	12 hydroxy arachidonic acid	BIGG:bigg2300207;	-1	C20H31O3
+hs_deg20	heparan sulfate, degradation product 20	BIGG:bigg2303866;	-4	C45H68N2O43S2
+cs_b_deg3	chondroitin sulfate B / dermatan sulfate (IdoA2S-GalNAc4S), degradation product 3	BIGG:bigg2415986;	-4	C37H55NO38S2
+cs_c_deg4	chondroitin sulfate C (GalNAc6S-GlcA), degradation product 4	BIGG:bigg2416062;	-2	C31H49NO29S
+4mptnl	4-Methylpentanal	KEGG:C02373;CAS:123-30-8;BIGG:bigg39716;	0	C6H12O
+xylu-D	D-Xylulose	KEGG:C00310;CAS:551-84-8;BIGG:bigg34575;	0	C5H10O5
+fum	Fumarate	KEGG:C00122;CAS:110-17-8;BIGG:bigg33938;	-2	C4H2O4
+fprica	5-Formamido-1-(5-phospho-D-ribosyl)imidazole-4-carboxamide	KEGG:C04734;BIGG:bigg44434;	-2	C10H13N4O9P
+dcdp	dCDP	KEGG:C00705;CAS:None;BIGG:bigg50858;	-3	C9H12N3O10P2
+hmbil	Hydroxymethylbilane	KEGG:C01024;CAS:73023-76-4;BIGG:bigg36648;	-8	C40H38N4O17
+glu-L	L-Glutamate	KEGG:C00025;CAS:56-86-0;BIGG:bigg33561;	-1	C5H8NO4
+hdca	Hexadecanoate (n-C16:0)	KEGG:C00249;CAS:57-10-3;BIGG:bigg34386;	-1	C16H31O2
+dtdpglu	dTDPglucose	KEGG:C00842;CAS:2009-24-7;BIGG:bigg36175;	-2	C16H24N2O16P2
+mi1p-D	1D-myo-Inositol 1-phosphate	KEGG:C01177;BIGG:bigg1484840;	-2	C6H11O9P
+ocdcea	octadecenoate (n-C18:1)	KEGG:C00712;BIGG:bigg1451011;	-1	C18H33O2
+citr-L	L-Citrulline	KEGG:C00327;CAS:372-75-8;BIGG:bigg34627;	0	C6H13N3O3
+Asn-X-Ser/Thr	protein-linked asparagine residue (N-glycosylation site)	BIGG:bigg1821398;	0	XH
+m8mpdol_L	(alpha-D-Mannosyl)8-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809518;	-20	C1780H2928N20O620P20
+l2n2m2mn	de-Fuc, reducing GlcNAc removed, de-Sia form of PA6 (w/o peptide linkage)	BIGG:bigg1862524;	0	C54H91N3O41
+udpacgal	UDP-N-acetyl-D-galactosamine	KEGG:C00203;CAS:None;BIGG:bigg34247;	-2	C17H25N3O17P2
+core4	Core 4	BIGG:bigg1885372;	0	C24H40N3O15X
+core6	Core 6	BIGG:bigg1885374;	0	C16H27N2O10X
+xoltri27	7-alpha,27-Dihydroxycholesterol	KEGG:C06341;CAS:59-31-4;BIGG:bigg48023;	0	C27H46O3
+48dhoxquin	4,8-Dihydroxyquinoline	KEGG:C05637;CAS:552-58-9;BIGG:bigg46171;	0	C9H7NO2
+adprib	ADPribose	KEGG:C00301;BIGG:bigg34547;	-2	C15H21N5O14P2
+datp	dATP	KEGG:C00131;CAS:1927-31-7;BIGG:bigg33969;	-4	C10H12N5O12P3
+betald	Betaine aldehyde	KEGG:C00576;BIGG:bigg35400;	1	C5H12NO
+prgnlone	Pregnenolone	KEGG:C01953;CAS:145-13-1;BIGG:bigg38769;	0	C21H32O2
+selmeth	Selenomethionine	KEGG:C05335;CAS:64-04-0;BIGG:bigg45598;	0	C5H11NO2Se
+acgal	N-Acetyl-D-galactosamine	KEGG:C01132;CAS:14215-68-0;BIGG:bigg36880;	0	C8H15NO6
+dak2gpe_hs	1-alkenyl 2-acylglycerol 3-phosphoethanolamine plasmalogen (homo sapiens)	BIGG:bigg2255861;	0	C7H14O5NPFULLRFULLR2CO
+acn13acngalgbside_hs	sialyl (1,3) sialyl (2,6) galactosylgloboside (homo sapiens)	BIGG:bigg2266492;	-2	C72H121N4O43FULLRCO
+ksii_core4_pre9	keratan sulfate II biosynthesis, precursor 9	BIGG:bigg2299224;	-3	C83H133N7O64S2X
+dhdascb	Dehydroascorbate	KEGG:C00425;CAS:490-83-5;BIGG:bigg34945;	0	C6H6O6
+estradiolglc	estradiol glucuronide	BIGG:bigg2304841;	0	C24H32O8
+lnlc	linoleic acid (all cis C18:2) n-6	KEGG:C01595;CAS:60-33-3;BIGG:bigg37956;	-1	C18H31O2
+ade	Adenine	KEGG:C00147;CAS:73-24-5;BIGG:bigg34039;	0	C5H5N5
+cmp	CMP	KEGG:C00055;BIGG:bigg33689;	-2	C9H12N3O8P
+dtmp	dTMP	KEGG:C00364;CAS:365-07-1;BIGG:bigg34753;	-2	C10H13N2O8P
+hpdcacoa	heptadecanoyl coa	BIGG:bigg2415330;	-4	C38H64N7O17P3S
+cs_e_deg2	chondroitin sulfate E (GalNAc4,6diS-GlcA), degradation product 2	BIGG:bigg2416314;	-6	C45H66N2O49S4
+pepslys	peptide sans lysine	BIGG:bigg2418619;	0	X
+3sala	3-Sulfino-L-alanine	KEGG:C00606;CAS:1115-65-7;BIGG:bigg35482;	-2	C3H5NO4S
+fucgal14acglcgalgluside_hs	Lacto-N-fucopentaosyl III ceramide	BIGG:bigg2419362;	0	C50H89N2O26FULLRCO
+cbl1	Cob(I)alamin	KEGG:C00853;CAS:18534-66-2;BIGG:bigg36205;	-1	C62H88CoN13O14P
+9-cis-retfa	fatty acid 9-cis-retinol	BIGG:bigg2430287;	0	C20H29OFULLR2CO
+lneldccoa	linoelaidyl coenzyme A	BIGG:bigg2218571;	-4	C39H62N7O17P3S
+tmndnccoa	timnodonyl coenzyme A	BIGG:bigg2218824;	-4	C41H60N7O17P3S
+5adtststerone	5alpha-Dihydrotestosterone	KEGG:C03917;CAS:521-18-6;BIGG:bigg42776;	0	C19H30O2
+g3p	Glyceraldehyde 3-phosphate	KEGG:C00118;CAS:142-10-9;BIGG:bigg35637;	-2	C3H5O6P
+nadp	Nicotinamide adenine dinucleotide phosphate	KEGG:C00006;CAS:53-59-8;BIGG:bigg33488;	-3	C21H25N7O17P3
+4izp	4-Imidazolone-5-propanoate	KEGG:C03680;BIGG:bigg42318;	-1	C6H7N2O3
+orot	Orotate	KEGG:C00295;CAS:65-86-1;BIGG:bigg34527;	-1	C5H3N2O4
+dnad	Deamino-NAD+	KEGG:C00857;BIGG:bigg36219;	-2	C21H24N6O15P2
+4ppcys	N-((R)-4-Phosphopantothenoyl)-L-cysteine	KEGG:C04352;BIGG:bigg43650;	-3	C12H20N2O9PS
+crn	L-Carnitine	KEGG:C00318;CAS:541-15-1;BIGG:bigg34600;	0	C7H15NO3
+34hpp	3-(4-Hydroxyphenyl)pyruvate	KEGG:C01179;BIGG:bigg37006;	-1	C9H7O4
+pppg9	Protoporphyrinogen IX	KEGG:C01079;BIGG:bigg36764;	-2	C34H38N4O4
+4hpro-LT	trans-4-Hydroxy-L-proline	KEGG:C01157;CAS:51-35-4;BIGG:bigg36935;	0	C5H9NO3
+doldp_U	Dolichol diphosphate, human uterine homolog	BIGG:bigg1809267;	-30	C1025H1670O70P20
+dolmanp_L	Dolichyl phosphate D-mannose, human liver homolog	BIGG:bigg1809321;	-10	C1140H1868O90P10
+s2l2n2m2m	de-Fuc form of PA6 (w/o peptide linkage)	BIGG:bigg1862478;	-2	C84H136N6O62
+mma	Methylamine	KEGG:C00218;BIGG:bigg1800349;	1	C1H6N
+triodthy	Triiodothyronine	KEGG:C02465;CAS:1823692;BIGG:bigg39878;	0	C15H12I3NO4
+f5hoxkyn	Formyl-5-hydroxykynurenamine	KEGG:C05647;CAS:2208-41-5;BIGG:bigg46193;	1	C10H13N2O3
+lald-D	D-Lactaldehyde	KEGG:C00937;CAS:None;BIGG:bigg36414;	0	C3H6O2
+cholcoar	3alpha,7alpha,12alpha-Trihydroxy-5beta-cholestanoyl-CoA	KEGG:C04760;CAS:745-65-3;BIGG:bigg44498;	-4	C48H76N7O20P3S
+phyQ	Phylloquinone	KEGG:C02059;CAS:84-80-0;BIGG:bigg39000;	0	C31H46O2
+pglyc_hs	phosphatidylglycerol (homo sapiens)	BIGG:bigg2262846;	-1	C6H12O6PFULLRCO2FULLR2CO2
+3hmbcoa	(S)-3-Hydroxy-2-methylbutyryl-CoA	KEGG:C04405;BIGG:bigg43751;	-4	C26H40N7O18P3S
+bvite	beta-tocopherol	BIGG:bigg2296531;	0	C28H48O2
+hs_pre5	heparan sulfate, precursor 5	BIGG:bigg2301801;	-3	C59H89N3O47X
+hom-L	L-Homoserine	KEGG:C00263;CAS:672-15-1;BIGG:bigg34437;	0	C4H9NO3
+thcys	Thiocysteine	KEGG:C01962;CAS:40524-74-1;BIGG:bigg38786;	0	C3H7NO2S2
+3aib	L-3-Amino-isobutanoate	KEGG:C03284;CAS:1758-80-1;BIGG:bigg41559;	0	C4H9NO2
+damp	dAMP	KEGG:C00360;CAS:653-63-4;BIGG:bigg34735;	-2	C10H12N5O6P
+thmmp	Thiamin monophosphate	KEGG:C01081;CAS:532-40-1;BIGG:bigg36768;	-1	C12H16N4O4PS
+Rtotal	R total	BIGG:bigg2220351;	-1	CO2FULLR
+ksi_deg12	keratan sulfate I, degradation product 12	BIGG:bigg2416926;	-9	C174H279N12O153S9
+lnlccrn	Linoleyl carnitine	BIGG:bigg2614398;	0	C25H45NO4
+lnlncgcrn	gamma-linolenyl carnitine	BIGG:bigg2614408;	0	C25H43NO4
+mlthf	5,10-Methylenetetrahydrofolate	KEGG:C00143;BIGG:bigg34022;	-2	C20H21N7O6
+nac	Nicotinate	KEGG:C00253;CAS:59-67-6;BIGG:bigg34401;	-1	C6H4NO2
+hpyr	Hydroxypyruvate	KEGG:C00168;CAS:1113-60-6;BIGG:bigg34120;	-1	C3H3O4
+g2m8mpdol_L	(alpha-D-Glucosyl)2-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809523;	-20	C1900H3128N20O720P20
+m5masnC	(alpha-D-mannosyl)5-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822902;	0	C52H87N2O40X
+s2l2n2m2mn	de-Fuc, reducing GlcNAc removed form of PA6 (w/o peptide linkage)	BIGG:bigg1862498;	-2	C76H123N5O57
+fadh2	Flavin adenine dinucleotide reduced	KEGG:C01352;BIGG:bigg132077;	-2	C27H33N9O15P2
+dtdp	dTDP	KEGG:C00363;BIGG:bigg34750;	-3	C10H13N2O11P2
+leuktrD4	Leukotriene D4	KEGG:C05951;CAS:1189-11-3;BIGG:bigg47032;	-1	C25H39N2O6S
+nmptrc	N-Methylputrescine	KEGG:C02723;CAS:3913-67-5;BIGG:bigg40435;	2	C5H16N2
+3dphb	3-Decaprenyl-4-hydroxybenzoate	BIGG:bigg2266634;	-1	C57H85O3
+3dpdhb	3-Decaprenyl-4,5-dihdydroxybenzoate	BIGG:bigg2267090;	-1	C57H85O4
+pre_prot	glycophosphatidylinositol (GPI)-anchored protein precursor	BIGG:bigg2289445;	0	XY
+pcollg5hlys	Procollagen 5-hydroxy-L-lysine	KEGG:C01211;BIGG:bigg53055;	0	C6H14N2O3
+6pthp	6-Pyruvoyl-5,6,7,8-tetrahydropterin	KEGG:C03684;BIGG:bigg42328;	0	C9H11N5O3
+dag_hs	diacylglycerol (homo sapiens)	BIGG:bigg2220569;	0	C3H6OFULLRCO2FULLR2CO2
+lneldc	linoelaidic acid (all trans C18:2)	BIGG:bigg2217974;	-1	C18H31O2
+ksi_deg28	keratan sulfate I, degradation product 28	BIGG:bigg2416943;	-3	C104H170N7O85S3
+galgalgalthcrm_hs	Gal-Gal-Gal-Gal-Gal-Glc-Cer (homo sapiens)	BIGG:bigg2266469;	0	C54H96NO32FULLRCO
+eandrstrn	epiandrosterone	KEGG:C05139;CAS:1232-73-1;BIGG:bigg45201;	0	C19H28O3
+orot5p	Orotidine 5'-phosphate	KEGG:C01103;CAS:2149-82-8;BIGG:bigg36813;	-3	C10H10N2O11P
+xan	Xanthine	KEGG:C00385;CAS:69-89-6;BIGG:bigg34825;	0	C5H4N4O2
+gsn	Guanosine	KEGG:C00387;CAS:118-00-3;BIGG:bigg51567;	0	C10H13N5O5
+4h2oglt	4-Hydroxy-2-oxoglutarate	KEGG:C01127;BIGG:bigg36868;	-2	C5H4O6
+3ohodcoa	3-Oxooctadecanoyl-CoA	BIGG:bigg1452160;	-4	C39H64N7O18P3S
+35cgmp	3',5'-Cyclic GMP	KEGG:C00942;CAS:7665-99-8;BIGG:bigg1485267;	-1	C10H11N5O7P
+Sfglutth	S-Formylglutathione	KEGG:C01031;BIGG:bigg1485290;	-1	C11H16N3O7S
+phaccoa	Phenylacetyl-CoA	KEGG:C00582;BIGG:bigg35419;	-4	C29H38N7O17P3S
+ddcaACP	Dodecanoyl-ACP (n-C12:0ACP)	KEGG:C05223;BIGG:bigg1436978;	-1	C23H43N2O8PRS
+mpdol_L	beta-D-Mannosyldiacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809496;	-20	C1300H2128N20O220P20
+m4mpdol_L	(alpha-D-Mannosyl)4-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809509;	-20	C1540H2528N20O420P20
+g1m8mpdol_L	alpha-D-Glucosyl-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809521;	-20	C1840H3028N20O670P20
+glac	D-glucurono-6,3-lactone	BIGG:bigg2216733;	0	C6H8O6
+dcsptn1	docosa-4,7,10,13,16-pentaenoic acid (n-6)	BIGG:bigg2218027;	-1	C22H33O2
+pail_hs	phosphatidylinositol (homo sapiens)	BIGG:bigg2255591;	-1	C9H16O9PFULLRCO2FULLR2CO2
+thp2c	2,3,4,5-Tetrahydropyridine-2-carboxylate	KEGG:C00450;BIGG:bigg35015;	-1	C6H8NO2
+ppmi12346p	5-Diphosphoinositol pentakisphosphate	BIGG:bigg2265069;	-13	C6H6O27P7
+ksii_core2_pre9	keratan sulfate II biosynthesis, precursor 9	BIGG:bigg2296700;	-3	C75H120N6O59S2X
+ksi_pre30	keratan sulfate I biosynthesis, precursor 30	BIGG:bigg2296848;	-10	C219H350N15O184S9X
+ksi_pre31	keratan sulfate I biosynthesis, precursor 31	BIGG:bigg2296849;	-10	C227H363N16O189S9X
+oaa	Oxaloacetate	KEGG:C00036;CAS:328-42-7;BIGG:bigg33604;	-2	C4H2O5
+6a2ohxnt	6-Amino-2-oxohexanoate	KEGG:C03239;CAS:566-88-1;BIGG:bigg41468;	0	C6H11NO3
+glcur1p	D-Glucuronate 1-phosphate	KEGG:C05385;BIGG:bigg45711;	-3	C6H8O10P
+coucoa	p-coumaroyl-CoA	BIGG:bigg2392457;	-4	C30H38N7O18P3S1
+ksi_deg30	keratan sulfate I, degradation product 30	BIGG:bigg2416935;	-3	C90H147N6O75S3
+retncoa	retinoyl CoA	BIGG:bigg2430158;	-4	C41H58N7O17P3S
+phe-L	L-Phenylalanine	KEGG:C00079;CAS:63-91-2;BIGG:bigg33775;	0	C9H11NO2
+glucys	gamma-L-Glutamyl-L-cysteine	KEGG:C00669;CAS:686-58-8;BIGG:bigg35655;	-1	C8H13N2O5S
+thcholst	3alpha,7alpha,12alpha-Trihydroxy-5beta-cholestan-26-al	KEGG:C01301;BIGG:bigg37315;	0	C27H46O4
+adpglc	ADPglucose	KEGG:C00498;BIGG:bigg35161;	-2	C16H23N5O15P2
+4mzym_int2	4-Methylzymosterol intermediate 2	BIGG:bigg1454782;	0	C28H44O
+strch2	starch, structure 2 (1,6-{2[1,4-Glc], [1,4-Glc]})	BIGG:bigg2214326;	0	C18H32O16
+lgnc	lignoceric acid	BIGG:bigg2218057;	-1	C24H47O2
+4aabutn	4-Acetamidobutanoate	KEGG:C02946;BIGG:bigg1446095;	-1	C6H10NO3
+orn-D	D-Ornithine	CAS:348-66-3;BIGG:bigg2263101;	1	C5H13N2O2
+4hbz	4-Hydroxybenzoate	KEGG:C00156;CAS:99-96-7;BIGG:bigg34069;	-1	C7H5O3
+gpi_hs	glycophosphatidylinositol (GPI) anchor precursor (3-(phosphoethanolaminyl-mannosyl)-glucosaminyl-acylphosphatidylinositol) (H8)	BIGG:bigg2288953;	0	C55H106N4O38P4FULLRCO2FULLR2CO2
+gpi_sig	glycophosphatidylinositol (GPI) signal sequence (C-terminal peptide)	BIGG:bigg2289448;	0	Y
+ksi_pre28	keratan sulfate I biosynthesis, precursor 28	BIGG:bigg2296846;	-9	C213H341N15O176S8X
+ksi_pre14	keratan sulfate I biosynthesis, precursor 14	BIGG:bigg2296827;	-5	C143H230N10O114S4X
+cs_a,b_pre2	chondroitin sulfate A (GalNAc4S-GlcA) and B (IdoA2S-GalNAc4S), precursor 2	BIGG:bigg2300732;	-4	C37H54NO37S2X
+hs_pre8	heparan sulfate, precursor 8	BIGG:bigg2301804;	-5	C79H116N4O64X
+hs_deg8	heparan sulfate, degradation product 8	BIGG:bigg2303821;	-10	C69H100N4O81S8
+hs_deg14	heparan sulfate, degradation product 14	BIGG:bigg2303860;	-7	C57H84N3O62S5
+whddca	omega hydroxy dodecanoate (n-C12:0)	BIGG:bigg2304726;	-1	C12H23O3
+cyan	Hydrogen cyanide	KEGG:C01326;CAS:57-12-5;BIGG:bigg34146;	0	CHN
+Rtotal3crn	R total 3 carnitine	BIGG:bigg2392273;	0	CO2FULLR3C7H14NO2
+fucfucfucgalacglcgal14acglcgalgluside_hs	(Gal)3 (Glc)1 (GlcNAc)2 (LFuc)3 (Cer)1	BIGG:bigg2419451;	0	C76H132N3O44FULLRCO
+mepi	Metanephrine	KEGG:C05588;CAS:306-08-1;BIGG:bigg46078;	1	C10H16NO3
+rib-D	D-Ribose	KEGG:C00121;CAS:50-69-1;BIGG:bigg33936;	0	C5H10O5
+gua	Guanine	KEGG:C00242;CAS:73-40-5;BIGG:bigg34363;	0	C5H5N5O
+succoa	Succinyl-CoA	KEGG:C00091;CAS:604-98-8;BIGG:bigg33820;	-5	C25H35N7O19P3S
+malt	Maltose	KEGG:C00208;CAS:69-79-4;BIGG:bigg34261;	0	C12H22O11
+thym	Thymine	KEGG:C00178;CAS:65-71-4;BIGG:bigg34151;	0	C5H6N2O2
+3ohdcoa	3-Oxohexadecanoyl-CoA	KEGG:C05259;BIGG:bigg45445;	-4	C37H60N7O18P3S
+ttdcea	tetradecenoate (n-C14:1)	KEGG:c08322;BIGG:bigg1451010;	-1	C14H25O2
+arachdcoa	C20:4-CoA	CAS:17046-56-9;BIGG:bigg1586032;	-4	C41H62N7O17P3S
+core8	Core 8	BIGG:bigg1886171;	0	C14H24NO10X
+cl	Chloride	KEGG:C00698;BIGG:bigg50130;	-1	Cl
+5hxkyn	5-Hydroxykynurenine	KEGG:C05651;CAS:2208-41-5;BIGG:bigg46201;	0	C10H12N2O4
+trypta	Tryptamine	KEGG:C00398;CAS:61-54-1;BIGG:bigg34864;	1	C10H13N2
+ipdp	Isopentenyl diphosphate	KEGG:C00129;BIGG:bigg33956;	-3	C5H9O7P2
+gd1alpha_hs	GD1a (homo sapiens)	BIGG:bigg2266635;	-2	C66H111N4O38FULLRCO
+lum3	Lumisterol 3	BIGG:bigg2288990;	0	C27H44O
+ksi_pre29	keratan sulfate I biosynthesis, precursor 29	BIGG:bigg2296847;	-10	C213H340N15O179S9X
+cs_a,b,e_pre1	chondroitin sulfate A (GalNAc4S-GlcA), B (IdoA2S-GalNAc4S), and E (GalNAc4,6diS-GlcA), precursor 1	BIGG:bigg2300729;	-3	C31H47NO31S2X
+hs_pre11	heparan sulfate, precursor 11	BIGG:bigg2301807;	-5	C79H121N5O77S4X
+cs_e_deg6	chondroitin sulfate E (GalNAc4,6diS-GlcA), degradation product 6	BIGG:bigg2416324;	-3	C31H48NO32S2
+ksi_deg13	keratan sulfate I, degradation product 13	BIGG:bigg2416927;	-8	C174H280N12O150S8
+tetpent3crn	tetracosapentaenoyl carnitine	BIGG:bigg2614455;	0	C31H51NO4
+s7p	Sedoheptulose 7-phosphate	KEGG:C05382;CAS:None;BIGG:bigg34485;	-2	C7H13O10P
+ppbng	Porphobilinogen	KEGG:C00931;CAS:487-90-1;BIGG:bigg36404;	-1	C10H13N2O4
+23dpg	2,3-Disphospho-D-glycerate	KEGG:C01159;BIGG:bigg1315507;	-5	C3H3O10P2
+4mlacac	4-Maleylacetoacetate	KEGG:C01036;CAS:5698-52-2;BIGG:bigg1485279;	-2	C8H6O6
+acmana	N-Acetyl-D-mannosamine	KEGG:C00645;CAS:3615-17-6;BIGG:bigg35606;	0	C8H15NO6
+m8mpdol_U	(alpha-D-Mannosyl)8-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809519;	-20	C1725H2840N20O620P20
+m7masnA	(alpha-D-mannosyl)7-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine, isoform A (protein)	BIGG:bigg1822939;	0	C64H107N2O50X
+m6masnB1	(alpha-D-mannosyl)6-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822945;	0	C58H97N2O45X
+2amac	2-Aminoacrylate	KEGG:C02218;CAS:5142-22-3;BIGG:bigg39352;	0	C3H5NO2
+hyptaur	Hypotaurine	KEGG:C00519;CAS:300-84-5;BIGG:bigg35230;	-1	C2H6NO2S
+23doguln	2,3-Dioxo-L-gulonate	KEGG:C04575;BIGG:bigg45750;	-1	C6H7O7
+xylnt	L-Xylonate	KEGG:C05411;CAS:583-08-4;BIGG:bigg45754;	-1	C5H9O6
+ak2gpe_hs	1-alkyl 2-acylglycerol 3-phosphoethanolamine	BIGG:bigg2255860;	0	C7H16O5NPFULLRFULLR2CO
+arg-D	D-Arginine	KEGG:C00792;CAS:157-06-2;BIGG:bigg36012;	1	C6H15N4O2
+gd1a_hs	GD1a (homo sapiens)	BIGG:bigg2266525;	-2	C66H111N4O38FULLRCO
+cortsn	Cortisone	KEGG:C00762;CAS:53-06-5;BIGG:bigg35911;	0	C21H28O5
+l2xser	(Gal)2-Xyl-L-Ser (protein)	BIGG:bigg2300315;	0	C17H29O14X
+wharachd	w-hydroxyl arachidonic acid	BIGG:bigg2299757;	-1	C20H31O3
+hs_deg7	heparan sulfate, degradation product 7	BIGG:bigg2303803;	-9	C67H99N4O80S8
+cs_d_deg5	chondroitin sulfate D (GlcNAc6S-GlcA2S), degradation product 5	BIGG:bigg2416182;	-3	C31H48NO32S2
+fucgalacglc13galacglcgal14acglcgalgluside_hs	(Gal)4 (Glc)1 (GlcNAc)3 (LFuc)1 (Cer)1	BIGG:bigg2419456;	0	C78H135N4O46FULLRCO
+fmn	FMN	KEGG:C00061;CAS:146-17-8;BIGG:bigg33703;	-2	C17H19N4O9P
+acg5sa	N-Acetyl-L-glutamate 5-semialdehyde	KEGG:C01250;CAS:None;BIGG:bigg37191;	-1	C7H10NO4
+ocdcyaACP	Octadecynoyl-ACP (n-C18:2ACP)	BIGG:bigg1451535;	-1	C29H51N2O8PRS
+m7mpdol_L	(alpha-D-Mannosyl)7-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809515;	-20	C1720H2828N20O570P20
+m4masn	(alpha-D-mannosyl)4-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822816;	0	C46H77N2O35X
+gncore1	GlcNAc-alpha-1,4-Core 1	BIGG:bigg1898482;	0	C22H37N2O15X
+5moxact	5-Methoxyindoleacetate	KEGG:C05660;CAS:608-07-1;BIGG:bigg46224;	-1	C11H10NO3
+gpi_prot_hs	glycophosphatidylinositol (GPI)-anchored protein	BIGG:bigg2289441;	0	C55H106N4O38P4FULLRCO2FULLR2CO2X
+ksi_pre12	keratan sulfate I biosynthesis, precursor 12	BIGG:bigg2296825;	-4	C135H218N9O106S3X
+iodine	Iodine	KEGG:C01382;CAS:7553-56-2;BIGG:bigg37476;	0	I2
+hdcecrn	Hexadecenoyl carnitine	BIGG:bigg2362823;	0	C23H43NO4
+4hbzcoa	4-hydroxybenoyl-CoA	BIGG:bigg2392523;	-4	C28H36N7O18P3S
+ksii_core2_deg2	keratan sulfate II (core 2-linked), degradation product 2	BIGG:bigg2418057;	-2	C70H114N5O56S2X
+leuktrF4	leukotriene F4	BIGG:bigg2705818;	-2	C28H42N2O8S
+gal	D-Galactose	KEGG:C00124;CAS:59-23-4;BIGG:bigg33945;	0	C6H12O6
+gam6p	D-Glucosamine 6-phosphate	KEGG:C00352;CAS:3616-42-0;BIGG:bigg34709;	-1	C6H13NO8P
+dump	dUMP	KEGG:C00365;CAS:964-26-1;BIGG:bigg34762;	-2	C9H11N2O8P
+thymd	Thymidine	KEGG:C00214;CAS:50-89-5;BIGG:bigg50348;	0	C10H14N2O5
+nicrnt	Nicotinate D-ribonucleotide	KEGG:C01185;BIGG:bigg37018;	-2	C11H12NO9P
+arab-L	L-Arabinose	KEGG:C00259;CAS:147-81-9;BIGG:bigg34429;	0	C5H10O5
+val-L	L-Valine	KEGG:C00183;CAS:72-18-4;BIGG:bigg34167;	0	C5H11NO2
+fe2	Fe2+	KEGG:C14818;CAS:None;BIGG:bigg33552;	2	Fe
+idp	IDP	KEGG:C00104;CAS:86-04-4;BIGG:bigg33869;	-3	C10H11N4O11P2
+56dihindlcrbxlt	5,6-Dihydroxyindole-2-carboxylate	BIGG:bigg1444022;	-1	C9H6NO4
+4mop	4-Methyl-2-oxopentanoate	KEGG:C00233;BIGG:bigg34334;	-1	C6H9O3
+3odcoa	3-Oxodecanoyl-CoA	KEGG:C05265;BIGG:bigg45458;	-4	C31H48N7O18P3S
+hdcea	Hexadecenoate (n-C16:1)	KEGG:C08362;BIGG:bigg246167;	-1	C16H29O2
+2oxoadp	2-Oxoadipate	KEGG:C00322;CAS:3184-35-8;BIGG:bigg1485244;	-2	C6H6O5
+Lkynr	L-Kynurenine	KEGG:C00328;CAS:343-65-7;BIGG:bigg1485286;	0	C10H12N2O3
+id3acald	Indole-3-acetaldehyde	KEGG:C00637;CAS:2591-98-2;BIGG:bigg35561;	0	C10H9NO
+c226crn	cervonyl carnitine	BIGG:bigg1586101;	0	C29H45NO4
+dedolp_U	Dehydrodolichol phosphate, human uterine homolog	BIGG:bigg1821321;	-20	C1025H1650O40P10
+fad	Flavin adenine dinucleotide oxidized	KEGG:C00016;CAS:146-14-5;BIGG:bigg33521;	-2	C27H31N9O15P2
+dadp	dADP	KEGG:C00206;CAS:None;BIGG:bigg34254;	-3	C10H12N5O9P2
+biocyt	Biocytin	KEGG:C05552;BIGG:bigg46012;	0	C16H28N4O4S
+2mbcoa	2-Methylbutanoyl-CoA	KEGG:C01033;BIGG:bigg36663;	-4	C26H40N7O17P3S
+3h26dm5coa	3-Hydroxy-2,6-dimethyl-5-methylene-heptanoyl-CoA	BIGG:bigg2266112;	-4	C31H48N7O18P3S
+egme	ecgonine methyl ester	CAS:1915211;BIGG:bigg2267774;	0	C10H17NO3
+25hvitd3	25-Hydroxyvitamin D3	BIGG:bigg2289142;	0	C27H44O2
+m(em)3gacpail_hs	mannosyl-3-(phosphoethanolaminyl-mannosyl)-glucosaminyl-acylphosphatidylinositol (M4A)	BIGG:bigg2289621;	0	C61H116N4O43P4FULLRCO2FULLR2CO2
+avite1	alpha-Tocopherol	BIGG:bigg2296507;	0	C29H50O2
+ksi_pre7	keratan sulfate I biosynthesis, precursor 7	BIGG:bigg2296820;	-2	C115H187N8O85SX
+cs_c_pre3	chondroitin sulfate C (GalNAc6S-GlcA), precursor 3	BIGG:bigg2300737;	-4	C45H67N2O42S2X
+Lcystin	L-Cystine	KEGG:C00491;CAS:56-89-3;BIGG:bigg35134;	0	C6H12N2O4S2
+accoa	Acetyl-CoA	KEGG:C00024;CAS:72-89-9;BIGG:bigg33558;	-4	C23H34N7O17P3S
+dcmp	dCMP	KEGG:C00239;CAS:1032-65-1;BIGG:bigg34352;	-2	C9H12N3O7P
+amp	AMP	KEGG:C00020;CAS:61-19-8;BIGG:bigg33534;	-2	C10H12N5O7P
+xolest_hs	cholesterol ester	KEGG:C02530;CAS:474-25-9;BIGG:bigg40037;	0	C27H45XCO2
+cs_d_deg2	chondroitin sulfate D (GlcNAc6S-GlcA2S), degradation product 2	BIGG:bigg2416175;	-6	C37H53NO44S4
+ksi_deg37	keratan sulfate I, degradation product 37	BIGG:bigg2416946;	0	C62H104N4O46
+acgalfucgalacglcgal14acglcgalgluside_hs	(Gal)3 (GalNAc)1 (Glc)1 (GlcNAc)2 (LFuc)1 (Cer)1	BIGG:bigg2419441;	0	C72H125N4O41FULLRCO
+fuc132galacglcgal14acglcgalgluside_hs	V3Fuc-nLc6Cer	BIGG:bigg2419465;	0	C64H112N3O36FULLRCO
+dcsptn1coa	docosa-4,7,10,13,16-pentaenoyl coenzyme A	BIGG:bigg2218825;	-4	C43H64N7O17P3S
+gthrd	Reduced glutathione	KEGG:C00051;CAS:70-18-8;BIGG:bigg33669;	-1	C10H16N3O6S
+leuktrE4	leukotriene E4	BIGG:bigg2705740;	-1	C23H36NO5S
+ru5p-D	D-Ribulose 5-phosphate	KEGG:C00199;CAS:4151-19-3;BIGG:bigg34237;	-2	C5H9O8P
+appnn	(+)-alpha-Pinene	KEGG:C06306;CAS:7440-38-2;BIGG:bigg47909;	0	C10H16
+tdcoa	Tetradecanoyl-CoA (n-C14:0CoA)	KEGG:C02593;BIGG:bigg40154;	-4	C35H58N7O17P3S
+hco3	Bicarbonate	KEGG:C00288;CAS:71-52-3;BIGG:bigg34509;	-1	CHO3
+thr-L	L-Threonine	KEGG:C00188;CAS:72-19-5;BIGG:bigg34186;	0	C4H9NO3
+hcys-L	L-Homocysteine	KEGG:C00155;CAS:6027-13-0;BIGG:bigg45588;	0	C4H9NO2S
+nmn	NMN	KEGG:C00455;CAS:1094-61-7;BIGG:bigg35022;	-1	C11H14N2O8P
+drib	Deoxyribose	KEGG:C01801;CAS:533-67-5;BIGG:bigg38440;	0	C5H10O4
+glyald	D-Glyceraldehyde	KEGG:C00577;CAS:453-17-8;BIGG:bigg35402;	0	C3H6O3
+ACP	acyl carrier protein	KEGG:C00229;BIGG:bigg1436893;	-1	C11H21N2O7PRS
+no	Nitric oxide	KEGG:C00533;CAS:10102-43-9;BIGG:bigg35273;	0	NO
+acgam	N-Acetyl-D-glucosamine	KEGG:C00140;CAS:7512-17-6;BIGG:bigg34006;	0	C8H15NO6
+b2coa	Crotonoyl-CoA	KEGG:C00877;CAS:102680-35-3;BIGG:bigg36265;	-4	C25H36N7O17P3S
+malcoa	Malonyl-CoA	KEGG:C00083;CAS:524-14-1;BIGG:bigg33789;	-5	C24H33N7O19P3S
+xol7aone	7alpha-Hydroxycholest-4-en-3-one	KEGG:C05455;CAS:67-97-0;BIGG:bigg45848;	0	C27H44O2
+3hpcoa	3-Hydroxypropionyl-CoA	KEGG:C05668;CAS:608-07-1;BIGG:bigg46236;	-4	C24H36N7O18P3S
+mercppyr	Mercaptopyruvate	KEGG:C00957;BIGG:bigg36476;	-1	C3H3O3S
+mi13456p	1D-myo-Inositol 1,3,4,5,6-pentakisphosphate	KEGG:C01284;BIGG:bigg37275;	-10	C6H7O21P5
+mi1345p	1D-myo-Inositol 1,3,4,5-tetrakisphosphate	KEGG:C01272;BIGG:bigg37244;	-8	C6H8O18P4
+galgluside_hs	galactosyl glucosyl ceramide	BIGG:bigg2265473;	0	C30H56NO12FULLRCO
+gt1b_hs	GT1b (homo sapiens)	BIGG:bigg2266618;	-3	C77H127N5O46FULLRCO
+ksi_pre2	keratan sulfate I biosynthesis, precursor 2	BIGG:bigg2296385;	-1	C87H142N6O62X
+12RHPET	12R-Hydroperoxyeicosatetraenoate	BIGG:bigg2296666;	-1	C20H31O4
+cs_pre	chondroitin sulfate precursor (GalNAc-GlcA-(Gal)2-Xyl-L-Ser (protein))	BIGG:bigg2300728;	-1	C31H49NO25X
+coumarin	coumarin	KEGG:C05851;CAS:91-64-5;BIGG:bigg46647;	0	C9H6O2
+prostge2	Prostaglandin E2	KEGG:C00584;CAS:363-24-6;BIGG:bigg35424;	-1	C20H31O5
+chsterol	Cholesterol	KEGG:C00187;CAS:57-88-5;BIGG:bigg34183;	0	C27H46O
+udpxyl	UDP-D-xylose	KEGG:C00190;CAS:141-43-5;BIGG:bigg34192;	-2	C14H20N2O16P2
+xol7ah2al	3alpha,7alpha-Dihydroxy-5beta-cholestan-26-al	KEGG:C05445;CAS:67-97-0;BIGG:bigg45826;	0	C27H46O3
+R2coa_hs	R group 2 Coenzyme A homo sapiens	BIGG:bigg2218049;	-4	XCO2C21H31N7O15P3S
+10fthf5glu	10-formyltetrahydrofolate-[Glu](5)	BIGG:bigg2304242;	-6	C40H45N11O19
+eicostetcrn	Eicosatetranoyl carnitine	BIGG:bigg2614413;	0	C27H45NO4
+tmndnccrn	Timnodonyl carnitine	BIGG:bigg2614450;	0	C27H43NO4
+rbt	Ribitol	KEGG:C00474;CAS:488-81-3;BIGG:bigg35086;	0	C5H12O5
+24nph	2,4 dihydroxy nitrophenol	BIGG:bigg2300001;	0	C6H5NO4
+crtstrn	Corticosterone	KEGG:C02140;CAS:50-22-6;BIGG:bigg39187;	0	C21H30O4
+13dpg	3-Phospho-D-glyceroyl phosphate	KEGG:C00236;CAS:None;BIGG:bigg34342;	-4	C3H4O10P2
+phpyr	Phenylpyruvate	KEGG:C00166;CAS:156-06-9;BIGG:bigg34111;	-1	C9H7O3
+urcan	Urocanate	KEGG:C00785;CAS:104-98-3;BIGG:bigg35990;	-1	C6H5N2O2
+k	potassium	KEGG:C00238;BIGG:bigg34349;	1	K
+occoa	Octanoyl-CoA (n-C8:0CoA)	KEGG:C01944;BIGG:bigg38747;	-4	C29H46N7O17P3S
+ethamp	Ethanolamine phosphate	KEGG:C00346;CAS:1071-23-4;BIGG:bigg1485304;	-1	C2H7NO4P
+3mob	3-Methyl-2-oxobutanoate	KEGG:C00141;BIGG:bigg34011;	-1	C5H7O3
+m6mpdol_L	(alpha-D-Mannosyl)6-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809513;	-20	C1660H2728N20O520P20
+n4m2masn	((N-acetyl-D-glucosaminyl)4-(alpha-D-mannosyl)2-beta-D-mannosyl-diacetylchitobiosyl)-L-asparagine (protein)	BIGG:bigg1830652;	0	C66H109N6O45X
+s2l2n2m2masn	de-Fuc form of PA6	BIGG:bigg1862476;	-2	C84H135N6O61X
+n2m2mn	de-Fuc, reducing GlcNAc removed, de-Sia, de-Gal form of PA6 (w/o peptide linkage)	BIGG:bigg1862531;	0	C42H71N3O31
+co	Carbon monoxide	KEGG:C00237;BIGG:bigg1749973;	0	CO
+normete-L	L-Normetanephrine	KEGG:C05589;CAS:306-08-1;BIGG:bigg46080;	1	C9H14NO3
+4hoxpacd	4-Hydroxyphenylacetaldehyde	KEGG:C03765;CAS:60-11-7;BIGG:bigg42489;	0	C8H8O2
+melatn	Melatonin	KEGG:C01598;CAS:73-31-4;BIGG:bigg37965;	0	C13H16N2O2
+Lcyst	L-Cysteate	KEGG:C00506;CAS:13100-82-8;BIGG:bigg35186;	-1	C3H6NO5S
+dtt	Dithiothreitol	KEGG:C00265;CAS:578517;BIGG:bigg34442;	0	C4H10O2S2
+pro-D	D-Proline	KEGG:C00763;CAS:344-25-2;BIGG:bigg35916;	0	C5H9NO2
+ak2gp_hs	1-alkyl 2-acylglycerol 3-phosphate	BIGG:bigg2255858;	-2	C5H9O6PFULLRFULLR2CO
+lpchol_hs	lysophosphatidylcholine (homo sapiens)	BIGG:bigg2262840;	0	C8H19NO5PFULLRCO2
+L2aadp	L-2-Aminoadipate	KEGG:C00956;CAS:542-32-5;BIGG:bigg1485280;	-1	C6H10NO4
+Nmelys	Histone N6-methyl-L-lysine	KEGG:C03702;CAS:117-81-7;BIGG:bigg42361;	1	CXH4
+galacglcgalgbside_hs	Gal-GlcNAc-Gal globoside (homo sapiens)	BIGG:bigg2266516;	0	C64H112N3O37FULLRCO
+gt1a_hs	GT1a (homo sapiens)	BIGG:bigg2266530;	-3	C77H127N5O46FULLRCO
+pcollglys	Procollagen L-lysine	KEGG:C03020;BIGG:bigg41032;	1	C7H14N3O2R2
+ksi_pre1	keratan sulfate I biosynthesis, precursor 1	BIGG:bigg2296347;	-1	C79H129N5O57X
+yvite	gamma-Tocopherol	BIGG:bigg2296479;	0	C28H48O2
+5HPET	5-Hydroperoxy-6-trans-8,11,14-cis-eicosatetraenoate	KEGG:C05356;CAS:7365-44-8;BIGG:bigg45650;	-1	C20H31O4
+taur	Taurine	KEGG:C00245;CAS:107-35-7;BIGG:bigg34373;	0	C2H7NO3S
+tym	Tyramine	KEGG:C00483;CAS:51-67-2;BIGG:bigg35110;	1	C8H12NO
+cs_b_pre5	chondroitin sulfate B (IdoA2S-GalNAc4s), precursor 5	BIGG:bigg2301452;	-5	C45H66N2O45S3X
+hs_deg3	heparan sulfate, degradation product 3	BIGG:bigg2303768;	-12	C81H117N5O97S10
+crtn	Creatinine	KEGG:C00791;CAS:60-27-5;BIGG:bigg36009;	0	C4H7N3O
+fucgalacgalfuc12gal14acglcgalgluside_hs	Type IIIH glycolipid	BIGG:bigg2419399;	0	C70H122N3O40FULLRCO
+hpdcacrn	heptadecanoyl carnitine	BIGG:bigg2422209;	0	C24H47NO4
+retfa	fatty acid retinol	BIGG:bigg2429940;	0	C20H29OFULLR2CO
+lnlncacoa	alpha-Linolenoyl-CoA	BIGG:bigg2218410;	-4	C39H60N7O17P3S
+pail345p_hs	phosphatidylinositol-3,4,5-trisphosphate (Homo sapiens)	KEGG:C05981;BIGG:bigg47125;	-7	C9H13O18P4FULLRCO2FULLR2CO2
+fucacgalfucgalacglcgalgluside_hs	(Gal)2 (GalNAc)1 (Glc)1 (GlcNAc)1 (LFuc)2 (Cer)1	BIGG:bigg2419348;	0	C64H112N3O35FULLRCO
+carveol	(E)-carveol	KEGG:C00964;BIGG:bigg36494;	0	C10H16O
+gal1p	alpha-D-Galactose 1-phosphate	KEGG:C00446;CAS:2255-14-3;BIGG:bigg35001;	-2	C6H11O9P
+acrn	O-Acetylcarnitine	KEGG:C02571;BIGG:bigg1442845;	0	C9H17NO4
+xylt	Xylitol	KEGG:C00379;CAS:87-99-0;BIGG:bigg34810;	0	C5H12O5
+4fumacac	4-Fumarylacetoacetate	KEGG:C01061;CAS:28613-33-4;BIGG:bigg1485275;	-2	C8H6O6
+peamn	Phenethylamine	KEGG:C05332;CAS:64-04-0;BIGG:bigg45591;	1	C8H12N
+mpdol_U	beta-D-Mannosyldiacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809499;	-20	C1245H2040N20O220P20
+g1m8mpdol_U	alpha-D-Glucosyl-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809522;	-20	C1785H2940N20O670P20
+man	D-Mannose	KEGG:C00159;CAS:3458-28-4;BIGG:bigg34085;	0	C6H12O6
+im4act	Imidazole-4-acetaldehyde	KEGG:C05130;CAS:617-54-9;BIGG:bigg45184;	0	C5H6N2O
+Lpipecol	L-Pipecolate	KEGG:C00408;CAS:535-75-1;BIGG:bigg34890;	0	C6H11NO2
+lnlccoa	linoleic coenzyme A	KEGG:C02050;BIGG:bigg2218570;	-4	C39H62N7O17P3S
+msa	Malonate semialdehyde	KEGG:C00222;CAS:None;BIGG:bigg34301;	-1	C3H3O3
+crmp_hs	Ceramide 1-phosphate	KEGG:C02960;CAS:551-16-6;BIGG:bigg40902;	-2	C18H35NO5PFULLRCO
+digalside_hs	Digalactosylceramide	BIGG:bigg2267787;	0	C30H56NO12FULLRCO
+ksi_pre13	keratan sulfate I biosynthesis, precursor 13	BIGG:bigg2296826;	-4	C143H231N10O111S3X
+nrpphrsf	Sulfate derivative of norepinephrine	BIGG:bigg2320877;	0	C8H11NO6S
+R4coa_hs	R group 4 Coenzyme A homo sapiens	BIGG:bigg2219197;	-4	XCO2C21H31N7O15P3S
+ksi_deg18	keratan sulfate I, degradation product 18	BIGG:bigg2416931;	-7	C146H235N10O127S7
+dmhptcoa	2,6 dimethylheptanoyl-CoA	BIGG:bigg2365555;	-4	C30H52N7O17P3S
+anth	Anthranilate	KEGG:C00108;CAS:118-92-3;BIGG:bigg33883;	-1	C7H6NO2
+f1p	D-Fructose 1-phosphate	KEGG:C01094;CAS:15978-08-2;BIGG:bigg40936;	-2	C6H11O9P
+dha	Dihydroxyacetone	KEGG:C00184;CAS:96-26-4;BIGG:bigg34170;	0	C3H6O3
+3mldz	3-Methylimidazole acetaldehyde	KEGG:C05827;CAS:63-37-6;BIGG:bigg46585;	0	C6H8N2O
+xol24oh	24-Hydroxycholesterol	CAS:474-73-7;BIGG:bigg2197434;	0	C27H46O2
+5hoxindact	5-Hydroxyindoleacetaldehyde	KEGG:C05634;CAS:552-58-9;BIGG:bigg46165;	0	C10H9NO2
+ntm2amep	N-Trimethyl-2-aminoethylphosphonate	KEGG:C06459;CAS:35597-43-4;BIGG:bigg48308;	-1	C5H13NO3P
+tststerone	Testosterone	KEGG:C00535;CAS:58-22-0;BIGG:bigg35280;	0	C19H28O2
+paf_hs	1-alkyl 2-acteylglycerol 3-phosphocholine (homo sapiens)	BIGG:bigg2255880;	0	C11H23O4NPFULLRCO2
+mi13p	1D-myo-Inositol 1,3-bisphosphate	KEGG:C04062;CAS:103597-56-4;BIGG:bigg43061;	-4	C6H10O12P2
+Ndmelys	Protein N6,N6-dimethyl-L-lysine	KEGG:C05545;CAS:52500-60-4;BIGG:bigg45999;	2	C2H7X
+gluside_hs	glucocerebroside (homo sapiens)	BIGG:bigg2265459;	0	C24H46NO7FULLRCO
+ksi_pre5	keratan sulfate I biosynthesis, precursor 5	BIGG:bigg2296816;	-2	C101H164N7O75SX
+ksi_pre27	keratan sulfate I biosynthesis, precursor 27	BIGG:bigg2296845;	-9	C205H328N14O171S8X
+ksii_core4_pre2	keratan sulfate II boisynthesis, precursor 2	BIGG:bigg2299217;	-1	C47H76N4O33X
+cs_d_pre4	chondroitin sulfate D (GlcNAc6S-GlcA2S), precursor 4	BIGG:bigg2300745;	-5	C45H66N2O45S3X
+debrisoquine	debrisoquine	BIGG:bigg2299980;	1	C10H14N3
+hs_deg12	heparan sulfate, degradation product 12	BIGG:bigg2303858;	-7	C55H82N3O64S6
+hs_deg19	heparan sulfate, degradation product 19	BIGG:bigg2303865;	-3	C43H67N2O42S2
+ksi_deg40	keratan sulfate I, degradation product 40	BIGG:bigg2416956;	0	C40H68N2O31
+acglcgalgluside_hs	(Gal)1 (Glc)1 (GlcNAc)1 (Cer)1	BIGG:bigg2419320;	0	C38H69N2O17FULLRCO
+xolest2_hs	cholesterol ester (from FULLR2)	BIGG:bigg2421141;	0	C27H45FULLR2CO2
+adrncrn	Adrenyl carnitine	BIGG:bigg2614417;	0	C29H49NO4
+acgagbside_hs	alpha GalNAc globoside (homo sapiens)	BIGG:bigg2266488;	0	C52H92N3O27FULLRCO
+ametam	S-Adenosylmethioninamine	KEGG:C01137;BIGG:bigg36895;	2	C14H24N6O3S
+pan4p	Pantetheine 4'-phosphate	KEGG:C01134;BIGG:bigg36886;	-2	C11H21N2O7PS
+g3m8mpdol_U	(alpha-D-Glucosyl)3-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809526;	-20	C1905H3140N20O770P20
+m6mpdol_U	(alpha-D-Mannosyl)6-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809514;	-20	C1605H2640N20O520P20
+m5mpdol_L	(alpha-D-Mannosyl)5-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809511;	-20	C1600H2628N20O470P20
+g1m8masn	(alpha-D-Glucosyl)-(alpha-D-mannosyl)8-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine (protein)	BIGG:bigg1822408;	0	C76H127N2O60X
+ctp	CTP	KEGG:C00063;CAS:65-47-4;BIGG:bigg33710;	-4	C9H12N3O14P3
+strch1	starch, structure 1 (1,6-{7[1,4-Glc], 4[1,4-Glc]})	BIGG:bigg2214270;	0	C66H112O56
+kdn	2-keto-3-deoxy-D-glycero-D-galactononic acid	BIGG:bigg2235495;	-1	C9H15O9
+ak2g_hs	1-alkyl 2-acylglycerol	BIGG:bigg2255859;	0	C5H10O2FULLRFULLR2CO2
+mi34p	1D-myo-Inositol 3,4-bisphosphate	KEGG:C04063;CAS:103597-56-4;BIGG:bigg43066;	-4	C6H10O12P2
+dem2emgacpail_prot_hs	deacylated-(phosphoethanolaminyl-dimannosyl),(phosphoethanolaminyl)-mannosyl-glucosaminyl-acylphosphatidylinositol	BIGG:bigg2289583;	0	C37H70N3O34P3FULLRCO2FULLR2CO2X
+cs_c,d,e_pre1	chondroitin sulfate C (GalNAc6S-GlcA) and D (GlcNAc6S-GlcA2S), precursor 1	BIGG:bigg2300735;	-3	C31H47NO31S2X
+tymsf	Tyramine O-sulfate	CAS:30223-92-8;BIGG:bigg2320878;	0	C8H11NO4S
+dmnoncoa	4,8 dimethylnonanoyl-CoA	BIGG:bigg2364597;	-4	C32H54N7O17P3S
+hs_deg1	heparan sulfate, degradation product 1	BIGG:bigg2303738;	-12	C79H115N5O99S11
+ksi_deg21	keratan sulfate I, degradation product 21	BIGG:bigg2416932;	-6	C132H213N9O114S6
+ksii_core4_deg3	keratan sulfate II (core 4-linked), degradation product 3	BIGG:bigg2418069;	-2	C66H107N6O51S2X
+Tn_antigen	Tn antigen	BIGG:bigg1885271;	0	C8H14NO5X
+micit	methylisocitrate	KEGG:C04593;CAS:20298-95-7;BIGG:bigg44122;	-3	C7H7O7
+xu5p-D	D-Xylulose 5-phosphate	KEGG:C00231;CAS:None;BIGG:bigg34329;	-2	C5H9O8P
+g1p	D-Glucose 1-phosphate	KEGG:C00103;CAS:59-56-3;BIGG:bigg33865;	-2	C6H11O9P
+man6p	D-Mannose 6-phosphate	KEGG:C00275;CAS:None;BIGG:bigg34471;	-2	C6H11O9P
+3ohxccoa	3-Oxohexacosyl-CoA	BIGG:bigg1457707;	-4	C47H80N7O18P3S
+dhlam	Dihydrolipoamide	KEGG:C00579;CAS:3884-47-7;BIGG:bigg35406;	0	C8H17NOS2
+g3pc	sn-Glycero-3-phosphocholine	KEGG:C00670;BIGG:bigg35659;	0	C8H20NO6P
+itaccoa	Itaconyl-CoA	KEGG:C00531;BIGG:bigg35266;	-5	C26H35N7O19P3S
+ttc-ggdp	trans,trans,cis-Geranylgeranyl diphosphate	BIGG:bigg1759656;	-3	C20H33O7P2
+chito2pdol_L	N,N'-Diacetylchitobiosyldiphosphodolichol, human liver homolog	BIGG:bigg1809476;	-20	C1240H2028N20O170P20
+dedol_U	Dehydrodolichol, human uterine homolog	BIGG:bigg1821333;	0	C1025H1660O10
+mhista	N-Methylhistamine	KEGG:C05127;CAS:617-54-9;BIGG:bigg45171;	1	C6H12N3
+17ahprgnlone	17alpha-Hydroxypregnenolone	KEGG:C05138;CAS:387-79-1;BIGG:bigg45199;	0	C21H32O3
+lyxnt	L-lyxonate	KEGG:C05412;CAS:583-08-4;BIGG:bigg45756;	-1	C5H9O6
+mi4p-D	1D-myo-Inositol 4-phosphate	KEGG:C03546;CAS:46495-39-0;BIGG:bigg42060;	-2	C6H11O9P
+retinal-cis-9	cis-9-retinal	BIGG:bigg2265509;	0	C20H28O
+mgacpail_hs	mannosyl-glucosaminyl-acylphosphatidylinositiol (H2)	BIGG:bigg2282492;	0	C37H68NO19PFULLRCO2FULLR2CO2
+cs_a_deg3	chondroitin sulfate A (GalNAc4S-GlcA), degradation product 3	BIGG:bigg2415890;	-3	C31H48NO32S2
+cs_d_deg6	chondroitin sulfate D (GlcNAc6S-GlcA2S), degradation product 6	BIGG:bigg2416184;	-3	C23H35O27S2
+cs_e_deg5	chondroitin sulfate E (GalNAc4,6diS-GlcA), degradation product 5	BIGG:bigg2416322;	-4	C31H47NO35S3
+ksi_deg19	keratan sulfate I, degradation product 19	BIGG:bigg2416940;	-6	C146H236N10O124S6
+h2co3	carbonic acid	BIGG:bigg1436647;	0	H2CO3
+gar	N1-(5-Phospho-D-ribosyl)glycinamide	KEGG:C03838;BIGG:bigg42621;	-1	C7H14N2O8P
+4aphdob	4-(2-Aminophenyl)-2,4-dioxobutanoate	KEGG:C01252;BIGG:bigg37199;	-1	C10H8NO4
+5hxkynam	5-Hydroxykynurenamine	KEGG:C05638;CAS:552-58-9;BIGG:bigg46174;	1	C9H13N2O2
+kdnp	2-keto-3-deoxy-D-glycero-D-galactononic acid 9-phosphate	BIGG:bigg2235507;	-3	C9H14O12P
+cgly	Cys-Gly	KEGG:C01419;CAS:19246-18-5;BIGG:bigg1445980;	0	C5H10N2O3S
+cs_e_pre5a	chondroitin sulfate E (GalNAc4,6diS-GlcA), precursor 5a	BIGG:bigg2301273;	-7	C45H64N2O51S5X
+ahandrostan	3alpha-Hydroxy-5beta-androstan-17-one	KEGG:C04373;CAS:53-42-9;BIGG:bigg43684;	0	C19H30O2
+estriol	estriol	KEGG:C05141;CAS:50-27-1;BIGG:bigg45207;	0	C18H24O3
+3amp	3'-AMP	KEGG:C01367;CAS:84-21-9;BIGG:bigg2224997;	-2	C10H12N5O7P
+cs_c_deg5	chondroitin sulfate C (GalNAc6S-GlcA), degradation product 5	BIGG:bigg2416064;	-2	C23H36O24S
+ksii_core2_deg1	keratan sulfate II (core 2-linked), degradation product 1	BIGG:bigg2418056;	-3	C70H113N5O59S3X
+galacglcgalacglcgal14acglcgalgluside_hs	I-antigen	BIGG:bigg2419410;	0	C72H125N4O42FULLRCO
+icit	Isocitrate	KEGG:C00311;CAS:30810-51-6;BIGG:bigg34579;	-3	C6H5O7
+2dr5p	2-Deoxy-D-ribose 5-phosphate	KEGG:C00673;CAS:102916-66-5;BIGG:bigg35666;	-2	C5H9O7P
+ahcys	S-Adenosyl-L-homocysteine	KEGG:C00021;CAS:979-92-0;BIGG:bigg33543;	0	C14H20N6O5S
+ncam	Nicotinamide	KEGG:C00153;CAS:98-92-0;BIGG:bigg34058;	0	C6H6N2O
+uppg3	Uroporphyrinogen III	KEGG:C01051;CAS:1976-85-8;BIGG:bigg36704;	-8	C40H36N4O16
+xyl-D	D-Xylose	KEGG:C00181;CAS:58-86-6;BIGG:bigg34162;	0	C5H10O5
+coa	Coenzyme A	KEGG:C00010;CAS:85-61-0;BIGG:bigg33502;	-4	C21H32N7O16P3S
+dkmpp	2,3-diketo-5-methylthio-1-phosphopentane	KEGG:C15650;BIGG:bigg1450933;	-2	C6H9O6PS
+hdd2coa	trans-Hexadec-2-enoyl-CoA	KEGG:C05272;BIGG:bigg45474;	-4	C37H60N7O17P3S
+dolglcp_U	Dolichyl beta-D-glucosyl phosphate, human uterine homolog	BIGG:bigg1809281;	-10	C1085H1780O90P10
+lipoate	Lipoate	KEGG:C00725;CAS:62-46-4;BIGG:bigg35801;	0	C8H14O2S2
+3hbcoa	(S)-3-Hydroxybutanoyl-CoA	KEGG:C01144;BIGG:bigg36912;	-4	C25H38N7O18P3S
+Nacsertn	N-Acetylserotonin	KEGG:C00978;CAS:1210-83-9;BIGG:bigg36527;	0	C12H14N2O2
+xoldiolone	7alpha,12alpha-Dihydroxycholest-4-en-3-one	KEGG:C05457;CAS:67-97-0;BIGG:bigg45850;	0	C27H44O3
+sarcs	Sarcosine	KEGG:C00213;CAS:107-97-1;BIGG:bigg34275;	0	C3H7NO2
+mev-R	(R)-Mevalonate	KEGG:C00418;CAS:150-97-0;BIGG:bigg34923;	-1	C6H11O4
+7dhchsterol	7-Dehydrocholesterol	KEGG:C01164;CAS:434-16-2;BIGG:bigg36958;	0	C27H44O
+arachcoa	arachidyl coenzyme A	BIGG:bigg2218697;	-4	C41H70N7O17P3S
+uri	Uridine	KEGG:C00299;CAS:58-96-8;BIGG:bigg34541;	0	C9H12N2O6
+pail4p_hs	1-Phosphatidyl-1D-myo-inositol 4-phosphate (Homo sapiens)	BIGG:bigg2255620;	-3	C9H15O12P2FULLRCO2FULLR2CO2
+L2aadp6sa	L-2-Aminoadipate 6-semialdehyde	KEGG:C04076;BIGG:bigg1445244;	0	C6H11NO3
+pail34p_hs	phosphatidylinositol-3,4-bisphosphate (Homo sapiens)	BIGG:bigg2265222;	-5	C9H14O15P3FULLRCO2FULLR2CO2
+mi14p	1D-myo-Inositol 1,4-bisphosphate	KEGG:C01220;CAS:47055-78-7;BIGG:bigg37109;	-4	C6H10O12P2
+t2m26dcoa	trans-2-Methyl-5-isopropylhexa-2,5-dienoyl-CoA	BIGG:bigg2266111;	-4	C31H46N7O17P3S
+udp	UDP	KEGG:C00015;CAS:58-98-0;BIGG:bigg33518;	-3	C9H11N2O12P2
+1a25dhvitd3	1-alpha,25-Dihydroxyvitamin D3	BIGG:bigg2289241;	0	C27H44O3
+mem2emgacpail_prot_hs	({[(mannosyl),(phosphoethanolaminyl)]-dimannosyl},{phosphoethanolaminyl})-mannosyl-glucosaminyl-acylphosphatidylinositol-Protein (M4B)	BIGG:bigg2289699;	0	C59H110N3O40P3FULLRCO2FULLR2CO2X
+ksii_core2_pre1	keratan sulfate II biosynthesis, precursor 1	BIGG:bigg2293843;	-1	C33H53N3O23X
+ksi_pre32	keratan sulfate I biosynthesis, precursor 32	BIGG:bigg2296850;	-11	C227H362N16O192S10X
+ksi	keratan sulfate I	BIGG:bigg2296858;	-13	C247H393N17O213S12X
+cspg_d	chondroitin sulfate D (GlcNAc6S-GlcA2S) proteoglycan	BIGG:bigg2300747;	-7	C45H64N2O51S5X
+hs_deg9	heparan sulfate, degradation product 9	BIGG:bigg2303822;	-10	C61H87N3O76S8
+Rtotal2	R total 2 position	BIGG:bigg2220400;	-1	CO2FULLR2
+ump	UMP	KEGG:C00105;CAS:58-97-9;BIGG:bigg33873;	-2	C9H11N2O9P
+gdchola	glycochenodeoxycholate	KEGG:C05466;CAS:67-97-0;BIGG:bigg45866;	0	C26H43NO5
+T4hcinnm	trans-4-Hydroxycinnamate	KEGG:C00811;CAS:7400-08-0 501-98-4;BIGG:bigg36077;	-1	C9H7O3
+cs_b	chondroitin sulfate B / dermatan sulfate (IdoA2S-GalNAc4S), free chain	BIGG:bigg2415880;	-6	C45H66N2O49S4
+pheacgln	alpha-N-Phenylacetyl-L-glutamine	KEGG:C04148;CAS:34522-32-2;BIGG:bigg43248;	0	C13H16N2O4
+Ser/Thr	protein-linked serine or threonine residue (O-glycosylation site)	BIGG:bigg1885235;	0	XH
+fucgalacglcgalgluside_hs	Type IH glycolipid	BIGG:bigg2419328;	0	C50H89N2O26FULLRCO
+galacglcgal14acglcgalgluside_hs	i-antigen	BIGG:bigg2419406;	0	C58H102N3O32FULLRCO
+cbl2	Cob(II)alamin	KEGG:C00541;CAS:14463-33-3;BIGG:bigg35292;	0	C62H92CoN13O14P
+10fthf6glu	10-formyltetrahydrofolate-[Glu](6)	BIGG:bigg2304244;	-7	C45H51N12O22
+pcrn	propionyl-carnitine	BIGG:bigg1862604;	0	C10H19NO4
+eicostetcoa	eicosatetranoyl coenzyme A	BIGG:bigg2219624;	-4	C41H62N7O17P3S
+clpndcrn	clupanodonyl carnitine	BIGG:bigg2614454;	0	C29H47NO4
+fucfucgalacglcgalgluside_hs	Leb glycolipid	BIGG:bigg2419332;	0	C56H99N2O30FULLRCO
+tststeroneglc	testosterone glucuronide	BIGG:bigg2304840;	0	C25H36O8
+hdd2crn	trans-Hexadec-2-enoyl carnitine	BIGG:bigg2734943;	0	C23H43NO4
+man1p	D-Mannose 1-phosphate	KEGG:C00636;BIGG:bigg42578;	-2	C6H11O9P
+aicar	5-Amino-1-(5-Phospho-D-ribosyl)imidazole-4-carboxamide	KEGG:C04677;CAS:3031-94-5;BIGG:bigg44312;	-2	C9H13N4O8P
+glyc	Glycerol	KEGG:C00116;CAS:56-81-5;BIGG:bigg33915;	0	C3H8O3
+h2o2	Hydrogen peroxide	KEGG:C00027;CAS:7722-84-1;BIGG:bigg33570;	0	H2O2
+alpro	S-Aminomethyldihydrolipoylprotein	KEGG:C01242;BIGG:bigg37170;	1	CH6NS2X
+stcrn	stearoylcarnitine	BIGG:bigg1585824;	0	C25H49NO4
+pcreat	Phosphocreatine	BIGG:bigg1594794;	-1	C4H9N3O5P
+forglu	N-Formimidoyl-L-glutamate	KEGG:C00439;BIGG:bigg34986;	-2	C6H8N2O4
+34dhpha	3,4-Dihydroxyphenylacetate	KEGG:C01161;CAS:102-32-9;BIGG:bigg36946;	-1	C8H7O4
+seahcys	Se-Adenosylselenohomocysteine	KEGG:C05692;CAS:4408-78-0;BIGG:bigg46298;	0	C14H20N6O5Se
+glcur	D-Glucuronate	KEGG:C00191;CAS:1700908;BIGG:bigg34196;	-1	C6H9O7
+2hb	2-Hydroxybutyrate	KEGG:C05984;CAS:71-23-8;BIGG:bigg47130;	-1	C4H7O3
+3htmelys	3-Hydroxy-N6,N6,N6-trimethyl-L-lysine	KEGG:C01259;BIGG:bigg37211;	0	C9H20N2O3
+ppmi1346p	Diphosphoinositol tetrakisphosphate	BIGG:bigg2265082;	-11	C6H7O24P6
+em2emgacpail_prot_hs	(phosphoethanolaminyl-dimannosyl),(phosphoethanolaminyl)-mannosyl-glucosaminyl-acylphosphatidylinositol	BIGG:bigg2289484;	0	C53H100N3O35P3FULLRCO2FULLR2CO2X
+gt3_hs	GT3 (homo sapiens)	BIGG:bigg2266622;	-3	C63H104N4O36FULLRCO
+etfox	Electron transfer flavoprotein oxidized	BIGG:bigg2300965;	0	R
+hs_deg4	heparan sulfate, degradation product 4	BIGG:bigg2303781;	-12	C73H104N4O92S10
+estrones	Estrone 3-sulfate	KEGG:C02538;CAS:57-91-0;BIGG:bigg40054;	-1	C18H21O5S
+tettet6	tetracosatetraenoic acid n-6	BIGG:bigg2219653;	-1	C24H39O2
+phyt	phytanic acid	KEGG:C01607;CAS:14721-66-5;BIGG:bigg37991;	-1	C20H39O2
+ksi_deg4	keratan sulfate I, degradation product 4	BIGG:bigg2416918;	-12	C222H355N15O197S12
+3spyr	3-Sulfopyruvate	KEGG:KEGG - C05528;BIGG:bigg1884585;	-2	C3H2O6S
+galacglc13galacglcgal14acglcgalgluside_hs	nLc8Cer	BIGG:bigg2419454;	0	C72H125N4O42FULLRCO
+aqcobal	Aquacob(III)alamin	KEGG:C00992;BIGG:bigg36561;	0	C62H93CoN13O15P
+13-cis-oretn	13-cis-oxo-retinoic acid	BIGG:bigg2430442;	-1	C20H27O3
+nrvnccrn	Nervonyl carnitine	BIGG:bigg2614386;	0	C31H59NO4
+galfucgalacglcgal14acglcgalgluside_hs	(Gal)4 (Glc)1 (GlcNAc)2 (LFuc)1 (Cer)1	BIGG:bigg2419448;	0	C70H122N3O41FULLRCO
+2mcacn	cis-2-Methylaconitate	KEGG:C04225;CAS:99-98-9;BIGG:bigg43396;	-3	C7H5O6
+tyr-L	L-Tyrosine	KEGG:C00082;CAS:60-18-4;BIGG:bigg33785;	0	C9H11NO3
+phom	O-Phospho-L-homoserine	KEGG:C01102;BIGG:bigg36811;	-2	C4H8NO6P
+his-L	L-Histidine	KEGG:C00135;CAS:71-00-1;BIGG:bigg33985;	0	C6H9N3O2
+dhor-S	(S)-Dihydroorotate	KEGG:C00337;CAS:5988-19-2;BIGG:bigg34662;	-1	C5H5N2O4
+ggdp	Geranylgeranyl diphosphate	KEGG:C00353;BIGG:bigg34712;	-3	C20H33O7P2
+abt	L-Arabinitol	KEGG:C00532;CAS:7643-75-6;BIGG:bigg35268;	0	C5H12O5
+csn	Cytosine	KEGG:C00380;CAS:71-30-7;BIGG:bigg34812;	0	C4H5N3O
+biliverd	Biliverdin	KEGG:C00500;CAS:114-25-0;BIGG:bigg35167;	-2	C33H32N4O6
+dolglcp_L	Dolichyl beta-D-glucosyl phosphate, human liver homolog	BIGG:bigg1809280;	-10	C1140H1868O90P10
+dutp	dUTP	KEGG:C00460;BIGG:bigg35037;	-4	C9H11N2O14P3
+eryth	L-Erythrulose	KEGG:C02045;CAS:533-50-6;BIGG:bigg38964;	0	C4H8O4
+od2coa	trans-Octadec-2-enoyl-CoA	KEGG:C16218;BIGG:bigg1452075;	-4	C39H64N7O17P3S
+3mb2coa	3-Methylbut-2-enoyl-CoA	KEGG:C03069;BIGG:bigg41135;	-4	C26H38N7O17P3S
+pydxn	Pyridoxine	KEGG:C00314;CAS:65-23-6;BIGG:bigg34590;	0	C8H11NO3
+pail3p_hs	1-Phosphatidyl-1D-myo-inositol 3-phosphate (Homo sapiens)	KEGG:C04549;CAS:652-69-7;BIGG:bigg44024;	-3	C9H15O12P2FULLRCO2FULLR2CO2
+acglcgalgbside_hs	GlcNAc-Gal globoside (homo sapiens)	BIGG:bigg2266514;	0	C58H102N3O32FULLRCO
+ga1_hs	GA1 (homo sapiens)	BIGG:bigg2266534;	0	C44H79N2O22FULLRCO
+emgacpail_hs	phosphoethanolaminyl-mannosyl-glucosylaminyl-acylphosphatidylinositol (H5)	BIGG:bigg2288858;	0	C39H74N2O22P2FULLRCO2FULLR2CO2
+ksii_core2_pre2	keratan sulfate II biosynthesis, precursor 2	BIGG:bigg2296039;	-1	C39H63N3O28X
+Ser-Gly/Ala-X-Gly	protein-linked serine residue (glycosaminoglycan attachment site)	BIGG:bigg2299698;	0	XH
+prostg1	(13E)-11alpha-Hydroxy-9,15-dioxoprost-13-enoate	KEGG:C04654;CAS:35597-44-5;BIGG:bigg44269;	-1	C20H31O5
+triodthysuf	Triiodothyronine sulfate	CAS:31135-55-4;BIGG:bigg2320886;	-1	C15H11I3NO7S
+mag_hs	monoacylglycerol 2 (homo sapiens)	BIGG:bigg2220593;	0	C3H7O2FULLR2CO2
+fucfucgalacglcgal14acglcgalgluside_hs	(Gal)3 (Glc)1 (GlcNAc)2 (LFuc)2 (Cer)1	BIGG:bigg2419450;	0	C70H122N3O40FULLRCO
+adocbl	Adenosylcobalamin	KEGG:C00194;CAS:13870-90-1;BIGG:bigg34204;	0	C72H100CoN18O17P
+idour	L-Iduronate	KEGG:C06472;CAS:2073-35-0;BIGG:bigg48353;	-1	C6H9O7
+arachcrn	arachidyl carnitine	BIGG:bigg2614347;	0	C27H53NO4
+nh4	Ammonium	KEGG:C01342;CAS:14798-03-9;BIGG:bigg33515;	1	H4N
+4mtolbutamide	4 hydroxy tolbutamide	BIGG:bigg2299999;	0	C12H18N2O4S
+gp1calpha_hs	GP1c alpha  (homo sapiens)	BIGG:bigg2288499;	-5	C99H159N7O62FULLRCO
+4ppan	D-4'-Phosphopantothenate	KEGG:C03492;BIGG:bigg41952;	-3	C9H15NO8P
+ribflv	Riboflavin	KEGG:C00255;CAS:83-88-5;BIGG:bigg34409;	0	C17H20N4O6
+trp-L	L-Tryptophan	KEGG:C00078;CAS:73-22-3;BIGG:bigg33772;	0	C11H12N2O2
+gdpddman	GDP-4-dehydro-6-deoxy-D-mannose	KEGG:C01222;BIGG:bigg37116;	-2	C16H21N5O15P2
+44mctr	4,4-dimethylcholesta-8,14,24-trienol	BIGG:bigg1454719;	0	C29H46O
+pmtcrn	L-Palmitoylcarnitine	KEGG:C02990;CAS:18877-64-0;BIGG:bigg40966;	0	C23H45NO4
+sph1p	Sphinganine 1-phosphate	KEGG:C01120;BIGG:bigg1485322;	-1	C18H39NO5P
+g1m7masnC	glucosyl-(alpha-D-mannosyl)7-beta-D-mannosyl-diacetylchitobiosyl-L-asparagine, isoform C (protein)	BIGG:bigg1838933;	0	C70H117N2O55X
+bilirub	Bilirubin	KEGG:C00486;CAS:635-65-4;BIGG:bigg35117;	-2	C33H34N4O6
+core2	Core 2	BIGG:bigg1885365;	0	C22H37N2O15X
+3m4hpga	3-Methoxy-4-hydroxyphenylglycolaldehyde	KEGG:C05583;CAS:306-08-1;BIGG:bigg46069;	0	C9H10O4
+44mzym	4,4-dimethylzymosterol	KEGG:C05108;CAS:59865-13-3;BIGG:bigg45128;	0	C29H48O
+dsmsterol	Desmosterol	KEGG:C01802;CAS:313-04-2;BIGG:bigg38445;	0	C27H44O
+clpnd	clupanodonic acid	BIGG:bigg2218032;	-1	C22H33O2
+clpndcoa	clupanodonyl CoA	BIGG:bigg2218826;	-4	C43H64N7O17P3S
+decdp	all trans Decaprenyl diphosphate	BIGG:bigg1787600;	-3	C50H81O7P2
+udpg	UDPglucose	KEGG:C00029;BIGG:bigg33576;	-2	C15H22N2O17P2
+em2emgacpail_hs	(phosphoethanolaminyl-dimannosyl),(phosphoethanolaminyl)-mannosyl-glucosaminyl-acylphosphatidylinositol (H7)	BIGG:bigg2288947;	0	C53H100N3O35P3FULLRCO2FULLR2CO2
+12HPET	12-Hydroperoxyeicosa-5,8,10,14-tetraenoate	KEGG:C04820;CAS:70608-72-9;BIGG:bigg44618;	-1	C20H31O4
+ksii_core2_pre4	keratan sulfate II biosynthesis, precursor 4	BIGG:bigg2296402;	-1	C53H86N4O38X
+leuktrB4	Leukotriene B4	KEGG:C02165;CAS:71160-24-2;BIGG:bigg39243;	-1	C20H31O4
+ser-D	D-Serine	KEGG:C00740;CAS:312-84-5;BIGG:bigg35846;	0	C3H7NO3
+apnnox	alpha-Pinene-oxide	KEGG:C02759;CAS:72936-74-4;BIGG:bigg40512;	0	C10H16O
+oxa	Oxalate	KEGG:C00209;CAS:144-62-7;BIGG:bigg34265;	-2	C2O4
+ksi_deg3	keratan sulfate I, degradation product 3	BIGG:bigg2416917;	-13	C233H371N16O205S12
+ksi_deg20	keratan sulfate I, degradation product 20	BIGG:bigg2416948;	-6	C138H223N9O119S6
+ptdcacrn	pendtadenoyl carnitine	BIGG:bigg2422206;	0	C22H43NO4
+galfuc12gal14acglcgalgluside_hs	(Gal)3 (Glc)1 (GlcNAc)1 (LFuc)1 (Cer)1	BIGG:bigg2419403;	0	C56H99N2O31FULLRCO
+galgalfucfucgalacglcgalacglcgal14acglcgalgluside_hs	(Gal)6 (Glc)1 (GlcNAc)3 (LFuc)2 (Cer)1	BIGG:bigg2419419;	0	C96H165N4O60FULLRCO
+dtdprmn	dTDP-L-rhamnose	KEGG:C03319;CAS:572-96-3;BIGG:bigg41621;	-2	C16H24N2O15P2
+dopa	Dopamine	KEGG:C03758;CAS:51-61-6;BIGG:bigg42467;	1	C8H12NO2
+3mox4hpac	3-Methoxy-4-hydroxyphenylacetaldehyde	KEGG:C05581;CAS:61-33-6;BIGG:bigg46064;	0	C9H10O3
+34dhoxpeg	3,4-Dihydroxyphenylethyleneglycol	KEGG:C05576;CAS:61-33-6;BIGG:bigg46054;	0	C8H10O4
+hmgcoa	Hydroxymethylglutaryl-CoA	KEGG:C00356;CAS:1553-55-5;BIGG:bigg34727;	-5	C27H39N7O20P3S
+andrstndn	Androstenedione	BIGG:bigg2210012;	0	C19H26O2
+hexc	hexacosanoate (n-C26:0)	BIGG:bigg1459812;	-1	C26H51O2
+2dp6mobq_me	2-Decaprenyl-3-methyl-6-methoxy-1,4-benzoquinone	BIGG:bigg2267531;	0	C58H88O3
+4tmeabut	4-Trimethylammoniobutanal	KEGG:C01149;BIGG:bigg36920;	1	C7H16NO
+ksi_pre34	keratan sulfate I biosynthesis, precursor 34	BIGG:bigg2296853;	-11	C241H385N17O202S10X
+ksii_core4_pre5	keratan sulfate II biosynthesis, precursor 5	BIGG:bigg2299220;	-1	C69H112N6O48X
+hspg	heparan sulfate proteoglycan	BIGG:bigg2301817;	-13	C79H113N5O101S12X
+4nphsf	4-Nitrophenyl sulfate	BIGG:bigg2320881;	-1	C6H4NO6S
+ksi_deg36	keratan sulfate I, degradation product 36	BIGG:bigg2416937;	-1	C62H103N4O49S1
+ksii_core2_deg5	keratan sulfate II (core 2-linked), degradation product 5	BIGG:bigg2418060;	-1	C50H82N4O38SX
+aact	Aminoacetone	KEGG:C01888;CAS:298-08-8;BIGG:bigg38629;	1	C3H8NO
+fucfucgalacglcgalacglcgal14acglcgalgluside_hs	(Gal)4 (Glc)1 (GlcNAc)3 (LFuc)2 (Cer)1	BIGG:bigg2419416;	0	C84H145N4O50FULLRCO
+fuc13galacglcgal14acglcgalgluside_hs	III3Fuc-nLc6Cer	BIGG:bigg2419462;	0	C64H112N3O36FULLRCO
+hexccrn	hexacosanoyl carnitine	BIGG:bigg2614366;	0	C33H65NO4
+tdchola	taurochenodeoxycholate	KEGG:C05465;CAS:67-97-0;BIGG:bigg45864;	0	C26H45NO6S
+5adtststerones	5alpha-Dihydrotestosterone sulfate	BIGG:bigg2794980;	-1	C19H29O5S
+cbasp	N-Carbamoyl-L-aspartate	KEGG:C00438;BIGG:bigg34984;	-2	C5H6N2O5
+5aizc	5-amino-1-(5-phospho-D-ribosyl)imidazole-4-carboxylate	KEGG:C04751;BIGG:bigg44477;	-3	C9H11N3O9P
+1p3h5c	L-1-Pyrroline-3-hydroxy-5-carboxylate	KEGG:C04281;CAS:5255-75-4;BIGG:bigg43511;	-1	C5H6NO3
+m2mpdol_U	(alpha-D-mannosyl)2-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809506;	-20	C1365H2240N20O320P20
+m4mpdol_U	(alpha-D-Mannosyl)4-beta-D-mannosyl-diacetylchitobiosyldiphosphodolichol, human uterine homolog	BIGG:bigg1809510;	-20	C1485H2440N20O420P20
+34dhpac	3,4-Dihydroxyphenylacetaldehyde	KEGG:C04043;BIGG:bigg43022;	0	C8H8O3
+ddsmsterol	7-Dehydrodesmosterol	KEGG:C05107;CAS:59865-13-3;BIGG:bigg45126;	0	C27H42O
+dmgly	N,N-Dimethylglycine	KEGG:C01026;CAS:1118-68-9;BIGG:bigg36652;	0	C4H9NO2
+gacpail_hs	glucosaminyl-acylphosphatidylinositol	BIGG:bigg2282464;	0	C31H58NO14PFULLRCO2FULLR2CO2
+ksii_core2_pre7	keratan sulfate II biosynthesis, precursor 7	BIGG:bigg2296696;	-2	C67H108N5O51SX
+hs_pre12	heparan sulfate, precursor 12	BIGG:bigg2301808;	-7	C79H119N5O83S6X
+hs_deg10	heparan sulfate, degradation product 10	BIGG:bigg2303823;	-9	C55H80N3O70S8
+ksi_deg7	keratan sulfate I, degradation product 7	BIGG:bigg2416921;	-10	C210H337N15O181S10
+galfucgalacglcgalgluside_hs	Type IB glycolipid	BIGG:bigg2419336;	0	C56H99N2O31FULLRCO
+duri	Deoxyuridine	KEGG:C00526;CAS:951-78-0;BIGG:bigg35251;	0	C9H12N2O5
+acgam1p	N-Acetyl-D-glucosamine 1-phosphate	KEGG:C04256;CAS:None;BIGG:bigg43457;	-2	C8H14NO9P
+am6sa	2-Aminomuconate 6-semialdehyde	KEGG:C03824;BIGG:bigg1445635;	0	C6H7NO3
+dhlpro	Dihydrolipolprotein	KEGG:C02972;BIGG:bigg146125;	0	H2S2X
+n2m2masn	((N-acetyl-D-glucosaminyl)2-(alpha-D-mannosyl)2-beta-D-mannosyl-diacetylchitobiosyl)-L-asparagine (protein)	BIGG:bigg1830430;	0	C50H83N4O35X
+glc1man	glucose-1,3-mannose oligosaccharide	BIGG:bigg1838717;	0	C12H22O11
+ivcoa	Isovaleryl-CoA	KEGG:C02939;BIGG:bigg40861;	-4	C26H40N7O17P3S
+3hbcoa-R	(R)-3-Hydroxybutanoyl-CoA	KEGG:C03561;CAS:46495-39-0;BIGG:bigg42080;	-4	C25H38N7O18P3S
+pecgon	pseudoecgonine	BIGG:bigg2282520;	-1	C9H14NO3
+1a25dhvitd2	1-alpha,25-Dihydroxyvitamin D2	BIGG:bigg2289254;	0	C28H44O3
+hs_deg22	heparan sulfate, degradation product 22	BIGG:bigg2303868;	-3	C37H56NO35S
+dmnoncrn	4,8 dimethylnonanoyl carnitine	BIGG:bigg2365396;	0	C18H37NO4
+tag1p-D	D-Tagatose 1-phosphate	BIGG:bigg2703813;	-2	C6H11O9P
+xtsn	Xanthosine	KEGG:C01762;CAS:146-80-5;BIGG:bigg38352;	0	C10H12N4O6
+acgam6p	N-Acetyl-D-glucosamine 6-phosphate	KEGG:C00357;CAS:102029-88-9;BIGG:bigg34733;	-2	C8H14NO9P
+hgentis	Homogentisate	KEGG:C00544;CAS:451-13-8;BIGG:bigg1485308;	-1	C8H7O4
+hdeACP	cis-hexadec-9-enoyl-[acyl-carrier protein] (n-C16:1)	KEGG:c16520;BIGG:bigg1437594;	-1	C27H49N2O8PRS
+T_antigen	T antigen (core 1)	BIGG:bigg1885354;	0	C14H24NO10X
+sucsal	Succinic semialdehyde	KEGG:C00232;CAS:692-29-5;BIGG:bigg34331;	-1	C4H5O3
+nwharg	N-(omega)-Hydroxyarginine	KEGG:C05933;CAS:SE: NOS;BIGG:bigg46955;	1	C6H15N4O3
+gullac	L-Gulono-1,4-lactone	KEGG:C01040;CAS:1128-23-0;BIGG:bigg36677;	0	C6H10O6
+akgp_hs	1-alkylglycerol 3-phosphate (homo sapiens)	BIGG:bigg2255857;	-2	C4H10O4PFULLRCO2
+retinal-11-cis	cis-11-retinal	BIGG:bigg2265510;	0	C20H28O
+34dhcinm	3,4-Dihydroxy-trans-cinnamate	KEGG:C01197;BIGG:bigg37057;	-1	C9H7O4
+gm2_hs	ganglioside GM2 (homo sapiens)	BIGG:bigg2265477;	-1	C49H85N3O25FULLRCO
+m(em)3gacpail_prot_hs	mannosyl-3-(phosphoethanolaminyl-mannosyl)-glucosaminyl-acylphosphatidylinositol-Protein (M4A)	BIGG:bigg2289700;	0	C61H116N4O43P4FULLRCO2FULLR2CO2X
+34hpl	3-(4-Hydroxyphenyl)lactate	BIGG:bigg2392410;	-1	C9H9O4
+ksi_deg11	keratan sulfate I, degradation product 11	BIGG:bigg2416925;	-9	C180H289N12O158S9
+ksi_deg38	keratan sulfate I, degradation product 38	BIGG:bigg2416954;	0	C54H91N3O41
+acngalacglcgalgluside_hs	(Gal)3 (Glc)1 (GlcNAc)1 (Cer)1	BIGG:bigg2419342;	-1	C55H95N3O30FULLRCO

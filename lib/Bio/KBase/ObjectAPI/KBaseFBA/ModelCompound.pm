@@ -21,10 +21,21 @@ has modelCompartmentLabel => ( is => 'rw', isa => 'Str',printOrder => '3', type 
 has isBiomassCompound  => ( is => 'rw', isa => 'Bool',printOrder => '3', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildisBiomassCompound' );
 has mapped_uuid  => ( is => 'rw', isa => 'ModelSEED::uuid',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildmapped_uuid' );
 has formula  => ( is => 'rw', isa => 'Str',printOrder => '2', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildformula' );
+has msid => ( is => 'rw', isa => 'Str',printOrder => '2', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildmsid' );
+has msname => ( is => 'rw', isa => 'Str',printOrder => '2', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildmsname' );
+
+has compound => (is => 'rw', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_build_compound', clearer => 'clear_compound', isa => 'Ref', weak_ref => 1);
 
 #***********************************************************************************************************
 # BUILDERS:
 #***********************************************************************************************************
+sub _build_compound {
+	 my ($self) = @_;
+	 my $array = [split(/\//,$self->compound_ref())];
+	 my $compoundid = pop(@{$array});
+	 $self->compound_ref($self->parent()->template()->_reference()."/compounds/id/".$compoundid);
+	 return $self->getLinkedObject($self->compound_ref());
+}
 sub _buildid {
 	my ($self) = @_;
 	return $self->compound()->id()."_".$self->modelCompartmentLabel();
@@ -53,6 +64,14 @@ sub _buildmapped_uuid {
 sub _buildformula {
 	my ($self) = @_;
 	return $self->compound()->formula();
+}
+sub _buildmsid {
+	my ($self) = @_;
+	return $self->compound()->id();
+}
+sub _buildmsname {
+	my ($self) = @_;
+	return $self->compound()->name();
 }
 
 #***********************************************************************************************************

@@ -28,7 +28,7 @@ sub _buildsolrxn {
 	my ($self) = @_;
 	my $rxns = [];
 	for (my $i=0; $i < @{$self->gapfillingSolutionReactions()};$i++) {
-		push(@{$rxns},[$self->gapfillingSolutionReactions()->[$i]->direction(),$self->gapfillingSolutionReactions()->[$i]->reaction()->id()]);
+		push(@{$rxns},[$self->gapfillingSolutionReactions()->[$i]->direction(),$self->gapfillingSolutionReactions()->[$i]->reaction()->msid()]);
 	}
 	return $rxns;
 }
@@ -48,7 +48,7 @@ sub _buildgapfillingReactionString {
 		if (length($string) > 0) {
 			$string .= ";";
 		}
-		$string .= $gapfillingReactions->[$i]->reaction()->id().$gapfillingReactions->[$i]->direction();
+		$string .= $gapfillingReactions->[$i]->reaction()->msid().$gapfillingReactions->[$i]->direction();
 	}
 	return $string;
 }
@@ -112,7 +112,7 @@ sub printSolution {
 		$output .= "ID\tDirection\tEquation\n";
 		for (my $i=0; $i < @{$rxns}; $i++) {
 			my $rxn = $rxns->[$i];
-			$output .= $rxn->reaction()->id()."[c]\t".$rxn->direction()."\t".$rxn->reaction()->definition()."\n";
+			$output .= $rxn->reaction()->id()."\t".$rxn->direction()."\t".$rxn->reaction()->definition()."\n";
 		}	
 		$output .= "}\n";
 	}

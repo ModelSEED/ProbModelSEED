@@ -40,16 +40,37 @@ has equationFormula => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass =
 has complexString => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildcomplexString' );
 has stoichiometry => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildstoichiometry' );
 
+has reaction => (is => 'rw', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_build_reaction', clearer => 'clear_reaction', isa => 'Ref', weak_ref => 1);
+
 #***********************************************************************************************************
 # BUILDERS:
 #***********************************************************************************************************
+sub _build_reaction {
+	 my ($self) = @_;
+	 if ($self->reaction_ref() !~ m/_[a-z]/) {
+	 	my $array = [split(/_/,$self->id())];
+	 	my $comp = pop(@{$array});
+	 	$comp =~ s/\d+//;
+	 	$array = [split(/\//,$self->reaction_ref())];
+	 	my $rxnid = pop(@{$array});
+	 	$self->reaction_ref($self->parent()->template()->_reference()."/reactions/id/".$rxnid."_".$comp);
+	 }
+	 my $rxn = $self->getLinkedObject($self->reaction_ref());
+	 if (!defined($rxn)) {
+	 	my $ref = $self->reaction_ref();
+	 	$ref =~ s/_e/_c/;
+	 	$self->reaction_ref($ref);
+	 	$rxn = $self->getLinkedObject($self->reaction_ref());
+	 }
+	 return $rxn
+}
 sub _buildname {
 	my ($self) = @_;
-	return $self->reaction->name()."_".$self->modelCompartmentLabel();
+	return $self->reaction->msname()."_".$self->modelCompartmentLabel();
 }
 sub _buildabbreviation {
 	my ($self) = @_;
-	return $self->reaction->abbreviation()."_".$self->modelCompartmentLabel();
+	return $self->reaction->msabbreviation()."_".$self->modelCompartmentLabel();
 }
 sub _builddefinition {
 	my ($self) = @_;
@@ -261,6 +282,36 @@ sub _buildstoichiometry {
 #***********************************************************************************************************
 # FUNCTIONS:
 #***********************************************************************************************************
+sub kegg {
+    my ($self,$id) = @_;
+    if (defined($id)) {
+    	my $aliases = $self->aliases();
+    	for (my $i=0; $i < @{$aliases}; $i++) {
+    		if ($aliases->[$i] eq "KEGG:".$id) {
+    			return $id;
+    		}
+    	}
+    	push(@{$aliases},"KEGG:".$id);
+    }
+    my $aliases = $self->getAliases("KEGG");
+    return (@$aliases) ? $aliases->[0] : undef;
+}
+
+sub enzyme {
+    my ($self,$enzyme) = @_;
+    if (defined($enzyme)) {
+    	my $aliases = $self->aliases();
+    	for (my $i=0; $i < @{$aliases}; $i++) {
+    		if ($aliases->[$i] eq "EC:".$enzyme) {
+    			return $enzyme;
+    		}
+    	}
+    	push(@{$aliases},"EC:".$enzyme);
+    }
+    my $aliases = $self->getAliases("EC");
+    return (@$aliases) ? $aliases->[0] : undef;
+}
+
 sub getAlias {
     my ($self,$set) = @_;
     my $aliases = $self->getAliases($set);
@@ -353,11 +404,11 @@ sub createEquation {
 	my $rgts = $self->modelReactionReagents();
 	my $rgtHash;
     my $rxnCompID = $self->modelcompartment()->compartment()->id();
-    my $hcpd = $self->parent()->biochemistry()->checkForProton();
+    my $hcpd = $self->parent()->template()->checkForProton();
  	if (!defined($hcpd) && $args->{hashed}==1) {
 	    Bio::KBase::ObjectAPI::utilities::error("Could not find proton in biochemistry!");
 	}
-	my $wcpd = $self->parent()->biochemistry()->checkForWater();
+	my $wcpd = $self->parent()->template()->checkForWater();
  	if (!defined($wcpd) && $args->{water}==1) {
 	    Bio::KBase::ObjectAPI::utilities::error("Could not find water in biochemistry!");
 	}
@@ -625,7 +676,6 @@ sub setGPRFromArray {
 sub ImportExternalEquation {
 	my $self = shift;
     my $args = Bio::KBase::ObjectAPI::utilities::args(["reagents"],{}, @_);
-	my $bio = $self->parent()->template()->biochemistry();
     my $rxncpds = $self->modelReactionReagents();
     for (my $i=0; $i < @{$rxncpds}; $i++){
     	$self->remove("modelReactionReagents",$rxncpds->[$i])
@@ -637,9 +687,9 @@ sub ImportExternalEquation {
 			coefficient => $args->{reagents}->{$key}
 	    });
     }		
-    my $output = $bio->searchForReactionByCode($self->equationCode());
+    my $output = $self->parent()->template()->searchForReactionByCode($self->equationCode());
     if (defined($output)) {
-    	$self->reaction_ref($bio->_reference()."/reactions/id/".$output->{rxnobj}->id());
+    	$self->reaction_ref($self->parent()->template()->_reference()."/reactions/id/".$output->{rxnobj}->id());
     	if ($output->{dir} eq "r") {
     		if ($self->direction() eq ">") {
     			$self->direction("<");
@@ -654,12 +704,12 @@ sub ImportExternalEquation {
     } else {
     	print "Not found:".$self->id()."\n";
     	my $array = [split(/_/,$self->id())];
-    	my $rxn = $bio->searchForReaction($array->[0]);
+    	my $rxn = $self->parent()->template()->searchForReaction($array->[0]);
     	if (defined($rxn)) {
-    		print $rxn->createEquation({format=>"id",protons=>0,direction=>0})."\n";
-    		print $self->createEquation({indecies => 0,format=>"id",hashed=>0,protons=>0,direction=>0})."\n";
+    		print $rxn->createEquation({format=>"msid",protons=>0,direction=>0})."\n";
+    		print $self->createEquation({indecies => 0,format=>"msid",hashed=>0,protons=>0,direction=>0})."\n";
     	}
-    	$self->reaction_ref($bio->_reference()."/reactions/id/rxn00000");
+    	$self->reaction_ref($self->parent()->template()->_reference()."/reactions/id/rxn00000_c");
     }
 }
 

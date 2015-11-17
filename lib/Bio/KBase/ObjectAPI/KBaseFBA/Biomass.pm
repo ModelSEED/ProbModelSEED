@@ -46,7 +46,7 @@ sub _equation_builder {
     	cpd17042_c0 => 1
     };
     for (my $i=0; $i < @{$cpds}; $i++) {
-        my $id = $cpds->[$i]->modelcompound()->compound()->uuid();
+        my $id = $cpds->[$i]->modelcompound()->compound()->id();
         my $coef = $cpds->[$i]->coefficient();
         if ($args->{rescale} == 1) {
 	        if (!defined($blacklistCpd->{$cpds->[$i]->modelcompound()->id()})) {

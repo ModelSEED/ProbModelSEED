@@ -7,7 +7,14 @@
 package Bio::KBase::ObjectAPI::KBaseFBA::DB::ModelTemplate;
 use Bio::KBase::ObjectAPI::IndexedObject;
 use Bio::KBase::ObjectAPI::KBaseFBA::TemplateBiomass;
+use Bio::KBase::ObjectAPI::KBaseFBA::TemplatePathway;
+use Bio::KBase::ObjectAPI::KBaseFBA::TemplateCompound;
+use Bio::KBase::ObjectAPI::KBaseFBA::TemplateCompCompound;
+use Bio::KBase::ObjectAPI::KBaseFBA::TemplateSubsystem;
+use Bio::KBase::ObjectAPI::KBaseFBA::TemplateCompartment;
 use Bio::KBase::ObjectAPI::KBaseFBA::TemplateReaction;
+use Bio::KBase::ObjectAPI::KBaseFBA::TemplateRole;
+use Bio::KBase::ObjectAPI::KBaseFBA::TemplateComplex;
 use Moose;
 use namespace::autoclean;
 extends 'Bio::KBase::ObjectAPI::IndexedObject';
@@ -20,21 +27,26 @@ has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metacl
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
 has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
 has biochemistry_ref => (is => 'rw', isa => 'Str', printOrder => '-1', default => 'kbase/default', type => 'attribute', metaclass => 'Typed');
+has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
+has type => (is => 'rw', isa => 'Str', printOrder => '-1', type => 'attribute', metaclass => 'Typed');
 has name => (is => 'rw', isa => 'Str', printOrder => '1', required => 1, type => 'attribute', metaclass => 'Typed');
 has domain => (is => 'rw', isa => 'Str', printOrder => '2', required => 1, type => 'attribute', metaclass => 'Typed');
-has mapping_ref => (is => 'rw', isa => 'Str', printOrder => '3', required => 1, type => 'attribute', metaclass => 'Typed');
-has id => (is => 'rw', isa => 'Str', printOrder => '0', required => 1, type => 'attribute', metaclass => 'Typed');
-has modelType => (is => 'rw', isa => 'Str', printOrder => '1', required => 1, type => 'attribute', metaclass => 'Typed');
 
 
 # SUBOBJECTS:
-has templateBiomasses => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateBiomass)', metaclass => 'Typed', reader => '_templateBiomasses', printOrder => '0');
-has templateReactions => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateReaction)', metaclass => 'Typed', reader => '_templateReactions', printOrder => '0');
+has biomasses => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateBiomass)', metaclass => 'Typed', reader => '_biomasses', printOrder => '-1');
+has pathways => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplatePathway)', metaclass => 'Typed', reader => '_pathways', printOrder => '-1');
+has compounds => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateCompound)', metaclass => 'Typed', reader => '_compounds', printOrder => '-1');
+has compcompounds => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateCompCompound)', metaclass => 'Typed', reader => '_compcompounds', printOrder => '-1');
+has subsystems => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateSubsystem)', metaclass => 'Typed', reader => '_subsystems', printOrder => '-1');
+has compartments => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateCompartment)', metaclass => 'Typed', reader => '_compartments', printOrder => '-1');
+has reactions => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateReaction)', metaclass => 'Typed', reader => '_reactions', printOrder => '-1');
+has roles => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateRole)', metaclass => 'Typed', reader => '_roles', printOrder => '-1');
+has complexes => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(TemplateComplex)', metaclass => 'Typed', reader => '_complexes', printOrder => '-1');
 
 
 # LINKS:
-has biochemistry => (is => 'rw', type => 'link(Bio::KBase::ObjectAPI::KBaseStore,Biochemistry,biochemistry_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_biochemistry', clearer => 'clear_biochemistry', isa => 'Bio::KBase::ObjectAPI::KBaseBiochem::Biochemistry', weak_ref => 1);
-has mapping => (is => 'rw', type => 'link(Bio::KBase::ObjectAPI::KBaseStore,Mapping,mapping_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_mapping', clearer => 'clear_mapping', isa => 'Bio::KBase::ObjectAPI::KBaseOntology::Mapping', weak_ref => 1);
+has biochemistry => (is => 'rw', type => 'link(Bio::KBase::ObjectAPI::KBaseStore,Biochemistry,biochemistry_ref)', metaclass => 'Typed', lazy => 1, builder => '_build_biochemistry', clearer => 'clear_biochemistry', isa => 'Ref', weak_ref => 1);
 
 
 # BUILDERS:
@@ -43,10 +55,6 @@ sub _build_uuid { return Data::UUID->new()->create_str(); }
 sub _build_biochemistry {
 	 my ($self) = @_;
 	 return $self->getLinkedObject($self->biochemistry_ref());
-}
-sub _build_mapping {
-	 my ($self) = @_;
-	 return $self->getLinkedObject($self->mapping_ref());
 }
 
 
@@ -60,58 +68,47 @@ sub _top { return 1; }
 my $attributes = [
           {
             'req' => 0,
-            'printOrder' => -1,
+            'perm' => 'rw',
             'name' => 'biochemistry_ref',
+            'printOrder' => -1,
             'default' => 'kbase/default',
-            'type' => 'Str',
-            'perm' => 'rw'
+            'type' => 'Str'
           },
           {
-            'req' => 1,
-            'printOrder' => 1,
-            'name' => 'name',
-            'default' => undef,
-            'type' => 'Str',
-            'description' => undef,
-            'perm' => 'rw'
-          },
-          {
-            'req' => 1,
-            'printOrder' => 2,
-            'name' => 'domain',
-            'default' => undef,
-            'type' => 'Str',
-            'description' => undef,
-            'perm' => 'rw'
-          },
-          {
-            'req' => 1,
-            'printOrder' => 3,
-            'name' => 'mapping_ref',
-            'default' => undef,
-            'type' => 'Str',
-            'description' => undef,
-            'perm' => 'rw'
-          },
-          {
-            'req' => 1,
-            'printOrder' => 0,
+            'perm' => 'rw',
             'name' => 'id',
+            'printOrder' => 0,
             'type' => 'Str',
-            'perm' => 'rw'
+            'req' => 1
+          },
+          {
+            'name' => 'type',
+            'printOrder' => -1,
+            'perm' => 'rw',
+            'type' => 'Str',
+            'req' => 0
           },
           {
             'req' => 1,
-            'printOrder' => 1,
-            'name' => 'modelType',
             'default' => undef,
             'type' => 'Str',
+            'perm' => 'rw',
             'description' => undef,
-            'perm' => 'rw'
+            'printOrder' => 1,
+            'name' => 'name'
+          },
+          {
+            'description' => undef,
+            'perm' => 'rw',
+            'name' => 'domain',
+            'printOrder' => 2,
+            'default' => undef,
+            'type' => 'Str',
+            'req' => 1
           }
         ];
 
-my $attribute_map = {biochemistry_ref => 0, name => 1, domain => 2, mapping_ref => 3, id => 4, modelType => 5};
+my $attribute_map = {biochemistry_ref => 0, id => 1, type => 2, name => 3, domain => 4};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -129,25 +126,16 @@ sub _attributes {
 my $links = [
           {
             'attribute' => 'biochemistry_ref',
-            'parent' => 'Bio::KBase::ObjectAPI::KBaseStore',
+            'class' => 'Biochemistry',
+            'module' => undef,
+            'method' => 'Biochemistry',
             'clearer' => 'clear_biochemistry',
             'name' => 'biochemistry',
-            'method' => 'Biochemistry',
-            'class' => 'Bio::KBase::ObjectAPI::KBaseBiochem::Biochemistry',
-            'module' => 'KBaseBiochem'
-          },
-          {
-            'attribute' => 'mapping_ref',
-            'parent' => 'Bio::KBase::ObjectAPI::KBaseStore',
-            'clearer' => 'clear_mapping',
-            'name' => 'mapping',
-            'method' => 'Mapping',
-            'class' => 'Bio::KBase::ObjectAPI::KBaseOntology::Mapping',
-            'module' => 'KBaseOntology'
+            'parent' => 'Bio::KBase::ObjectAPI::KBaseStore'
           }
         ];
 
-my $link_map = {biochemistry => 0, mapping => 1};
+my $link_map = {biochemistry => 0};
 sub _links {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -164,28 +152,71 @@ sub _links {
 
 my $subobjects = [
           {
-            'req' => undef,
-            'printOrder' => 0,
-            'name' => 'templateBiomasses',
-            'default' => undef,
-            'description' => undef,
+            'module' => 'KBaseFBA',
             'class' => 'TemplateBiomass',
             'type' => 'child',
-            'module' => 'KBaseFBA'
+            'name' => 'biomasses',
+            'printOrder' => -1
           },
           {
-            'req' => undef,
-            'printOrder' => 0,
-            'name' => 'templateReactions',
-            'default' => undef,
-            'description' => undef,
-            'class' => 'TemplateReaction',
             'type' => 'child',
+            'printOrder' => -1,
+            'name' => 'pathways',
+            'module' => 'KBaseFBA',
+            'class' => 'TemplatePathway'
+          },
+          {
+            'class' => 'TemplateCompound',
+            'module' => 'KBaseFBA',
+            'type' => 'child',
+            'name' => 'compounds',
+            'printOrder' => -1
+          },
+          {
+            'class' => 'TemplateCompCompound',
+            'module' => 'KBaseFBA',
+            'name' => 'compcompounds',
+            'printOrder' => -1,
+            'type' => 'child'
+          },
+          {
+            'class' => 'TemplateSubsystem',
+            'module' => 'KBaseFBA',
+            'type' => 'child',
+            'name' => 'subsystems',
+            'printOrder' => -1
+          },
+          {
+            'class' => 'TemplateCompartment',
+            'module' => 'KBaseFBA',
+            'name' => 'compartments',
+            'printOrder' => -1,
+            'type' => 'child'
+          },
+          {
+            'class' => 'TemplateReaction',
+            'module' => 'KBaseFBA',
+            'name' => 'reactions',
+            'printOrder' => -1,
+            'type' => 'child'
+          },
+          {
+            'module' => 'KBaseFBA',
+            'class' => 'TemplateRole',
+            'name' => 'roles',
+            'printOrder' => -1,
+            'type' => 'child'
+          },
+          {
+            'name' => 'complexes',
+            'printOrder' => -1,
+            'type' => 'child',
+            'class' => 'TemplateComplex',
             'module' => 'KBaseFBA'
           }
         ];
 
-my $subobject_map = {templateBiomasses => 0, templateReactions => 1};
+my $subobject_map = {biomasses => 0, pathways => 1, compounds => 2, compcompounds => 3, subsystems => 4, compartments => 5, reactions => 6, roles => 7, complexes => 8};
 sub _subobjects {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -200,13 +231,41 @@ sub _subobjects {
 	 }
 }
 # SUBOBJECT READERS:
-around 'templateBiomasses' => sub {
+around 'biomasses' => sub {
 	 my ($orig, $self) = @_;
-	 return $self->_build_all_objects('templateBiomasses');
+	 return $self->_build_all_objects('biomasses');
 };
-around 'templateReactions' => sub {
+around 'pathways' => sub {
 	 my ($orig, $self) = @_;
-	 return $self->_build_all_objects('templateReactions');
+	 return $self->_build_all_objects('pathways');
+};
+around 'compounds' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('compounds');
+};
+around 'compcompounds' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('compcompounds');
+};
+around 'subsystems' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('subsystems');
+};
+around 'compartments' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('compartments');
+};
+around 'reactions' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('reactions');
+};
+around 'roles' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('roles');
+};
+around 'complexes' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('complexes');
 };
 
 
