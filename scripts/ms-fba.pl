@@ -17,9 +17,13 @@ my($opt, $usage) = Bio::P3::Workspace::ScriptHelpers::options("%c %o <model>",[
 	["objective=s", "Objective reaction", { "default" => "bio1" }],
 	["app", "Run as app"],
 ]);
+if (!defined($ARGV[0])) {
+	print "Must supply model to run FBA on!\n".$usage."\n";
+	exit();	
+}
 my $paths = Bio::P3::Workspace::ScriptHelpers::process_paths([$ARGV[0]]);
 my $model = $paths->[0];
-my $objective = ["biomassflux",$opt->{target},1];
+my $objective = ["biomassflux",$opt->{objective},1];
 if ($objective->[1] !~ m/^bio/) {
 	if ($objective->[1] =~ m/^cpd/) {
 		$objective->[0] = "drainflux";
@@ -46,4 +50,4 @@ my $output = $client->FluxBalanceAnalysis({
 	custom_constraints => [],
 	solver => $opt->{solver},
 });
-print Data::Dumper->Dump($output)."\n";
+print Data::Dumper->Dump([$output])."\n";

@@ -988,7 +988,7 @@ sub export_media
     my $mediacpds = $media->mediacompounds();
     for (my $i=0; $i < @{$mediacpds}; $i++) {
     	if ($mediacpds->[$i]->compound_ref() =~ m/(cpd\d+)$/) {
-    		$output .= $1."\t".$mediacpds->[$i]->name()."\t".$mediacpds->[$i]->concentration()."\t".$mediacpds->[$i]->minFlux()."\t".$mediacpds->[$i]->maxFlux()."\n";
+    		$output .= $1."\t".$mediacpds->[$i]->compound()->name()."\t".$mediacpds->[$i]->concentration()."\t".$mediacpds->[$i]->minFlux()."\t".$mediacpds->[$i]->maxFlux()."\n";
     	}    	
     }
     if ($input->{to_shock} == 1) {

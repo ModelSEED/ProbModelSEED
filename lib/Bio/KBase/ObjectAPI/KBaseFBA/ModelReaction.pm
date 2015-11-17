@@ -55,7 +55,14 @@ sub _build_reaction {
 	 	my $rxnid = pop(@{$array});
 	 	$self->reaction_ref($self->parent()->template()->_reference()."/reactions/id/".$rxnid."_".$comp);
 	 }
-	 return $self->getLinkedObject($self->reaction_ref());
+	 my $rxn = $self->getLinkedObject($self->reaction_ref());
+	 if (!defined($rxn)) {
+	 	my $ref = $self->reaction_ref();
+	 	$ref =~ s/_e/_c/;
+	 	$self->reaction_ref($ref);
+	 	$rxn = $self->getLinkedObject($self->reaction_ref());
+	 }
+	 return $rxn
 }
 sub _buildname {
 	my ($self) = @_;
