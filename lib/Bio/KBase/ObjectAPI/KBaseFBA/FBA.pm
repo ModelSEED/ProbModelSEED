@@ -1628,7 +1628,6 @@ sub createJobDirectory {
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."genes.tbl",$genedata);
 	#Printing parameter file
 	my $paramData = [];
-	$parameters->{MFASolver} = "CPLEX";#TODO
 	foreach my $param (keys(%{$parameters})) {
 		push(@{$paramData},$param."|".$parameters->{$param}."|Specialized parameters");
 	}
