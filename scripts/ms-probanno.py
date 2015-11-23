@@ -39,6 +39,7 @@ if __name__ == '__main__':
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='ms-probanno', epilog=desc3)
     parser.add_argument('genomeref', help='reference to genome object', action='store', default=None)
+    parser.add_argument('templateref', help='reference to template model object', action='store', default=None)
     parser.add_argument('rxnprobsref', help='reference to rxnprobs object', action='store', default=None)
     parser.add_argument('--ws-url', help='url of workspace service endpoint', action='store', dest='wsURL', default='https://p3.theseed.org/services/Workspace')
     parser.add_argument('--token', help='token for user', action='store', dest='token', default=None)
@@ -55,8 +56,10 @@ if __name__ == '__main__':
     # Workaround for extraneous delimiter tacked on the end of references.
     if args.genomeref[-2:] == '||':
         args.genomeref = args.genomeref[:-2]
+    if args.templateref[-2:] == '||':
+        args.templateref = args.templateref[:-2]
     
-    # Get the genome object from the workspace.
+    # Get the genome object from the workspace (for the features).
     wsClient = Workspace(url=args.wsURL, token=args.token)
     try:
         # The get() method returns an array of tuples where the first element is
@@ -68,6 +71,41 @@ if __name__ == '__main__':
     except WorkspaceServerError as e:
         sys.stderr.write('Failed to get genome using reference %s\n' %(args.genomeref))
         exit(1)
+
+    # Get the template object from the workspace (for the complexes and roles).
+    try:
+        # See comment above on output of get() method.
+        object = wsClient.get({ 'objects': [ args.templateref ] })
+        template = json.loads(object[0][1])
+        
+    except WorkspaceServerError as e:
+        sys.stderr.write('Failed to get template model using reference %s\n' %(args.templateref))
+        exit(1)
+
+    # Build a dictionary to look up roles in the template by ID.
+    roles = dict()
+    for index in range(len(template['roles'])):        
+        roles[template['roles'][index]['id']] = index
+
+    # Create a dictionary to map a complex to a list of roles as defined in the template.
+    complexesToRoles = dict()
+    for index in range(len(template['complexes'])):
+        complexId = template['complexes'][index]['id']
+        complexesToRoles[complexId] = list()
+        for crindex in range(len(template['complexes'][index]['complexroles'])):
+            # A complex has a list of complexroles and each complexrole has a reference
+            # to a role and each role has a name. Role ID is last element in reference.
+            roleId = template['complexes'][index]['complexroles'][crindex]['templaterole_ref'].split('/')[-1]
+            complexesToRoles[complexId].append(template['roles'][roles[roleId]]['name'])        
+
+    # Create a dictionary to map a reaction to a list of complexes as defined in the template.
+    reactionsToComplexes = dict()
+    for index in range(len(template['reactions'])):
+        reactionId = template['reactions'][index]['id']
+        reactionsToComplexes[reactionId] = list()
+        for complexRef in template['reactions'][index]['templatecomplex_refs']:
+            # Complex ID is last element in reference.
+            reactionsToComplexes[reactionId].append(complexRef.split('/')[-1])
 
     # Create a worker for running the algorithm.
     worker = ProbAnnotationWorker(genome['id'])
@@ -90,10 +128,10 @@ if __name__ == '__main__':
         totalRoleProbs = worker.totalRoleProbabilities(roleProbs)
 
         # Calculate complex probabilities.
-        complexProbs = worker.complexProbabilities(totalRoleProbs)
+        complexProbs = worker.complexProbabilities(totalRoleProbs, complexesToRequiredRoles = complexesToRoles)
  
         # Calculate reaction probabilities.
-        reactionProbs = worker.reactionProbabilities(complexProbs) 
+        reactionProbs = worker.reactionProbabilities(complexProbs, rxnsToComplexes = reactionsToComplexes) 
 
         # Cleanup work directory.
         worker.cleanup()
@@ -112,7 +150,7 @@ if __name__ == '__main__':
         input = dict()
         input['objects'] = list()
         input['overwrite'] = 1
-        input['objects'].append( [ args.rxnprobsref, 'unspecified', { }, data ]) # 'rxnprobs' when workspace is updated
+        input['objects'].append( [ args.rxnprobsref, 'rxnprobs', { }, data ]) # 'rxnprobs' when workspace is updated
         wsClient.create(input)
 
     except WorkspaceServerError as e:
