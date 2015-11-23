@@ -18,8 +18,10 @@ SYNOPSIS
 desc2 = '''
 DESCRIPTION
       Run the probabilistic algorithm for a genome.  The genomeref argument is
-      the reference to the input genome object.  The rxnprobsref argument is
-      the reference to where the output rxnprobs object is stored.
+      the reference to the input genome object.  The templateref argument is
+      the reference to the template model used to reconstruct a model for the
+      organism.  The rxnprobsref argument is the reference to where the output
+      rxnprobs object is stored.
       
       The --ws-url optional argument specifies the url of the workspace service
       endpoint.  The --token optional argument specifies the authentication
@@ -29,7 +31,9 @@ DESCRIPTION
 desc3 = '''
 EXAMPLES
       Run probabilistic annotation for Bacillus subtilis genome:
-      > ms-probanno /mmundy/home/models/.224308.49_model/224308.49.genome /mmundy/home/models/.224308.49_model/224308.49.rxnprobs
+      > ms-probanno /mmundy/home/models/.224308.49_model/224308.49.genome
+          /chenry/public/modelsupport/templates/GramPositive.modeltemplate
+          /mmundy/home/models/.224308.49_model/224308.49.rxnprobs
 
 AUTHORS
       Mike Mundy 
