@@ -580,9 +580,7 @@ class ProbAnnotationWorker:
             if len(cplxGprs) > 0:
                 GPR = " or ".join( list(set(cplxGprs)) )
 
-            # Convert to ModelSEED IDs.
-            rxnnum = re.sub(r'kb\|rxn.', '', rxn)
-            rxn = 'rxn%05d' %(int(rxnnum))
+            # Add everything to the final list.
             reactionProbs.append( [rxn, maxProb, TYPE, complexString, GPR] )
 
         # Save the generated data when debug is turned on.

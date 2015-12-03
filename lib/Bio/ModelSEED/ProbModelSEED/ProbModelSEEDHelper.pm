@@ -876,19 +876,16 @@ sub build_fba_object {
 		}
 	}
 	if ($params->{probanno}) {
-		# Will switch this to have get_object automatically convert to json.
 		$log->info("Getting reaction likelihoods from ".$model->rxnprobs_ref());
 		my $rxnprobs = $self->get_object($model->rxnprobs_ref(),undef,{refreshcache => 1});
 	    if (!defined($rxnprobs)) {
 	    	$self->error("Reaction likelihood retrieval from ".$model->rxnprobs_ref()." failed");
 	    }		
-		my $probrxns = Bio::KBase::ObjectAPI::utilities::FROMJSON($rxnprobs);
 		$fba->{parameters}->{"Objective coefficient file"} = "ProbModelReactionCoefficients.txt";
 		$fba->{inputfiles}->{"ProbModelReactionCoefficients.txt"} = [];
 		my $rxncosts = {};
-		for (my $i=0; $i < @{$probrxns}; $i++) {
-			my $rxn = $probrxns->[$i];
-			$rxncosts->{$rxn->[0]} = (1-$rxn->[1]);
+		foreach my $rxn (@{$rxnprobs->{reaction_probabilities}}) {
+			$rxncosts->{$rxn->[0]} = (1-$rxn->[1]); # ID is first element, likelihood is second element
 		}
 		my $compindecies = {};
 		my $comps = $model->modelcompartments();
@@ -897,14 +894,13 @@ sub build_fba_object {
 		}
 		foreach my $compindex (keys(%{$compindecies})) {
 			my $tmp = $model->template();
-			my $tmprxns = $tmp->templateReactions();
+			my $tmprxns = $tmp->reactions();
 			for (my $i=0; $i < @{$tmprxns}; $i++) {
 				my $tmprxn = $tmprxns->[$i];
-				my $tmpid = $tmprxn->reaction()->id()."_".$tmprxn->compartment()->id().$compindex;
-				if (defined($rxncosts->{$tmprxn->reaction()->id()})) {
-					$log->info("adding rxn ".$tmpid." with cost ".$rxncosts->{$tmprxn->reaction()->id()});
-					push(@{$fba->{inputfiles}->{"ProbModelReactionCoefficients.txt"}},"forward\t".$tmpid."\t".$rxncosts->{$tmprxn->reaction()->id()});
-					push(@{$fba->{inputfiles}->{"ProbModelReactionCoefficients.txt"}},"reverse\t".$tmpid."\t".$rxncosts->{$tmprxn->reaction()->id()});
+				my $tmpid = $tmprxn->id().$compindex;
+				if (defined($rxncosts->{$tmprxn->id()})) {
+					push(@{$fba->{inputfiles}->{"ProbModelReactionCoefficients.txt"}},"forward\t".$tmpid."\t".$rxncosts->{$tmprxn->id()});
+					push(@{$fba->{inputfiles}->{"ProbModelReactionCoefficients.txt"}},"reverse\t".$tmpid."\t".$rxncosts->{$tmprxn->id()});
 				}
 			}
 		}	
@@ -1001,29 +997,17 @@ sub ComputeReactionProbabilities {
     if (defined($parameters->{adminmode})) {
     	$self->{_params}->{adminmode} = $parameters->{adminmode}
     }
-    $parameters = $self->validate_args($parameters,["genome","output_path"],{
-    	output_file => undef
-    });
-    if (substr($parameters->{output_path},-1,1) ne "/") {
-    	$parameters->{output_path} .= "/";
-    }
+    $parameters = $self->validate_args($parameters,["genome", "template", "rxnprobs"], {});
 	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
-    $log->info("Started computing reaction probabilities for genome ".$parameters->{genome});
-	if (!defined($parameters->{output_file})) {
-		my $genome = $self->get_genome($parameters->{genome});
-		$parameters->{output_file} = $genome->wsmeta()->[0].".rxnprobs";
-	}
-	my $rxnprobsref = $parameters->{output_path}.$parameters->{output_file};
-    my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$parameters->{genome}." ".$rxnprobsref." --token '".$self->token()."'";
-    $log->info("Calculating reaction likelihoods with command: ".$cmd);
+    my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$parameters->{genome}." ".$parameters->{template}." ".$parameters->{rxnprobs}." --token '".$self->token()."'";
+    $log->info("Started calculating reaction likelihoods with command: ".$cmd);
     system($cmd);
     if ($? != 0) {
     	$self->error("Calculating reaction likelihoods failed!");
     }
-    # Waiting for workspace service to support rxnprobs type.
-    # my $rxnprob = $self->get_object($rxnprobsref,"rxnprobs");
-    my $data = $self->get_object($rxnprobsref,"unspecified"); # Replace with above line
-    my $rxnprob = Bio::KBase::ObjectAPI::utilities::FROMJSON($data); # Delete this line
+    $log->info("Finished calculating reaction likelihoods");
+    # Get the object, add the job result, and save it back to workspace.
+    my $rxnprob = $self->get_object($parameters->{rxnprobs},"rxnprobs");
 	$rxnprob->{jobresult} = {
 	   	id => 0,
 		app => {
@@ -1037,11 +1021,11 @@ sub ComputeReactionProbabilities {
 		start_time => $starttime,
 		end_time => time(),
 		elapsed_time => time()-$starttime,
-		output_files => [[$parameters->{output_path}.$parameters->{output_file}]],
+		output_files => [[$parameters->{rxnprobs}]],
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED"
 	};
-	return $self->save_object($parameters->{output_path}.$parameters->{output_file},$rxnprob,"unspecified"); # "rxnprobs" when workspace updated
+	return $self->save_object($parameters->{rxnprobs},$rxnprob,"rxnprobs");
 }
 
 sub ModelReconstruction {
@@ -1124,11 +1108,15 @@ sub ModelReconstruction {
     if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
     	my $genomeref = $genome->_reference();
     	$genomeref =~ s/\|\|$//; # Remove the extraneous || at the end of the reference
+    	my $templateref = $template->_reference();
+    	$templateref =~ s/\|\|$//; # Remove the extraneous || at the end of the reference
+    	my $rxnprobsref = $folder."/".$genome->id().".rxnprobs";
     	$self->ComputeReactionProbabilities({
     		genome => $genomeref,
-    		output_path => $folder,
-    		output_file => $genome->id().".rxnprobs"
+    		template => $templateref,
+    		rxnprobs => $rxnprobsref
     	});
+    	$mdl->rxnprobs_ref($rxnprobsref);
     }
     $mdl->jobresult({
     	id => 0,
@@ -1237,11 +1225,13 @@ sub FluxBalanceAnalysis {
     }
     
     my $fba = $self->build_fba_object($model,$parameters);
+    $log->info("Started solving flux balance problem");
     my $objective = $fba->runFBA();
     print "Objective:".$objective."\n";
     if (!defined($objective)) {
     	$self->error("FBA failed with no solution returned! See ".$fba->jobnode());
     }
+    $log->info("Got solution for flux balance problem");
     $fba->jobresult({
     	id => 0,
 		app => {
@@ -1421,6 +1411,7 @@ sub GapfillModel {
     
     my $fba = $self->build_fba_object($model,$parameters);
     $fba->PrepareForGapfilling($parameters);
+    $log->info("Started solving gap fill problem");
     my $objective = $fba->runFBA();
     $fba->parseGapfillingOutput();
     if (!defined($fba->gapfillingSolutions()->[0])) {
@@ -1429,6 +1420,7 @@ sub GapfillModel {
 	if (@{$fba->gapfillingSolutions()->[0]->gapfillingSolutionReactions()} == 0) {
 		$self->error("No gapfilling needed on specified condition!");
 	}
+    $log->info("Got solution for gap fill problem");
 	
 	my $gfsols = [];
 	my $gftbl = "Solution\tID\tName\tEquation\tDirection\n";
