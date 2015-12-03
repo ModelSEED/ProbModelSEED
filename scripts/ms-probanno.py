@@ -4,6 +4,7 @@ import argparse
 import json
 import sys
 import os
+import time
 import traceback
 from biop3.ProbModelSEED.ProbAnnotationWorker import ProbAnnotationWorker
 from biop3.Workspace.WorkspaceClient import Workspace, ServerError as WorkspaceServerError, _read_inifile
@@ -39,6 +40,67 @@ AUTHORS
       Mike Mundy 
 '''
 
+def getObject(wsClient, reference):
+    ''' Get an object from the workspace.
+    
+        @param wsClient: Workspace client object
+        @param reference: Reference to workspace object
+        @return Object data in JSON format
+    '''
+
+    retryCount = 3
+    while retryCount > 0:
+        try:
+            # The get() method returns an array of tuples where the first element is
+            # the object's metadata (which is valid json) and the second element is
+            # the object's data (which is not valid json).
+            object = wsClient.get({ 'objects': [ reference ] })
+            return json.loads(object[0][1])
+    
+        except WorkspaceServerError as e:
+            # When there is a network glitch, wait a second and try again.
+            if 'HTTP status: 503 Service Unavailable' in e.message or 'HTTP status: 502 Bad Gateway' in e.message:
+                retryCount -= 1
+                time.sleep(1)
+            else:                
+                sys.stderr.write('Failed to get object using reference %s\n' %(reference))
+                tb = traceback.format_exc()
+                sys.stderr.write(tb)
+                exit(1)
+
+    sys.stderr.write('Failed to get object using reference %s because of network problems\n' %(reference))
+    exit(1)
+
+def putObject(wsClient, reference, type, data):
+    ''' Put an object to the workspace.
+    
+        @param wsClient: Workspace client object
+        @param reference: Reference to workspace object
+        @param type: Type of object
+        @param data: Object data in JSON format
+        @return Nothing
+    '''
+
+    retryCount = 3
+    while retryCount > 0:
+        try:
+            wsClient.create({ 'objects': [ [ reference, type, { }, data ] ], 'overwrite': 1 })
+            return
+    
+        except WorkspaceServerError as e:
+            # When there is a network glitch, wait a second and try again.
+            if 'HTTP status: 503 Service Unavailable' in e.message or 'HTTP status: 502 Bad Gateway' in e.message:
+                retryCount -= 1
+                time.sleep(1)
+            else:                
+                sys.stderr.write('Failed to create object using reference %s\n' %(reference))
+                tb = traceback.format_exc()
+                sys.stderr.write(tb)
+                exit(1)
+                
+    sys.stderr.write('Failed to create object using reference %s because of network problems\n' %(reference))
+    exit(1)
+
 if __name__ == '__main__':
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='ms-probanno', epilog=desc3)
@@ -65,26 +127,10 @@ if __name__ == '__main__':
     
     # Get the genome object from the workspace (for the features).
     wsClient = Workspace(url=args.wsURL, token=args.token)
-    try:
-        # The get() method returns an array of tuples where the first element is
-        # the object's metadata (which is valid json) and the second element is
-        # the object's data (which is not valid json).
-        object = wsClient.get({ 'objects': [ args.genomeref ] })
-        genome = json.loads(object[0][1])
-
-    except WorkspaceServerError as e:
-        sys.stderr.write('Failed to get genome using reference %s\n' %(args.genomeref))
-        exit(1)
+    genome = getObject(wsClient, args.genomeref)
 
     # Get the template object from the workspace (for the complexes and roles).
-    try:
-        # See comment above on output of get() method.
-        object = wsClient.get({ 'objects': [ args.templateref ] })
-        template = json.loads(object[0][1])
-        
-    except WorkspaceServerError as e:
-        sys.stderr.write('Failed to get template model using reference %s\n' %(args.templateref))
-        exit(1)
+    template = getObject(wsClient, args.templateref)
 
     # Build a dictionary to look up roles in the template by ID.
     roles = dict()
@@ -148,19 +194,8 @@ if __name__ == '__main__':
         exit(1)
 
     # Create the rxnprobs object in the workspace.
-    try:
-        data = dict()
-        data['reaction_probabilities'] = reactionProbs
-        input = dict()
-        input['objects'] = list()
-        input['overwrite'] = 1
-        input['objects'].append( [ args.rxnprobsref, 'rxnprobs', { }, data ]) # 'rxnprobs' when workspace is updated
-        wsClient.create(input)
-
-    except WorkspaceServerError as e:
-        sys.stderr.write('Failed to create rxnprobs object using reference %s\n' %(args.rxnprobsref))
-        tb = traceback.format_exc()
-        sys.stderr.write(tb)
-        exit(1)
+    data = dict()
+    data['reaction_probabilities'] = reactionProbs
+    putObject(wsClient, args.rxnprobsref, 'rxnprobs', data)
 
     exit(0)

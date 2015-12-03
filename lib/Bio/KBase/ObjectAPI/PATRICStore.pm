@@ -155,7 +155,31 @@ sub get_objects {
 	#Pulling objects from workspace
 	if (@{$newrefs} > 0) {
 #		print "Objects:".Data::Dumper->Dump([{adminmode => $self->adminmode(),objects => $newrefs}])."\n";
-		my $objdatas = $self->workspace()->get({adminmode => $self->adminmode(),objects => $newrefs});
+		my $retryCount = 3;
+		my $error;
+		my $objdatas;
+		while ($retryCount > 0) {
+			eval {
+				$objdatas = $self->workspace()->get({adminmode => $self->adminmode(),objects => $newrefs});
+			};
+			# If there is a network glitch, wait a second and try again. 
+			if ($@) {
+				$error = $@;
+				if (($error =~ m/HTTP status: 503 Service Unavailable/) ||
+				    ($error =~ m/HTTP status: 502 Bad Gateway/)) {
+					$retryCount -= 1;
+					print STDERR "Error putting workspace object ".$error."\n";
+					sleep(1);				
+				} else {
+					$retryCount = 0; # Get out and report the error
+				}
+			} else {
+				last;
+			}
+		}
+		if ($retryCount == 0) {
+			Bio::KBase::ObjectAPI::utilities::error($error);
+		}
 		my $object;
 		for (my $i=0; $i < @{$objdatas}; $i++) {
 			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1]);
@@ -276,7 +300,31 @@ sub save_objects {
     		push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},$obj->{object}]);
     	}
     }
-    my $listout = $self->workspace()->create($input);
+    my $listout;
+    my $error;
+    my $retryCount = 3;
+	while ($retryCount > 0) {
+		eval {
+			$listout = $self->workspace()->create($input);
+		};
+		# If there is a network glitch, wait a second and try again. 
+		if ($@) {
+			$error = $@;
+			if (($error =~ m/HTTP status: 503 Service Unavailable/) ||
+			    ($error =~ m/HTTP status: 502 Bad Gateway/)) {
+				$retryCount -= 1;
+				print STDERR "Error putting workspace object ".$error."\n";
+				sleep(1);				
+			} else {
+				$retryCount = 0; # Get out and report the error
+			}
+		} else {
+			last;
+		}
+	}
+	if ($retryCount == 0) {
+		Bio::KBase::ObjectAPI::utilities::error($error);
+	}
     my $output = {};
     for (my $i=0; $i < @{$reflist}; $i++) {
     	my $refinedref = $reflist->[$i];
