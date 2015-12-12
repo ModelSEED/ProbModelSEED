@@ -268,3 +268,8 @@ class ProbModelSEED(object):
         resp = self._call('ProbModelSEED.MergeModels',
                           [input])
         return resp[0]
+
+    def CheckJobs(self, input):
+        resp = self._call('ProbModelSEED.CheckJobs',
+                          [input])
+        return resp[0]

@@ -76,6 +76,9 @@ module ProbModelSEED {
 
     /* User permission in worksace (e.g. w - write, r - read, a - admin, n - none) */
 	typedef string WorkspacePerm;
+	
+	/* ID of job running in app service */
+	typedef string JobID;
     
     /*********************************************************************************
     Complex data structures to support functions
@@ -583,7 +586,7 @@ module ProbModelSEED {
 		reference genome;
     } ModelReconstruction_params;
     authentication required;
-	funcdef ModelReconstruction(ModelReconstruction_params input) returns (ModelStats output);
+	funcdef ModelReconstruction(ModelReconstruction_params input) returns (JobID output);
 	
 	/* 
 		FUNCTION: FluxBalanceAnalysis
@@ -593,7 +596,7 @@ module ProbModelSEED {
 		reference model;
     } FluxBalanceAnalysis_params;
     authentication required;
-	funcdef FluxBalanceAnalysis(FluxBalanceAnalysis_params input) returns (fba_data output);
+	funcdef FluxBalanceAnalysis(FluxBalanceAnalysis_params input) returns (JobID output);
 	
 	/* 
 		FUNCTION: GapfillModel
@@ -603,7 +606,7 @@ module ProbModelSEED {
 		reference model;
     } GapfillModel_params;
     authentication required;
-	funcdef GapfillModel(GapfillModel_params input) returns (ModelStats output);
+	funcdef GapfillModel(GapfillModel_params input) returns (JobID output);
 	
 	/* 
 		FUNCTION: MergeModels
@@ -615,5 +618,31 @@ module ProbModelSEED {
 		string output_path;
     } MergeModels_params;
     authentication required;
-	funcdef MergeModels(MergeModels_params input) returns (ModelStats output);
+	funcdef MergeModels(MergeModels_params input) returns (JobID output);
+	
+	/*********************************************************************************
+	Job management functions
+   	*********************************************************************************/
+   	typedef structure {
+		JobID id;
+		string app;
+	
+		string status;
+		string submit_time;
+		string start_time;
+		string completed_time;
+
+		string stdout_shock_node;
+		string stderr_shock_node;
+    } Task;
+   	
+   	/* 
+		FUNCTION: CheckJobs
+		DESCRIPTION: This function checks on the current status of app service jobs
+	*/
+    typedef structure {
+		list<JobID> jobs;
+    } CheckJobs_params;
+    authentication required;
+	funcdef CheckJobs(CheckJobs_params input) returns (mapping<JobID,Task> output);
 };

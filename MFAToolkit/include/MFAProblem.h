@@ -171,10 +171,12 @@ public:
 	int AddPROMConstraints(Data* InData, OptimizationParameter* InParameters,OptSolutionData*& CurrentSolution);
 	int LoadAdditionalReactions(Data* InData,OptimizationParameter* InParameters);
 	int BuildCoreProblem(Data* InData,OptimizationParameter*& InParameters);
+	int AddMassBalanceAtomConstraint(const char* ID, Data* InData);
+	int AddDeltaGofFormationConstraint(Data* InData);
 	int AddUptakeLimitConstraints();
 	int FluxBalanceAnalysisMasterPipeline(Data* InData, OptimizationParameter* InParameters);
 	int QuantitativeModelOptimization(Data* InData, OptimizationParameter* InParameters);
-	bool SolveGapfillingProblem(int currentround,int gfstart,int inactstart,double threshold,OptSolutionData*& CurrentSolution,string label);
+	bool SolveGapfillingProblem(int currentround,int gfstart,int inactstart,double threshold,OptSolutionData*& CurrentSolution,string label,OptimizationParameter* InParameters);
 
 	//FBA extension studies
 	int CombinatorialKO(int maxDeletions,Data* InData, bool reactions);
@@ -186,6 +188,7 @@ public:
 	void PrintSolutions(int StartIndex, int EndIndex,bool tightbounds = false);
 	void PrintVariableKey();
 	void WriteLPFile();
+	void WriteMFALog();
 };
 
 struct RegLogicNode {

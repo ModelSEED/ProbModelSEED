@@ -15,6 +15,7 @@
 	    my $c = Config::Simple->new();
 		$c->read($bin."/test.cfg");
 	    my $self = {
+			directory => $bin."/",
 			testcount => 0,
 			dumpoutput => $c->param("ProbModelSEEDTest.dumpoutput"),
 			showerrors => $c->param("ProbModelSEEDTest.showerrors"),
@@ -43,6 +44,7 @@
 	    	$classpath =~ s/::/\//g;
 	    	require $classpath.".pm";
 	    	$self->{obj} = $serverclass->new();
+	    	$self->{svrconfig} = $self->{obj}->{_config};
 	    } else {
 	    	my $classpath = $clientclass;
 	    	$classpath =~ s/::/\//g;
@@ -71,7 +73,7 @@
 	}
 	
 	sub test_harness {
-		my($self,$function,$parameters,$name,$tests,$fail_to_pass,$dependency,$user) = @_;
+		my($self,$function,$parameters,$name,$tests,$fail_to_pass,$dependency,$user,$app) = @_;
 		$self->set_user($user);
 		$self->{testoutput}->{$name} = {
 			output => undef,
@@ -94,10 +96,26 @@
 		}
 		my $output;
 		eval {
-			if (defined($parameters)) {
-				$output = $self->{obj}->$function($parameters);
+			if ($app == 1) {
+				 if (!defined($self->{url}) || $self->{url} eq "impl") {
+				 	my $fullparam = {command => $function,arguments => $parameters};
+				 	my $json = Bio::KBase::ObjectAPI::utilities::TOJSON($fullparam,1);
+				 	open (my $fa, ">", $self->{directory}."CurrentParams.json");
+				 	print $fa $json;
+				 	close($fa);
+				 	$ENV{KB_AUTH_TOKEN} = $self->{token};
+				 	my $result = system("perl ".$self->{directory}."../../internalScripts/App-RunProbModelSEEDJob.pl ".$self->{svrconfig}->{appservice_url}." ".$self->{directory}."../../internalScripts/RunProbModelSEEDJob.json ".$self->{directory}."CurrentParams.json ".$self->{directory}."CurrentOutput ".$self->{directory}."CurrentError");
+				 	if ($result != 0) {
+				 		die "Command failed!";
+				 	}
+				 	$output = {};
+				 }
 			} else {
-				$output = $self->{obj}->$function();
+				if (defined($parameters)) {
+					$output = $self->{obj}->$function($parameters);
+				} else {
+					$output = $self->{obj}->$function();
+				}
 			}
 		};
 		my $errors;
@@ -146,10 +164,10 @@
 	
 	sub run_tests {
 		my($self) = @_;
-		my $model_dir = "/".$self->{user}."/home/models";
+		my $model_dir = "/".$self->{user}."/home/modeltesting";
 		my $model_name = "TestModel";
-		my $model = $model_dir."/".$model_name;	
-		my $output = $self->test_harness("list_models",{},,"initial list models test",[],0,undef,1);
+		my $model = $model_dir."/".$model_name;
+		my $output = $self->test_harness("list_models",{path => "/".$self->{user}."/home/modeltesting"},,"initial list models test",[],0,undef,1);
 		for(my $i=0; $i < @{$output}; $i++) {
 			if ($output->[$i]->{ref} eq $model_dir."/TestModel") {
 				my $output = $self->test_harness("delete_model",{
@@ -173,7 +191,7 @@
 			fulldb => "0",
 			output_path => $model_dir,
 			output_file => $model_name
-		},"Reconstruct from workspace genome test",[],0,undef,1);
+		},"Reconstruct from workspace genome test",[],0,undef,1,1);
 		$output = $self->test_harness("export_media",{
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
 			to_shock => 1,
@@ -182,13 +200,13 @@
 			models => [[$model,1],[$model,1]],
 			output_path => $model_dir,
 			output_file => "TestCommunityModel"
-		},"Merging model test",[],0,undef,1);
+		},"Merging model test",[],0,undef,1,1);
 		$output = $self->test_harness("ModelReconstruction",{
-			genome => "PATRICSOLR:83333.84",
+			genome => "PATRIC:83333.84",
 			fulldb => "0",
 			output_path => $model_dir,
 			output_file => "PubGenomeModel"
-		},"Reconstruct public PATRIC genome test",[],0,undef,1);
+		},"Reconstruct public PATRIC genome test",[],0,undef,1,1);
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => $model
 		},"List ".$model_name." gapfill solutions",[["defined(\$output->[0]) && !defined(\$output->[1])","Model should have only one gapfilling"]],0,"Reconstruct from workspace genome test",1);
@@ -202,7 +220,7 @@
 			model => $model,
 			integrate_solution => "1",
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
-		},"Gapfill ".$model_name." in minimal media",[],0,"Reconstruct from workspace genome test",1);
+		},"Gapfill ".$model_name." in minimal media",[],0,"Reconstruct from workspace genome test",1,1);
 		$output = $self->test_harness("export_model",{
 			model => $model,
 			format => "sbml",
@@ -210,11 +228,13 @@
 		},"Export ".$model_name." as SBML",[],0,"Reconstruct from workspace genome test",1);
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => $model,
-		},"FBA of ".$model_name." in complete media",[["\$output->{objective} >= 0.0001","Model should grow in Complete media"]],0,"Reconstruct from workspace genome test",1);
+		#},"FBA of ".$model_name." in complete media",[["\$output->{objective} >= 0.0001","Model should grow in Complete media"]],0,"Reconstruct from workspace genome test",1);
+		},"FBA of ".$model_name." in complete media",[],0,"Reconstruct from workspace genome test",1,1);
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => $model,
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
-		},"FBA of ".$model_name." in minimal media",[["\$output->{objective} >= 0.0001","Model should grow in minimal media"]],0,"Gapfill ".$model_name." in minimal media",1);
+		#},"FBA of ".$model_name." in minimal media",[["\$output->{objective} >= 0.0001","Model should grow in minimal media"]],0,"Gapfill ".$model_name." in minimal media",1);
+		},"FBA of ".$model_name." in minimal media",[],0,"Gapfill ".$model_name." in minimal media",1,1);
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => $model
 		},"List ".$model_name." gapfill solutions again",[["defined(\$output->[1])","Model should have two gapfillings"]],0,"Gapfill ".$model_name." in minimal media",1);

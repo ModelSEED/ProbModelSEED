@@ -667,8 +667,15 @@ sub getLinkedObject {
 	if ($ref =~ m/^~$/) {
 		return $self->topparent();
 	} elsif ($ref =~ m/(.+)\|\|(.*)/) {
-    	my $obj = $self->store()->get_object($1);
+    	my $objpath = $1;
     	my $internalref = $2;
+    	if ($objpath !~ m/^\//) {
+    		$objpath = $self->wsmeta()->[2].$objpath;
+    		while ($objpath =~ m/[^\/]+\/\.\.\/*/) {
+				$objpath =~ s/[^\/]+\/\.\.\/*//g;
+			}
+    	}
+    	my $obj = $self->store()->get_object($objpath);
     	if (length($internalref) == 0) {
     		return $obj;
     	} elsif ($internalref =~ m/^\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {

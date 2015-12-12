@@ -1343,7 +1343,7 @@ sub createJobDirectory {
 	}
 	#Setting parameters
 	my $parameters = {
-		"write LP file" => 1,
+		"write LP file" => 0,
 		"write variable key" => 1,
 		"new fba pipeline" => 1,
 		"perform MFA" => 1,

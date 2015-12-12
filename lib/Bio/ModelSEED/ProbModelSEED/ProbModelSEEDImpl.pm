@@ -22,6 +22,7 @@ use Data::Dumper;
 use Config::Simple;
 use Plack::Request;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
+use Bio::KBase::ObjectAPI::utilities;
 
 #
 # Alias our context variable.
@@ -2733,32 +2734,11 @@ sub plant_annotation_overview
 
 <pre>
 $input is a ModelReconstruction_params
-$output is a ModelStats
+$output is a JobID
 ModelReconstruction_params is a reference to a hash where the following keys are defined:
 	genome has a value which is a reference
 reference is a string
-ModelStats is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
-	id has a value which is a string
-	source has a value which is a string
-	source_id has a value which is a string
-	name has a value which is a string
-	type has a value which is a string
-	ref has a value which is a reference
-	genome_ref has a value which is a reference
-	template_ref has a value which is a reference
-	fba_count has a value which is an int
-	integrated_gapfills has a value which is an int
-	unintegrated_gapfills has a value which is an int
-	gene_associated_reactions has a value which is an int
-	gapfilled_reactions has a value which is an int
-	num_genes has a value which is an int
-	num_compounds has a value which is an int
-	num_reactions has a value which is an int
-	num_biomasses has a value which is an int
-	num_biomass_compounds has a value which is an int
-	num_compartments has a value which is an int
-Timestamp is a string
+JobID is a string
 
 </pre>
 
@@ -2767,32 +2747,11 @@ Timestamp is a string
 =begin text
 
 $input is a ModelReconstruction_params
-$output is a ModelStats
+$output is a JobID
 ModelReconstruction_params is a reference to a hash where the following keys are defined:
 	genome has a value which is a reference
 reference is a string
-ModelStats is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
-	id has a value which is a string
-	source has a value which is a string
-	source_id has a value which is a string
-	name has a value which is a string
-	type has a value which is a string
-	ref has a value which is a reference
-	genome_ref has a value which is a reference
-	template_ref has a value which is a reference
-	fba_count has a value which is an int
-	integrated_gapfills has a value which is an int
-	unintegrated_gapfills has a value which is an int
-	gene_associated_reactions has a value which is an int
-	gapfilled_reactions has a value which is an int
-	num_genes has a value which is an int
-	num_compounds has a value which is an int
-	num_reactions has a value which is an int
-	num_biomasses has a value which is an int
-	num_biomass_compounds has a value which is an int
-	num_compartments has a value which is an int
-Timestamp is a string
+JobID is a string
 
 
 =end text
@@ -2824,10 +2783,10 @@ sub ModelReconstruction
     my($output);
     #BEGIN ModelReconstruction
     $input = $self->initialize_call($input);
-    $output = $self->helper()->ModelReconstruction($input);
+    $output = $self->helper()->app_harness("ModelReconstruction",$input);
     #END ModelReconstruction
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to ModelReconstruction:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -2851,19 +2810,11 @@ sub ModelReconstruction
 
 <pre>
 $input is a FluxBalanceAnalysis_params
-$output is a fba_data
+$output is a JobID
 FluxBalanceAnalysis_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-fba_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
-	id has a value which is a fba_id
-	ref has a value which is a reference
-	objective has a value which is a float
-	media_ref has a value which is a reference
-	objective_function has a value which is a string
-Timestamp is a string
-fba_id is a string
+JobID is a string
 
 </pre>
 
@@ -2872,19 +2823,11 @@ fba_id is a string
 =begin text
 
 $input is a FluxBalanceAnalysis_params
-$output is a fba_data
+$output is a JobID
 FluxBalanceAnalysis_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-fba_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
-	id has a value which is a fba_id
-	ref has a value which is a reference
-	objective has a value which is a float
-	media_ref has a value which is a reference
-	objective_function has a value which is a string
-Timestamp is a string
-fba_id is a string
+JobID is a string
 
 
 =end text
@@ -2916,18 +2859,10 @@ sub FluxBalanceAnalysis
     my($output);
     #BEGIN FluxBalanceAnalysis
     $input = $self->initialize_call($input);
-    my $fbaoutput = $self->helper()->FluxBalanceAnalysis($input);
-    $output = {
-    	rundate => $fbaoutput->[3],
-    	id => $fbaoutput->[0],
-    	"ref" => $fbaoutput->[2].$fbaoutput->[0],
-    	media_ref => $fbaoutput->[7]->{media},
-		objective => $fbaoutput->[7]->{objective},
-		objective_function => ""
-    };
+    $output = $self->helper()->app_harness("FluxBalanceAnalysis",$input);
     #END FluxBalanceAnalysis
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to FluxBalanceAnalysis:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -2951,32 +2886,11 @@ sub FluxBalanceAnalysis
 
 <pre>
 $input is a GapfillModel_params
-$output is a ModelStats
+$output is a JobID
 GapfillModel_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-ModelStats is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
-	id has a value which is a string
-	source has a value which is a string
-	source_id has a value which is a string
-	name has a value which is a string
-	type has a value which is a string
-	ref has a value which is a reference
-	genome_ref has a value which is a reference
-	template_ref has a value which is a reference
-	fba_count has a value which is an int
-	integrated_gapfills has a value which is an int
-	unintegrated_gapfills has a value which is an int
-	gene_associated_reactions has a value which is an int
-	gapfilled_reactions has a value which is an int
-	num_genes has a value which is an int
-	num_compounds has a value which is an int
-	num_reactions has a value which is an int
-	num_biomasses has a value which is an int
-	num_biomass_compounds has a value which is an int
-	num_compartments has a value which is an int
-Timestamp is a string
+JobID is a string
 
 </pre>
 
@@ -2985,32 +2899,11 @@ Timestamp is a string
 =begin text
 
 $input is a GapfillModel_params
-$output is a ModelStats
+$output is a JobID
 GapfillModel_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-ModelStats is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
-	id has a value which is a string
-	source has a value which is a string
-	source_id has a value which is a string
-	name has a value which is a string
-	type has a value which is a string
-	ref has a value which is a reference
-	genome_ref has a value which is a reference
-	template_ref has a value which is a reference
-	fba_count has a value which is an int
-	integrated_gapfills has a value which is an int
-	unintegrated_gapfills has a value which is an int
-	gene_associated_reactions has a value which is an int
-	gapfilled_reactions has a value which is an int
-	num_genes has a value which is an int
-	num_compounds has a value which is an int
-	num_reactions has a value which is an int
-	num_biomasses has a value which is an int
-	num_biomass_compounds has a value which is an int
-	num_compartments has a value which is an int
-Timestamp is a string
+JobID is a string
 
 
 =end text
@@ -3042,10 +2935,10 @@ sub GapfillModel
     my($output);
     #BEGIN GapfillModel
     $input = $self->initialize_call($input);
-    $output = $self->helper()->GapfillModel($input);
+    $output = $self->helper()->app_harness("GapfillModel",$input);
     #END GapfillModel
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to GapfillModel:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -3069,37 +2962,16 @@ sub GapfillModel
 
 <pre>
 $input is a MergeModels_params
-$output is a ModelStats
+$output is a JobID
 MergeModels_params is a reference to a hash where the following keys are defined:
-	input_models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+	models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
 	0: (model) a reference
 	1: (abundance) a float
 
 	output_file has a value which is a string
 	output_path has a value which is a string
 reference is a string
-ModelStats is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
-	id has a value which is a string
-	source has a value which is a string
-	source_id has a value which is a string
-	name has a value which is a string
-	type has a value which is a string
-	ref has a value which is a reference
-	genome_ref has a value which is a reference
-	template_ref has a value which is a reference
-	fba_count has a value which is an int
-	integrated_gapfills has a value which is an int
-	unintegrated_gapfills has a value which is an int
-	gene_associated_reactions has a value which is an int
-	gapfilled_reactions has a value which is an int
-	num_genes has a value which is an int
-	num_compounds has a value which is an int
-	num_reactions has a value which is an int
-	num_biomasses has a value which is an int
-	num_biomass_compounds has a value which is an int
-	num_compartments has a value which is an int
-Timestamp is a string
+JobID is a string
 
 </pre>
 
@@ -3108,37 +2980,16 @@ Timestamp is a string
 =begin text
 
 $input is a MergeModels_params
-$output is a ModelStats
+$output is a JobID
 MergeModels_params is a reference to a hash where the following keys are defined:
-	input_models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+	models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
 	0: (model) a reference
 	1: (abundance) a float
 
 	output_file has a value which is a string
 	output_path has a value which is a string
 reference is a string
-ModelStats is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
-	id has a value which is a string
-	source has a value which is a string
-	source_id has a value which is a string
-	name has a value which is a string
-	type has a value which is a string
-	ref has a value which is a reference
-	genome_ref has a value which is a reference
-	template_ref has a value which is a reference
-	fba_count has a value which is an int
-	integrated_gapfills has a value which is an int
-	unintegrated_gapfills has a value which is an int
-	gene_associated_reactions has a value which is an int
-	gapfilled_reactions has a value which is an int
-	num_genes has a value which is an int
-	num_compounds has a value which is an int
-	num_reactions has a value which is an int
-	num_biomasses has a value which is an int
-	num_biomass_compounds has a value which is an int
-	num_compartments has a value which is an int
-Timestamp is a string
+JobID is a string
 
 
 =end text
@@ -3170,14 +3021,106 @@ sub MergeModels
     my($output);
     #BEGIN MergeModels
     $input = $self->initialize_call($input);
-    $output = $self->helper()->MergeModels($input);
+    $output = $self->helper()->app_harness("MergeModels",$input);
     #END MergeModels
     my @_bad_returns;
-    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to MergeModels:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
 							       method_name => 'MergeModels');
+    }
+    return($output);
+}
+
+
+
+
+=head2 CheckJobs
+
+  $output = $obj->CheckJobs($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a CheckJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+CheckJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a JobID
+JobID is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a CheckJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+CheckJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a JobID
+JobID is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub CheckJobs
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to CheckJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'CheckJobs');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN CheckJobs
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->check_jobs($input);
+    #END CheckJobs
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to CheckJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'CheckJobs');
     }
     return($output);
 }
@@ -3947,6 +3890,37 @@ a reference to a hash where the key is a string and the value is a string
 =item Description
 
 User permission in worksace (e.g. w - write, r - read, a - admin, n - none)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 JobID
+
+=over 4
+
+
+
+=item Description
+
+ID of job running in app service
 
 
 =item Definition
@@ -5658,7 +5632,7 @@ DESCRIPTION: This function combines multiple FBA models into a single community 
 
 <pre>
 a reference to a hash where the following keys are defined:
-input_models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
 0: (model) a reference
 1: (abundance) a float
 
@@ -5672,12 +5646,99 @@ output_path has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-input_models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+models has a value which is a reference to a list where each element is a reference to a list containing 2 items:
 0: (model) a reference
 1: (abundance) a float
 
 output_file has a value which is a string
 output_path has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 Task
+
+=over 4
+
+
+
+=item Description
+
+********************************************************************************
+	Job management functions
+   	********************************************************************************
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a JobID
+app has a value which is a string
+status has a value which is a string
+submit_time has a value which is a string
+start_time has a value which is a string
+completed_time has a value which is a string
+stdout_shock_node has a value which is a string
+stderr_shock_node has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a JobID
+app has a value which is a string
+status has a value which is a string
+submit_time has a value which is a string
+start_time has a value which is a string
+completed_time has a value which is a string
+stdout_shock_node has a value which is a string
+stderr_shock_node has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 CheckJobs_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: CheckJobs
+DESCRIPTION: This function checks on the current status of app service jobs
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a JobID
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a JobID
 
 
 =end text

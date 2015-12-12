@@ -9,29 +9,11 @@ use JSON::XS;
 use Data::Dumper;
 use Log::Log4perl;
 use Bio::KBase::ObjectAPI::utilities;
+use Bio::KBase::ObjectAPI::logging;
 use Bio::KBase::ObjectAPI::PATRICStore;
 use Bio::ModelSEED::Client::SAP;
+use Bio::KBase::AppService::Client;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
-
-#****************************************************************************
-#Getter setters for parameters
-#****************************************************************************
-sub workspace_url {
-	my ($self) = @_;
-	return $self->{_params}->{"workspace-url"};
-}
-sub token {
-	my ($self) = @_;
-	return $self->{_params}->{token};
-}
-sub shock_url {
-	my ($self) = @_;
-	return $self->{_params}->{"shock-url"};
-}
-sub adminmode {
-	my ($self,$adminmode) = @_;
-	return $self->{_params}->{adminmode};
-}
 
 #****************************************************************************
 #Data retrieval and storage functions functions
@@ -45,7 +27,7 @@ sub copy_object {
 	my($self,$ref,$destination,$recursive) = @_;
 	return $self->workspace_service()->copy({
 		objects => [[$ref,$destination]],
-		adminmode => $self->{_params}->{adminmode},
+		adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
 		overwrite => 1,
 		recursive => $recursive,
 	});
@@ -102,8 +84,10 @@ sub save_model {
 sub get_genome {
 	my($self, $ref) = @_;
 	my $obj;
-	if ($ref =~ m/^PATRICSOLR:(.+)/) {
+	if ($ref =~ m/^PATRIC:(.+)/) {
     	return $self->retrieve_PATRIC_genome($1);
+	} elsif ($ref =~ m/^REFSEQ:(.+)/) {
+    	return $self->retrieve_PATRIC_genome($1,1);
 	} elsif ($ref =~ m/^PUBSEED:(.+)/) {
     	return $self->retrieve_SEED_genome($1);
 	} elsif ($ref =~ m/^RAST:(.+)/) {
@@ -130,7 +114,7 @@ sub get_model_meta {
 	my $metas = $self->workspace_service()->get({
 		objects => [$ref],
 		metadata_only => 1,
-		adminmode => $self->{_params}->{adminmode}
+		adminmode => Bio::KBase::ObjectAPI::config::adminmode()
 	});
 	if (!defined($metas->[0]->[0]->[0])) {
     	return undef;
@@ -144,11 +128,11 @@ sub biochemistry {
 	if (defined($bio)) {
 		#In this case, the cache is being overwritten with an existing biochemistry object (e.g. ProbModelSEED servers will call this)
 		$self->{_cached_biochemistry} = $bio;
-		$self->PATRICStore()->cache()->{$self->{_params}->{biochemistry}}->[0] = $bio->wsmeta();
-		$self->PATRICStore()->cache()->{$self->{_params}->{biochemistry}}->[1] = $bio;
+		$self->PATRICStore()->cache()->{Bio::KBase::ObjectAPI::config::biochemistry()}->[0] = $bio->wsmeta();
+		$self->PATRICStore()->cache()->{Bio::KBase::ObjectAPI::config::biochemistry()}->[1] = $bio;
 	}
 	if (!defined($self->{_cached_biochemistry})) {
-		$self->{_cached_biochemistry} = $self->get_object($self->{_params}->{biochemistry},"biochemistry");		
+		$self->{_cached_biochemistry} = $self->get_object(Bio::KBase::ObjectAPI::config::biochemistry(),"biochemistry");		
 	}
 	return $self->{_cached_biochemistry};
 }
@@ -156,22 +140,29 @@ sub biochemistry {
 sub workspace_service {
 	my($self) = @_;
 	if (!defined($self->{_workspace_service})) {
-		$self->{_workspace_service} = Bio::P3::Workspace::WorkspaceClientExt->new($self->workspace_url(),token => $self->token());
+		$self->{_workspace_service} = Bio::P3::Workspace::WorkspaceClientExt->new(Bio::KBase::ObjectAPI::config::workspace_url(),token => Bio::KBase::ObjectAPI::config::token());
 	}
 	return $self->{_workspace_service};
+}
+sub app_service {
+	my($self) = @_;
+	if (!defined($self->{_app_service})) {
+		$self->{_app_service} = Bio::KBase::AppService::Client->new(Bio::KBase::ObjectAPI::config::appservice_url(),token => Bio::KBase::ObjectAPI::config::token());
+	}
+	return $self->{_app_service};
 }
 sub PATRICStore {
 	my($self) = @_;
 	if (!defined($self->{_PATRICStore})) {
 		my $cachetarg = {};
-		for (my $i=0; $i < @{$self->{_params}->{cache_targets}}; $i++) {
-			$cachetarg->{$self->{_params}->{cache_targets}->[$i]} = 1;
+		for (my $i=0; $i < @{Bio::KBase::ObjectAPI::config::cache_targets()}; $i++) {
+			$cachetarg->{Bio::KBase::ObjectAPI::config::cache_targets()->[$i]} = 1;
 		}
 		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({
-			data_api_url => $self->{_params}->{data_api_url},
+			data_api_url => Bio::KBase::ObjectAPI::config::data_api_url(),
 			workspace => $self->workspace_service(),
-			adminmode => $self->{_params}->{adminmode},
-			file_cache => $self->{_params}->{file_cache},
+			adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
+			file_cache => Bio::KBase::ObjectAPI::config::file_cache(),
     		cache_targets => $cachetarg
 		});
 	}
@@ -187,10 +178,6 @@ sub validate_args {
 sub error {
 	my($self,$msg) = @_;
 	Bio::KBase::ObjectAPI::utilities::error($msg);
-}
-sub config {
-	my($self) = @_;
-	$self->{_params};
 }
 
 #****************************************************************************
@@ -215,7 +202,7 @@ sub delete_model {
 		objects => [$model, $modelfolder],
 		deleteDirectories => 1,
 		force => 1,
-		adminmode => $self->adminmode()
+		adminmode => Bio::KBase::ObjectAPI::config::adminmode()
 	});
 	# Only return metadata on model object.
 	return $output->[0];
@@ -267,7 +254,7 @@ sub get_model_summary {
 	$output->{genome_ref} =~ s/\|\|//;
 	$output->{template_ref} =~ s/\|\|//;
 	my $list = $self->workspace_service()->ls({
-		adminmode => $self->adminmode(),
+		adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
 		paths => [$modelmeta->[2].".".$modelmeta->[0]."/fba"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
@@ -354,9 +341,12 @@ Description:
 		
 =cut
 sub retrieve_PATRIC_genome {
-	my ($self,$genomeid) = @_;
+	my ($self,$genomeid,$refseq) = @_;
 	#Retrieving genome information
-	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->config()->{data_api_url}."genome/?genome_id=".$genomeid."&http_accept=application/json",token => $self->token()});
+	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => Bio::KBase::ObjectAPI::config::data_api_url()."genome/?genome_id=".$genomeid."&http_accept=application/json",token => Bio::KBase::ObjectAPI::config::token()});
+	if (!defined($refseq)) {
+		$refseq = 0;
+	}
 	$data = $data->[0];
 	my $perm = "n";
 	my $uperm = "o";
@@ -377,7 +367,7 @@ sub retrieve_PATRIC_genome {
 	my $meta = [
     	$genomeid,
 		"genome",
-		$self->config()->{data_api_url}."genome/?genome_id=".$genomeid."&http_accept=application/json",
+		Bio::KBase::ObjectAPI::config::data_api_url()."genome/?genome_id=".$genomeid."&http_accept=application/json",
 		$data->{completion_date},
 		$genomeid,
 		$data->{owner},
@@ -387,6 +377,10 @@ sub retrieve_PATRIC_genome {
 		$uperm,
 		$perm
     ];
+    my $genomesource = "PATRIC";
+    if ($refseq == 1) {
+    	$genomesource = "RefSeq";
+    }
 	my $genome = {
     	id => $genomeid,
 		scientific_name => $data->{genome_name},
@@ -397,7 +391,7 @@ sub retrieve_PATRIC_genome {
 		contigs => [],
 		contig_lengths => [],
 		contig_ids => [],
-		source => "PATRIC",
+		source => $genomesource,
 		source_id => $genomeid,
 		md5 => "none",
 		taxonomy => join(":",@{$data->{taxon_lineage_names}}),
@@ -405,63 +399,72 @@ sub retrieve_PATRIC_genome {
 		complete => 1,
 		publications => [$data->{publication}],
 		features => [],
-		contigset_ref => "PATRICSOLR:CONTIGS:".$genomeid,
+		contigset_ref => "",
 	};
 	#Retrieving feature information
 	my $start = 0;
 	my $params = {};
 	my $loopcount = 0;
+	my $ftrcount = 0;
 	while ($start >= 0 && $loopcount < 100) {
 		$loopcount++;#Insurance that no matter what, this loop won't run for more than 100 iterations
-		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => $self->config()->{data_api_url}."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => $self->token()},$params);
+		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => Bio::KBase::ObjectAPI::config::data_api_url()."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => Bio::KBase::ObjectAPI::config::token()},$params);
 		if (defined($ftrdata) && @{$ftrdata} > 0) {
+			my $currentcount = @{$ftrdata};
+			$ftrcount += $currentcount;
 			for (my $i=0; $i < @{$ftrdata}; $i++) {
 				$data = $ftrdata->[$i];
-				my $id = $data->{feature_id};
-				if (defined($data->{seed_id})) {
-					$id = $data->{seed_id};
-				}
-				if (defined($data->{patric_id})) {
-					$id = $data->{patric_id};
-				}
-				my $ftrobj = {id => $id,type => "CDS",aliases=>[]};
-				if (defined($data->{start})) {
-					$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
-				}
-				if (defined($data->{feature_type})) {
-					$ftrobj->{type} = $data->{feature_type};
-				}
-				if (defined($data->{product})) {
-					$ftrobj->{function} = $data->{product};
-				}
-				if (defined($data->{na_sequence})) {
-					$ftrobj->{dna_sequence} = $data->{na_sequence};
-					$ftrobj->{dna_sequence_length} = $data->{na_length};
-				}
-				if (defined($data->{aa_sequence})) {
-					$ftrobj->{protein_translation} = $data->{aa_sequence};
-					$ftrobj->{protein_translation_length} = $data->{aa_length};
-					$ftrobj->{md5} = $data->{aa_sequence_md5};
-				}
-				my $list = ["feature_id","alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
-				for (my $j=0; $j < @{$list}; $j++) {
-					if (defined($data->{$list->[$j]})) {
-						push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
+				if (($data->{feature_id} =~ m/^PATRIC/ && $refseq == 0) || ($data->{feature_id} =~ m/^RefSeq/ && $refseq == 1)) {
+					my $id;
+					if ($refseq == 1) {
+						$id = $data->{refseq_locus_tag};
+					} else {
+						$id = $data->{patric_id};
+					}
+					if (defined($id)) {
+						my $ftrobj = {id => $id,type => "CDS",aliases=>[]};
+						if (defined($data->{start})) {
+							$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
+						}
+						if (defined($data->{feature_type})) {
+							$ftrobj->{type} = $data->{feature_type};
+						}
+						if (defined($data->{product})) {
+							$ftrobj->{function} = $data->{product};
+						}
+						if (defined($data->{na_sequence})) {
+							$ftrobj->{dna_sequence} = $data->{na_sequence};
+							$ftrobj->{dna_sequence_length} = $data->{na_length};
+						}
+						if (defined($data->{aa_sequence})) {
+							$ftrobj->{protein_translation} = $data->{aa_sequence};
+							$ftrobj->{protein_translation_length} = $data->{aa_length};
+							$ftrobj->{md5} = $data->{aa_sequence_md5};
+						}
+						my $list = ["feature_id","alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
+						for (my $j=0; $j < @{$list}; $j++) {
+							if (defined($data->{$list->[$j]})) {
+								push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
+							}
+						}
+						push(@{$genome->{features}},$ftrobj);
 					}
 				}
-				push(@{$genome->{features}},$ftrobj);
 			}
 		}
-		print $start."\t".@{$genome->{features}}."\t".@{$ftrdata}."\n";
-		if (@{$genome->{features}} < $params->{count}) {
-			$start = @{$genome->{features}};
+		if ($ftrcount < $params->{count}) {
+			$start = $ftrcount;
 		} else {
 			$start = -1;
 		}
 	}
 	my $genome = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome);
 	$genome->wsmeta($meta);
-	$genome->_reference("PATRICSOLR:".$genomeid);
+	if ($refseq == 1) {
+		$genome->_reference("REFSEQ:".$genomeid);
+	} else {
+		$genome->_reference("PATRIC:".$genomeid);
+	}
 	$genome->parent($self->PATRICStore());
 	return $genome;
 }
@@ -603,9 +606,9 @@ Description:
 =cut
 sub retrieve_RAST_genome {
 	my($self,$id,$username,$password) = @_;
-	my $mssvr = Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient->new($self->{_params}->{"mssserver-url"});
-	$mssvr->{token} = $self->token();
-	$mssvr->{client}->{token} = $self->token();
+	my $mssvr = Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient->new(Bio::KBase::ObjectAPI::config::mssserver_url());
+	$mssvr->{token} = Bio::KBase::ObjectAPI::config::token();
+	$mssvr->{client}->{token} = Bio::KBase::ObjectAPI::config::token();
 	my $data = $mssvr->getRastGenomeData({
 		genome => $id,
 		username => $username,
@@ -751,7 +754,6 @@ Description:
 =cut
 sub build_fba_object {
 	my($self,$model,$params) = @_;
-	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
 	my $media = $self->get_object($params->{media},"media");
     if (!defined($media)) {
     	$self->error("Media retrieval failed!");
@@ -876,7 +878,7 @@ sub build_fba_object {
 		}
 	}
 	if ($params->{probanno}) {
-		$log->info("Getting reaction likelihoods from ".$model->rxnprobs_ref());
+		Bio::KBase::ObjectAPI::logging::log("Getting reaction likelihoods from ".$model->rxnprobs_ref());
 		my $rxnprobs = $self->get_object($model->rxnprobs_ref(),undef,{refreshcache => 1});
 	    if (!defined($rxnprobs)) {
 	    	$self->error("Reaction likelihood retrieval from ".$model->rxnprobs_ref()." failed");
@@ -904,7 +906,7 @@ sub build_fba_object {
 				}
 			}
 		}	
-    	$log->info("Added reaction coefficients from reaction likelihoods in ".$model->rxnprobs_ref());
+    	Bio::KBase::ObjectAPI::logging::log("Added reaction coefficients from reaction likelihoods in ".$model->rxnprobs_ref());
 	}
 	return $fba;
 }
@@ -930,9 +932,9 @@ sub copy_genome {
     });
     my $genome = $self->get_genome($input->{genome});
     if (!defined($input->{destination})) {
-    	$input->{destination} = "/".$self->{_params}->{username}."/modelseed/genomes/";
+    	$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/modelseed/genomes/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/genomes/";
+    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/genomes/";
     	}
     }
     if (!defined($input->{destname})) {
@@ -962,9 +964,9 @@ sub copy_model {
     });
     my $model = $self->get_model($input->{model});
     if (!defined($input->{destination})) {
-    	$input->{destination} = "/".$self->{_params}->{username}."/home/models/";
+    	$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".$self->{_params}->{username}."/plantseed/models/";
+    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/models/";
     	}
     }
     if (!defined($input->{destname})) {
@@ -988,24 +990,51 @@ sub copy_model {
     $meta->[8] = $oldautometa;
     return $self->get_model_summary($model);
 }
+
+sub check_jobs {
+	my($self,$input) = @_;
+	$input = $self->validate_args($input,[],{
+		jobs => []
+	});
+	my $output = {};
+	if (@{$input->{jobs}} == 0) {
+		my $enumoutput = $self->app_service()->enumerate_tasks(0,10000);
+		for (my $i=0; $i < @{$enumoutput}; $i++) {
+			if ($enumoutput->[$i]->{app} eq "RunProbModelSEEDJob") {
+				$output->{$enumoutput->[$i]->{id}} = $enumoutput->[$i];
+			}
+		}
+	} else {
+		$output = $self->app_service()->query_tasks($input->{jobs});
+	}
+	return $output;
+}
 #****************************************************************************
 #Apps
 #****************************************************************************
+sub app_harness {
+	my($self,$command,$parameters) = @_;
+	my $starttime = time();
+	if (Bio::KBase::ObjectAPI::config::run_as_app() == 1) {
+		my $task = $self->app_service()->start_app("RunProbModelSEEDJob",{command => $command,arguments => $parameters},"/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/");
+		return $task->{id};
+	} else {
+		Bio::KBase::ObjectAPI::logging::log($command.": job started");
+	    my $output = $self->$command($parameters);
+	    Bio::KBase::ObjectAPI::logging::log($command.": job done (elapsed time ".(time()-$starttime).")");
+	    return $output;
+	}
+}
+
 sub ComputeReactionProbabilities {
 	my($self,$parameters) = @_;
-    my $starttime = time();
-    if (defined($parameters->{adminmode})) {
-    	$self->{_params}->{adminmode} = $parameters->{adminmode}
-    }
     $parameters = $self->validate_args($parameters,["genome", "template", "rxnprobs"], {});
-	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
-    my $cmd = $ENV{KB_TOP}."/bin/ms-probanno ".$parameters->{genome}." ".$parameters->{template}." ".$parameters->{rxnprobs}." --token '".$self->token()."'";
-    $log->info("Started calculating reaction likelihoods with command: ".$cmd);
+    my $cmd = Bio::KBase::ObjectAPI::config::bin_directory()."/bin/ms-probanno ".$parameters->{genome}." ".$parameters->{template}." ".$parameters->{rxnprobs}." --token '".Bio::KBase::ObjectAPI::config::token()."'";
     system($cmd);
     if ($? != 0) {
     	$self->error("Calculating reaction likelihoods failed!");
     }
-    $log->info("Finished calculating reaction likelihoods");
+    Bio::KBase::ObjectAPI::logging::log("Finished calculating reaction likelihoods");
     # Get the object, add the job result, and save it back to workspace.
     my $rxnprob = $self->get_object($parameters->{rxnprobs},"rxnprobs");
 	$rxnprob->{jobresult} = {
@@ -1018,22 +1047,19 @@ sub ComputeReactionProbabilities {
 			"parameters"=>[]
 		},
 		parameters => $parameters,
-		start_time => $starttime,
+		start_time => 0,
 		end_time => time(),
-		elapsed_time => time()-$starttime,
+		elapsed_time => time()-0,
 		output_files => [[$parameters->{rxnprobs}]],
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED"
 	};
-	return $self->save_object($parameters->{rxnprobs},$rxnprob,"rxnprobs");
+	$self->save_object($parameters->{rxnprobs},$rxnprob,"rxnprobs");
+	return $parameters->{rxnprobs};
 }
 
 sub ModelReconstruction {
 	my($self,$parameters) = @_;
-    my $starttime = time();
-    if (defined($parameters->{adminmode})) {
-    	$self->{_params}->{adminmode} = $parameters->{adminmode}
-    }
     $parameters = $self->validate_args($parameters,[],{
     	media => undef,
     	template_model => undef,
@@ -1046,10 +1072,6 @@ sub ModelReconstruction {
     	probanno => 0,
     	predict_essentiality => 1,
     });
-
-	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
-    $log->info("Started model reconstruction for genome ".$parameters->{genome});
-	
 	my $genome = $self->get_genome($parameters->{genome});
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $genome->id()."_model";	
@@ -1058,7 +1080,7 @@ sub ModelReconstruction {
 		if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
 			$parameters->{media} = "/chenry/public/modelsupport/media/PlantHeterotrophicMedia";
 		} else {
-			$parameters->{media} = $self->{_params}->{default_media};
+			$parameters->{media} = Bio::KBase::ObjectAPI::config::default_media();
 		}
 	}
     
@@ -1066,19 +1088,19 @@ sub ModelReconstruction {
     if (!defined($parameters->{templatemodel})) {
     	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
     		if (!defined($parameters->{output_path})) {
-    			$parameters->{output_path} = "/".$self->{_params}->{username}."/plantseed/models/";
+    			$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/models/";
     		}
-    		$template = $self->get_object($self->{_params}->{template_dir}."plant.modeltemplate","modeltemplate");
+    		$template = $self->get_object(Bio::KBase::ObjectAPI::config::template_dir()."plant.modeltemplate","modeltemplate");
     	} else {
     		if (!defined($parameters->{output_path})) {
-    			$parameters->{output_path} = "/".$self->{_params}->{username}."/home/models/";
+    			$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
     		}
-    		my $classifier_data = $self->get_object($self->{_params}->{classifier},"string");
+    		my $classifier_data = $self->get_object(Bio::KBase::ObjectAPI::config::classifier(),"string");
     		my $class = $self->classify_genome($classifier_data,$genome);
     		if ($class eq "Gram positive") {
-	    		$template = $self->get_object($self->{_params}->{template_dir}."GramPositive.modeltemplate","modeltemplate");
+	    		$template = $self->get_object(Bio::KBase::ObjectAPI::config::template_dir()."GramPositive.modeltemplate","modeltemplate");
 	    	} elsif ($class eq "Gram negative") {
-	    		$template = $self->get_object($self->{_params}->{template_dir}."GramNegative.modeltemplate","modeltemplate");
+	    		$template = $self->get_object(Bio::KBase::ObjectAPI::config::template_dir()."GramNegative.modeltemplate","modeltemplate");
 	    	}
     	}
     } else {
@@ -1094,7 +1116,7 @@ sub ModelReconstruction {
     my $outputfiles = [];
    	$self->save_object($folder,undef,"folder",{application_type => "ModelReconstruction"});
     #Only stash genome in model folder if it's not already a workspace genome (e.g. from RAST/PATRIC/KBase/SEED)
-    if ($parameters->{genome} =~ m/^PATRICSOLR:(.+)$/ || $parameters->{genome} =~ m/^RAST:(.+)$/ || $parameters->{genome} =~ m/^PUBSEED:(.+)$/ || $parameters->{genome} =~ m/^KBASE:(.+)$/) {
+    if ($parameters->{genome} =~ m/^REFSEQ:(.+)$/ || $parameters->{genome} =~ m/^PATRIC:(.+)$/ || $parameters->{genome} =~ m/^RAST:(.+)$/ || $parameters->{genome} =~ m/^PUBSEED:(.+)$/ || $parameters->{genome} =~ m/^KBASE:(.+)$/) {
     	$self->save_object($folder."/".$genome->id().".genome",$genome,"genome");
     }
     # Note, the save operation above will have updated the reference for the genome which must be done
@@ -1128,16 +1150,16 @@ sub ModelReconstruction {
 			"parameters"=>[]
 		},
 		parameters => $parameters,
-		start_time => $starttime,
+		start_time => 0,
 		end_time => time(),
-		elapsed_time => time()-$starttime,
+		elapsed_time => time()-0,
 		output_files => [[$parameters->{output_path}."/".$parameters->{output_file}]],
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED"
     });
     $self->save_object($folder."/fba",undef,"folder");
     $self->save_object($folder."/gapfilling",undef,"folder");
-    my $output = $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$mdl,"model");
+    my $output = $self->save_object($parameters->{output_path}.$parameters->{output_file},$mdl,"model");
     my $summary;
     if ($parameters->{gapfill} == 1) {
     	$summary = $self->GapfillModel({
@@ -1156,15 +1178,11 @@ sub ModelReconstruction {
     } else {
     	$summary = $self->save_model($mdl,$parameters->{output_path}."/".$parameters->{output_file},{},1);
     }
-    return $summary;
+    return $parameters->{output_path}.$parameters->{output_file};
 }
 
 sub FluxBalanceAnalysis {
 	my($self,$parameters) = @_;
-    my $starttime = time();
-    if (defined($parameters->{adminmode})) {
-    	$self->{_params}->{adminmode} = $parameters->{adminmode}
-    }
 	$parameters = $self->validate_args($parameters,["model"],{
 		media => undef,
 		fva => 1,
@@ -1184,17 +1202,14 @@ sub FluxBalanceAnalysis {
 	});
 	$parameters->{fva} = 1;
 	$parameters->{minimizeflux} = 1;
-
-	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
-    $log->info("Started flux balance analysis for model ".$parameters->{model}." on media ".$parameters->{media});
-
+	
     my $model = $self->get_model($parameters->{model});
     $parameters->{model} = $model->_reference();
     if (!defined($parameters->{media})) {
 		if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
 			$parameters->{media} = "/chenry/public/modelsupport/media/PlantHeterotrophicMedia";
 		} else {
-			$parameters->{media} = $self->{_params}->{default_media};
+			$parameters->{media} = Bio::KBase::ObjectAPI::config::default_media();
 		}
 	}
     
@@ -1202,7 +1217,7 @@ sub FluxBalanceAnalysis {
     $parameters->{output_path} = $model->wsmeta()->[2].".".$model->wsmeta()->[0]."/fba";
     if (!defined($parameters->{output_file})) {
 	    my $list = $self->workspace_service()->ls({
-			adminmode => $self->adminmode(),
+			adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
 			paths => [$parameters->{output_path}],
 			excludeDirectories => 1,
 			excludeObjects => 0,
@@ -1225,13 +1240,13 @@ sub FluxBalanceAnalysis {
     }
     
     my $fba = $self->build_fba_object($model,$parameters);
-    $log->info("Started solving flux balance problem");
+    Bio::KBase::ObjectAPI::logging::log("Started solving flux balance problem");
     my $objective = $fba->runFBA();
     print "Objective:".$objective."\n";
     if (!defined($objective)) {
     	$self->error("FBA failed with no solution returned! See ".$fba->jobnode());
     }
-    $log->info("Got solution for flux balance problem");
+    Bio::KBase::ObjectAPI::logging::log("Got solution for flux balance problem");
     $fba->jobresult({
     	id => 0,
 		app => {
@@ -1242,9 +1257,9 @@ sub FluxBalanceAnalysis {
 			"parameters"=>[]
 		},
 		parameters => $parameters,
-		start_time => $starttime,
+		start_time => 0,
 		end_time => time(),
-		elapsed_time => time()-$starttime,
+		elapsed_time => time()-0,
 		output_files => [[ $parameters->{output_path}."/".$parameters->{output_file}]],
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED",
@@ -1314,24 +1329,21 @@ sub FluxBalanceAnalysis {
 	    	},
 	    	name => $model->wsmeta()->[0]."-".$fba->media()->wsmeta()->[0]."-essentials"
 	    };
-	    $self->save_object("/".$self->{_params}->{username}."/home/Feature Groups/".$model->wsmeta()->[0]."-".$fba->media()->wsmeta()->[0]."-essentials",$ftrgroup,"feature_group",{
+	    $self->save_object("/".Bio::KBase::ObjectAPI::config::username()."/home/Feature Groups/".$model->wsmeta()->[0]."-".$fba->media()->wsmeta()->[0]."-essentials",$ftrgroup,"feature_group",{
 	    	description => "Group of essential genes predicted by metabolic models",
 	    	media => $parameters->{media},
 	    	model => $parameters->{model}
 	    });
     }
-    return $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
+    $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
     	objective => $objective,
     	media => $parameters->{media}
     });
+    return $parameters->{output_path}.$parameters->{output_file};
 }
 
 sub GapfillModel {
 	my($self,$parameters) = @_;
-	my $starttime = time();
-    if (defined($parameters->{adminmode})) {
-    	$self->{_params}->{adminmode} = $parameters->{adminmode}
-    }
     $parameters = $self->validate_args($parameters,["model"],{
 		media => undef,
 		probanno => 0,
@@ -1362,19 +1374,13 @@ sub GapfillModel {
 		minimizeflux => 0,
 		findminmedia => 0
 	});
-	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
-    $log->info("Starting gap fill for model ".$parameters->{model}." on media ".$parameters->{media});
-	
-    if (defined($parameters->{adminmode}) && $parameters->{adminmode} == 1) {
-    	$self->adminmode($parameters->{adminmode});
-    }
     my $model = $self->get_model($parameters->{model});
     $parameters->{model} = $model->_reference();
     if (!defined($parameters->{media})) {
 		if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
 			$parameters->{media} = "/chenry/public/modelsupport/media/PlantHeterotrophicMedia";
 		} else {
-			$parameters->{media} = $self->{_params}->{default_media};
+			$parameters->{media} = Bio::KBase::ObjectAPI::config::default_media();
 		}
 	}
     
@@ -1382,7 +1388,7 @@ sub GapfillModel {
     $parameters->{output_path} = $model->wsmeta()->[2].".".$model->wsmeta()->[0]."/gapfilling";
     if (!defined($parameters->{output_file})) {
 	    my $gflist = $self->workspace_service()->ls({
-			adminmode => $self->adminmode(),
+			adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
 			paths => [$parameters->{output_path}],
 			excludeDirectories => 1,
 			excludeObjects => 0,
@@ -1411,7 +1417,7 @@ sub GapfillModel {
     
     my $fba = $self->build_fba_object($model,$parameters);
     $fba->PrepareForGapfilling($parameters);
-    $log->info("Started solving gap fill problem");
+    Bio::KBase::ObjectAPI::logging::log("Started solving gap fill problem");
     my $objective = $fba->runFBA();
     $fba->parseGapfillingOutput();
     if (!defined($fba->gapfillingSolutions()->[0])) {
@@ -1420,7 +1426,7 @@ sub GapfillModel {
 	if (@{$fba->gapfillingSolutions()->[0]->gapfillingSolutionReactions()} == 0) {
 		$self->error("No gapfilling needed on specified condition!");
 	}
-    $log->info("Got solution for gap fill problem");
+    Bio::KBase::ObjectAPI::logging::log("Got solution for gap fill problem");
 	
 	my $gfsols = [];
 	my $gftbl = "Solution\tID\tName\tEquation\tDirection\n";
@@ -1444,9 +1450,9 @@ sub GapfillModel {
 			"parameters"=>[]
 		},
 		parameters => $parameters,
-		start_time => $starttime,
+		start_time => 0,
 		end_time => time(),
-		elapsed_time => time()-$starttime,
+		elapsed_time => time()-0,
 		output_files => [[ $parameters->{output_path}."/".$parameters->{output_file}]],
 		job_output => "",
 		hostname => "https://p3.theseed.org/services/ProbModelSEED",
@@ -1510,23 +1516,17 @@ sub GapfillModel {
 		});
 		$write_files = 1;
 	}
-    Bio::KBase::ObjectAPI::utilities::set_global("gapfill name","");
-	return $self->save_model($model,$model->wsmeta()->[2].$model->wsmeta()->[0],{},$write_files);
+	$self->save_model($model,$model->wsmeta()->[2].$model->wsmeta()->[0],{},$write_files);
+	return $model->wsmeta()->[2].$model->wsmeta()->[0];
 }
 
 sub MergeModels {
 	my($self,$parameters) = @_;
-	my $log = Log::Log4perl->get_logger("ProbModelSEEDHelper");
-	my $starttime = time();
-    if (defined($parameters->{adminmode})) {
-    	$self->{_params}->{adminmode} = $parameters->{adminmode}
-    }
-    $parameters = $self->validate_args($parameters,["models"],{
-    	output_path => "/".$self->{_params}->{username}."/home/models/",
+	$parameters = $self->validate_args($parameters,["models"],{
+    	output_path => "/".Bio::KBase::ObjectAPI::config::username()."/home/models/",
     	output_file => "CommunityModel",
     });
-    $log->info("Started merging models!");
-	#Pulling first model to obtain biochemistry ID
+    #Pulling first model to obtain biochemistry ID
 	my $model = $self->get_model($parameters->{models}->[0]->[0]);
 	my $genomeObj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new({
 		id => $parameters->{output_file}."Genome",
@@ -1642,7 +1642,7 @@ sub MergeModels {
 		}
 		#Adding compounds to community model
 		my $translation = {};
-		$log->info("Loading compounds");
+		Bio::KBase::ObjectAPI::logging::log("Loading compounds");
 		my $cpds = $model->modelcompounds();
 		for (my $j=0; $j < @{$cpds}; $j++) {
 			my $cpd = $cpds->[$j];
@@ -1662,7 +1662,7 @@ sub MergeModels {
 			}
 			$translation->{$cpd->id()} = $comcpd->id();
 		}
-		$log->info("Loading reactions");
+		Bio::KBase::ObjectAPI::logging::log("Loading reactions");
 		#Adding reactions to community model
 		my $rxns = $model->modelreactions();
 		for (my $j=0; $j < @{$rxns}; $j++) {
@@ -1695,7 +1695,7 @@ sub MergeModels {
 				}
 			}
 		}
-		$log->info("Loading biomass");
+		Bio::KBase::ObjectAPI::logging::log("Loading biomass");
 		#Adding biomass to community model
 		my $bios = $model->biomasses();
 		for (my $j=0; $j < @{$bios}; $j++) {
@@ -1709,17 +1709,18 @@ sub MergeModels {
 			$bio->id("bio".$biocount);
 			$bio->name("bio".$biocount);
 		}
-		$log->info("Loading primary biomass");
+		Bio::KBase::ObjectAPI::logging::log("Loading primary biomass");
 		#Adding biomass component to primary composite biomass reaction
 		$primbio->add("biomasscompounds",{
 			modelcompound_ref => "~/modelcompounds/id/".$translation->{$biomassCpd->id()},
 			coefficient => -1*$parameters->{models}->[$i]->[1]/$totalAbundance
 		});
 	}
-	$log->info("Merge complete!");	
+	Bio::KBase::ObjectAPI::logging::log("Merge complete!");	
 	$self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$genomeObj->id(),$genomeObj,"genome",{});
-	$commdl->genome_ref($genomeObj->_reference());	
-	return $self->save_model($commdl,$parameters->{output_path}."/".$parameters->{output_file},{},1);
+	$commdl->genome_ref($genomeObj->_reference());
+	$self->save_model($commdl,$parameters->{output_path}."/".$parameters->{output_file},{},1);
+	return $parameters->{output_path}."/".$parameters->{output_file};
 }
 
 sub load_to_shock {
@@ -1728,9 +1729,9 @@ sub load_to_shock {
 	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
 	my $filename = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$data]);
-	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth ".$self->token()."\" -X POST -F 'upload=\@".$filename."' ".$self->shock_url()."/node");
+	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth ".Bio::KBase::ObjectAPI::config::token()."\" -X POST -F 'upload=\@".$filename."' ".Bio::KBase::ObjectAPI::config::shock_url()."/node");
 	$output = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$output}));
-	return $self->shock_url()."/node/".$output->{data}->{id};
+	return Bio::KBase::ObjectAPI::config::shock_url()."/node/".$output->{data}->{id};
 }
 
 #****************************************************************************
@@ -1740,15 +1741,17 @@ sub new {
     my($class, $parameters) = @_;
     my $self = {};
     bless $self, $class;
-    $parameters = $self->validate_args($parameters,["token","username","fbajobcache","fbajobdir","mfatoolkitbin",],{
+    $parameters = $self->validate_args($parameters,["token","username","fbajobcache","fbajobdir","mfatoolkitbin"],{
     	source => "PATRIC",
     	data_api_url => "https://www.patricbrc.org/api/",
     	"mssserver-url" => "http://bio-data-1.mcs.anl.gov/services/ms_fba",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
+    	"appservice_url" => "http://p3.theseed.org/services/app_service",
     	"shock-url" => "http://p3.theseed.org/services/shock_api",
     	adminmode => 0,
     	method => "unknown",
     	run_as_app => 0,
+    	home_dir => "modelseed",
     	file_cache => "/disks/p3/fba/filecache/",
     	cache_targets => ["/chenry/public/modelsupport/biochemistry/default.biochem"],
     	biochemistry => "/chenry/public/modelsupport/biochemistry/default.biochem",
@@ -1756,34 +1759,30 @@ sub new {
     	classifier => "/chenry/public/modelsupport/classifiers/gramclassifier.string",
     	template_dir => "/chenry/public/modelsupport/templates/"
     });
-    $self->{_params} = $parameters;
-    if ($self->{_params}->{fbajobcache} ne "none") {
-    	Bio::KBase::ObjectAPI::utilities::FinalJobCache($self->{_params}->{fbajobcache});
-    }
-    Bio::KBase::ObjectAPI::utilities::default_biochemistry($self->{_params}->{biochemistry});
-    Bio::KBase::ObjectAPI::utilities::source($self->{_params}->{source});
-    Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY($self->{_params}->{fbajobdir});
-    Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY($self->{_params}->{mfatoolkitbin});
-    if (!-e Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf") {
-    	if (!-d Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()) {
-    		File::Path::mkpath (Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY());
-    	}
-    	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf",[
-	    	"############################################################",
-			"# A simple root logger with a Log::Log4perl::Appender::File ",
-			"# file appender in Perl.",
-			"############################################################",
-			"log4perl.rootLogger=ERROR, LOGFILE",
-			"",
-			"log4perl.appender.LOGFILE=Log::Log4perl::Appender::File",
-			"log4perl.appender.LOGFILE.filename=".Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.log",
-			"log4perl.appender.LOGFILE.mode=append",
-			"",
-			"log4perl.appender.LOGFILE.layout=PatternLayout",
-			"log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n",
-    	]);
-    }
-    Log::Log4perl::init(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY()."/ProbModelSEED.conf");
+    Bio::KBase::ObjectAPI::config::appservice_url($parameters->{appservice_url});
+    Bio::KBase::ObjectAPI::config::home_dir($parameters->{home_dir});
+    Bio::KBase::ObjectAPI::config::run_as_app($parameters->{run_as_app});
+    Bio::KBase::ObjectAPI::config::method($parameters->{method});
+    Bio::KBase::ObjectAPI::config::adminmode($parameters->{adminmode});
+    Bio::KBase::ObjectAPI::config::shock_url($parameters->{"shock-url"});
+    Bio::KBase::ObjectAPI::config::workspace_url($parameters->{"workspace-url"});
+    Bio::KBase::ObjectAPI::config::mssserver_url($parameters->{"mssserver-url"});
+    Bio::KBase::ObjectAPI::config::template_dir($parameters->{template_dir});
+    Bio::KBase::ObjectAPI::config::classifier($parameters->{classifier});
+    Bio::KBase::ObjectAPI::config::cache_targets($parameters->{cache_targets});
+    Bio::KBase::ObjectAPI::config::file_cache($parameters->{file_cache});
+    Bio::KBase::ObjectAPI::config::token($parameters->{token});
+    Bio::KBase::ObjectAPI::config::username($parameters->{username});
+    Bio::KBase::ObjectAPI::config::data_api_url($parameters->{data_api_url});
+	Bio::KBase::ObjectAPI::config::FinalJobCache($parameters->{fbajobcache});
+    Bio::KBase::ObjectAPI::config::default_media($parameters->{default_media});
+    Bio::KBase::ObjectAPI::config::default_biochemistry($parameters->{biochemistry});
+	Bio::KBase::ObjectAPI::config::source($parameters->{source});
+    Bio::KBase::ObjectAPI::config::config_directory($parameters->{fbajobdir});
+    Bio::KBase::ObjectAPI::config::mfatoolkit_binary($parameters->{mfatoolkitbin});
+    Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir($parameters->{fbajobdir});
+    Bio::KBase::ObjectAPI::config::bin_directory($parameters->{bin_directory});
+    Bio::KBase::ObjectAPI::logging::log("ProbModelSEEDHelper initialized");
     return $self;
 }
 

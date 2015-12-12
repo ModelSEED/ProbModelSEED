@@ -21,8 +21,10 @@
 #include "MFAToolkit.h"
 
 int lpcount = 0;
+vector<string>* MFALog;
 
 MFAProblem::MFAProblem() {
+  MFALog = new vector<string>;
 	SetParameter("MFA output path",(FOutputFilepath()+GetParameter("MFA output")).data());
 	MinFluxConstraint = NULL;
 	ObjectiveConstraint = NULL;
@@ -48,6 +50,7 @@ MFAProblem::MFAProblem() {
 }
 
 MFAProblem::~MFAProblem() {
+  delete MFALog;
 	for (int i=0; i < FNumVariables(); i++) {
 		delete Variables[i];
 	}
@@ -3714,7 +3717,7 @@ int MFAProblem::RunDeletionExperiments(Data* InData,OptimizationParameter* InPar
 			this->AddObjective(originalObjective);
 			LoadObjective();
 			if (GapfillPhenosim) {
-				bool gapfilled = SolveGapfillingProblem(1,atoi(GetParameter("gfstart").data()),atoi(GetParameter("inactstart").data()),atoi(GetParameter("threshold").data()),NewSolution,label);
+				bool gapfilled = SolveGapfillingProblem(1,atoi(GetParameter("gfstart").data()),atoi(GetParameter("inactstart").data()),atoi(GetParameter("threshold").data()),NewSolution,label,InParameters);
 				if (gapfilled) {
 					WTgrowth = 0;
 					growth = atof(GetParameter("original objective").data());
@@ -3727,7 +3730,7 @@ int MFAProblem::RunDeletionExperiments(Data* InData,OptimizationParameter* InPar
 				}
 				noGrowth.assign(GetParameter("current gapfilled reactions"));
 			} else {
-				NewSolution = RunSolver(false,true,true);
+				NewSolution = RunSolver(false,false,false);
 				if (NewSolution != NULL && NewSolution->Status == SUCCESS) {
 					WTgrowth = NewSolution->Objective;
 					if (WTgrowth < 1e-7) {
@@ -3844,7 +3847,7 @@ int MFAProblem::RunDeletionExperiments(Data* InData,OptimizationParameter* InPar
 								this->LoadObjective();
 							}
 						} else {
-							NewSolution = RunSolver(false,true,false);
+							NewSolution = RunSolver(false,false,false);
 							if (NewSolution != NULL && NewSolution->Status == SUCCESS) {
 								if (NewSolution->Objective/WTgrowth < 0.9) {
 									cout << "Reduced growth" << endl;
@@ -4250,6 +4253,160 @@ int MFAProblem::BuildCoreProblem(Data* InData,OptimizationParameter*& InParamete
 	}
 	AddUptakeLimitConstraints();
 	ConvertStringToObjective(GetParameter("objective"), InData);
+	//Now I add mass balance constraints for particular atoms
+	if (GetParameter("Mass balance atoms").length() > 0 && GetParameter("Mass balance atoms").compare("none") != 0) {
+	  vector<string>* strings = StringToStrings(GetParameter("Mass balance atoms"),";");
+	  for (int i=0; i < int(strings->size()); i++) {
+	    	    AddMassBalanceAtomConstraint((*strings)[i].data(), InData);
+	  }
+	}
+	//	AddDeltaGofFormationConstraint(InData);
+}
+
+int MFAProblem::AddMassBalanceAtomConstraint(const char* ID, Data* InData) {
+  // two inequalities to constrain absolute value
+  LinEquation* newConstraint = InitializeLinEquation("Mass balance constraint",MFA_ZERO_TOLERANCE,LESS);
+  LinEquation* newConstraintReciprocal = InitializeLinEquation("Mass balance constraint",MFA_ZERO_TOLERANCE,LESS);
+  // start with drain variables; 
+  for (int j=0; j < this->FNumVariables();j++) {
+    MFAVariable* currVar = this->GetVariable(j);
+    if ((currVar->Type == FORWARD_DRAIN_FLUX || currVar->Type == DRAIN_FLUX) && currVar->AssociatedSpecies != NULL) {
+      int atomCount = currVar->AssociatedSpecies->CountAtomType(ID);
+      cout << "(1) pushing " << atomCount << " for " << currVar->AssociatedSpecies->GetData("DATABASE",STRING) << endl;
+      newConstraint->Variables.push_back(currVar);
+      newConstraint->Coefficient.push_back(atomCount);
+      newConstraintReciprocal->Variables.push_back(currVar);
+      newConstraintReciprocal->Coefficient.push_back(-atomCount);
+    }
+    if ((currVar->Type == REVERSE_DRAIN_FLUX) && currVar->AssociatedSpecies != NULL) {
+      int atomCount = currVar->AssociatedSpecies->CountAtomType(ID);
+      cout << "(2) pushing " << atomCount << " for " << currVar->AssociatedSpecies->GetData("DATABASE",STRING) << endl;
+      newConstraint->Variables.push_back(currVar);
+      newConstraint->Coefficient.push_back(-atomCount);
+      newConstraintReciprocal->Variables.push_back(currVar);
+      newConstraintReciprocal->Coefficient.push_back(atomCount);
+    }
+  }
+
+  // include all reactants and products of the biomass reaction
+  for (int i=0; i < InData->FNumReactions(); i++) {
+    Reaction* reaction = InData->GetReaction(i);
+    double biomass = 0;
+    if (reaction->GetData("DATABASE",STRING).length() > 3 && reaction->GetData("DATABASE",STRING).substr(0,3).compare("bio") == 0) {
+      MFAVariable* currVar = reaction->GetMFAVar(FLUX);
+      if (currVar == NULL) {
+	currVar = reaction->GetMFAVar(FORWARD_FLUX);
+      }
+      for (int j=0; j < reaction->FNumReactants(); j++) {
+	Species* reactant = reaction->GetReactant(j);
+	int atomCount = reactant->CountAtomType(ID);
+	double flux = atomCount * reaction->GetReactantCoef(j);
+	cout << "(3) pushing " << flux << " for " << reactant->GetData("DATABASE",STRING) << endl;
+	biomass += flux;
+      }
+      newConstraint->Variables.push_back(currVar);
+      newConstraint->Coefficient.push_back(biomass);
+      newConstraintReciprocal->Variables.push_back(currVar);
+      newConstraintReciprocal->Coefficient.push_back(-biomass);
+    }
+  }
+
+  this->AddConstraint(newConstraint);
+  this->AddConstraint(newConstraintReciprocal);
+
+  // shut down any mass imbalanced reaction
+  for (int i=0; i < InData->FNumReactions(); i++) {
+    Reaction* reaction = InData->GetReaction(i);
+    if (reaction->GetData("DATABASE",STRING).length() > 3 && reaction->GetData("DATABASE",STRING).substr(0,3).compare("bio") == 0) {
+      continue; // skip biomass reaction which is by definition balanced since cpd11416 has no formula
+    }
+    int numID = 0;
+    for (int j=0; j < reaction->FNumReactants(); j++) {
+      Species* reactant = reaction->GetReactant(j);
+      numID += reactant->CountAtomType(ID)*reaction->GetReactantCoef(j);
+    }
+    if (numID != 0) {
+      string logit = "Shutting down mass-imbalanced reaction: ";
+      logit.append(reaction->GetData("DATABASE",STRING));
+      logit.append(" [");
+      logit.append(ID);
+      logit.append("]");
+      MFALog->push_back(logit);
+
+      if (reaction->GetMFAVar(FLUX) != NULL) {
+	LinEquation* shutdown = InitializeLinEquation("Shut down flux",0,EQUAL);
+	shutdown->Variables.push_back(reaction->GetMFAVar(FLUX));
+	shutdown->Coefficient.push_back(1);
+	this->AddConstraint(shutdown);
+      }
+      if (reaction->GetMFAVar(FORWARD_FLUX) != NULL) {
+	LinEquation* shutdown = InitializeLinEquation("Shut down flux",0,EQUAL);
+	shutdown->Variables.push_back(reaction->GetMFAVar(FORWARD_FLUX));
+	shutdown->Coefficient.push_back(1);
+	this->AddConstraint(shutdown);
+      }
+      if (reaction->GetMFAVar(REVERSE_FLUX) != NULL) {
+	LinEquation* shutdown = InitializeLinEquation("Shut down flux",0,EQUAL);
+	shutdown->Variables.push_back(reaction->GetMFAVar(REVERSE_FLUX));
+	shutdown->Coefficient.push_back(1);
+	this->AddConstraint(shutdown);
+      }
+    }
+  }  
+
+  return SUCCESS;
+}
+
+// formation energy of products leaving the system minus reactants entering the system should be less than zero
+int MFAProblem::AddDeltaGofFormationConstraint(Data* InData) {
+  LinEquation* newConstraint = InitializeLinEquation("Mass balance constraint",0,LESS);
+  // start with drain variables; 
+  for (int j=0; j < this->FNumVariables();j++) {
+    MFAVariable* currVar = this->GetVariable(j);
+    if (currVar->AssociatedSpecies != NULL && currVar->AssociatedSpecies->GetData("DATABASE",STRING).compare("cpd11416_c0") == 0) {
+      continue;
+    }
+    if ((currVar->Type == FORWARD_DRAIN_FLUX || currVar->Type == DRAIN_FLUX) && currVar->AssociatedSpecies != NULL) {
+      double deltaG = currVar->AssociatedSpecies->FEstDeltaG();
+      cout << "(1) pushing deltaG " << deltaG << " for " << currVar->AssociatedSpecies->GetData("DATABASE",STRING) << endl;
+      newConstraint->Variables.push_back(currVar);
+      newConstraint->Coefficient.push_back(-deltaG); // negate, because positive DRAIN_FLUX means reactant is entering the system
+    }
+    if ((currVar->Type == REVERSE_DRAIN_FLUX) && currVar->AssociatedSpecies != NULL) {
+      double deltaG = currVar->AssociatedSpecies->FEstDeltaG();
+      cout << "(2) pushing deltaG " << deltaG << " for " << currVar->AssociatedSpecies->GetData("DATABASE",STRING) << endl;
+      newConstraint->Variables.push_back(currVar);
+      newConstraint->Coefficient.push_back(deltaG);
+    }
+  }
+
+  // include all reactants and products of the biomass reaction
+  for (int i=0; i < InData->FNumReactions(); i++) {
+    Reaction* reaction = InData->GetReaction(i);
+    double biomass = 0;
+    if (reaction->GetData("DATABASE",STRING).length() > 3 && reaction->GetData("DATABASE",STRING).substr(0,3).compare("bio") == 0) {
+      MFAVariable* currVar = reaction->GetMFAVar(FLUX);
+      if (currVar == NULL) {
+	currVar = reaction->GetMFAVar(FORWARD_FLUX);
+      }
+      for (int j=0; j < reaction->FNumReactants(); j++) {
+	Species* reactant = reaction->GetReactant(j);
+	if (reactant->GetData("DATABASE",STRING).compare("cpd11416_c0") == 0) {
+	  continue;
+	}
+	double deltaG = reactant->FEstDeltaG();
+	double flux = deltaG * reaction->GetReactantCoef(j);
+	cout << "(3) pushing deltaG " << deltaG << " for biomass: " << reactant->GetData("DATABASE",STRING) << endl;
+	biomass += flux;
+      }
+      newConstraint->Variables.push_back(currVar); 
+      newConstraint->Coefficient.push_back(-biomass); // negate, because reactant coefficients are negative
+    }
+  }
+
+  this->AddConstraint(newConstraint);
+
+  return SUCCESS;
 }
 
 int MFAProblem::AddUptakeLimitConstraints() {
@@ -7755,7 +7912,7 @@ int MFAProblem::GapFilling(Data* InData, OptimizationParameter* InParameters,Opt
 		}
 	}
 	for (int i=startsize; i < int(ObjFunct->Variables.size()); i++) {
-	  ObjFunct->Coefficient[i] = ObjFunct->Coefficient[i]*omegap/penaltysum;
+		//ObjFunct->Coefficient[i] = ObjFunct->Coefficient[i]*omegap/penaltysum;
 	}
 	double threshold = 0.5;
 	if (!InParameters->ReactionsUse) {
@@ -7788,7 +7945,7 @@ int MFAProblem::GapFilling(Data* InData, OptimizationParameter* InParameters,Opt
 					if (currvar != NULL) {
 						currvar->UpperBound = 0;
 						LoadVariable(currvar->Index);
-						SolveGapfillingProblem(1,gfstart,inactstart,threshold,CurrentSolution,InParameters->GapfillingTargetReactions[i]);
+						SolveGapfillingProblem(1,gfstart,inactstart,threshold,CurrentSolution,InParameters->GapfillingTargetReactions[i],InParameters);
 						currvar->UpperBound = 1;
 						LoadVariable(currvar->Index);
 					}
@@ -7796,7 +7953,7 @@ int MFAProblem::GapFilling(Data* InData, OptimizationParameter* InParameters,Opt
 			}
 		} else {
 			while (stay_in_loop) {
-				stay_in_loop = SolveGapfillingProblem(currentround,gfstart,inactstart,threshold,CurrentSolution,"objective");
+				stay_in_loop = SolveGapfillingProblem(currentround,gfstart,inactstart,threshold,CurrentSolution,"objective",InParameters);
 				if (InParameters->alpha > 0) {
 					//If this is a straight up gapfilling with no activation, then we only solve once
 					stay_in_loop = false;
@@ -7912,7 +8069,7 @@ int MFAProblem::GapFilling(Data* InData, OptimizationParameter* InParameters,Opt
 	return SUCCESS;
 }
 
-bool MFAProblem::SolveGapfillingProblem(int currentround,int gfstart,int inactstart,double threshold,OptSolutionData*& CurrentSolution,string label) {
+bool MFAProblem::SolveGapfillingProblem(int currentround,int gfstart,int inactstart,double threshold,OptSolutionData*& CurrentSolution,string label,OptimizationParameter* InParameters) {
 	this->ResetSolver();
 	this->LoadSolver(false);
 	CurrentSolution = RunSolver(true,false,true);
@@ -10741,4 +10898,13 @@ void MFAProblem::WriteLPFile() {
 	  GlobalWriteLPFile(Solver,lpcount);
 	  lpcount++;
 	}
+}
+
+void MFAProblem::WriteMFALog() {
+  ofstream log_output;
+  if (OpenOutput(log_output,FOutputFilepath()+"MFALog.txt")) {
+    for (int i = 0; i < MFALog->size(); i++) {
+      log_output << (*MFALog)[i].data() << endl;
+    }
+  }
 }

@@ -51,13 +51,9 @@ if (defined($paths->[3])) {
 if (defined($opt->{admin})) {
 	$input->{adminmode} = $opt->{admin};
 }
-if (!defined($opt->{name})) {
-	$input->{output_file} = $input->{genome};
-	$input->{output_file} =~ s/.+\///g;
-	$input->{output_file} .= ".model";
-} else {
+if (defined($opt->{name})) {
 	$input->{output_file} = $opt->{name};
 }
 my $client = Bio::P3::Workspace::ScriptHelpers::msClient();
 my $output = $client->ModelReconstruction($input);
-print Data::Dumper->Dump($output)."\n";
+print Data::Dumper->Dump([$output])."\n";
