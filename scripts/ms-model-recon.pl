@@ -56,4 +56,11 @@ if (defined($opt->{name})) {
 }
 my $client = Bio::P3::Workspace::ScriptHelpers::msClient();
 my $output = $client->ModelReconstruction($input);
-print Data::Dumper->Dump([$output])."\n";
+print "Job ID:".$output."\n";
+my $jobstatus = $client->CheckJobs({jobs => [$output]});
+while ($jobstatus->{$output}->{status} ne "complete") {
+	print "Status:".$jobstatus->{$output}->{status}."\n";
+	sleep(3);
+	$jobstatus = $client->CheckJobs({jobs => [$output]});
+}
+print "Finished!\n";

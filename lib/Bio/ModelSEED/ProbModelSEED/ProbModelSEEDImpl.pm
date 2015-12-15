@@ -85,26 +85,15 @@ sub config {
 sub helper {
 	my ($self) = @_;
 	if (!defined($CallContext->{_helper})) {
-		my $targets = [split(/;/,$self->config()->{cache_targets})];
-		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
-			token => $self->token(),
-			username => $self->user_id(),
-			fbajobcache => $self->config()->{fbajobcache},
-    		fbajobdir => $self->config()->{fbajobdir},
-    		mfatoolkitbin => $self->config()->{mfatoolkitbin},
-			logfile => $self->config()->{logfile},
-			data_api_url => $self->config()->{data_api_url},
-			"workspace-url" => $self->workspace_url(),
-			"shock-url" => $self->config()->{shock_url},
-			adminmode => $self->adminmode(),
-			method => $self->current_method(),
-			file_cache => $self->config()->{file_cache},
-			cache_targets => $targets,
-			biochemistry => $self->config()->{biochemistry},
-			default_media => $self->config()->{default_media},
-			classifier => $self->config()->{classifier},
-			template_dir => $self->config()->{template_dir}
-		});
+		my $currentconfig = {};
+		my $config = $self->config();
+		foreach my $key (keys(%{$config})) {
+			$currentconfig->{$key} = $config->{$key};
+		}
+		$currentconfig->{token} = $self->token();
+		$currentconfig->{username} = $self->user_id();
+		$currentconfig->{cache_targets} = [split(/;/,$currentconfig->{cache_targets})];
+		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new($currentconfig);
 	}
 	return $CallContext->{_helper};
 }

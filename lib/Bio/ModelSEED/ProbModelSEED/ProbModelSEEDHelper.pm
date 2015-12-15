@@ -1016,7 +1016,9 @@ sub app_harness {
 	my($self,$command,$parameters) = @_;
 	my $starttime = time();
 	if (Bio::KBase::ObjectAPI::config::run_as_app() == 1) {
+		Bio::KBase::ObjectAPI::logging::log($command.": issuing app");
 		my $task = $self->app_service()->start_app("RunProbModelSEEDJob",{command => $command,arguments => $parameters},"/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/");
+		Bio::KBase::ObjectAPI::logging::log($command.": app issued");
 		return $task->{id};
 	} else {
 		Bio::KBase::ObjectAPI::logging::log($command.": job started");
@@ -1746,11 +1748,11 @@ sub new {
     	data_api_url => "https://www.patricbrc.org/api/",
     	"mssserver-url" => "http://bio-data-1.mcs.anl.gov/services/ms_fba",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",
-    	"appservice_url" => "http://p3.theseed.org/services/app_service",
+    	appservice_url => "http://p3.theseed.org/services/app_service",
     	"shock-url" => "http://p3.theseed.org/services/shock_api",
     	adminmode => 0,
     	method => "unknown",
-    	run_as_app => 0,
+    	run_as_app => 1,
     	home_dir => "modelseed",
     	file_cache => "/disks/p3/fba/filecache/",
     	cache_targets => ["/chenry/public/modelsupport/biochemistry/default.biochem"],
