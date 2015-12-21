@@ -6,7 +6,6 @@ use DateTime;
 
 our $logger = undef;
 our $processid = undef;
-our $verboselevel = undef;
 
 sub processid {
 	if (!defined($processid)) {
@@ -44,7 +43,11 @@ sub logger {
 
 sub log {
     my $msg = shift;
-    Bio::KBase::ObjectAPI::logging::logger()->info(DateTime->now()->datetime()."/".$processid."/".Bio::KBase::ObjectAPI::config::username().":".$msg);
+    my $type = shift;
+    if (!defined($type)) {
+    	$type = "info";
+    }
+    Bio::KBase::ObjectAPI::logging::logger()->$type('<msg type="'.$type.'" time="'.DateTime->now()->datetime().'" pid="'.$processid.'" user="'.Bio::KBase::ObjectAPI::config::username().'">'."\n".$msg."\n</msg>\n");
 }
 
 1;

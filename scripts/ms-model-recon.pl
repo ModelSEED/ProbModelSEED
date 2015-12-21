@@ -58,7 +58,7 @@ my $client = Bio::P3::Workspace::ScriptHelpers::msClient();
 my $output = $client->ModelReconstruction($input);
 print "Job ID:".$output."\n";
 my $jobstatus = $client->CheckJobs({jobs => [$output]});
-while ($jobstatus->{$output}->{status} ne "complete") {
+while ($jobstatus->{$output}->{status} ne "completed") {
 	print "Status:".$jobstatus->{$output}->{status}."\n";
 	sleep(3);
 	$jobstatus = $client->CheckJobs({jobs => [$output]});

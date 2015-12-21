@@ -155,31 +155,7 @@ sub get_objects {
 	#Pulling objects from workspace
 	if (@{$newrefs} > 0) {
 #		print "Objects:".Data::Dumper->Dump([{adminmode => $self->adminmode(),objects => $newrefs}])."\n";
-		my $retryCount = 3;
-		my $error;
-		my $objdatas;
-		while ($retryCount > 0) {
-			eval {
-				$objdatas = $self->workspace()->get({adminmode => $self->adminmode(),objects => $newrefs});
-			};
-			# If there is a network glitch, wait a second and try again. 
-			if ($@) {
-				$error = $@;
-				if (($error =~ m/HTTP status: 503 Service Unavailable/) ||
-				    ($error =~ m/HTTP status: 502 Bad Gateway/)) {
-					$retryCount -= 1;
-					print STDERR "Error putting workspace object ".$error."\n";
-					sleep(1);				
-				} else {
-					$retryCount = 0; # Get out and report the error
-				}
-			} else {
-				last;
-			}
-		}
-		if ($retryCount == 0) {
-			Bio::KBase::ObjectAPI::utilities::error($error);
-		}
+		
 		my $object;
 		for (my $i=0; $i < @{$objdatas}; $i++) {
 			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1]);
@@ -268,6 +244,7 @@ sub save_object {
 
 sub save_objects {
     my ($self,$refobjhash,$overwrite) = @_;
+    my $objectdata = {};
     if (!defined($overwrite)) {
     	$overwrite = 1;
     }
@@ -275,6 +252,7 @@ sub save_objects {
     	objects => [],
     	overwrite => 1,
     	adminmode => $self->adminmode(),
+    	createUploadNodes => 1
     };
     if (defined($self->adminmode()) && $self->adminmode() == 1 && defined($self->setowner())) {
     	$input->{setowner} = $self->setowner();
@@ -285,46 +263,28 @@ sub save_objects {
     	my $obj = $refobjhash->{$ref};
     	push(@{$reflist},$ref);
     	$objecthash->{$ref} = 0;
-    	if (defined($typetrans->{$obj->{type}})) {
+    	if ($obj->{type} eq "modelfolder" || $obj->{type} eq "fbamodel") {
+    		$self->save_model($obj->{object},$ref);
+    	} elsif (defined($typetrans->{$obj->{type}})) {
     		$objecthash->{$ref} = 1;
     		$obj->{object}->parent($self);
     		if (defined($transform->{$obj->{type}}->{out})) {
     			my $function = $transform->{$obj->{type}}->{out};
-    			push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},$self->$function($obj->{object},$obj->{usermeta})]);
+    			$objectdata->{$ref} = $self->$function($obj->{object},$obj->{usermeta});
+    			push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     		} else {
-    			push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},$obj->{object}->toJSON()]);
+    			$objectdata->{$ref} = $obj->{object}->toJSON();
+    			push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     		}
     	} elsif (defined($jsontypes->{$obj->{type}})) {
-    		push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},Bio::KBase::ObjectAPI::utilities::TOJSON($obj->{object})]);
+    		$objectdata->{$ref} = Bio::KBase::ObjectAPI::utilities::TOJSON($obj->{object});
+    		push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     	} else {
-    		push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},$obj->{object}]);
+    		$objectdata->{$ref} = $obj->{object};
+    		push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     	}
     }
-    my $listout;
-    my $error;
-    my $retryCount = 3;
-	while ($retryCount > 0) {
-		eval {
-			$listout = $self->workspace()->create($input);
-		};
-		# If there is a network glitch, wait a second and try again. 
-		if ($@) {
-			$error = $@;
-			if (($error =~ m/HTTP status: 503 Service Unavailable/) ||
-			    ($error =~ m/HTTP status: 502 Bad Gateway/)) {
-				$retryCount -= 1;
-				print STDERR "Error putting workspace object ".$error."\n";
-				sleep(1);				
-			} else {
-				$retryCount = 0; # Get out and report the error
-			}
-		} else {
-			last;
-		}
-	}
-	if ($retryCount == 0) {
-		Bio::KBase::ObjectAPI::utilities::error($error);
-	}
+    my $listout = $self->call_ws("create",$input);
     my $output = {};
     for (my $i=0; $i < @{$reflist}; $i++) {
     	my $refinedref = $reflist->[$i];
@@ -344,6 +304,19 @@ sub save_objects {
     	}	
     }
     return $output; 
+}
+
+sub upload_to_shock {
+	my ($self,$content,$url) = @_;
+	my $uuid = Data::UUID->new()->create_str();
+	File::Path::mkpath Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir();
+	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir().$uuid,[$content]);	
+	my $filename = Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir().$uuid;
+	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable('curl -X POST -H "Authorization: OAuth '.Bio::KBase::ObjectAPI::config::token().'" --data-binary @'.$filename.' '.$url);
+	unlink($filename);
+	my $json = JSON::XS->new;
+	my $data = $json->decode(join("\n",@{$output}));
+	return $data->{data}->{id};
 }
 
 sub object_from_file {
@@ -501,30 +474,144 @@ sub transform_media_to_ws {
 	return $data;
 }
 
-sub transform_model_to_ws {
-	my ($self,$object,$meta) = @_;
-	$meta->{name} = $object->name();
-	$meta->{type} = $object->type();
-	$meta->{isMinimal} = $object->isMinimal();
-	$meta->{isDefined} = $object->isDefined();
-	$meta->{source_id} = $object->source_id();
-	$meta->{number_compounds} = @{$object->mediacompounds()};
-	my $data = "id\tname\tconcentration\tminflux\tmaxflux\n";
-	my $mediacpds = $object->mediacompounds();
-	my $compounds = "";
-	for (my $i=0; $i < @{$mediacpds}; $i++) {
-		$data .= $mediacpds->[$i]->id()."\t".
-			$mediacpds->[$i]->name()."\t".
-			$mediacpds->[$i]->concentration()."\t".
-			$mediacpds->[$i]->minFlux()."\t".
-			$mediacpds->[$i]->maxFlux()."\n";
-		if (length($compounds) > 0) {
-			$compounds .= "|";
+sub save_model {
+	my ($self,$object,$ref) = @_;
+	my $array = [split(/\//,$ref)];
+	my $name = pop(@{$array});
+	#Listing contents of any existing model folder in this location
+	my $output = $self->call_ws("ls",{
+		paths => [$ref],
+		recursive => 1,
+	});
+	#Checking what data is already present
+	my $modelmeta;
+	my $createinput = {objects => [],createUploadNodes => 1};
+	my $exists = 0;
+	my $subobjects = {};
+	if (defined($output->{$ref})) {
+		for (my $i=0; $i < @{$output->{$ref}}; $i++) {
+			if ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref && $output->{$ref}->[$i]->[1] eq "modelfolder") {
+				$modelmeta = $output->{$ref}->[$i];
+				$exists = 1;
+				last;
+			}
 		}
-		$compounds .= $mediacpds->[$i]->id().":".$mediacpds->[$i]->name();
+		if ($exists == 1) {
+			for (my $i=0; $i < @{$output->{$ref}}; $i++) {
+				if ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/fba" && $output->{$ref}->[$i]->[1] eq "folder") {
+					$subobjects->{fba} = 1;	
+				} elsif ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/gapfilling" && $output->{$ref}->[$i]->[1] eq "folder") {
+					$subobjects->{gapfill} = 1;
+				} elsif ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/genome" && $output->{$ref}->[$i]->[1] eq "genome") {
+					$subobjects->{genome} = 1;
+				}
+			}
+		}
 	}
-	$meta->{compounds} = $compounds;
-	return $data;
+	my $objectdata = {};
+	#Adding folders and genome if not already present
+	if ($exists != 1) {
+		push(@{$createinput->{objects}},[$ref,"modelfolder",{},undef]);
+	}
+	if (!defined($subobjects->{fba})) {
+		push(@{$createinput->{objects}},[$ref."/fba","folder",{},undef]);
+	}
+	if (!defined($subobjects->{gapfill})) {
+		push(@{$createinput->{objects}},[$ref."/gapfilling","folder",{},undef]);
+	}
+	if (!defined($subobjects->{genome})) {
+		push(@{$createinput->{objects}},[$ref."/genome","genome",{},undef]);
+		$objectdata->{$ref."/genome"} = $self->transform_genome_to_ws($object->genome());
+	}
+	#Saving model JSON structure
+	push(@{$createinput->{objects}},[$ref."/model","fbamodel",{},undef]);
+	$objectdata->{$ref."/model"} = $object->toJSON();
+	#Saving model SBML format
+	push(@{$createinput->{objects}},[$ref."/".$name.".sbml","string",{
+	   description => "SBML version of model data for use in COBRA toolbox and other applications"
+	},undef]);
+	$objectdata->{$ref."/".$name.".sbml"} = $object->export({format => "sbml"});
+	#Saving compound table for model
+	push(@{$createinput->{objects}},[$ref."/".$name.".cpdtbl","string",{
+		   description => "Tab delimited table containing data on compounds in metabolic model",
+	},undef]);
+	my $mdlcpds = $object->modelcompounds();
+	my $cpdtbl = "ID\tName\tFormula\tCharge\tCompartment\n";
+	for (my $i=0; $i < @{$mdlcpds}; $i++) {
+		$cpdtbl .= $mdlcpds->[$i]->id()."\t".$mdlcpds->[$i]->name()."\t".$mdlcpds->[$i]->formula()."\t".$mdlcpds->[$i]->compound()->defaultCharge()."\t".$mdlcpds->[$i]->modelcompartment()->label()."\n";
+	}
+	$objectdata->{$ref."/".$name.".cpdtbl"} = $cpdtbl;
+	#Saving reaction table for model
+	push(@{$createinput->{objects}},[$ref."/".$name.".rxntbl","string",{
+		   description => "Tab delimited table containing data on reactions in metabolic model",
+	},undef]);
+	my $mdlrxns = $object->modelreactions();
+	my $rxntbl = "ID\tName\tEquation\tDefinition\tGenes\n";
+	for (my $i=0; $i < @{$mdlrxns}; $i++) {
+		$rxntbl .= $mdlrxns->[$i]->id()."\t".$mdlrxns->[$i]->name()."\t".$mdlrxns->[$i]->equation()."\t".$mdlrxns->[$i]->definition()."\t".$mdlrxns->[$i]->gprString()."\n";
+	}
+	$objectdata->{$ref."/".$name.".rxntbl"} = $rxntbl;
+	#Calling create functions
+	my $listout = $self->call_ws("create",$createinput);
+	#Uploading actual files to shock
+	$output = {};
+	for (my $i=0; $i < @{$listout}; $i++) {
+		if (defined($listout->[$i]->[11]) && length($listout->[$i]->[11]) > 0 && defined($objectdata->{$listout->[$i]->[2].$listout->[$i]->[0]})) {
+			$self->upload_to_shock($objectdata->{$listout->[$i]->[2].$listout->[$i]->[0]},$listout->[$i]->[11]);
+		}
+		if ($listout->[$i]->[1] eq "modelfolder") {
+			$modelmeta = $listout->[$i]
+		}
+		if ($listout->[$i]->[0] eq "model" || $listout->[$i]->[0] eq "genome") {
+			$output->{$listout->[$i]->[2].$listout->[$i]->[0]} = $listout->[$i];
+			if ($listout->[0] eq "model") {
+				$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]} = [$listout->[$i],$object];
+				$self->cache()->{$listout->[$i]->[4]} = [$listout->[$i],$object];
+				$self->cache()->{$ref} = [$modelmeta,$object];
+				$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]}->[1]->wsmeta($modelmeta);
+				$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]}->[1]->_reference($ref."||");
+			}
+			if ($listout->[0] eq "genome") {
+		    	$self->cache()->{$listout->[$i]->[4]} = [$listout->[$i],$object->genome()];
+		    	$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]} = [$listout->[$i],$object->genome()];
+		    	$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]}->[1]->wsmeta($listout->[$i]);
+				$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]}->[1]->_reference($listout->[$i]->[2].$listout->[$i]->[0]."||");
+			}
+		}
+		
+	}	
+	return $output;
+}
+
+sub call_ws {
+	my ($self,$function,$args) = @_;
+	$args->{adminmode} =  $self->adminmode();
+	my $retryCount = 3;
+	my $error;
+	my $output;
+	while ($retryCount > 0) {
+		eval {
+			$output = $self->workspace()->$function($args);
+		};
+		# If there is a network glitch, wait a second and try again. 
+		if ($@) {
+			$error = $@;
+			if (($error =~ m/HTTP status: 503 Service Unavailable/) ||
+			    ($error =~ m/HTTP status: 502 Bad Gateway/)) {
+				$retryCount -= 1;
+				Bio::KBase::ObjectAPI::logging->log("Error putting workspace object ".$error,"error");
+				sleep(1);				
+			} else {
+				$retryCount = 0; # Get out and report the error
+			}
+		} else {
+			last;
+		}
+	}
+	if ($retryCount == 0) {
+		Bio::KBase::ObjectAPI::utilities::error($error);
+	}
+	return $output;
 }
 
 no Moose;

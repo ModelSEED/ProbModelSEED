@@ -61,13 +61,16 @@ sub adminmode {
 #Initialization function for call
 sub initialize_call {
 	my ($self,$params) = @_;
-	Bio::KBase::ObjectAPI::utilities::elaspedtime();
 	if (defined($params->{adminmode})) {
 		$CallContext->{_adminmode} = $params->{adminmode};
 	}
 	if (defined($params->{wsurl})) {
 		$CallContext->{"_workspace-url"} = $params->{wsurl};
 	}
+	Bio::KBase::ObjectAPI::utilities::elaspedtime();
+	Bio::KBase::ObjectAPI::config::username($self->user_id());
+	Bio::KBase::ObjectAPI::config::token($self->token());
+	Bio::KBase::ObjectAPI::config::adminmode($self->adminmode());
 	return $params;
 }
 
@@ -85,15 +88,12 @@ sub config {
 sub helper {
 	my ($self) = @_;
 	if (!defined($CallContext->{_helper})) {
-		my $currentconfig = {};
-		my $config = $self->config();
-		foreach my $key (keys(%{$config})) {
-			$currentconfig->{$key} = $config->{$key};
-		}
-		$currentconfig->{token} = $self->token();
-		$currentconfig->{username} = $self->user_id();
-		$currentconfig->{cache_targets} = [split(/;/,$currentconfig->{cache_targets})];
-		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new($currentconfig);
+		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
+			token => $self->token(),
+			username => $self->user_id(),
+			adminmode => $self->adminmode(),
+			workspace_url => $self->workspace_url()
+		});
 	}
 	return $CallContext->{_helper};
 }
@@ -295,20 +295,11 @@ sub new
     };
     bless $self, $class;
     #BEGIN_CONSTRUCTOR
-    my $params = Bio::KBase::ObjectAPI::utilities::load_config({
-    	service => "ProbModelSEED"
+    Bio::KBase::ObjectAPI::config::load_config({
+    	filename => $ENV{KB_DEPLOYMENT_CONFIG},
+		service => "ProbModelSEED"
     });
-    if (defined($args[0])) {
-    	foreach my $key (keys(%{$args[0]})) {
-    		$params->{$key} = $args[0]->{$key};
-    	}
-    }
-	$params = Bio::KBase::ObjectAPI::utilities::ARGS($params,["fbajobcache","fbajobdir","mfatoolkitbin"],{
-		"workspace-url" => "http://p3.theseed.org/services/Workspace",
-		"mssserver-url" => "http://bio-data-1.mcs.anl.gov/services/ms_fba",
-	});
-	print Data::Dumper->Dump([$params]);
-	$self->{_config} = $params;
+	Bio::KBase::ObjectAPI::logging::$type("Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]));
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))

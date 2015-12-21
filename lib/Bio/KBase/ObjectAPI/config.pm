@@ -1,52 +1,35 @@
 package Bio::KBase::ObjectAPI::config;
 use strict;
 
-our $username = undef;
-our $configdir = undef;
-our $mfatoolkit_binary = undef;
-our $mfatoolkit_job_dir = undef;
-our $source = undef;
-our $default_biochemistry = undef;
-our $FinalJobCache = undef;
-our $run_as_app = undef;
-our $method = undef;
-our $adminmode = undef;
-our $shock_url = undef;
-our $workspace_url = undef;
-our $mssserver_url = undef;
-our $appservice_url = undef;
-our $template_dir = undef;
-our $classifier = undef;
-our $cache_targets = undef;
-our $file_cache = undef;
+our $username = "";
+our $method = "";
+our $adminmode = 0;
 our $token = undef;
-our $data_api_url = undef;
-our $default_media = undef;
-our $bin_directory = undef;
-our $home_dir = undef;
+our $configfile_loaded = undef;
+our $service_config = undef;
 
 sub home_dir {
 	my $input = shift;
 	if (defined($input)) {
-		$home_dir = $input;
+		$service_config->{home_dir} = $input;
 	}
-	return $home_dir;
+	return $service_config->{home_dir};
 }
 
 sub bin_directory {
 	my $input = shift;
 	if (defined($input)) {
-		$bin_directory = $input;
+		$service_config->{bin_directory} = $input;
 	}
-	return $bin_directory;
+	return $service_config->{bin_directory};
 }
 
 sub config_directory {
 	my $input = shift;
 	if (defined($input)) {
-		$configdir = $input;
+		$service_config->{configdir} = $input;
 	}
-	return $configdir;
+	return $service_config->{configdir};
 }
 
 sub username {
@@ -60,49 +43,49 @@ sub username {
 sub mfatoolkit_binary {
 	my $input = shift;
 	if (defined($input)) {
-		$mfatoolkit_binary = $input;
+		$service_config->{mfatoolkit_binary} = $input;
 	}
-	return $mfatoolkit_binary;
+	return $service_config->{mfatoolkit_binary};
 }
 
 sub mfatoolkit_job_dir {
 	my $input = shift;
 	if (defined($input)) {
-		$mfatoolkit_job_dir = $input;
+		$service_config->{mfatoolkit_job_dir} = $input;
 	}
-	return $mfatoolkit_job_dir;
+	return $service_config->{mfatoolkit_job_dir};
 }
 
 sub source {
 	my $input = shift;
 	if (defined($input)) {
-		$source = $input;
+		$service_config->{source} = $input;
 	}
-	return $source;
+	return $service_config->{source};
 }
 
 sub default_biochemistry {
 	my $input = shift;
 	if (defined($input)) {
-		$default_biochemistry = $input;
+		$service_config->{default_biochemistry} = $input;
 	}
-	return $default_biochemistry;
+	return $service_config->{default_biochemistry};
 }
 
 sub FinalJobCache {
 	my $input = shift;
 	if (defined($input)) {
-		$FinalJobCache = $input;
+		$service_config->{fbajobcache} = $input;
 	}
-	return $FinalJobCache;
+	return $service_config->{fbajobcache};
 }
 
 sub run_as_app {
 	my $input = shift;
 	if (defined($input)) {
-		$run_as_app = $input;
+		$service_config->{run_as_app} = $input;
 	}
-	return $run_as_app;
+	return $service_config->{run_as_app};
 }
 
 sub method {
@@ -124,65 +107,68 @@ sub adminmode {
 sub shock_url {
 	my $input = shift;
 	if (defined($input)) {
-		$shock_url = $input;
+		$service_config->{"shock-url"} = $input;
 	}
-	return $shock_url;
+	return $service_config->{"shock-url"};
 }
 
 sub workspace_url {
 	my $input = shift;
 	if (defined($input)) {
-		$workspace_url = $input;
+		$service_config->{"workspace-url"} = $input;
 	}
-	return $workspace_url;
+	return $service_config->{"workspace-url"};
 }
 
 sub mssserver_url {
 	my $input = shift;
 	if (defined($input)) {
-		$mssserver_url = $input;
+		$service_config->{"mssserver-url"} = $input;
 	}
-	return $mssserver_url;
+	return $service_config->{"mssserver-url"};
 }
 
 sub appservice_url {
 	my $input = shift;
 	if (defined($input)) {
-		$appservice_url = $input;
+		$service_config->{"appservice_ur"} = $input;
 	}
-	return $appservice_url;
+	return $service_config->{"appservice_url"};
 }
 
 sub template_dir {
 	my $input = shift;
 	if (defined($input)) {
-		$template_dir = $input;
+		$service_config->{template_dir} = $input;
 	}
-	return $template_dir;
+	return $service_config->{template_dir};
 }
 
 sub classifier {
 	my $input = shift;
 	if (defined($input)) {
-		$classifier = $input;
+		$service_config->{classifier} = $input;
 	}
-	return $classifier;
+	return $service_config->{classifier};
 }
 
 sub cache_targets {
 	my $input = shift;
 	if (defined($input)) {
-		$cache_targets = $input;
+		$service_config->{cache_targets} = $input;
 	}
-	return $cache_targets;
+	if (!ref($service_config->{cache_targets})) {
+		$service_config->{cache_targets} = [split(/;/,$service_config->{cache_targets})];
+	}
+	return $service_config->{cache_targets};
 }
 
 sub file_cache {
 	my $input = shift;
 	if (defined($input)) {
-		$file_cache = $input;
+		$service_config->{file_cache} = $input;
 	}
-	return $file_cache;
+	return $service_config->{file_cache};
 }
 
 sub token {
@@ -196,17 +182,75 @@ sub token {
 sub data_api_url {
 	my $input = shift;
 	if (defined($input)) {
-		$data_api_url = $input;
+		$service_config->{data_api_url} = $input;
 	}
-	return $data_api_url;
+	return $service_config->{data_api_url};
 }
 
 sub default_media {
 	my $input = shift;
 	if (defined($input)) {
-		$default_media = $input;
+		$service_config->{default_media} = $input;
 	}
-	return $default_media;
+	return $service_config->{default_media};
+}
+
+sub configfile_loaded {
+	my $input = shift;
+	if (defined($input)) {
+		$configfile_loaded = $input;
+	}
+	return $configfile_loaded;
+}
+
+sub load_config {
+	my ($args) = @_;
+	$args = Bio::KBase::ObjectAPI::utilities::ARGS($args,[],{
+		filename => $ENV{KB_DEPLOYMENT_CONFIG},
+		service => $ENV{KB_SERVICE_NAME},
+	});
+	if (!defined($args->{service})) {
+		Bio::KBase::ObjectAPI::utilities::error("No service specified!");
+	}
+	if (!defined($args->{filename})) {
+		Bio::KBase::ObjectAPI::utilities::error("No config file specified!");
+	}
+	if (!-e $args->{filename}) {
+		Bio::KBase::ObjectAPI::utilities::error("Specified config file ".$args->{filename}." doesn't exist!");
+	}
+	my $c = Config::Simple->new();
+	$c->read($args->{filename});
+	my $hash = $c->vars();
+	$service_config = {};
+	foreach my $key (keys(%{$hash})) {
+		my $array = [split(/\./,$key)];
+		if ($array->[0] eq $args->{service}) {
+			if ($hash->{$key} ne "null") {
+				$service_config->{$array->[1]} = $hash->{$key};
+			}
+		}
+	}
+	$service_config = Bio::KBase::ObjectAPI::utilities::ARGS($service_config,["fbajobcache","fbajobdir","mfatoolkitbin"],{
+    	source => "PATRIC",
+    	data_api_url => "https://www.patricbrc.org/api/",
+    	"mssserver-url" => "http://bio-data-1.mcs.anl.gov/services/ms_fba",
+    	"workspace-url" => "http://p3.theseed.org/services/Workspace",
+    	appservice_url => "http://p3.theseed.org/services/app_service",
+    	"shock-url" => "http://p3.theseed.org/services/shock_api",
+      	run_as_app => 1,
+    	home_dir => "modelseed",
+    	file_cache => "/disks/p3/fba/filecache/",
+    	cache_targets => ["/chenry/public/modelsupport/biochemistry/default.biochem"],
+    	biochemistry => "/chenry/public/modelsupport/biochemistry/default.biochem",
+    	default_media => "/chenry/public/modelsupport/patric-media/Complete",
+    	classifier => "/chenry/public/modelsupport/classifiers/gramclassifier.string",
+    	template_dir => "/chenry/public/modelsupport/templates/"
+     });	
+	Bio::KBase::ObjectAPI::config::configfile_loaded($args->{filename});
+}
+
+sub all_params {
+	return $service_config;
 }
 
 1;
