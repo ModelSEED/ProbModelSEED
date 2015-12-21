@@ -1426,7 +1426,7 @@ sub GapfillModel {
 		$self->error("Analysis completed, but no valid solutions found!");
 	}
 	if (@{$fba->gapfillingSolutions()->[0]->gapfillingSolutionReactions()} == 0) {
-		$self->error("No gapfilling needed on specified condition!");
+		Bio::KBase::ObjectAPI::logging::log("No gapfilling needed on specified condition!");
 	}
     Bio::KBase::ObjectAPI::logging::log("Got solution for gap fill problem");
 	
