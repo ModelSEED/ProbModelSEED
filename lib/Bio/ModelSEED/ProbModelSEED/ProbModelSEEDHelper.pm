@@ -79,6 +79,7 @@ sub save_model {
 		   model => $model->wsmeta()->[2]."/".$model->wsmeta()->[0]
 		});
 	}
+	$self->update_model_meta($ref,$summary,$model->wsmeta()->[3]);
 	return $summary;
 }
 sub get_genome {
@@ -122,6 +123,14 @@ sub get_model_meta {
 	return $metas->[0]->[0];
 }
 
+sub update_model_meta {
+	my($self,$ref,$meta,$create_time) = @_;
+	$self->workspace_service()->update_metadata({
+		objects => [ [$ref,$meta] ],
+		adminmode => Bio::KBase::ObjectAPI::config::adminmode()
+	});
+	return;
+}
 #This function retrieves or sets the biochemistry object in the server memory, making retrieval of biochemsitry very fast
 sub biochemistry {
 	my($self,$bio) = @_;
