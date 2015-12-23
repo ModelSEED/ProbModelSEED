@@ -1098,14 +1098,8 @@ sub ModelReconstruction {
     my $template;
     if (!defined($parameters->{templatemodel})) {
     	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
-    		if (!defined($parameters->{output_path})) {
-    			$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/models/";
-    		}
     		$template = $self->get_object(Bio::KBase::ObjectAPI::config::template_dir()."plant.modeltemplate","modeltemplate");
     	} else {
-    		if (!defined($parameters->{output_path})) {
-    			$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
-    		}
     		my $classifier_data = $self->get_object(Bio::KBase::ObjectAPI::config::classifier(),"string");
     		my $class = $self->classify_genome($classifier_data,$genome);
     		if ($class eq "Gram positive") {
@@ -1119,6 +1113,13 @@ sub ModelReconstruction {
     }
     if (!defined($template)) {
     	$self->error("template retrieval failed!");
+    }
+    if (!defined($parameters->{output_path})) {
+    	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
+    		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/models/";
+    	} else {
+    		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
+    	}
     }
     if (substr($parameters->{output_path},-1,1) ne "/") {
     	$parameters->{output_path} .= "/";
