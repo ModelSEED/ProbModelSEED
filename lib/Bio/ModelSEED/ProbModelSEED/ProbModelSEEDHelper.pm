@@ -1737,8 +1737,8 @@ sub MergeModels {
 sub load_to_shock {
 	my($self,$data) = @_;
 	my $uuid = Data::UUID->new()->create_str();
-	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
-	my $filename = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
+	File::Path::mkpath Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir();
+	my $filename = Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir().$uuid;
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$data]);
 	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth ".Bio::KBase::ObjectAPI::config::token()."\" -X POST -F 'upload=\@".$filename."' ".Bio::KBase::ObjectAPI::config::shock_url()."/node");
 	$output = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$output}));

@@ -118,7 +118,7 @@ sub _buildjobid {
 
 sub _buildjobpath {
 	my ($self) = @_;
-	my $path = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
+	my $path = Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir();
 	if (!defined($path) || length($path) == 0) {
 		$path = "/tmp/fbajobs/";
 	}
@@ -136,14 +136,14 @@ sub _buildjobdirectory {
 sub _buildmfatoolkitBinary {
 	my ($self) = @_;
 	my $bin;
-	if (defined(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY()) && length(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY()) > 0 && -e Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY()) {
-		$bin = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY();
+	if (defined(Bio::KBase::ObjectAPI::config::mfatoolkit_binary()) && length(Bio::KBase::ObjectAPI::config::mfatoolkit_binary()) > 0 && -e Bio::KBase::ObjectAPI::config::mfatoolkit_binary()) {
+		$bin = Bio::KBase::ObjectAPI::config::mfatoolkit_binary();
 	} else {
 		$bin = `which mfatoolkit 2>/dev/null`;
 		chomp $bin;
 	}
 	if ((! defined $bin) || (!-e $bin)) {
-		Bio::KBase::ObjectAPI::utilities::error("MFAToolkit binary could not be found at ".Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY()."!");
+		Bio::KBase::ObjectAPI::utilities::error("MFAToolkit binary could not be found at ".Bio::KBase::ObjectAPI::config::mfatoolkit_binary()."!");
 	}
 	return $bin;
 }
@@ -368,17 +368,17 @@ sub runFBA {
 	}
 	system($self->command());
 	$self->loadMFAToolkitResults();
-	if (defined(Bio::KBase::ObjectAPI::utilities::FinalJobCache())) {
-		if (Bio::KBase::ObjectAPI::utilities::FinalJobCache() eq "SHOCK") {
+	if (defined(Bio::KBase::ObjectAPI::config::FinalJobCache())) {
+		if (Bio::KBase::ObjectAPI::config::FinalJobCache() eq "SHOCK") {
 			system("cd ".$self->jobPath().";tar -czf ".$self->jobPath().$self->jobID().".tgz ".$self->jobID());
 			my $node = Bio::KBase::ObjectAPI::utilities::LoadToShock($self->jobPath().$self->jobID().".tgz");
 			unlink($self->jobPath().$self->jobID().".tgz");
 			$self->jobnode($node);
-		} else {
-			if (!-d Bio::KBase::ObjectAPI::utilities::FinalJobCache()) {
-				File::Path::mkpath (Bio::KBase::ObjectAPI::utilities::FinalJobCache());
+		} elsif (Bio::KBase::ObjectAPI::config::FinalJobCache() ne "none") {
+			if (!-d Bio::KBase::ObjectAPI::config::FinalJobCache()) {
+				File::Path::mkpath (Bio::KBase::ObjectAPI::config::FinalJobCache());
 			}
-			system("cd ".$self->jobPath().";tar -czf ".Bio::KBase::ObjectAPI::utilities::FinalJobCache()."/".$self->jobID().".tgz ".$self->jobID());
+			system("cd ".$self->jobPath().";tar -czf ".Bio::KBase::ObjectAPI::config::FinalJobCache()."/".$self->jobID().".tgz ".$self->jobID());
 		}
 	}
 	if ($self->jobDirectory() =~ m/\/fbajobs\/.+/) {
