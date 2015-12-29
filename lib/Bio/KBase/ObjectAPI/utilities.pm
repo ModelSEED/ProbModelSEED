@@ -545,27 +545,6 @@ sub PRINTHTMLTABLE {
     return join("\n", @$html);
 }
 
-=head3 MFATOOLKIT_JOB_DIRECTORY
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY(string input);
-Description:
-	Getter setter for where the MFAToolkit job data should go
-Example:
-
-=cut
-
-sub MFATOOLKIT_JOB_DIRECTORY {
-	my ($input) = @_;
-	if (defined($input)) {
-		$ENV{MFATOOLKIT_JOB_DIRECTORY} = $input;
-	}
-	if (!defined($ENV{MFATOOLKIT_JOB_DIRECTORY})) {
-		$ENV{MFATOOLKIT_JOB_DIRECTORY} = "/tmp/fbajobs/";
-	}
-	return $ENV{MFATOOLKIT_JOB_DIRECTORY};
-}
-
 =head3 CLASSIFIER_BINARY
 
 Definition:
@@ -584,24 +563,6 @@ sub CLASSIFIER_PATH {
 	return $ENV{CLASSIFIER_PATH};
 }
 
-=head3 MFATOOLKIT_BINARY
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_BINARY(string input);
-Description:
-	Getter setter for where the MFAToolkit binary is located
-Example:
-
-=cut
-
-sub MFATOOLKIT_BINARY {
-	my ($input) = @_;
-	if (defined($input)) {
-		$ENV{MFATOOLKIT_BINARY} = $input;
-	}
-	return $ENV{MFATOOLKIT_BINARY};
-}
-
 =head3 CurrentJobID
 
 Definition:
@@ -618,24 +579,6 @@ sub CurrentJobID {
 		$ENV{KBFBA_CurrentJobID} = $input;
 	}
 	return $ENV{KBFBA_CurrentJobID};
-}
-
-=head3 FinalJobCache
-
-Definition:
-	string = Bio::KBase::ObjectAPI::utilities::FinalJobCache(string input);
-Description:
-	Getter setter for the current job id to be used as the final job cache destination for MFAToolkit jobs
-Example:
-
-=cut
-
-sub FinalJobCache {
-	my ($input) = @_;
-	if (defined($input)) {
-		$ENV{KBFBA_FinalJobCache} = $input;
-	}
-	return $ENV{KBFBA_FinalJobCache};
 }
 
 =head3 source
@@ -1117,18 +1060,6 @@ sub rest_download {
 		}
 	}
 	Bio::KBase::ObjectAPI::utilities::error("REST download failed at URL:".$args->{url});
-}
-
-sub load_to_shock {
-	my ($content) = @_;
-	my $uuid = Data::UUID->new()->create_str();
-	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
-	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid,[$content]);	
-	my $filename = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
-	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable('curl -X POST -H "Authorization: OAuth '.Bio::KBase::ObjectAPI::utilities::token().'" --data-binary @'.$filename.' '.Bio::KBase::ObjectAPI::utilities::shockurl().'/node');
-	my $json = JSON::XS->new;
-	my $data = $json->decode(join("\n",@{$output}));
-	return $data->{data}->{id};
 }
 
 sub elaspedtime {
