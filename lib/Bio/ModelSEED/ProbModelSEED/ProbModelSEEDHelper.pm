@@ -84,6 +84,14 @@ sub get_model_meta {
 	return $metas->[0]->[0];
 }
 
+sub update_model_meta {
+	my($self,$ref,$meta,$create_time) = @_;
+	$self->workspace_service()->update_metadata({
+		objects => [ [$ref,$meta] ],
+		adminmode => Bio::KBase::ObjectAPI::config::adminmode()
+	});
+	return;
+}
 #This function retrieves or sets the biochemistry object in the server memory, making retrieval of biochemsitry very fast
 sub biochemistry {
 	my($self,$bio) = @_;
@@ -1077,6 +1085,13 @@ sub ModelReconstruction {
     if (!defined($template)) {
     	$self->error("template retrieval failed!");
     }
+    if (!defined($parameters->{output_path})) {
+    	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
+    		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/models/";
+    	} else {
+    		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
+    	}
+    }
     if (substr($parameters->{output_path},-1,1) ne "/") {
     	$parameters->{output_path} .= "/";
     }
@@ -1385,7 +1400,7 @@ sub GapfillModel {
 		$self->error("Analysis completed, but no valid solutions found!");
 	}
 	if (@{$fba->gapfillingSolutions()->[0]->gapfillingSolutionReactions()} == 0) {
-		$self->error("No gapfilling needed on specified condition!");
+		Bio::KBase::ObjectAPI::logging::log("No gapfilling needed on specified condition!");
 	}
     Bio::KBase::ObjectAPI::logging::log("Got solution for gap fill problem");
 	
@@ -1687,8 +1702,8 @@ sub MergeModels {
 sub load_to_shock {
 	my($self,$data) = @_;
 	my $uuid = Data::UUID->new()->create_str();
-	File::Path::mkpath Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY();
-	my $filename = Bio::KBase::ObjectAPI::utilities::MFATOOLKIT_JOB_DIRECTORY().$uuid;
+	File::Path::mkpath Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir();
+	my $filename = Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir().$uuid;
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$data]);
 	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth ".Bio::KBase::ObjectAPI::config::token()."\" -X POST -F 'upload=\@".$filename."' ".Bio::KBase::ObjectAPI::config::shock_url()."/node");
 	$output = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$output}));

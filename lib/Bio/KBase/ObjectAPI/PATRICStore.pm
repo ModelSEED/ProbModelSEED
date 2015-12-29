@@ -579,7 +579,9 @@ sub save_model {
 			}
 		}
 		
-	}	
+	}
+	my $summary = $self->get_model_summary($model);
+	$self->update_model_meta($ref,$summary,$model->wsmeta()->[3]);
 	return $output;
 }
 
