@@ -282,6 +282,9 @@ sub _buildIndex {
 		Bio::KBase::ObjectAPI::utilities::error("Bad call to _buildIndex!");
 	}
 	my $method = "_$att";
+	if ($method eq "_modelcompounds" && $self->_class() eq "FBA") {
+		Bio::KBase::ObjectAPI::utilities::error("Call to nonexistant method!");
+	}
 	my $subobjs = $self->$method();
 	if (@{$subobjs} > 0) {
 		#First we check if all objects need to be built before the index can be constructed

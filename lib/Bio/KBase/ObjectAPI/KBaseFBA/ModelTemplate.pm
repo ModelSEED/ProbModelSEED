@@ -135,6 +135,7 @@ sub buildModel {
 		modelcompounds => [],
 		modelreactions => []
 	});
+	$mdl->genome($genome);
 	$mdl->_reference("~");
 	$mdl->parent($self->parent());
 	my $rxns = $self->reactions();

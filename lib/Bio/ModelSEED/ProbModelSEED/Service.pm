@@ -49,6 +49,7 @@ our %return_counts = (
         'FluxBalanceAnalysis' => 1,
         'GapfillModel' => 1,
         'MergeModels' => 1,
+        'ImportKBaseModel' => 1,
         'CheckJobs' => 1,
         'version' => 1,
 );
@@ -75,6 +76,7 @@ our %method_authentication = (
         'FluxBalanceAnalysis' => 'required',
         'GapfillModel' => 'required',
         'MergeModels' => 'required',
+        'ImportKBaseModel' => 'required',
         'CheckJobs' => 'required',
 );
 
@@ -104,6 +106,7 @@ sub _build_valid_methods
         'FluxBalanceAnalysis' => 1,
         'GapfillModel' => 1,
         'MergeModels' => 1,
+        'ImportKBaseModel' => 1,
         'CheckJobs' => 1,
         'version' => 1,
     };

@@ -16,7 +16,7 @@ extends 'Bio::KBase::ObjectAPI::BaseObject';
 has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metaclass => 'Typed');
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
-has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
+#has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
 has energy => (is => 'rw', isa => 'Num', printOrder => '9', default => '40', type => 'attribute', metaclass => 'Typed');
 has cofactor => (is => 'rw', isa => 'Num', printOrder => '8', default => '0.15', type => 'attribute', metaclass => 'Typed');
 has rna => (is => 'rw', isa => 'Num', printOrder => '4', default => '0.1', type => 'attribute', metaclass => 'Typed');
@@ -37,7 +37,7 @@ has biomasscompounds => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub 
 
 
 # BUILDERS:
-sub _build_reference { my ($self) = @_;return $self->parent()->_reference().'/biomasses/id/'.$self->id(); }
+sub _reference { my ($self) = @_;return $self->parent()->_reference().'/biomasses/id/'.$self->id(); }
 sub _build_uuid { my ($self) = @_;return $self->_reference(); }
 
 

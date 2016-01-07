@@ -129,6 +129,7 @@ sub PATRICStore {
 			$cachetarg->{Bio::KBase::ObjectAPI::config::cache_targets()->[$i]} = 1;
 		}
 		$self->{_PATRICStore} = Bio::KBase::ObjectAPI::PATRICStore->new({
+			helper => $self,
 			data_api_url => Bio::KBase::ObjectAPI::config::data_api_url(),
 			workspace => $self->workspace_service(),
 			adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
@@ -137,6 +138,43 @@ sub PATRICStore {
 		});
 	}
 	return $self->{_PATRICStore};
+}
+sub KBaseStore {
+	my($self,$parameters) = @_;
+	$parameters = $self->validate_args($parameters,[],{
+		kbwsurl => Bio::KBase::ObjectAPI::config::kbwsurl(),
+		kbuser => undef,
+		kbpassword => undef,
+		kbtoken => undef
+    });
+    if (!defined($parameters->{kbtoken})) {
+    	my $token = Bio::KBase::ObjectAPI::utilities::kblogin({
+    		user_id => $parameters->{kbuser},
+    		password => $parameters->{kbpassword}
+    	});
+		if (!defined($token)) {
+			Bio::KBase::ObjectAPI::utilities::error("Failed to authenticate KBase user ".$parameters->{kbuser});
+		}
+		$parameters->{kbtoken} = $token;
+    }
+    require "Bio/KBase/workspace/Client.pm";
+    my $wsclient = Bio::KBase::workspace::Client->new($parameters->{kbwsurl},token => $parameters->{kbtoken});
+    return Bio::KBase::ObjectAPI::KBaseStore->new({
+		provenance => [{
+			"time" => DateTime->now()->datetime()."+0000",
+			service_ver => $VERSION,
+			service => "ProbModelSEED",
+			method => Bio::KBase::ObjectAPI::config::method,
+			method_params => [],
+			input_ws_objects => [],
+			resolved_ws_objects => [],
+			intermediate_incoming => [],
+			intermediate_outgoing => []
+		}],
+		workspace => $wsclient,
+		file_cache => undef,
+		cache_targets => [],
+	});
 }
 sub call_ws {
 	my($self,$function,$args) = @_;
@@ -167,16 +205,11 @@ Description:
 =cut
 sub delete_model {
 	my($self,$model) = @_;
-	my $modelfolder;
-	if ($model =~ m/^(.+\/)([^\/]+)$/) {
-		$modelfolder = $1.".".$2;
-	}
 	# Not quite sure what will happen if the model or modelfolder does not exist 
 	my $output = $self->call_ws("delete",{
-		objects => [$model, $modelfolder],
+		objects => [$model],
 		deleteDirectories => 1,
 		force => 1,
-		adminmode => Bio::KBase::ObjectAPI::config::adminmode()
 	});
 	# Only return metadata on model object.
 	return $output->[0];
@@ -192,7 +225,7 @@ Description:
 =cut
 sub get_model_data {
 	my ($self,$modelref) = @_;
-	my $model = $self->get_object(($modelref);
+	my $model = $self->get_object($modelref);
 	return $model->export({format => "condensed"});
 }
 
@@ -209,7 +242,7 @@ sub get_model_summary {
 		source_id => $modelmeta->[0],
 		name => $model->name(),
 		type => $model->type(),
-		genome_ref => $model->genome_ref(),
+		genome_ref => $modelmeta->[2].$modelmeta->[0]."/genome",
 		template_ref => $model->template_ref(),
 		num_compounds => $numcpds,
 		num_reactions => $numrxns,
@@ -225,18 +258,16 @@ sub get_model_summary {
 		integrated_gapfills => $model->integrated_gapfill_count(),
 		unintegrated_gapfills => $model->unintegrated_gapfill_count()
 	};
-	$output->{genome_ref} =~ s/\|\|//;
 	$output->{template_ref} =~ s/\|\|//;
 	my $list = $self->call_ws("ls",{
-		adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
-		paths => [$modelmeta->[2].".".$modelmeta->[0]."/fba"],
+		paths => [$modelmeta->[2].$modelmeta->[0]."/fba"],
 		excludeDirectories => 1,
 		excludeObjects => 0,
 		recursive => 0,
 		query => {type => "fba"}
 	});
-	if (defined($list->{$modelmeta->[2].".".$modelmeta->[0]."/fba"})) {
-		$list = $list->{$modelmeta->[2].".".$modelmeta->[0]."/fba"};
+	if (defined($list->{$modelmeta->[2].$modelmeta->[0]."/fba"})) {
+		$list = $list->{$modelmeta->[2].$modelmeta->[0]."/fba"};
 		$output->{fba_count} = @{$list};
 	}
 	return $output;
@@ -965,10 +996,244 @@ sub copy_model {
     return $self->get_model_summary($model);
 }
 
+sub list_model_fba {
+	my($self,$model) = @_;
+	my $list = $self->call_ws("ls",{
+		paths => [$model."/fba"],
+		excludeDirectories => 1,
+		excludeObjects => 0,
+		recursive => 1,
+		query => {type => "fba"}
+	});
+	my $output = [];
+	if (defined($list->{$model."/fba"})) {
+		$list = $list->{$model."/fba"};
+		for (my $i=0; $i < @{$list}; $i++) {
+			push(@{$output},{
+				rundate => $list->[$i]->[3],
+				id => $list->[$i]->[0],
+				"ref" => $list->[$i]->[2].$list->[$i]->[0],
+				media_ref => $list->[$i]->[7]->{media},
+				objective => $list->[$i]->[7]->{objective},
+				objective_function => $list->[$i]->[8]->{objective_function},				
+			});
+		}
+	}
+    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+	return $output;
+}
+
+sub list_model_gapfills {
+	my($self,$model,$includemetadata) = @_;
+	my $list = $self->call_ws("ls",{
+		paths => [$model."/gapfilling"],
+		excludeDirectories => 1,
+		excludeObjects => 0,
+		recursive => 1,
+		query => {type => "fba"}
+	});
+	my $output = [];
+	if (defined($list->{$model."/gapfilling"})) {
+		$list = $list->{$model."/gapfilling"};
+		for (my $i=0; $i < @{$list}; $i++) {
+			push(@{$output},{
+				rundate => $list->[$i]->[3],
+				id => $list->[$i]->[0],
+				"ref" => $list->[$i]->[2].$list->[$i]->[0],
+				media_ref => $list->[$i]->[7]->{media},
+				integrated => $list->[$i]->[7]->{integrated},
+				integrated_solution => $list->[$i]->[7]->{integrated_solution},
+				solution_reactions => []				
+			});
+			if (defined($list->[$i]->[7]->{solutiondata})) {
+				$output->[$i]->{solution_reactions} = Bio::KBase::ObjectAPI::utilities::FROMJSON($list->[$i]->[7]->{solutiondata});
+				for (my $j=0; $j < @{$output->[$i]->{solution_reactions}}; $j++) {
+					for (my $k=0; $k < @{$output->[$i]->{solution_reactions}->[$j]}; $k++) {
+						my $comp = "c";
+						if ($output->[$i]->{solution_reactions}->[$j]->[$k]->{compartment_ref} =~ m/\/([^\/]+)$/) {
+							$comp = $1;
+						}
+						$output->[$i]->{solution_reactions}->[$j]->[$k] = {
+							direction => $output->[$i]->{solution_reactions}->[$j]->[$k]->{direction},
+							reaction => $output->[$i]->{solution_reactions}->[$j]->[$k]->{reaction_ref},
+							compartment => $comp.$output->[$i]->{solution_reactions}->[$j]->[$k]->{compartmentIndex}
+						};
+					}
+				}
+			}
+			if ($includemetadata == 1) {
+				$output->[$i]->{metadata} = $list->[$i]->[7];
+			}
+		}
+	}
+    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+	return $output;
+}
+
+sub list_models {
+	my ($self,$input) = @_;
+	$input = $self->validate_args($input,[],{path => undef});
+    my $list;
+    my $output = {};
+    if (defined($input->{path})) {
+    	$list = [["",undef,$input->{path}]];
+    } else {
+    	$list = $self->call_ws("ls",{
+			paths => ["/".Bio::KBase::ObjectAPI::config::username()."/"],
+			adminmode => Bio::KBase::ObjectAPI::config::adminmode()
+		});
+		if (!defined($list->{"/".Bio::KBase::ObjectAPI::config::username()."/"})) {
+			# Just return an empty list if there is no workspace for the user.
+			return $output;
+		}
+		$list = $list->{"/".Bio::KBase::ObjectAPI::config::username()."/"};
+    }
+	for (my $i=0; $i < @{$list}; $i++) {
+		my $currentlist = $self->call_ws("ls",{
+			paths => [$list->[$i]->[2].$list->[$i]->[0]],
+			excludeDirectories => 0,
+			excludeObjects => 0,
+			recursive => 1,
+			query => {type => ["modelfolder","fba"]},
+			adminmode => Bio::KBase::ObjectAPI::config::adminmode()
+		});
+		if (defined($currentlist->{$list->[$i]->[2].$list->[$i]->[0]})) {
+			$currentlist = $currentlist->{$list->[$i]->[2].$list->[$i]->[0]};
+			my $newlist = [];
+			my $fbalist = [];
+			for (my $k=0; $k < @{$currentlist}; $k++) {
+				if ($currentlist->[$k]->[1] eq "fba") {
+					push(@{$fbalist},$currentlist->[$k]);
+				} elsif ($currentlist->[$k]->[1] eq "modelfolder") {
+					push(@{$newlist},$currentlist->[$k]);
+				}
+			}
+			my $fbahash = {};
+			for (my $k=0; $k < @{$fbalist}; $k++) {
+				push(@{$fbahash->{$fbalist->[$k]->[2]}},$fbalist->[$k]); 
+			}
+			for (my $j=0; $j < @{$newlist}; $j++) {
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]} = $newlist->[$j]->[8];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{rundate} = $newlist->[$j]->[3];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{id} = $newlist->[$j]->[0];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gene_associated_reactions} = ($output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_reactions} - 22);
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gapfilled_reactions} = 0;
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = 0;
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{integrated_gapfills} = 0;
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills} = 0;
+				if (defined($fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/fba/"})) {
+					$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/fba/"}};
+				}
+				if (defined($fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"})) {
+					for (my $k=0; $k < @{$fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"}}; $k++) {
+						my $item = $fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"}->[$k];
+						if ($item->[7]->{integrated} == 1) {
+							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{integrated_gapfills}++;
+						} else {
+							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills}++;
+						}
+					}
+				}
+				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{reactions};
+				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{genes};
+				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasses};		
+				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_biomass_compounds} = split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds});
+				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds};
+			}
+		}
+	}
+	print Data::Dumper->Dump([$output]);
+	return $output;
+}
+
+sub delete_model_objects {
+	my($self,$model,$ids,$type) = @_;
+	my $output = {};
+	my $idhash = {};
+	for (my $i=0; $i < @{$ids}; $i++) {
+		$idhash->{$ids->[$i]} = 1;
+	}
+	my $folder = "/fba";
+	my $modelobj;
+	if ($type eq "gapfilling") {
+		$folder = "/gapfilling";
+		$modelobj = $self->get_object($model);
+	}
+	my $list = $self->call_ws("ls",{
+		paths => [$model.$folder],
+		excludeDirectories => 1,
+		excludeObjects => 0,
+		recursive => 1
+	});
+	$list = $list->{$model.$folder};
+	for (my $i=0; $i < @{$list}; $i++) {
+		my $selected = 0;
+		if (defined($idhash->{$list->[$i]->[0]})) {
+			if ($type eq "gapfilling") {
+				$modelobj->deleteGapfillSolution({gapfill => $list->[$i]->[0]});	
+			}
+			my $list = $self->call_ws("delete",{
+				objects => [$list->[$i]->[2].$list->[$i]->[0]],
+			});
+			$selected = 1;
+		} elsif ($list->[$i]->[0] =~ m/(.+)\.[^\.]+$/) {
+			if (defined($idhash->{$1})) {
+				my $list = $self->call_ws("delete",{
+					objects => [$list->[$i]->[2].$list->[$i]->[0]],
+				});
+			}
+			$selected = 1;
+		}
+		if ($selected == 1) {
+			$output->{$list->[$i]->[0]} = {
+				rundate => $list->[$i]->[3],
+				id => $list->[$i]->[0],
+				"ref" => $list->[$i]->[2].$list->[$i]->[0],
+				media_ref => $list->[$i]->[7]->{media},				
+			};
+			if ($type eq "gapfilling") {
+				$output->{$list->[$i]->[0]}->{integrated} = $list->[$i]->[7]->{integrated};
+				$output->{$list->[$i]->[0]}->{integrated_solution} = $list->[$i]->[7]->{integrated_solution};
+			} else {
+				$output->{$list->[$i]->[0]}->{objective} = $list->[$i]->[7]->{objective};
+				$output->{$list->[$i]->[0]}->{objective_function} = $list->[$i]->[7]->{objective_function};
+			}
+		}
+	}
+	return $output;
+}
+
+sub integrate_model_gapfills {
+	my($self,$model,$intlist) = @_;
+	$model = $self->get_object($model);
+	for (my $i=0; $i < @{$intlist}; $i++) {
+		$model->integrateGapfillSolution({
+			gapfill => $intlist->[$i]
+		});
+	}
+	$self->save_object($model->wsmeta()->[2].$model->wsmeta()->[0],$model,"model");
+}
+
+sub unintegrate_model_gapfills {
+	my($self,$model,$intlist) = @_;
+	$model = $self->get_object($model);
+	for (my $i=0; $i < @{$intlist}; $i++) {
+		$model->unintegrateGapfillSolution({
+			gapfill => $intlist->[$i]
+		});
+	}
+	$self->save_object($model->wsmeta()->[2].$model->wsmeta()->[0],$model,"model");
+}
+
 sub check_jobs {
 	my($self,$input) = @_;
 	$input = $self->validate_args($input,[],{
-		jobs => []
+		jobs => [],
+		return_errors => 0,
+		exclude_failed => 0,
+		exclude_running => 0,
+		exclude_complete => 0,
 	});
 	my $output = {};
 	if (@{$input->{jobs}} == 0) {
@@ -980,6 +1245,25 @@ sub check_jobs {
 		}
 	} else {
 		$output = $self->app_service()->query_tasks($input->{jobs});
+	}
+	foreach my $key (keys(%{$output})) {
+		if ($input->{exclude_failed} == 1 && $output->{$key}->{status} eq "failed") {
+			delete $output->{$key};
+		}
+		if ($input->{exclude_running} == 1 && $output->{$key}->{status} eq "running") {
+			delete $output->{$key};
+		}
+		if ($input->{exclude_complete} == 1 && $output->{$key}->{status} eq "completed") {
+			delete $output->{$key};
+		}
+	}
+	if ($input->{return_errors} == 1 || keys(%{$output}) == 1) {
+		foreach my $key (keys(%{$output})) {
+			if ($output->{$key}->{status} eq "failed") {
+				my $commandoutput = Bio::KBase::ObjectAPI::utilities::runexecutable("curl ".Bio::KBase::ObjectAPI::config::appservice_url()."/task_info/".$output->{$key}->{id}."/stderr");
+				$output->{$key}->{errors} = join("\n",@{$commandoutput});
+			}
+		}
 	}
 	return $output;
 }
@@ -995,16 +1279,55 @@ sub app_harness {
 		Bio::KBase::ObjectAPI::logging::log($command.": app issued");
 		return $task->{id};
 	} else {
+		my $jobresult = {
+			id => 0,
+			start_time => $starttime,
+			parameters => {
+				command => $command,
+				arguments => $parameters
+			},
+			hostname => Bio::KBase::ObjectAPI::config::appservice_url(),
+			app => {
+				"id" => "RunProbModelSEEDJob",
+				"script" => "App-RunProbModelSEEDJob",
+				"label" => "Runs a ProbModelSEED job",
+				"description" => "Runs a ProbModelSEED modeling job",
+				"parameters" => [{
+					"id" => "command",
+					"label" => "Command",
+					"required" => 1,
+					"default" => undef,
+					"desc" => "ProbModelSEED command to run",
+					"type" => "string"
+				},{
+					"id" => "arguments",
+					"label" => "Arguments",
+					"required" => 1,
+					"default" => undef,
+					"desc" => "ProbModelSEED arguments",
+					"type" => "string"
+				}]
+			},
+			output_files => []
+		};
 		Bio::KBase::ObjectAPI::logging::log($command.": job started");
-	    my $output = $self->$command($parameters);
-	    Bio::KBase::ObjectAPI::logging::log($command.": job done (elapsed time ".(time()-$starttime).")");
+	    my $output = $self->$command($parameters,$jobresult);
+		$jobresult->{end_time} = time();
+		$jobresult->{elapsed_time} = (time()-$starttime);
+		if (ref($output)) {
+			$jobresult->{job_output} = Bio::KBase::ObjectAPI::utilities::TOJSON($output);
+		} else {
+			$jobresult->{job_output} = $output;
+		}
+		$jobresult->{output_files} = [keys(%{$self->PATRICStore()->save_file_list()})];
+		$self->save_object($jobresult->{path},$jobresult,"job_result");
+	    Bio::KBase::ObjectAPI::logging::log($command.": job done (elapsed time ".$jobresult->{elapsed_time}.")");
 	    return $output;
 	}
 }
 
 sub ComputeReactionProbabilities {
-	my($self,$parameters) = @_;
-    my $start = time();
+	my($self,$parameters,$jobresult) = @_;
     $parameters = $self->validate_args($parameters,["genome", "template", "rxnprobs"], {});
     my $cmd = Bio::KBase::ObjectAPI::config::bin_directory()."/bin/ms-probanno ".$parameters->{genome}." ".$parameters->{template}." ".$parameters->{rxnprobs}." --token '".Bio::KBase::ObjectAPI::config::token()."'";
     system($cmd);
@@ -1012,31 +1335,12 @@ sub ComputeReactionProbabilities {
     	$self->error("Calculating reaction likelihoods failed!");
     }
     Bio::KBase::ObjectAPI::logging::log("Finished calculating reaction likelihoods");
-    #Save the job result in the same folder
-    my $jobresult  = {
-	   	id => 0,
-		app => {
-			"id"=>"ComputeReactionProbabilities",
-			"script"=>"App-ComputeReactionProbabilities",
-			"label"=>"Compute reaction probabilities",
-			"description"=>"Computes probabilities for reactions in model based on potential blast hits.",
-			"parameters"=>[]
-		},
-		parameters => $parameters,
-		start_time => $start,
-		end_time => time(),
-		elapsed_time => time()-$start,
-		output_files => [[$parameters->{rxnprobs}]],
-		job_output => "",
-		hostname => "https://p3.theseed.org/services/ProbModelSEED"
-	};
-	$self->save_object($parameters->{rxnprobs}.".jobresult",$jobresult,"jobresult");
+	$jobresult->{path} = $parameters->{rxnprobs}.".jobresult";
 	return $parameters->{rxnprobs};
 }
 
 sub ModelReconstruction {
-	my($self,$parameters) = @_;
-    my $start = time();
+	my($self,$parameters,$jobresult) = @_;
     $parameters = $self->validate_args($parameters,[],{
     	media => undef,
     	template_model => undef,
@@ -1103,6 +1407,9 @@ sub ModelReconstruction {
 	    modelid => $parameters->{output_file},
 	    fulldb => $parameters->{fulldb}
 	});
+	$mdl->genome_ref($parameters->{output_file}."/genome||");
+	$mdl->wsmeta()->[2] = $parameters->{output_path};
+	$mdl->wsmeta()->[0] = $parameters->{output_file};
 	#Now compute reaction probabilities if they are needed for gapfilling or probanno model building
     if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
     	my $genomeref = $genome->_reference();
@@ -1114,48 +1421,31 @@ sub ModelReconstruction {
     		genome => $genomeref,
     		template => $templateref,
     		rxnprobs => $rxnprobsref
-    	});
+    	},$jobresult);
     	$mdl->rxnprobs_ref($rxnprobsref);
     }
     $self->save_object($folder,$mdl,"model");
    	if ($parameters->{gapfill} == 1) {
-    	$summary = $self->GapfillModel({
-    		model => $parameters->{output_path}."/".$parameters->{output_file},
+    	$self->GapfillModel({
+    		model => $folder,
     		media => $parameters->{media},
     		integrate_solution => 1,
     		probanno => $parameters->{probanno},
-    	},$mdl);    	
+    	},$jobresult,$mdl);    	
     	if ($parameters->{predict_essentiality} == 1) {
     		$self->FluxBalanceAnalysis({
-	    		model => $parameters->{output_path}."/".$parameters->{output_file},
+	    		model => $folder,
 	    		media => $parameters->{media},
 	    		predict_essentiality => 1
-	    	},$mdl);
+	    	},$jobresult,$mdl);
     	}	
     }
-    $self->save_object($folder."/jobresult",{
-   		id => 0,
-		app => {
-			"id"=>"ModelReconstruction",
-			"script"=>"App-ModelReconstruction",
-			"label"=>"Reconstruct metabolic model",
-			"description"=>"Reconstructs a metabolic model from an annotated genome.",
-			"parameters"=>[]
-		},
-		parameters => $parameters,
-		start_time => $start,
-		end_time => time(),
-		elapsed_time => time()-$start,
-		output_files => [$folder],
-		job_output => $self->get_model_summary($mdl),
-		hostname => "https://p3.theseed.org/services/ProbModelSEED"
-   	},"jobresult");
-    return $parameters->{output_path}.$parameters->{output_file};
+	$jobresult->{path} = $folder."/jobresult";
+    return $folder;
 }
 
 sub FluxBalanceAnalysis {
-	my($self,$parameters,$model) = @_;
-	my $start = time();
+	my($self,$parameters,$jobresult,$model) = @_;
 	$parameters = $self->validate_args($parameters,["model"],{
 		media => undef,
 		fva => 1,
@@ -1212,32 +1502,15 @@ sub FluxBalanceAnalysis {
 		}
 		$parameters->{output_file} = "fba.".$index;
     }
-    
+    my $outputfile = $parameters->{output_path}."/".$parameters->{output_file};
     my $fba = $self->build_fba_object($model,$parameters);
     Bio::KBase::ObjectAPI::logging::log("Started solving flux balance problem");
     my $objective = $fba->runFBA();
-    print "Objective:".$objective."\n";
+    Bio::KBase::ObjectAPI::logging::log("Objective:".$objective);
     if (!defined($objective)) {
     	$self->error("FBA failed with no solution returned! See ".$fba->jobnode());
     }
     Bio::KBase::ObjectAPI::logging::log("Got solution for flux balance problem");
-    $fba->jobresult({
-    	id => 0,
-		app => {
-			"id"=>"FluxBalanceAnalysis",
-			"script"=>"App-FluxBalanceAnalysis",
-			"label"=>"Run flux balance analysis",
-			"description"=>"Run flux balance analysis on model.",
-			"parameters"=>[]
-		},
-		parameters => $parameters,
-		start_time => $start,
-		end_time => time(),
-		elapsed_time => time()-$start,
-		output_files => [[ $parameters->{output_path}."/".$parameters->{output_file}]],
-		job_output => "",
-		hostname => "https://p3.theseed.org/services/ProbModelSEED",
-    });
     #Printing essential gene list as feature group and text list
     my $fbatbl = "ID\tName\tEquation\tFlux\tUpper bound\tLower bound\tMax\tMin\n";
     my $objs = $fba->FBABiomassVariables();
@@ -1264,7 +1537,7 @@ sub FluxBalanceAnalysis {
     		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
     		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
     } 
-    $self->save_object($parameters->{output_path}."/".$parameters->{output_file}.".fluxtbl",$fbatbl,"string",{
+    $self->save_object($outputfile.".fluxtbl",$fbatbl,"string",{
 	   description => "Tab delimited table containing data on reaction fluxes from flux balance analysis",
 	   fba => $parameters->{output_file},
 	   media => $parameters->{media},
@@ -1292,7 +1565,7 @@ sub FluxBalanceAnalysis {
 	    		push(@{$esslist},$ftrs->[0]->id());
 	    	}
 	    }
-	   	$self->save_object($model->wsmeta()->[2].".".$model->wsmeta()->[0]."/essentialgenes/".$parameters->{output_file}."-essentials",join("\n",@{$esslist}),"string",{
+	   	$self->save_object($outputfile.".essentials",join("\n",@{$esslist}),"string",{
 	    	description => "Tab delimited table containing list of predicted genes from flux balance analysis",
 	    	media => $parameters->{media},
 	    	model => $parameters->{model}
@@ -1309,15 +1582,16 @@ sub FluxBalanceAnalysis {
 	    	model => $parameters->{model}
 	    });
     }
-    $self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
+    $self->save_object($outputfile,$fba,"fba",{
     	objective => $objective,
     	media => $parameters->{media}
     });
-    return $parameters->{output_path}.$parameters->{output_file};
+    $jobresult->{path} = $outputfile.".jobresult";
+    return $outputfile;
 }
 
 sub GapfillModel {
-	my($self,$parameters,$model) = @_;
+	my($self,$parameters,$jobresult,$model) = @_;
     $parameters = $self->validate_args($parameters,["model"],{
 		media => undef,
 		probanno => 0,
@@ -1359,7 +1633,6 @@ sub GapfillModel {
 			$parameters->{media} = Bio::KBase::ObjectAPI::config::default_media();
 		}
 	}
-    
     #Setting output path based on model and then creating results folder
     $parameters->{output_path} = $model->wsmeta()->[2].$model->wsmeta()->[0]."/gapfilling";
     if (!defined($parameters->{output_file})) {
@@ -1385,12 +1658,10 @@ sub GapfillModel {
 		}
 		$parameters->{output_file} = "gf.".$index;
     }
-    Bio::KBase::ObjectAPI::utilities::set_global("gapfill name",$parameters->{output_file});
-    
+    my $outputfile = $parameters->{output_path}."/".$parameters->{output_file};
     if (defined($parameters->{source_model})) {
 		$parameters->{source_model} = $self->get_object($parameters->{source_model});
     }
-    
     my $fba = $self->build_fba_object($model,$parameters);
     $fba->PrepareForGapfilling($parameters);
     Bio::KBase::ObjectAPI::logging::log("Started solving gap fill problem");
@@ -1403,7 +1674,6 @@ sub GapfillModel {
 		Bio::KBase::ObjectAPI::logging::log("No gapfilling needed on specified condition!");
 	}
     Bio::KBase::ObjectAPI::logging::log("Got solution for gap fill problem");
-	
 	my $gfsols = [];
 	my $gftbl = "Solution\tID\tName\tEquation\tDirection\n";
 	for (my $i=0; $i < @{$fba->gapfillingSolutions()}; $i++) {
@@ -1415,32 +1685,14 @@ sub GapfillModel {
 		}
 	}
 	my $solutiondata = Bio::KBase::ObjectAPI::utilities::TOJSON($gfsols);
-	
-	$fba->jobresult({
-    	id => 0,
-		app => {
-			"id"=>"GapfillModel",
-			"script"=>"App-GapfillModel",
-			"label"=>"Gapfill metabolic model",
-			"description"=>"Run gapfilling on model.",
-			"parameters"=>[]
-		},
-		parameters => $parameters,
-		start_time => 0,
-		end_time => time(),
-		elapsed_time => time()-0,
-		output_files => [[ $parameters->{output_path}."/".$parameters->{output_file}]],
-		job_output => "",
-		hostname => "https://p3.theseed.org/services/ProbModelSEED",
-    });
-	$self->save_object($parameters->{output_path}."/".$parameters->{output_file},$fba,"fba",{
+	$self->save_object($outputfile,$fba,"fba",{
 		integrated_solution => 0,
 		solutiondata => $solutiondata,
 		integratedindex => 0,
 		media => $parameters->{media},
 		integrated => $parameters->{integrate_solution}
 	});
-	$self->save_object($parameters->{output_path}."/".$parameters->{output_file}.".gftbl",$gftbl,"string",{
+	$self->save_object($outputfile.".gftbl",$gftbl,"string",{
 	   description => "Tab delimited table of reactions gapfilled in metabolic model",
 	   fba => $parameters->{output_file},
 	   media => $parameters->{media},
@@ -1471,12 +1723,13 @@ sub GapfillModel {
     		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
     		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
     } 
-    $self->save_object($parameters->{output_path}."/".$parameters->{output_file}.".fbatbl",$fbatbl,"string",{
+    $self->save_object($outputfile.".fbatbl",$fbatbl,"string",{
 	   description => "Table of fluxes through reactions used in gapfilling solution",
 	   fba => $parameters->{output_file},
 	   media => $parameters->{media},
 	   model => $parameters->{model}
 	});
+	Bio::KBase::ObjectAPI::logging::log("Adding new gapfilling:".$fba->id());
 	$model->add("gapfillings",{
 		id => $fba->id(),
 		gapfill_id => $fba->id(),
@@ -1485,53 +1738,33 @@ sub GapfillModel {
 		integrated_solution => 0,
 		media_ref => $parameters->{media},
 	});
-	my $write_files = 0;
 	if ($parameters->{integrate_solution}) {
 		my $report = $model->integrateGapfillSolutionFromObject({
 			gapfill => $fba
 		});
-		$write_files = 1;
 	}
-	$self->save_model($model,$model->wsmeta()->[2].$model->wsmeta()->[0],{},$write_files);
+	$self->save_object($model->wsmeta()->[2].$model->wsmeta()->[0],$model,"model");
+	$jobresult->{path} = $outputfile.".jobresult";
 	return $model->wsmeta()->[2].$model->wsmeta()->[0];
 }
 
 sub MergeModels {
-	my($self,$parameters) = @_;
-	$parameters = $self->validate_args($parameters,["models"],{
-    	output_path => "/".Bio::KBase::ObjectAPI::config::username()."/home/models/",
-    	output_file => "CommunityModel",
+	my($self,$parameters,$jobresult) = @_;
+	$parameters = $self->validate_args($parameters,["models","output_file"],{
+		output_path => "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/"
     });
     #Pulling first model to obtain biochemistry ID
 	my $model = $self->get_object($parameters->{models}->[0]->[0]);
-	my $genomeObj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new({
-		id => $parameters->{output_file}."Genome",
-		scientific_name => $parameters->{output_file}."Genome",
-		domain => "Community",
-		genetic_code => 11,
-		dna_size => 0,
-		num_contigs => 0,
-		contig_lengths => [],
-		contig_ids => [],
-		source => "PATRIC",
-		source_id => $parameters->{output_file}."Genome",
-		md5 => "",
-		taxonomy => "Community",
-		gc_content => 0,
-		complete => 0,
-		publications => [],
-		features => [],
-    });
-    $genomeObj->parent($self->PATRICStore());
 	#Creating new community model
 	my $commdl = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new({
 		source_id => $parameters->{output_file},
-		source => "PATRIC",
+		source => Bio::KBase::ObjectAPI::config::source(),
 		id => $parameters->{output_file},
 		type => "CommunityModel",
 		name => $parameters->{output_file},
 		template_ref => $model->template_ref(),
 		template_refs => [$model->template_ref()],
+		genome_ref => $parameters->{output_path}."/".$parameters->{output_file}."/genome||",
 		modelreactions => [],
 		modelcompounds => [],
 		modelcompartments => [],
@@ -1539,163 +1772,206 @@ sub MergeModels {
 		gapgens => [],
 		gapfillings => [],
 	});
+	for (my $i=0; $i < @{$parameters->{models}}; $i++) {
+		$parameters->{models}->[$i]->[0] .= "||";
+	}
+	$commdl->wsmeta()->[2] = $parameters->{output_path};
+	$commdl->wsmeta()->[0] = $parameters->{output_file};
 	$commdl->parent($self->PATRICStore());
-	my $cmpsHash = {
-		e => $commdl->addCompartmentToModel({
-			compartment => $model->template()->biochemistry()->getObject("compartments","e"),
-			pH => 7,
-			potential => 0,
-			compartmentIndex => 0
-		}),
-		c => $commdl->addCompartmentToModel({
-			compartment => $model->template()->biochemistry()->getObject("compartments","c"),
-			pH => 7,
-			potential => 0,
-			compartmentIndex => 0
-		})
-	};
-	my $totalAbundance = 0;
-	for (my $i=0; $i < @{$parameters->{models}}; $i++) {
-		$totalAbundance += $parameters->{models}->[$i]->[1];
-	}
-	my $biocount = 1;
-	my $primbio = $commdl->add("biomasses",{
-		id => "bio1",
-		name => "bio1",
-		other => 1,
-		dna => 0,
-		rna => 0,
-		protein => 0,
-		cellwall => 0,
-		lipid => 0,
-		cofactor => 0,
-		energy => 0
+	my $genomeObj = $commdl->merge_models({
+		models => $parameters->{models}
 	});
-	my $biomassCompound = $model->template()->biochemistry()->getObject("compounds","cpd11416");
-	my $biocpd = $commdl->add("modelcompounds",{
-		id => $biomassCompound->id()."_".$cmpsHash->{c}->id(),
-		compound_ref => $biomassCompound->_reference(),
-		charge => 0,
-		modelcompartment_ref => "~/modelcompartments/id/".$cmpsHash->{c}->id()
-	});
-	$primbio->add("biomasscompounds",{
-		modelcompound_ref => "~/modelcompounds/id/".$biocpd->id(),
-		coefficient => 1
-	});
-	for (my $i=0; $i < @{$parameters->{models}}; $i++) {
-		print "Loading model ".$parameters->{models}->[$i]->[0]."\n";
-		if ($i > 0) {
-			$model = $self->get_object($parameters->{models}->[$i]->[0]);
-		}
-		my $biomassCpd = $model->getObject("modelcompounds","cpd11416_c0");
-		#Adding genome, features, and roles to master mapping and annotation
-		my $mdlgenome = $model->genome();
-		$genomeObj->dna_size($genomeObj->dna_size()+$mdlgenome->dna_size());
-		$genomeObj->num_contigs($genomeObj->num_contigs()+$mdlgenome->num_contigs());
-		$genomeObj->gc_content($genomeObj->gc_content()+$mdlgenome->dna_size()*$mdlgenome->gc_content());
-		push(@{$genomeObj->{contig_lengths}},@{$mdlgenome->{contig_lengths}});
-		push(@{$genomeObj->{contig_ids}},@{$mdlgenome->{contig_ids}});	
-		print "Loading features\n";
-		for (my $j=0; $j < @{$mdlgenome->features()}; $j++) {
-			if (!defined($mdlgenome->features()->[$j]->quality())) {
-				$mdlgenome->features()->[$j]->quality({});
-			}
-			$genomeObj->add("features",$mdlgenome->features()->[$j]);
-		}
-		$commdl->template_refs()->[$i+1] = $model->template_ref();
-		#Adding compartments to community model
-		my $cmps = $model->modelcompartments();
-		print "Loading compartments\n";
-		for (my $j=0; $j < @{$cmps}; $j++) {
-			if ($cmps->[$j]->compartment()->id() ne "e") {
-				$cmpsHash->{$cmps->[$j]->compartment()->id()} = $commdl->addCompartmentToModel({
-					compartment => $cmps->[$j]->compartment(),
-					pH => 7,
-					potential => 0,
-					compartmentIndex => ($i+1)
-				});
-			}
-		}
-		#Adding compounds to community model
-		my $translation = {};
-		Bio::KBase::ObjectAPI::logging::log("Loading compounds");
-		my $cpds = $model->modelcompounds();
-		for (my $j=0; $j < @{$cpds}; $j++) {
-			my $cpd = $cpds->[$j];
-			my $rootid = $cpd->compound()->id();
-			if ($cpd->id() =~ m/(.+)_([a-zA-Z]\d+)/) {
-				$rootid = $1;
-			}
-			my $comcpd = $commdl->getObject("modelcompounds",$rootid."_".$cmpsHash->{$cpd->modelcompartment()->compartment()->id()}->id());
-			if (!defined($comcpd)) {
-				$comcpd = $commdl->add("modelcompounds",{
-					id => $rootid."_".$cmpsHash->{$cpd->modelcompartment()->compartment()->id()}->id(),
-					compound_ref => $cpd->compound_ref(),
-					charge => $cpd->charge(),
-					formula => $cpd->formula(),
-					modelcompartment_ref => "~/modelcompartments/id/".$cmpsHash->{$cpd->modelcompartment()->compartment()->id()}->id(),
-				});
-			}
-			$translation->{$cpd->id()} = $comcpd->id();
-		}
-		Bio::KBase::ObjectAPI::logging::log("Loading reactions");
-		#Adding reactions to community model
-		my $rxns = $model->modelreactions();
-		for (my $j=0; $j < @{$rxns}; $j++) {
-			my $rxn = $rxns->[$j];
-			my $rootid = $rxn->reaction()->id();
-			if ($rxn->id() =~ m/(.+)_([a-zA-Z]\d+)/) {
-				$rootid = $1;
-			}
-			my $originalcmpid = $rxn->modelcompartment()->compartment()->id();
-			if ($originalcmpid eq "e0") {
-				$originalcmpid = "c0";
-			}
-			if (!defined($commdl->getObject("modelreactions",$rootid."_".$cmpsHash->{$originalcmpid}->id()))) {
-				my $comrxn = $commdl->add("modelreactions",{
-					id => $rootid."_".$cmpsHash->{$originalcmpid}->id(),
-					reaction_ref => $rxn->reaction_ref(),
-					direction => $rxn->direction(),
-					protons => $rxn->protons(),
-					modelcompartment_ref => "~/modelcompartments/id/".$cmpsHash->{$originalcmpid}->id(),
-					probability => $rxn->probability()
-				});
-				for (my $k=0; $k < @{$rxn->modelReactionProteins()}; $k++) {
-					$comrxn->add("modelReactionProteins",$rxn->modelReactionProteins()->[$k]);
-				}
-				for (my $k=0; $k < @{$rxn->modelReactionReagents()}; $k++) {
-					$comrxn->add("modelReactionReagents",{
-						modelcompound_ref => "~/modelcompounds/id/".$translation->{$rxn->modelReactionReagents()->[$k]->modelcompound()->id()},
-						coefficient => $rxn->modelReactionReagents()->[$k]->coefficient()
-					});
-				}
-			}
-		}
-		Bio::KBase::ObjectAPI::logging::log("Loading biomass");
-		#Adding biomass to community model
-		my $bios = $model->biomasses();
-		for (my $j=0; $j < @{$bios}; $j++) {
-			my $bio = $bios->[$j]->cloneObject();
-			$bio->parent($commdl);
-			for (my $k=0; $k < @{$bio->biomasscompounds()}; $k++) {
-				$bio->biomasscompounds()->[$k]->modelcompound_ref("~/modelcompounds/id/".$translation->{$bios->[$j]->biomasscompounds()->[$k]->modelcompound()->id()});
-			}
-			$bio = $commdl->add("biomasses",$bio);
-			$biocount++;
-			$bio->id("bio".$biocount);
-			$bio->name("bio".$biocount);
-		}
-		Bio::KBase::ObjectAPI::logging::log("Loading primary biomass");
-		#Adding biomass component to primary composite biomass reaction
-		$primbio->add("biomasscompounds",{
-			modelcompound_ref => "~/modelcompounds/id/".$translation->{$biomassCpd->id()},
-			coefficient => -1*$parameters->{models}->[$i]->[1]/$totalAbundance
-		});
-	}
-	Bio::KBase::ObjectAPI::logging::log("Merge complete!");	
-	$self->save_object($parameters->{output_path}."/.".$parameters->{output_file}."/".$genomeObj->id(),$genomeObj,"genome",{});
-	$commdl->genome_ref($genomeObj->_reference());
-	$self->save_model($commdl,$parameters->{output_path}."/".$parameters->{output_file},{},1);
+	$commdl->genome_ref($parameters->{output_file}."/genome||");
+	$self->save_object($parameters->{output_path}."/".$parameters->{output_file},$commdl,"model",{});
+	$jobresult->{path} = $parameters->{output_path}."/".$parameters->{output_file}."/jobresult";
+	return $parameters->{output_path}."/".$parameters->{output_file};
+}
+
+sub ImportKBaseModel {
+	my($self,$parameters,$jobresult) = @_;
+	$parameters = $self->validate_args($parameters,["kbws","kbid"],{
+		kbwsurl => undef,
+		kbuser => undef,
+		kbpassword => undef,
+		kbtoken => undef,
+		output_file => $parameters->{kbid},
+		output_path => "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/"
+    });
+    #Making sure the output path has a slash at the end
+    if (substr($parameters->{output_path},-1,1) ne "/") {
+    	$parameters->{output_path} .= "/";
+    }
+    #Retrieving model from KBase
+    my $kbstore = $self->KBaseStore({
+    	kbuser => $parameters->{kbuser},
+		kbpassword => $parameters->{kbpassword},
+		kbtoken => $parameters->{kbtoken},
+		kbwsurl => $parameters->{kbwsurl},
+    });
+    my $model = $kbstore->get_object($parameters->{kbws}."/".$parameters->{kbid});
+    #Creating folder for imported model
+	my $folder = $parameters->{output_path}.$parameters->{output_file};
+    $self->save_object($folder,undef,"modelfolder");
+   	#Saving contigsets inside the model folder if they exist for the genome - saved as contigset for now so no translation needed
+   	my $genome = $model->genome();
+   	if (defined($genome->contigset_ref())) {
+   		$self->save_object($folder."/contigset",$genome->contigs(),"contigset");
+   		#Resetting reference for contigset to local path
+   		$genome->contigset_ref("contigset||");
+   	}
+   	#Saving genome inside the model folder - no translation is needed
+   	$self->save_object($folder."/genome",$genome,"genome");
+   	#Resetting reference for genome to local path
+   	$genome->_reference($parameters->{output_file}."/genome||");
+   	$model->genome_ref($genome->_reference());
+    #Changing template reference
+    if ($model->template_ref() =~ m/228\/2\/\d+/) {
+    	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."GramNegative.modeltemplate");
+    } elsif ($model->template_ref() =~ m/228\/1\/\d+/) {
+    	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."GramPositive.modeltemplate");
+    }
+    $model->parent($self->PATRICStore());
+    #Correcting compound refs
+    my $compounds = $model->modelcompounds();
+    for (my $i=0; $i < @{$compounds}; $i++) {
+    	my $cpd = $compounds->[$i]->compound();
+    	$compounds->[$i]->compound_ref($cpd->_reference());
+    }
+    #Correcting reaction and feature refs
+    my $reactions = $model->modelreactions();
+    for (my $i=0; $i < @{$reactions}; $i++) {
+    	my $rxn = $reactions->[$i]->reaction();
+    	$reactions->[$i]->reaction_ref($rxn->_reference());
+    	my $prots = $reactions->[$i]->modelReactionProteins();
+    	for (my $j=0; $j < @{$prots}; $j++) {
+    		my $subunits = $prots->[$j]->modelReactionProteinSubunits();
+    		for (my $k=0; $k < @{$subunits}; $k++) {
+    			my $ftrrefs = $subunits->[$k]->feature_refs();
+    			for (my $m=0; $m < @{$ftrrefs}; $m++) {
+    				if ($ftrrefs->[$m] =~ m/\/([^\/]+)$/) {
+    					$ftrrefs->[$m] = $parameters->{output_file}."/genome||/features/id/".$1;
+    				}
+    			}
+    		}
+    	}
+    }
+    #Correcting compartment refs
+    my $compartments = $model->modelcompartments();
+    for (my $i=0; $i < @{$compartments}; $i++) {
+    	my $cmp = $compartments->[$i]->compartment();
+    	$compartments->[$i]->compartment_ref($cmp->_reference());
+    }
+	#Transfering gapfillings
+    $self->save_object($folder."/gapfilling",undef,"folder");
+    my $oldgfs = $model->gapfillings();
+    $model->gapfillings([]);
+    for (my $i=0; $i < @{$oldgfs}; $i++) {
+    	#Only transfering integrated gapfillings
+    	if ($oldgfs->[$i]->integrated() == 1) {
+	    	push(@{$model->gapfillings()},$oldgfs->[$i]);
+	    	$oldgfs->[$i]->id("gf.".$i);
+	    	$oldgfs->[$i]->gapfill_id("gf.".$i);
+	    	my $fba;
+	    	if (defined($oldgfs->[$i]->gapfill_ref())) {
+	    		my $gf = $oldgfs->[$i]->gapfill();
+	    		$fba = $gf->fba();
+	    		$fba->gapfillingSolutions($gf->gapfillingSolutions());
+	    		$oldgfs->[$i]->gapfill_ref(undef);
+	    	} else {
+	    		$fba = $oldgfs->[$i]->fba();
+	    	}
+	    	$oldgfs->[$i]->fba_ref($parameters->{output_file}."/gapfilling/".$fba->id()."||");
+	    	$fba->id("gf.".$i);
+	    	$fba->fbamodel_ref($folder."||");
+	    	if ($fba->media_ref() =~ m/\/([^\/]+)$/) {
+	    		$fba->media_ref("/chenry/public/modelsupport/patric-media/".$1."||");
+	    		$oldgfs->[$i]->media_ref($fba->media_ref());
+	    	}
+	    	for (my $j=0; $j < @{$fba->geneKO_refs()}; $j++) {
+	    		if ($fba->geneKO_refs()->[$j] =~ m/\/([^\/]+)$/) {
+    				$fba->geneKO_refs()->[$j] = "../genome||/features/id/".$1;
+    			}
+	    	}
+	    	for (my $j=0; $j < @{$fba->reactionKO_refs()}; $j++) {
+	    		if ($fba->reactionKO_refs()->[$j] =~ m/\/([^\/]+)$/) {
+    				$fba->reactionKO_refs()->[$j] = "../../".$parameters->{output_file}."||/modelreactions/id/".$1;
+    			}
+	    	}
+	    	for (my $j=0; $j < @{$fba->additionalCpd_refs()}; $j++) {
+	    		if ($fba->additionalCpd_refs()->[$j] =~ m/\/([^\/]+)$/) {
+    				$fba->additionalCpd_refs()->[$j] = "../../".$parameters->{output_file}."||/modelcompounds/id/".$1;
+    			}
+	    	}
+	    	my $subobject_ref_trans = {
+	    		FBAReactionBound => ["modelreaction_ref","modelreactions"],
+	    		FBACompoundBound => ["modelcompound_ref","modelcompounds"],
+	    		FBACompoundVariable => ["modelcompound_ref","modelcompounds"],
+	    		FBAReactionVariable => ["modelreaction_ref","modelreactions"],
+	    		FBABiomassVariable => ["biomass_ref","biomasses"],
+	    		FBAMetaboliteProductionResult => ["modelcompound_ref","modelcompounds"]
+	    	};
+	    	foreach my $item (keys(%{$subobject_ref_trans})) {
+	    		my $objects = $fba->$item();
+	    		for (my $j=0; $j < @{$objects}; $j++) {
+	    			my $fn = $subobject_ref_trans->{$item}->[0];
+	    			if ($objects->[$j]->$fn() =~ m/\/([^\/]+)$/) {
+	    				$objects->[$j]->$fn("../../".$parameters->{output_file}."||/".$subobject_ref_trans->{$item}->[1]."/id/".$1)
+	    			}
+	    		}
+	    	}
+	    	my $solutions = $fba->gapfillingSolutions();
+	    	for (my $j=0; $j < @{$solutions}; $j++) {
+	    		my $solution = $solutions->[$j];
+	    		my $gfrxns = $solution->gapfillingSolutionReactions();
+	    		for (my $k=0; $k < @{$gfrxns}; $k++) {
+	    			my $gfrxn = $gfrxns->[$k];
+	    			if ($gfrxn->compartment_ref() =~ m/\/([^\/]+)$/) {
+	    				my $comp = $1;
+	    				$gfrxn->compartment_ref($model->template_ref()."/compartments/id/".$comp);
+	    				if ($gfrxn->reaction_ref() =~ m/\/([^\/]+)$/) {
+		    				my $rxn = $1;
+		    				$gfrxn->reaction_ref($model->template_ref()."/reactions/id/".$rxn."_".$comp);
+		    				my $mdlrxn = $model->get_object("modelreactions",{id => $rxn."_".$comp.$gfrxn->compartmentIndex()});
+		    				if (@{$mdlrxn->modelReactionProteins()} > 0) {
+		    					$mdlrxn->gapfill_data()->{$parameters->{output_file}."/gapfilling/".$fba->id()."||"} = "added:".$rxn->direction();
+		    				} else {
+		    					$mdlrxn->gapfill_data()->{$parameters->{output_file}."/gapfilling/".$fba->id()."||"} = "reversed:".$rxn->direction();
+		    				}
+		    			}
+	    			}
+	    		}
+	    		$gfrxns = $solution->rejectedCandidates();
+	    		for (my $k=0; $k < @{$gfrxns}; $k++) {
+	    			my $gfrxn = $gfrxns->[$k];
+	    			if ($gfrxn->compartment_ref() =~ m/\/([^\/]+)$/) {
+	    				my $comp = $1;
+	    				$gfrxn->compartment_ref($model->template_ref()."/compartments/id/".$comp);
+	    				if ($gfrxn->reaction_ref() =~ m/\/([^\/]+)$/) {
+		    				$gfrxn->reaction_ref($model->template_ref()."/reactions/id/".$1."_".$comp);
+		    			}
+	    			}
+	    		}
+	    		$gfrxns = $solution->activatedReactions();
+	    		for (my $k=0; $k < @{$gfrxns}; $k++) {
+	    			my $gfrxn = $gfrxns->[$k];
+	    			if ($gfrxn->modelreaction_ref() =~ m/\/([^\/]+)$/) {
+	    				$gfrxn->modelreaction_ref("../../".$parameters->{output_file}."||/modelreactions/id/".$1);
+	    			}
+	    		}
+	    		$gfrxns = $solution->failedReaction_refs();
+	    		for (my $k=0; $k < @{$gfrxns}; $k++) {
+	    			if ($gfrxns->[$k] =~ m/\/([^\/]+)$/) {
+	    				$gfrxns->[$k] = "../../".$parameters->{output_file}."||/modelreactions/id/".$1;
+	    			}
+	    		}
+	    	}	    	
+	    	#Saving FBA object
+	    	$self->save_object($fba,$folder."/gapfilling/".$fba->id(),"fba");
+    	}
+    }
+    #Saving model to PATRIC
+	$self->save_object($model,$parameters->{output_path}."/".$parameters->{output_file},"model",{});
+	$jobresult->{path} = $parameters->{output_path}."/".$parameters->{output_file}."/jobresult";
 	return $parameters->{output_path}."/".$parameters->{output_file};
 }
 
@@ -1732,11 +2008,17 @@ sub new {
     	});
     }
     #Setting ephemeral configs from input arguments (token, username, adminmode)
-    foreach my $key (keys(%{$paramters})) {
-    	my $function = "Bio::KBase::ObjectAPI::config::".$key;
-    	if (defined($paramters->{$key})) {
-    		$function($paramters->{$key});
-    	}
+    if (defined($parameters->{workspace_url})) {
+    	Bio::KBase::ObjectAPI::config::workspace_url($parameters->{workspace_url});
+    }
+    if (defined($parameters->{username})) {
+    	Bio::KBase::ObjectAPI::config::username($parameters->{username});
+    }
+    if (defined($parameters->{token})) {
+    	Bio::KBase::ObjectAPI::config::token($parameters->{token});
+    }
+    if (defined($parameters->{adminmode})) {
+    	Bio::KBase::ObjectAPI::config::adminmode($parameters->{adminmode});
     }
     return $self;
 }

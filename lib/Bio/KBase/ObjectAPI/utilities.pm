@@ -7,6 +7,7 @@ use File::Temp qw(tempfile);
 use File::Path;
 use File::Copy::Recursive;
 use JSON::XS;
+use HTTP::Request::Common;
 
 our $VERBOSE = undef; # A GLOBAL Reference to print verbose() calls to, or undef.
 our $CONFIG = undef;
@@ -1067,6 +1068,28 @@ sub elaspedtime {
 		$startime = time();
 	}
 	return time()-$startime;
+}
+
+sub kblogin {
+	my $params = shift;
+	my $url = "https://kbase.us/services/authorization/Sessions/Login";
+	my $content = {
+		user_id => $params->{user_id},
+		password => $params->{password},
+		status => 1,
+		fields => "un,token,user_id,kbase_sessionid,name"
+	};
+	my $ua = LWP::UserAgent->new();
+	my $req = HTTP::Request::Common::POST($url,Content_Type => 'application/x-www-form-urlencoded; charset=UTF-8',Content => $content);
+	my $res = $ua->request($req);
+	#my $ua = LWP::UserAgent->new();
+	#my $res = $ua->post($url,{"Content-Type" => "",Content => $content});
+	print $res->content."\n";
+	if (!$res->is_success) {
+    	Bio::KBase::ObjectAPI::utilities::error("KBase login failed!");
+	}
+	my $data = decode_json $res->content;
+	return $data->{token};
 }
 
 1;

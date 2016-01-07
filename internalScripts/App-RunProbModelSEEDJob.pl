@@ -19,7 +19,7 @@ Bio::KBase::ObjectAPI::config::load_config({
 	filename => $ENV{KB_DEPLOYMENT_CONFIG},
 	service => "ProbModelSEED"
 });
-Bio::KBase::ObjectAPI::logging::info("App starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]));
+Bio::KBase::ObjectAPI::logging::log("App starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]));
 my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	token => $script->token()->token(),
 	username => $script->token()->user_id(),

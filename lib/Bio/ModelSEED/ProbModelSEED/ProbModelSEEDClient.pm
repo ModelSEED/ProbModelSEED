@@ -2590,6 +2590,107 @@ sub MergeModels
 
 
 
+=head2 ImportKBaseModel
+
+  $output = $obj->ImportKBaseModel($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is an ImportKBaseModel_params
+$output is a JobID
+ImportKBaseModel_params is a reference to a hash where the following keys are defined:
+	kbws has a value which is a string
+	kbid has a value which is a string
+	kbwsurl has a value which is a string
+	kbuser has a value which is a string
+	kbpassword has a value which is a string
+	kbtoken has a value which is a string
+	output_file has a value which is a string
+	output_path has a value which is a string
+JobID is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is an ImportKBaseModel_params
+$output is a JobID
+ImportKBaseModel_params is a reference to a hash where the following keys are defined:
+	kbws has a value which is a string
+	kbid has a value which is a string
+	kbwsurl has a value which is a string
+	kbuser has a value which is a string
+	kbpassword has a value which is a string
+	kbtoken has a value which is a string
+	output_file has a value which is a string
+	output_path has a value which is a string
+JobID is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub ImportKBaseModel
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function ImportKBaseModel (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to ImportKBaseModel:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'ImportKBaseModel');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.ImportKBaseModel",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'ImportKBaseModel',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method ImportKBaseModel",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'ImportKBaseModel',
+				       );
+    }
+}
+
+
+
 =head2 CheckJobs
 
   $output = $obj->CheckJobs($input)
@@ -5236,6 +5337,56 @@ models has a value which is a reference to a list where each element is a refere
 0: (model) a reference
 1: (abundance) a float
 
+output_file has a value which is a string
+output_path has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 ImportKBaseModel_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: ImportKBaseModel
+DESCRIPTION: This function imports a metabolic model from a specified location in KBase
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+kbws has a value which is a string
+kbid has a value which is a string
+kbwsurl has a value which is a string
+kbuser has a value which is a string
+kbpassword has a value which is a string
+kbtoken has a value which is a string
+output_file has a value which is a string
+output_path has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+kbws has a value which is a string
+kbid has a value which is a string
+kbwsurl has a value which is a string
+kbuser has a value which is a string
+kbpassword has a value which is a string
+kbtoken has a value which is a string
 output_file has a value which is a string
 output_path has a value which is a string
 

@@ -670,7 +670,7 @@ sub getLinkedObject {
     	my $objpath = $1;
     	my $internalref = $2;
     	if ($objpath !~ m/^\//) {
-    		$objpath = $self->wsmeta()->[2].$objpath;
+    		$objpath = $self->topparent()->wsmeta()->[2].$objpath;
     		while ($objpath =~ m/[^\/]+\/\.\.\/*/) {
 				$objpath =~ s/[^\/]+\/\.\.\/*//g;
 			}

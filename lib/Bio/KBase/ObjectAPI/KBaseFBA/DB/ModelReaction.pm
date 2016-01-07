@@ -17,7 +17,7 @@ extends 'Bio::KBase::ObjectAPI::BaseObject';
 has parent => (is => 'rw', isa => 'Ref', weak_ref => 1, type => 'parent', metaclass => 'Typed');
 # ATTRIBUTES:
 has uuid => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_uuid');
-has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
+#has _reference => (is => 'rw', lazy => 1, isa => 'Str', type => 'msdata', metaclass => 'Typed',builder => '_build_reference');
 has protons => (is => 'rw', isa => 'Num', printOrder => '7', default => '0', type => 'attribute', metaclass => 'Typed');
 has reaction_ref => (is => 'rw', isa => 'Str', printOrder => '-1', required => 1, type => 'attribute', metaclass => 'Typed');
 has direction => (is => 'rw', isa => 'Str', printOrder => '5', default => '=', type => 'attribute', metaclass => 'Typed');
@@ -43,7 +43,7 @@ has modelcompartment => (is => 'rw', type => 'link(FBAModel,modelcompartments,mo
 
 
 # BUILDERS:
-sub _build_reference { my ($self) = @_;return $self->parent()->_reference().'/modelreactions/id/'.$self->id(); }
+sub _reference { my ($self) = @_;return $self->parent()->_reference().'/modelreactions/id/'.$self->id(); }
 sub _build_uuid { my ($self) = @_;return $self->_reference(); }
 sub _build_reaction {
 	 my ($self) = @_;

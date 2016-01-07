@@ -269,6 +269,11 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def ImportKBaseModel(self, input):
+        resp = self._call('ProbModelSEED.ImportKBaseModel',
+                          [input])
+        return resp[0]
+
     def CheckJobs(self, input):
         resp = self._call('ProbModelSEED.CheckJobs',
                           [input])

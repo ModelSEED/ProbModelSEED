@@ -45,7 +45,7 @@ sub user_id {
 sub workspace_url {
 	my ($self) = @_;
 	if (!defined($CallContext->{"_workspace-url"})) {
-		return $self->config()->{"workspace-url"};
+		$CallContext->{"_workspace-url"} = Bio::KBase::ObjectAPI::config::workspace_url();
 	}
 	return $CallContext->{"_workspace-url"};
 }
@@ -80,11 +80,6 @@ sub current_method {
 	return $CallContext->method;
 }
 
-sub config {
-	my ($self) = @_;
-	return $self->{_config};
-}
-
 sub helper {
 	my ($self) = @_;
 	if (!defined($CallContext->{_helper})) {
@@ -96,194 +91,6 @@ sub helper {
 		});
 	}
 	return $CallContext->{_helper};
-}
-
-sub _list_fba_studies {
-	my ($self,$input) = @_;
-	$input = $self->helper()->validate_args($input,["model"],{});
-    $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
-    my $list = $self->helper()->workspace_service()->ls({
-		paths => [$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"],
-		excludeDirectories => 1,
-		excludeObjects => 0,
-		recursive => 1,
-		query => {type => "fba"}
-	});
-	my $output = {};
-	if (defined($list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"})) {
-		$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba"};
-		for (my $i=0; $i < @{$list}; $i++) {
-			my $element = {
-				rundate => $list->[$i]->[3],
-				id => $list->[$i]->[0],
-				"ref" => $list->[$i]->[2].$list->[$i]->[0],
-				media_ref => $list->[$i]->[7]->{media},
-				objective => $list->[$i]->[7]->{objective},
-				objective_function => $list->[$i]->[8]->{objective_function},				
-			};
-			$output->{$list->[$i]->[0]} = $element;
-		}
-	}
-	# Output is sorted by rundate (newest first).
-	return $output;
-}
-
-sub _list_models {
-	my ($self,$input) = @_;
-	$input = $self->helper()->validate_args($input,[],{path => undef});
-    my $list;
-    my $output = {};
-    if (defined($input->{path})) {
-    	$list = [["",undef,$input->{path}]];
-    } else {
-    	$list = $self->helper()->workspace_service()->ls({
-			paths => ["/".$self->user_id()."/"],
-			adminmode => $self->adminmode()
-		});
-		if (!defined($list->{"/".$self->user_id()."/"})) {
-			# Just return an empty list if there is no workspace for the user.
-			return $output;
-		}
-		$list = $list->{"/".$self->user_id()."/"};
-    }
-	for (my $i=0; $i < @{$list}; $i++) {
-		my $currentlist = $self->helper()->workspace_service()->ls({
-			paths => [$list->[$i]->[2].$list->[$i]->[0]],
-			excludeDirectories => 1,
-			excludeObjects => 0,
-			recursive => 1,
-			query => {type => ["model","fba"]},
-			adminmode => $self->adminmode()
-		});
-		if (defined($currentlist->{$list->[$i]->[2].$list->[$i]->[0]})) {
-			$currentlist = $currentlist->{$list->[$i]->[2].$list->[$i]->[0]};
-			my $newlist = [];
-			my $fbalist = [];
-			for (my $k=0; $k < @{$currentlist}; $k++) {
-				if ($currentlist->[$k]->[1] eq "fba") {
-					push(@{$fbalist},$currentlist->[$k]);
-				} elsif ($currentlist->[$k]->[1] eq "model") {
-					push(@{$newlist},$currentlist->[$k]);
-				}
-			}
-			my $fbahash = {};
-			for (my $k=0; $k < @{$fbalist}; $k++) {
-				push(@{$fbahash->{$fbalist->[$k]->[2]}},$fbalist->[$k]); 
-			}
-			for (my $j=0; $j < @{$newlist}; $j++) {
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]} = $newlist->[$j]->[8];
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{rundate} = $newlist->[$j]->[3];
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{id} = $newlist->[$j]->[0];
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gene_associated_reactions} = ($output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_reactions} - 22);
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gapfilled_reactions} = 0;
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = 0;
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{integrated_gapfills} = 0;
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills} = 0;
-				if (defined($fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/fba/"})) {
-					$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/fba/"}};
-				}
-				if (defined($fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/gapfilling/"})) {
-					for (my $k=0; $k < @{$fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/gapfilling/"}}; $k++) {
-						my $item = $fbahash->{$newlist->[$j]->[2].".".$newlist->[$j]->[0]."/gapfilling/"}->[$k];
-						if ($item->[7]->{integrated} == 1) {
-							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{integrated_gapfills}++;
-						} else {
-							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills}++;
-						}
-					}
-				}
-				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{reactions};
-				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{genes};
-				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasses};		
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_biomass_compounds} = split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds});
-				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds};
-			}
-		}
-	}
-	return $output;
-}
-
-sub _list_gapfill_solutions {
-	my ($self,$input) = @_;
-	$input = $self->helper()->validate_args($input,["model"],{include_meta => 0});
-    $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
-    my $gflist = $self->helper()->workspace_service()->ls({
-		paths => [$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"],
-		excludeDirectories => 1,
-		excludeObjects => 0,
-		recursive => 1,
-		query => {type => "fba"}
-	});
-	my $output = {};
-	if (defined($gflist->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"})) {
-		$gflist = $gflist->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/gapfilling"};
-		for (my $i=0; $i < @{$gflist}; $i++) {
-			my $id = $gflist->[$i]->[0];
-			$output->{$id} = {
-				rundate => $gflist->[$i]->[3],
-				id => $id,
-				"ref" => $gflist->[$i]->[2].$gflist->[$i]->[0],
-				media_ref => $gflist->[$i]->[7]->{media},
-				integrated => $gflist->[$i]->[7]->{integrated},
-				integrated_solution => $gflist->[$i]->[7]->{integrated_solution},
-				solution_reactions => []
-			};
-			if (defined($gflist->[$i]->[7]->{solutiondata})) {
-				$output->{$id}->{solution_reactions} = Bio::KBase::ObjectAPI::utilities::FROMJSON($gflist->[$i]->[7]->{solutiondata});
-				for (my $j=0; $j < @{$output->{$id}->{solution_reactions}}; $j++) {
-					for (my $k=0; $k < @{$output->{$id}->{solution_reactions}->[$j]}; $k++) {
-						my $comp = "c";
-						if ($output->{$id}->{solution_reactions}->[$j]->[$k]->{compartment_ref} =~ m/\/([^\/]+)$/) {
-							$comp = $1;
-						}
-						$output->{$id}->{solution_reactions}->[$j]->[$k] = {
-							direction => $output->{$id}->{solution_reactions}->[$j]->[$k]->{direction},
-							reaction => $output->{$id}->{solution_reactions}->[$j]->[$k]->{reaction_ref},
-							compartment => $comp.$output->{$id}->{solution_reactions}->[$j]->[$k]->{compartmentIndex}
-						};
-					}
-				}
-			}
-			if ($input->{include_meta}) {
-				$output->{$id}->{metadata} = $gflist->[$i]->[7];
-			}
-		}
-	}
-	return $output;
-}
-
-sub _list_model_edits {
-	my ($self,$input) = @_;
-	$input = $self->helper()->validate_args($input,["model"],{});
-    $input->{model_meta} = $self->helper()->get_model_meta($input->{model});
-    my $list = $self->helper()->workspace_service()->ls({
-		paths => [$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"],
-		excludeDirectories => 1,
-		excludeObjects => 0,
-		recursive => 1,
-		query => {type => "model_edit"}
-	});
-	my $output = {};
-	if (defined($list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"})) {
-		$list = $list->{$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/edits"};
-		for (my $i=0; $i < @{$list}; $i++) {
-			my $data = Bio::KBase::ObjectAPI::utilities::FROMJSON($list->[$i]->[7]->{editdata});
-			my $id = $list->[$i]->[0];
-			$output->{$id} = {
-				rundate => $list->[$i]->[3],
-				integrated => $list->[$i]->[7]->{integrated},
-				id => $id,
-				"ref" => $list->[$i]->[2].$list->[$i]->[0],
-				reactions_to_delete => $data->{reactions_to_delete},
-				altered_directions => $data->{altered_directions},
-				altered_gpr => $data->{altered_gpr},
-				reactions_to_add => $data->{reactions_to_add},
-				altered_biomass_compound => $data->{altered_biomass_compound}
-			};
-		}
-	}
-	return $output;
 }
 
 #END_HEADER
@@ -299,7 +106,7 @@ sub new
     	filename => $ENV{KB_DEPLOYMENT_CONFIG},
 		service => "ProbModelSEED"
     });
-	Bio::KBase::ObjectAPI::logging::$type("Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]));
+	Bio::KBase::ObjectAPI::logging::log("Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]),"info");
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
@@ -404,13 +211,8 @@ sub list_gapfill_solutions
     my($output);
     #BEGIN list_gapfill_solutions
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{});
-	my $hash = $self->_list_gapfill_solutions($input);
-	my $output = [];
-	foreach my $key (keys(%{$hash})) {
-		push(@{$output},$hash->{$key});
-	}
-    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+    $input = $self->helper()->validate_args($input,["model"],{include_metadata => 0});
+	$output = $self->helper()->list_model_gapfills($input->{model},$input->{include_metadata});
     #END list_gapfill_solutions
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -526,60 +328,36 @@ sub manage_gapfill_solutions
     	selected_solutions => {},
     	include_meta => 1
     });
-    my $gflist = $self->_list_gapfill_solutions($input);
     my $rmlist = [];
-    my $updatelist = [];
+    my $intlist = [];
+    my $unintlist = [];
     $output = {};
     foreach my $gf (keys(%{$input->{commands}})) {
-    	if (defined($gflist->{$gf})) {
-    		$output->{$gf} = $gflist->{$gf};
-    		if (lc($input->{commands}->{$gf}) eq "d") {
-    			$ctx->log_debug("Deleting gapfill ".$gflist->{$gf}->{"ref"});
-    			push(@{$rmlist},$gflist->{$gf}->{"ref"});
-    		} elsif (lc($input->{commands}->{$gf}) eq "i") {
-    			if (!defined($input->{selected_solutions}->{$gf})) {
-    				$input->{selected_solutions}->{$gf} = 0;
-    			}
-    			$ctx->log_debug("Integrating gapfill ".$gflist->{$gf}->{"ref"}." solution ".$input->{selected_solutions}->{$gf});
-    			$output->{$gf}->{integrated} = 1;
-    			$output->{$gf}->{integrated_solution} = $input->{selected_solutions}->{$gf};
-    			push(@{$updatelist},[$gflist->{$gf}->{"ref"},{
-    				integrated => 1,
-    				integrated_solution => $input->{selected_solutions}->{$gf},
-    				media => $gflist->{$gf}->{metadata}->{media},
-    				solutiondata => $gflist->{$gf}->{metadata}->{solutiondata}
-    			}]);
-    		} elsif (lc($input->{commands}->{$gf}) eq "u") {
-    			$ctx->log_debug("Unintegrating gapfill ".$gflist->{$gf}->{"ref"});
-    			$output->{$gf}->{integrated} = 0;
-    			$output->{$gf}->{integrated_solution} = -1;
-    			push(@{$updatelist},[$gflist->{$gf}->{"ref"},{
-    				integrated => 0,
-    				integrated_solution => -1,
-    				media => $gflist->{$gf}->{metadata}->{media},
-    				solutiondata => $gflist->{$gf}->{metadata}->{solutiondata}
-    			}]);
-    		} else {
-    			$self->helper()->error("Specified command ".$input->{commands}->{$gf}." is not supported!");
-    		}
-    		delete $output->{$gf}->{metadata};
-    	} else {
-    		$self->helper()->error("Specified gapfilling does not exist!");
+    	if (lc($input->{commands}->{$gf}) eq "d") {
+    		push(@{$rmlist},$gf);
+    	} elsif (lc($input->{commands}->{$gf}) eq "i") {
+    		push(@{$intlist},$gf);
+    	} elsif (lc($input->{commands}->{$gf}) eq "u") {
+    		push(@{$unintlist},$gf);
     	}
     }
-    if (@{$updatelist} > 0) {
-	    $self->helper()->workspace_service()->update_metadata({
-			objects => $updatelist,
-			adminmode => $self->adminmode()
-	    });
-    }
     if (@{$rmlist} > 0) {
-	    $self->helper()->workspace_service()->delete({
-			objects => $rmlist,
-			deleteDirectories => 1,
-			force => 1,
-			adminmode => $self->adminmode()
-	    });
+    	my $rmout = $self->helper()->delete_model_objects($input->{model},$rmlist,"gapfilling");
+    	foreach my $gf (keys(%{$rmout})) {
+    		$output->{$gf} = $rmout->{$gf};
+    	}
+    }
+    if (@{$intlist} > 0) {
+    	my $intout = $self->helper()->integrate_model_gapfills($input->{model},$intlist);
+    	foreach my $gf (keys(%{$intout})) {
+    		$output->{$gf} = $intout->{$gf};
+    	}
+    }
+    if (@{$unintlist} > 0) {
+    	my $unintout = $self->helper()->unintegrate_model_gapfills($input->{model},$unintlist);
+    	foreach my $gf (keys(%{$unintout})) {
+    		$output->{$gf} = $unintout->{$gf};
+    	}
     }
     #END manage_gapfill_solutions
     my @_bad_returns;
@@ -672,12 +450,8 @@ sub list_fba_studies
     my($output);
     #BEGIN list_fba_studies
     $input = $self->initialize_call($input);
-    my $hash = $self->_list_fba_studies($input);
-	my $output = [];
-	foreach my $key (keys(%{$hash})) {
-		push(@{$output},$hash->{$key});
-	}
-    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+    $input = $self->helper()->validate_args($input,["model"],{});
+    $output = $self->helper()->list_model_fba($input->{model});
     #END list_fba_studies
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -776,26 +550,7 @@ sub delete_fba_studies
     #BEGIN delete_fba_studies
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["model","fbas"],{});
-    my $fbalist = $self->_list_fba_studies($input);
-    my $rmlist = [];
-    $output = {};
-    for (my $i=0; $i < @{$input->{fbas}}; $i++) {
-    	if (defined($fbalist->{$input->{fbas}->[$i]})) {
-    		$output->{$input->{fbas}->[$i]} = $fbalist->{$input->{fbas}->[$i]};
-    		push(@{$rmlist},$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba/".$input->{fbas}->[$i]);
-    		push(@{$rmlist},$input->{model_meta}->[2].".".$input->{model_meta}->[0]."/fba/".$input->{fbas}->[$i].".fluxtbl");
-    	} else {
-    		$self->helper()->error("Specified FBA does not exist!");
-    	}
-    }
-    if (@{$rmlist} > 0) {
-	    $self->helper()->workspace_service()->delete({
-			objects => $rmlist,
-			deleteDirectories => 1,
-			force => 1,
-			adminmode => $self->adminmode()
-	    });
-    }
+    $output = $self->helper()->delete_model_objects($input->{model},$input->{fbas},"fba");
     #END delete_fba_studies
     my @_bad_returns;
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -879,7 +634,7 @@ sub export_model
 		format => "sbml",
 		to_shock => 0
     });
-    my $model = $self->helper()->get_model($input->{model});
+    my $model = $self->helper()->get_object($input->{model});
     $output = $model->export({format => $input->{format}});
     if ($input->{to_shock} == 1) {
     	$output = $self->helper()->load_to_shock($output);
@@ -1140,7 +895,7 @@ sub get_model
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["model"],{to => 0});
     if ($input->{to} == 1) {
-    	$output = $self->helper()->get_model($input->{model})->serializeToDB();
+    	$output = $self->helper()->get_object($input->{model})->serializeToDB();
     } else {
     	$output = $self->helper()->get_model_data($input->{model});
     }
@@ -1382,7 +1137,7 @@ sub list_models
     my($output);
     #BEGIN list_models
     $input = $self->initialize_call($input);
-    my $hash = $self->_list_models($input);
+    my $hash = $self->helper()->list_models($input);
 	my $output = [];
 	foreach my $key (keys(%{$hash})) {
 		push(@{$output},$hash->{$key});
@@ -1810,12 +1565,7 @@ sub list_model_edits
     my($output);
     #BEGIN list_model_edits
     $input = $self->initialize_call($input);
-    my $hash = $self->_list_model_edits($input);
-	my $output = [];
-	foreach my $key (keys(%{$hash})) {
-		push(@{$output},$hash->{$key});
-	}
-    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+    $output = [];
     #END list_model_edits
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -1954,68 +1704,7 @@ sub manage_model_edits
     $input = $self->helper()->validate_args($input,["model","commands"],{
     	new_edit => {}
     });
-    my $list = $self->_list_model_edits($input);
-    my $rmlist = [];
-    my $updatelist = [];
     $output = {};
-    foreach my $edit (keys(%{$input->{commands}})) {
-    	if (defined($list->{$edit})) {
-    		$output->{$edit} = $list->{$edit};
-    		if (lc($input->{commands}->{$edit}) eq "d") {
-    			push(@{$rmlist},$input->{model_meta}->[2]."edits/".$edit.".model_edit");
-    		} elsif (lc($input->{commands}->{$edit}) eq "i") {
-    			$output->{$edit}->{integrated} = 1;
-    			push(@{$updatelist},[$input->{model_meta}->[2]."edits/".$edit.".model_edit",{
-    				integrated => 1,
-    			}]);
-    		} elsif (lc($input->{commands}->{$edit}) eq "u") {
-    			$output->{$edit}->{integrated} = 0;
-    			push(@{$updatelist},[$input->{model_meta}->[2]."edits/".$edit.".model_edit",{
-    				integrated => 0,
-    			}]);
-    		}
-    	} else {
-    		$self->helper()->error("Specified edit does not exist!");
-    	}
-    }
-    if (@{$updatelist} > 0) {
-	    $self->helper()->workspace_service()->update_metadata({
-			objects => $updatelist,
-			adminmode => $self->adminmode()
-	    });
-    }
-    if (@{$rmlist} > 0) {
-	    $self->helper()->workspace_service()->delete({
-			objects => $rmlist,
-			deleteDirectories => 1,
-			force => 1,
-			adminmode => $self->adminmode()
-	    });
-    }
-    if (defined($input->{new_edit})) {
-    	my $editmeta = {
-    		integrated => 1,
-    	};
-    	my $editobj = $self->helper()->validate_args($input->{new_edit},["id"],{
-	    	reactions_to_delete => [],
-	    	altered_directions => {},
-	    	altered_gpr => {},
-	    	reactions_to_add => [],
-	    	altered_biomass_compound => {}
-	    });
-	    $editmeta->{editdata} = Bio::KBase::ObjectAPI::utilities::TOJSON($editobj);
-    	$self->helper()->workspace_service()->create({
-    		objects => [[
-    			$input->{model_meta}->[2]."edits/".$input->{new_edit}->{id}.".model_edit",
-    			"model_edit",
-    			$editmeta,
-    			$editobj
-    		]],
-    		overwrite => 1,
-    		adminmode => $self->adminmode()
-    	});
-    	$output->{$editobj->{id}} = $editobj;
-    };
     #END manage_model_edits
     my @_bad_returns;
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -3009,6 +2698,94 @@ sub MergeModels
 	my $msg = "Invalid returns passed to MergeModels:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
 							       method_name => 'MergeModels');
+    }
+    return($output);
+}
+
+
+
+
+=head2 ImportKBaseModel
+
+  $output = $obj->ImportKBaseModel($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is an ImportKBaseModel_params
+$output is a JobID
+ImportKBaseModel_params is a reference to a hash where the following keys are defined:
+	kbws has a value which is a string
+	kbid has a value which is a string
+	kbwsurl has a value which is a string
+	kbuser has a value which is a string
+	kbpassword has a value which is a string
+	kbtoken has a value which is a string
+	output_file has a value which is a string
+	output_path has a value which is a string
+JobID is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is an ImportKBaseModel_params
+$output is a JobID
+ImportKBaseModel_params is a reference to a hash where the following keys are defined:
+	kbws has a value which is a string
+	kbid has a value which is a string
+	kbwsurl has a value which is a string
+	kbuser has a value which is a string
+	kbpassword has a value which is a string
+	kbtoken has a value which is a string
+	output_file has a value which is a string
+	output_path has a value which is a string
+JobID is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub ImportKBaseModel
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to ImportKBaseModel:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'ImportKBaseModel');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN ImportKBaseModel
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->app_harness("ImportKBaseModel",$input);
+    #END ImportKBaseModel
+    my @_bad_returns;
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to ImportKBaseModel:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'ImportKBaseModel');
     }
     return($output);
 }
@@ -5630,6 +5407,56 @@ models has a value which is a reference to a list where each element is a refere
 0: (model) a reference
 1: (abundance) a float
 
+output_file has a value which is a string
+output_path has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 ImportKBaseModel_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: ImportKBaseModel
+DESCRIPTION: This function imports a metabolic model from a specified location in KBase
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+kbws has a value which is a string
+kbid has a value which is a string
+kbwsurl has a value which is a string
+kbuser has a value which is a string
+kbpassword has a value which is a string
+kbtoken has a value which is a string
+output_file has a value which is a string
+output_path has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+kbws has a value which is a string
+kbid has a value which is a string
+kbwsurl has a value which is a string
+kbuser has a value which is a string
+kbpassword has a value which is a string
+kbtoken has a value which is a string
 output_file has a value which is a string
 output_path has a value which is a string
 

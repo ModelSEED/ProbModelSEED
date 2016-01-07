@@ -44,7 +44,6 @@
 	    	$classpath =~ s/::/\//g;
 	    	require $classpath.".pm";
 	    	$self->{obj} = $serverclass->new();
-	    	$self->{svrconfig} = $self->{obj}->{_config};
 	    } else {
 	    	my $classpath = $clientclass;
 	    	$classpath =~ s/::/\//g;
@@ -104,7 +103,9 @@
 				 	print $fa $json;
 				 	close($fa);
 				 	$ENV{KB_AUTH_TOKEN} = $self->{token};
-				 	my $result = system("perl ".$self->{directory}."../../internalScripts/App-RunProbModelSEEDJob.pl ".$self->{svrconfig}->{appservice_url}." ".$self->{directory}."../../internalScripts/RunProbModelSEEDJob.json ".$self->{directory}."CurrentParams.json ".$self->{directory}."CurrentOutput ".$self->{directory}."CurrentError");
+				 	my $command = "perl ".$self->{directory}."../../internalScripts/App-RunProbModelSEEDJob.pl ".Bio::KBase::ObjectAPI::config::appservice_url()." ".$self->{directory}."../../internalScripts/RunProbModelSEEDJob.json ".$self->{directory}."CurrentParams.json ".$self->{directory}."CurrentOutput ".$self->{directory}."CurrentError";
+				 	print "Running: ".$command."\n";
+				 	my $result = system($command);
 				 	if ($result != 0) {
 				 		die "Command failed!";
 				 	}
@@ -250,19 +251,19 @@
 				"gf.0" => "i"
 			}
 		},"Integrating ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1);
-		$output = $self->test_harness("manage_gapfill_solutions",{
-			model => $model,
-			commands => {
-				"gf.0" => "d"
-			}
-		},"Deleting ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1);
+		#$output = $self->test_harness("manage_gapfill_solutions",{
+		#	model => $model,
+		#	commands => {
+		#		"gf.0" => "d"
+		#	}
+		#},"Deleting ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1);
 		$output = $self->test_harness("list_fba_studies",{
 			model => $model
 		},"List ".$model_name." FBA studies after running additional FBA",[["length(\$output) == 3","Model should have three FBAs"]],0,"FBA of ".$model_name." in minimal media",1);
-		$output = $self->test_harness("delete_fba_studies",{
-			model => $model,
-			fbas => ["fba.0"]
-		},"Deleting ".$model_name." FBA",[],0,undef,1);
+		#$output = $self->test_harness("delete_fba_studies",{
+		#	model => $model,
+		#	fbas => ["fba.0"]
+		#},"Deleting ".$model_name." FBA",[],0,undef,1);
 		done_testing($self->{completetestcount});
 	}
 }	

@@ -19,7 +19,7 @@ sub home_dir {
 sub bin_directory {
 	my $input = shift;
 	if (defined($input)) {
-		$service_config->{bin_directory} = $input;
+		$service_config->{bin_directory} = $input;#
 	}
 	return $service_config->{bin_directory};
 }
@@ -43,17 +43,17 @@ sub username {
 sub mfatoolkit_binary {
 	my $input = shift;
 	if (defined($input)) {
-		$service_config->{mfatoolkit_binary} = $input;
+		$service_config->{mfatoolkitbin} = $input;
 	}
-	return $service_config->{mfatoolkit_binary};
+	return $service_config->{mfatoolkitbin};
 }
 
 sub mfatoolkit_job_dir {
 	my $input = shift;
 	if (defined($input)) {
-		$service_config->{mfatoolkit_job_dir} = $input;
+		$service_config->{fbajobdir} = $input;
 	}
-	return $service_config->{mfatoolkit_job_dir};
+	return $service_config->{fbajobdir};
 }
 
 sub source {
@@ -67,9 +67,9 @@ sub source {
 sub default_biochemistry {
 	my $input = shift;
 	if (defined($input)) {
-		$service_config->{default_biochemistry} = $input;
+		$service_config->{biochemistry} = $input;
 	}
-	return $service_config->{default_biochemistry};
+	return $service_config->{biochemistry};
 }
 
 sub FinalJobCache {
@@ -110,6 +110,14 @@ sub shock_url {
 		$service_config->{"shock-url"} = $input;
 	}
 	return $service_config->{"shock-url"};
+}
+
+sub kbwsurl {
+	my $input = shift;
+	if (defined($input)) {
+		$service_config->{kbwsurl} = $input;
+	}
+	return $service_config->{kbwsurl};
 }
 
 sub workspace_url {
@@ -232,6 +240,7 @@ sub load_config {
 	}
 	$service_config = Bio::KBase::ObjectAPI::utilities::ARGS($service_config,["fbajobcache","fbajobdir","mfatoolkitbin"],{
     	source => "PATRIC",
+    	kbwsurl => "https://kbase.us/services/ws",
     	data_api_url => "https://www.patricbrc.org/api/",
     	"mssserver-url" => "http://bio-data-1.mcs.anl.gov/services/ms_fba",
     	"workspace-url" => "http://p3.theseed.org/services/Workspace",

@@ -48,6 +48,8 @@ use Moose;
 use Bio::KBase::ObjectAPI::utilities;
 use Data::Dumper;
 use Log::Log4perl;
+use LWP::UserAgent;
+use HTTP::Request::Common;
 
 use Class::Autouse qw(
     Bio::KBase::ObjectAPI::KBaseRegulation::Regulome
@@ -96,6 +98,7 @@ my $jsontypes = {
 # ATTRIBUTES:
 #***********************************************************************************************************
 has workspace => ( is => 'rw', isa => 'Ref', required => 1);
+has helper => ( is => 'rw', isa => 'Ref', required => 1);
 has data_api_url => ( is => 'rw', isa => 'Str', required => 1);
 has cache => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 has adminmode => ( is => 'rw', isa => 'Num',default => 0);
@@ -104,6 +107,7 @@ has provenance => ( is => 'rw', isa => 'ArrayRef',default => sub { return []; })
 has user_override => ( is => 'rw', isa => 'Str',default => "");
 has file_cache => ( is => 'rw', isa => 'Str',default => "");
 has cache_targets => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
+has save_file_list => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 
 #***********************************************************************************************************
 # BUILDERS:
@@ -154,9 +158,7 @@ sub get_objects {
 	}
 	#Pulling objects from workspace
 	if (@{$newrefs} > 0) {
-#		print "Objects:".Data::Dumper->Dump([{adminmode => $self->adminmode(),objects => $newrefs}])."\n";
-		
-		my $object;
+		my $objdatas = $self->call_ws("get",{adminmode => $self->adminmode(),objects => $newrefs});
 		for (my $i=0; $i < @{$objdatas}; $i++) {
 			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1]);
 		}
@@ -170,6 +172,11 @@ sub get_objects {
 
 sub process_object {
 	my ($self,$meta,$data) = @_;
+	if ($meta->[1] eq "modelfolder") {
+		my $mdldata = $self->load_model($meta,$data);
+		$meta = $mdldata->[0];
+		$data = $mdldata->[1];
+	}	
 	#Downloading object from shock if the object is in shock
 	$data = $self->download_object_from_shock($meta,$data);
 	#Writing target object to file cache if they are not already there
@@ -263,7 +270,7 @@ sub save_objects {
     	my $obj = $refobjhash->{$ref};
     	push(@{$reflist},$ref);
     	$objecthash->{$ref} = 0;
-    	if ($obj->{type} eq "modelfolder" || $obj->{type} eq "fbamodel") {
+    	if ($obj->{type} eq "model") {
     		$self->save_model($obj->{object},$ref);
     	} elsif (defined($typetrans->{$obj->{type}})) {
     		$objecthash->{$ref} = 1;
@@ -291,6 +298,7 @@ sub save_objects {
     	$refinedref =~ s/\/+/\//g;
     	for (my $j=0; $j < @{$listout}; $j++) {
     		if ($refinedref eq $listout->[$j]->[2].$listout->[$j]->[0]) {
+    			$self->upload_to_shock($objectdata->{$reflist->[$i]},$listout->[$j]->[11]);
     			$output->{$reflist->[$i]} = $listout->[$j];
     			$self->cache()->{$reflist->[$i]} = [$listout->[$j],$refobjhash->{$reflist->[$i]}->{object}];
 		    	$self->cache()->{$listout->[$j]->[2].$listout->[$j]->[0]} = [$listout->[$j],$refobjhash->{$reflist->[$i]}->{object}];
@@ -307,16 +315,17 @@ sub save_objects {
 }
 
 sub upload_to_shock {
-	my ($self,$content,$url) = @_;
+	my ($self,$content,$url) = @_;	
 	my $uuid = Data::UUID->new()->create_str();
 	File::Path::mkpath Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir();
-	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir().$uuid,[$content]);	
 	my $filename = Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir().$uuid;
-	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable('curl -X POST -H "Authorization: OAuth '.Bio::KBase::ObjectAPI::config::token().'" --data-binary @'.$filename.' '.$url);
-	unlink($filename);
-	my $json = JSON::XS->new;
-	my $data = $json->decode(join("\n",@{$output}));
-	return $data->{data}->{id};
+	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$content]);
+	my $ua = LWP::UserAgent->new();
+	my $req = HTTP::Request::Common::POST($url,Authorization => "OAuth ".Bio::KBase::ObjectAPI::config::token(),Content_Type => 'multipart/form-data',Content => [upload => [$filename]]);
+	$req->method('PUT');
+	my $res = $ua->request($req);
+	Bio::KBase::ObjectAPI::logging::log($res->content);
+	#unlink($filename);
 }
 
 sub object_from_file {
@@ -335,22 +344,48 @@ sub transform_genome_from_ws {
 	my ($self,$data,$meta) = @_;
 	$data = Bio::KBase::ObjectAPI::utilities::FROMJSON($data);
 	$data->{id} = $meta->[0];
-	$data->{source} = "PATRIC";
+	if (!defined($data->{source})) {
+		$data->{source} = "PATRIC";
+	}
 	foreach my $gene (@{$data->{features}}) {
 		delete $gene->{feature_creation_event};
 		if (defined($gene->{protein_translation})) {
-			$gene->{protein_translation_length} = length($gene->{protein_translation});
-			$gene->{dna_sequence_length} = 3*$gene->{protein_translation_length};
-			$gene->{md5} = Digest::MD5::md5_hex($gene->{protein_translation}),
-			$gene->{publications} = [],
-			$gene->{subsystems} = [],
-			$gene->{protein_families} = [],
-			$gene->{aliases} = [],
-			$gene->{subsystem_data} = [],
-			$gene->{regulon_data} = [],
-			$gene->{atomic_regulons} = [],
-			$gene->{coexpressed_fids} = [],
-			$gene->{co_occurring_fids} = [],
+			if (!defined($gene->{protein_translation_length})) {
+				$gene->{protein_translation_length} = length($gene->{protein_translation});
+			}
+			if (!defined($gene->{dna_sequence_length})) {
+				$gene->{dna_sequence_length} = 3*$gene->{protein_translation_length};
+			}
+			if (!defined($gene->{md5})) {
+				$gene->{md5} = Digest::MD5::md5_hex($gene->{protein_translation}),
+			}
+			if (!defined($gene->{publications})) {
+				$gene->{publications} = [],
+			}
+			if (!defined($gene->{subsystems})) {
+				$gene->{subsystems} = [],
+			}
+			if (!defined($gene->{protein_families})) {
+				$gene->{protein_families} = [],
+			}
+			if (!defined($gene->{aliases})) {
+				$gene->{aliases} = [],
+			}
+			if (!defined($gene->{subsystem_data})) {
+				$gene->{subsystem_data} = [],
+			}
+			if (!defined($gene->{regulon_data})) {
+				$gene->{regulon_data} = [],
+			}
+			if (!defined($gene->{atomic_regulons})) {
+				$gene->{atomic_regulons} = [],
+			}
+			if (!defined($gene->{coexpressed_fids})) {
+				$gene->{coexpressed_fids} = [],
+			}
+			if (!defined($gene->{co_occurring_fids})) {
+				$gene->{co_occurring_fids} = [],
+			}
 		}
 	}
 	my $contigset;
@@ -484,14 +519,18 @@ sub save_model {
 		recursive => 1,
 	});
 	#Checking what data is already present
-	my $modelmeta;
+	my $refobject;
+	my $refpath;
+	if ($ref =~ m/^(.+)\/([^\/]+)$/) {
+		$refpath = $1;
+		$refobject = $2;
+	}
 	my $createinput = {objects => [],createUploadNodes => 1};
 	my $exists = 0;
 	my $subobjects = {};
 	if (defined($output->{$ref})) {
 		for (my $i=0; $i < @{$output->{$ref}}; $i++) {
 			if ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref && $output->{$ref}->[$i]->[1] eq "modelfolder") {
-				$modelmeta = $output->{$ref}->[$i];
 				$exists = 1;
 				last;
 			}
@@ -524,7 +563,7 @@ sub save_model {
 		$objectdata->{$ref."/genome"} = $self->transform_genome_to_ws($object->genome());
 	}
 	#Saving model JSON structure
-	push(@{$createinput->{objects}},[$ref."/model","fbamodel",{},undef]);
+	push(@{$createinput->{objects}},[$ref."/model","model",{},undef]);
 	$objectdata->{$ref."/model"} = $object->toJSON();
 	#Saving model SBML format
 	push(@{$createinput->{objects}},[$ref."/".$name.".sbml","string",{
@@ -555,34 +594,43 @@ sub save_model {
 	my $listout = $self->call_ws("create",$createinput);
 	#Uploading actual files to shock
 	$output = {};
+	my $modelmeta;
 	for (my $i=0; $i < @{$listout}; $i++) {
+		Bio::KBase::ObjectAPI::logging::log("Save model:".$i."\t".join("\t",@{$listout->[$i]}));
 		if (defined($listout->[$i]->[11]) && length($listout->[$i]->[11]) > 0 && defined($objectdata->{$listout->[$i]->[2].$listout->[$i]->[0]})) {
 			$self->upload_to_shock($objectdata->{$listout->[$i]->[2].$listout->[$i]->[0]},$listout->[$i]->[11]);
 		}
-		if ($listout->[$i]->[1] eq "modelfolder") {
-			$modelmeta = $listout->[$i]
-		}
 		if ($listout->[$i]->[0] eq "model" || $listout->[$i]->[0] eq "genome") {
 			$output->{$listout->[$i]->[2].$listout->[$i]->[0]} = $listout->[$i];
-			if ($listout->[0] eq "model") {
-				$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]} = [$listout->[$i],$object];
-				$self->cache()->{$listout->[$i]->[4]} = [$listout->[$i],$object];
+			if ($listout->[$i]->[0] eq "model") {
+				$modelmeta = $listout->[$i];
+				$modelmeta->[0] = $refobject;
+				$modelmeta->[2] = $refpath."/";				
+				$object->wsmeta($modelmeta);
+				$object->_reference($ref."||");
+				$self->cache()->{$modelmeta->[2].$modelmeta->[0]} = [$modelmeta,$object];
+				$self->cache()->{$modelmeta->[4]} = [$modelmeta,$object];
 				$self->cache()->{$ref} = [$modelmeta,$object];
-				$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]}->[1]->wsmeta($modelmeta);
-				$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]}->[1]->_reference($ref."||");
 			}
-			if ($listout->[0] eq "genome") {
+			if ($listout->[$i]->[0] eq "genome") {
 		    	$self->cache()->{$listout->[$i]->[4]} = [$listout->[$i],$object->genome()];
 		    	$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]} = [$listout->[$i],$object->genome()];
 		    	$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]}->[1]->wsmeta($listout->[$i]);
 				$self->cache()->{$listout->[$i]->[2].$listout->[$i]->[0]}->[1]->_reference($listout->[$i]->[2].$listout->[$i]->[0]."||");
 			}
-		}
-		
+		}	
 	}
-	my $summary = $self->get_model_summary($model);
-	$self->update_model_meta($ref,$summary,$model->wsmeta()->[3]);
+	my $summary = $self->helper()->get_model_summary($object);
+	$self->helper()->update_model_meta($ref,$summary,$object->wsmeta()->[3]);
 	return $output;
+}
+
+sub load_model {
+	my ($self,$meta) = @_;
+	my $objdatas = $self->call_ws("get",{objects => [$meta->[2].$meta->[0]."/model"]});
+	$objdatas->[0]->[0]->[0] = $meta->[0];
+	$objdatas->[0]->[0]->[2] = $meta->[2];
+	return $objdatas->[0];
 }
 
 sub call_ws {
@@ -592,6 +640,9 @@ sub call_ws {
 	my $error;
 	my $output;
 	while ($retryCount > 0) {
+		if ($function eq "create") {
+			$args->{overwrite} = 1;
+		}	
 		eval {
 			$output = $self->workspace()->$function($args);
 		};
@@ -601,7 +652,7 @@ sub call_ws {
 			if (($error =~ m/HTTP status: 503 Service Unavailable/) ||
 			    ($error =~ m/HTTP status: 502 Bad Gateway/)) {
 				$retryCount -= 1;
-				Bio::KBase::ObjectAPI::logging->log("Error putting workspace object ".$error,"error");
+				Bio::KBase::ObjectAPI::logging::log("Error putting workspace object ".$error,"error");
 				sleep(1);				
 			} else {
 				$retryCount = 0; # Get out and report the error
@@ -612,6 +663,13 @@ sub call_ws {
 	}
 	if ($retryCount == 0) {
 		Bio::KBase::ObjectAPI::utilities::error($error);
+	}
+	if ($function eq "create") {
+		if (defined($args->{objects})) {
+			for (my $i=0; $i < @{$args->{objects}}; $i++) {
+				$self->save_file_list()->{$args->{objects}->[$i]->[0]} = 1;
+			}
+		}
 	}
 	return $output;
 }
