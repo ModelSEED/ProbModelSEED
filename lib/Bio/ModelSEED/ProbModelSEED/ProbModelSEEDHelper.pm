@@ -1412,8 +1412,7 @@ sub ModelReconstruction {
 	$mdl->wsmeta()->[0] = $parameters->{output_file};
 	#Now compute reaction probabilities if they are needed for gapfilling or probanno model building
     if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
-    	my $genomeref = $genome->_reference();
-    	$genomeref =~ s/\|\|$//; # Remove the extraneous || at the end of the reference
+    	my $genomeref = $folder."/genome";
     	my $templateref = $template->_reference();
     	$templateref =~ s/\|\|$//; # Remove the extraneous || at the end of the reference
     	my $rxnprobsref = $folder."/rxnprobs";

@@ -6,6 +6,7 @@ import sys
 import os
 import time
 import traceback
+import requests
 from biop3.ProbModelSEED.ProbAnnotationWorker import ProbAnnotationWorker
 from biop3.Workspace.WorkspaceClient import Workspace, ServerError as WorkspaceServerError, _read_inifile
 
@@ -40,7 +41,7 @@ AUTHORS
       Mike Mundy 
 '''
 
-def getObject(wsClient, reference):
+def getObject(wsClient, reference, token):
     ''' Get an object from the workspace.
     
         @param wsClient: Workspace client object
@@ -48,6 +49,7 @@ def getObject(wsClient, reference):
         @return Object data in JSON format
     '''
 
+    requests.packages.urllib3.disable_warnings()
     retryCount = 3
     while retryCount > 0:
         try:
@@ -55,6 +57,11 @@ def getObject(wsClient, reference):
             # the object's metadata (which is valid json) and the second element is
             # the object's data (which is not valid json).
             object = wsClient.get({ 'objects': [ reference ] })
+            if len(object[0][0][11]) > 0:
+                response = requests.get(object[0][0][11]+'?download', headers={ 'AUTHORIZATION': 'OAuth '+token })
+                if response.status_code != requests.codes.OK:
+                    response.raise_for_status()
+                object[0][1] = response.text
             return json.loads(object[0][1])
     
         except WorkspaceServerError as e:
@@ -127,10 +134,10 @@ if __name__ == '__main__':
     
     # Get the genome object from the workspace (for the features).
     wsClient = Workspace(url=args.wsURL, token=args.token)
-    genome = getObject(wsClient, args.genomeref)
+    genome = getObject(wsClient, args.genomeref, args.token)
 
     # Get the template object from the workspace (for the complexes and roles).
-    template = getObject(wsClient, args.templateref)
+    template = getObject(wsClient, args.templateref, args.token)
 
     # Build a dictionary to look up roles in the template by ID.
     roles = dict()
