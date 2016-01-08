@@ -41,7 +41,6 @@ Bio::KBase::ObjectAPI::config::adminmode(1);
 
 my $count = 0;
 for (my $i=0; $i < @{$modellist}; $i++) {
-	print $i."\n";
 	if ($i % $procs  == $index) {
 		if ($count % 100 == 0) {
 			$helper = undef;
@@ -66,10 +65,9 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 		};
 		if ($@) {
 			my $error = $@;
-			print $i.":".$modellist->[$i]->{id}.":error";
-			Bio::KBase::ObjectAPI::logging::log($modellist->[$i]->{id}.":".$error);
+			Bio::KBase::ObjectAPI::logging::log($i.":".$modellist->[$i]->{id}.":".$error);
 		} else {
-			print $i.":".$modellist->[$i]->{id}.":success";
+			Bio::KBase::ObjectAPI::logging::log($i.":".$modellist->[$i]->{id}.":success");
 		}
 		$count++;
 	}
