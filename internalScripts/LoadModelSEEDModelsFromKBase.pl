@@ -49,6 +49,7 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 				token => Bio::P3::Workspace::ScriptHelpers::token(),
 				username => "chenry",
 				method => "ModelReconstruction",
+				configfile => "/disks/p3dev1/deployment/deployment.cfg"
 			});
 			Bio::KBase::ObjectAPI::config::adminmode(1);
 		}

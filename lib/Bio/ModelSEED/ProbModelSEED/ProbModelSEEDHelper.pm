@@ -1933,7 +1933,7 @@ sub new {
     	adminmode => 0,
     	method => "unknown",
     	configfile => $ENV{KB_DEPLOYMENT_CONFIG},
-    	configservice => $ENV{KB_SERVICE_NAME},
+    	configservice => "ProbModelSEED",
     	workspace_url => undef
     });
     #Loading config if it's not already loaded
