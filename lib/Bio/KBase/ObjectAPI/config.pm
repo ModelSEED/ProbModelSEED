@@ -1,6 +1,7 @@
 package Bio::KBase::ObjectAPI::config;
 use strict;
 
+our $setowner = "";
 our $username = "";
 our $method = "";
 our $adminmode = 0;
@@ -102,6 +103,14 @@ sub adminmode {
 		$adminmode = $input;
 	}
 	return $adminmode;
+}
+
+sub setowner {
+	my $input = shift;
+	if (defined($input)) {
+		$setowner = $input;
+	}
+	return $setowner;
 }
 
 sub shock_url {

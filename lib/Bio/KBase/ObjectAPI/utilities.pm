@@ -1080,11 +1080,7 @@ sub kblogin {
 		fields => "un,token,user_id,kbase_sessionid,name"
 	};
 	my $ua = LWP::UserAgent->new();
-	my $req = HTTP::Request::Common::POST($url,Content_Type => 'application/x-www-form-urlencoded; charset=UTF-8',Content => $content);
-	my $res = $ua->request($req);
-	#my $ua = LWP::UserAgent->new();
-	#my $res = $ua->post($url,{"Content-Type" => "",Content => $content});
-	print $res->content."\n";
+	my $res = $ua->post($url,$content);
 	if (!$res->is_success) {
     	Bio::KBase::ObjectAPI::utilities::error("KBase login failed!");
 	}

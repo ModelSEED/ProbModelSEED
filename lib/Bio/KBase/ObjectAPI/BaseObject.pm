@@ -681,6 +681,13 @@ sub getLinkedObject {
     	} elsif ($internalref =~ m/^\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
     		return $obj->queryObject($1,{$2 => $3});
     	}
+	} elsif ($ref =~ m/^~\/(\w+)\/(\w+)\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
+		my $linkedobject = $1;
+		my $otherlinkedobject = $2;
+		return $self->topparent()->$linkedobject()->$otherlinkedobject()->queryObject($3,{$4 => $5});
+	} elsif ($ref =~ m/^~\/(\w+)\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
+		my $linkedobject = $1;
+		return $self->topparent()->$linkedobject()->queryObject($2,{$3 => $4});
 	} elsif ($ref =~ m/^~\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
 		return $self->topparent()->queryObject($1,{$2 => $3});
 	} elsif ($ref =~ m/^[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}$/) {

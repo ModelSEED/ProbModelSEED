@@ -325,7 +325,7 @@ sub upload_to_shock {
 	$req->method('PUT');
 	my $res = $ua->request($req);
 	Bio::KBase::ObjectAPI::logging::log($res->content);
-	#unlink($filename);
+	unlink($filename);
 }
 
 sub object_from_file {
@@ -641,6 +641,9 @@ sub call_ws {
 	my $output;
 	while ($retryCount > 0) {
 		if ($function eq "create") {
+			if (length(Bio::KBase::ObjectAPI::config::setowner()) > 0) {
+				$args->{setowner} = Bio::KBase::ObjectAPI::config::setowner();
+			}
 			$args->{overwrite} = 1;
 		}	
 		eval {

@@ -620,6 +620,23 @@ module ProbModelSEED {
     authentication required;
 	funcdef MergeModels(MergeModels_params input) returns (JobID output);
 	
+	/* 
+		FUNCTION: ImportKBaseModel
+		DESCRIPTION: This function imports a metabolic model from a specified location in KBase
+	*/
+    typedef structure {
+    	string kbws;
+    	string kbid;
+		string kbwsurl;
+		string kbuser;
+		string kbpassword;
+		string kbtoken;
+		string output_file;
+		string output_path;
+    } ImportKBaseModel_params;
+    authentication required;
+	funcdef ImportKBaseModel(ImportKBaseModel_params input) returns (JobID output);
+	
 	/*********************************************************************************
 	Job management functions
    	*********************************************************************************/
@@ -642,6 +659,10 @@ module ProbModelSEED {
 	*/
     typedef structure {
 		list<JobID> jobs;
+		bool include_completed;
+		bool include_failed;
+		bool include_running;
+		bool include_errors;
     } CheckJobs_params;
     authentication required;
 	funcdef CheckJobs(CheckJobs_params input) returns (mapping<JobID,Task> output);

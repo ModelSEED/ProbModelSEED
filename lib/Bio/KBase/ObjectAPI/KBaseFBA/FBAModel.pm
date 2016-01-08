@@ -1061,7 +1061,6 @@ sub unintegrateGapfillSolution {
 			delete $rxn->gapfill_data()->{$gfmeta->id()};
 			#removing direction if no other gapfilling was found
 			if ($found == 0) {
-				
 				if ($rxn->direction() eq $gfarray->[1]) {
 					$self->remove("modelreactions",$rxn);
 				} elsif ($gfarray->[1] eq ">" && $rxn->direction() eq "=") {
@@ -1099,10 +1098,10 @@ sub integrateGapfillSolution {
 	}
 	$self->_clearIndex();
 	my $gf;
-	if (defined($gfmeta->gapfill_ref())) {
-		$gf = $gfmeta->gapfill();
-	} else {
+	if (defined($gfmeta->fba_ref())) {
 		$gf = $gfmeta->fba();
+	} else {
+		$gf = $gfmeta->gapfill();
 	}
 	if (!defined($args->{solution})) {
 		$args->{solution} = $gf->gapfillingSolutions()->[0]->id();
@@ -1522,6 +1521,46 @@ sub merge_models {
 		return $genomeObj;
 	}
 	Bio::KBase::ObjectAPI::logging::log("Merge complete!");	
+}
+
+sub translate_to_localrefs {
+	my $self = shift;
+	my $compartments = $self->modelcompartments();
+    for (my $i=0; $i < @{$compartments}; $i++) {
+		if ($compartments->[$i]->compartment_ref() =~ m/\/([^\/]+)$/) {
+    		$compartments->[$i]->compartment_ref("~/template/compartments/id/".$1);
+		}
+    }
+	my $compounds = $self->modelcompounds();
+    for (my $i=0; $i < @{$compounds}; $i++) {
+		if ($compounds->[$i]->compound_ref() =~ m/\/([^\/]+)$/) {
+			$compounds->[$i]->compound_ref("~/template/compounds/id/".$1);
+		}
+    }
+    my $reactions = $self->modelreactions();
+    for (my $i=0; $i < @{$reactions}; $i++) {
+		my $array = [split(/_/,$reactions->[$i]->id())];
+	 	my $comp = pop(@{$array});
+	 	$comp =~ s/\d+//;
+		if ($reactions->[$i]->reaction_ref() =~ m/\/([^\/]+)$/) {
+			$reactions->[$i]->reaction_ref("~/template/reactions/id/".$1."_".$comp);
+		}
+		my $prots = $reactions->[$i]->modelReactionProteins();
+    	for (my $j=0; $j < @{$prots}; $j++) {
+    		if ($prots->[$j]->complex_ref() =~ m/\/([^\/]+)$/) {
+    			$prots->[$j]->complex_ref("~/template/complexes/name/".$1);
+    		}
+    		my $subunits = $prots->[$j]->modelReactionProteinSubunits();
+    		for (my $k=0; $k < @{$subunits}; $k++) {
+    			my $ftrrefs = $subunits->[$k]->feature_refs();
+    			for (my $m=0; $m < @{$ftrrefs}; $m++) {
+    				if ($ftrrefs->[$m] =~ m/\/([^\/]+)$/) {
+    					$ftrrefs->[$m] = "~/genome/features/id/".$1;
+    				}
+    			}
+    		}
+    	}
+    }
 }
 
 __PACKAGE__->meta->make_immutable;

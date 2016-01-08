@@ -13,6 +13,7 @@ use Bio::KBase::ObjectAPI::logging;
 use Bio::KBase::ObjectAPI::PATRICStore;
 use Bio::ModelSEED::Client::SAP;
 use Bio::KBase::AppService::Client;
+use Bio::KBase::ObjectAPI::KBaseStore;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
 
 #****************************************************************************
@@ -1809,11 +1810,14 @@ sub ImportKBaseModel {
 		kbwsurl => $parameters->{kbwsurl},
     });
     my $model = $kbstore->get_object($parameters->{kbws}."/".$parameters->{kbid});
+    $model->id($parameters->{output_file});
+    $model->source("ModelSEED");
     #Creating folder for imported model
 	my $folder = $parameters->{output_path}.$parameters->{output_file};
     $self->save_object($folder,undef,"modelfolder");
    	#Saving contigsets inside the model folder if they exist for the genome - saved as contigset for now so no translation needed
    	my $genome = $model->genome();
+   	$model->name($genome->scientific_name()." model");
    	if (defined($genome->contigset_ref())) {
    		$self->save_object($folder."/contigset",$genome->contigs(),"contigset");
    		#Resetting reference for contigset to local path
@@ -1821,158 +1825,90 @@ sub ImportKBaseModel {
    	}
    	#Saving genome inside the model folder - no translation is needed
    	$self->save_object($folder."/genome",$genome,"genome");
-   	#Resetting reference for genome to local path
-   	$genome->_reference($parameters->{output_file}."/genome||");
-   	$model->genome_ref($genome->_reference());
     #Changing template reference
-    if ($model->template_ref() =~ m/228\/2\/\d+/) {
-    	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."GramNegative.modeltemplate");
-    } elsif ($model->template_ref() =~ m/228\/1\/\d+/) {
-    	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."GramPositive.modeltemplate");
+    if ($model->template_ref() =~ m/228\/2\/*\d*/) {
+    	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."GramNegative.modeltemplate||");
+    } elsif ($model->template_ref() =~ m/228\/1\/*\d*/) {
+    	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."GramPositive.modeltemplate||");
     }
-    $model->parent($self->PATRICStore());
-    #Correcting compound refs
-    my $compounds = $model->modelcompounds();
-    for (my $i=0; $i < @{$compounds}; $i++) {
-    	my $cpd = $compounds->[$i]->compound();
-    	$compounds->[$i]->compound_ref($cpd->_reference());
-    }
-    #Correcting reaction and feature refs
-    my $reactions = $model->modelreactions();
-    for (my $i=0; $i < @{$reactions}; $i++) {
-    	my $rxn = $reactions->[$i]->reaction();
-    	$reactions->[$i]->reaction_ref($rxn->_reference());
-    	my $prots = $reactions->[$i]->modelReactionProteins();
-    	for (my $j=0; $j < @{$prots}; $j++) {
-    		my $subunits = $prots->[$j]->modelReactionProteinSubunits();
-    		for (my $k=0; $k < @{$subunits}; $k++) {
-    			my $ftrrefs = $subunits->[$k]->feature_refs();
-    			for (my $m=0; $m < @{$ftrrefs}; $m++) {
-    				if ($ftrrefs->[$m] =~ m/\/([^\/]+)$/) {
-    					$ftrrefs->[$m] = $parameters->{output_file}."/genome||/features/id/".$1;
-    				}
-    			}
-    		}
-    	}
-    }
-    #Correcting compartment refs
-    my $compartments = $model->modelcompartments();
-    for (my $i=0; $i < @{$compartments}; $i++) {
-    	my $cmp = $compartments->[$i]->compartment();
-    	$compartments->[$i]->compartment_ref($cmp->_reference());
-    }
-	#Transfering gapfillings
+    $model->translate_to_localrefs();
+   	#Transfering gapfillings
     $self->save_object($folder."/gapfilling",undef,"folder");
     my $oldgfs = $model->gapfillings();
     $model->gapfillings([]);
     for (my $i=0; $i < @{$oldgfs}; $i++) {
     	#Only transfering integrated gapfillings
     	if ($oldgfs->[$i]->integrated() == 1) {
-	    	push(@{$model->gapfillings()},$oldgfs->[$i]);
+	    	my $oldparent = $model->parent();
 	    	$oldgfs->[$i]->id("gf.".$i);
 	    	$oldgfs->[$i]->gapfill_id("gf.".$i);
 	    	my $fba;
 	    	if (defined($oldgfs->[$i]->gapfill_ref())) {
 	    		my $gf = $oldgfs->[$i]->gapfill();
+	    		Bio::KBase::ObjectAPI::logging::log($gf->serializeToDB());
 	    		$fba = $gf->fba();
-	    		$fba->gapfillingSolutions($gf->gapfillingSolutions());
-	    		$oldgfs->[$i]->gapfill_ref(undef);
+	    		if (defined($gf->gapfillingSolutions()->[0])) {
+	    			$fba->add("gapfillingSolutions",$gf->gapfillingSolutions()->[0]);
+	    		}
 	    	} else {
 	    		$fba = $oldgfs->[$i]->fba();
 	    	}
-	    	$oldgfs->[$i]->fba_ref($parameters->{output_file}."/gapfilling/".$fba->id()."||");
-	    	$fba->id("gf.".$i);
-	    	$fba->fbamodel_ref($folder."||");
-	    	if ($fba->media_ref() =~ m/\/([^\/]+)$/) {
-	    		$fba->media_ref("/chenry/public/modelsupport/patric-media/".$1."||");
-	    		$oldgfs->[$i]->media_ref($fba->media_ref());
+	    	if (defined($fba->gapfillingSolutions()->[0])) {
+		    	Bio::KBase::ObjectAPI::logging::log("Valid gapfilling:".$parameters->{output_file}."/gapfilling/gf.".$i);
+		    	push(@{$model->gapfillings()},$oldgfs->[$i]);
+		    	$fba->fbamodel($model);
+		    	$fba->id("gf.".$i);
+		    	$oldgfs->[$i]->fba_ref($parameters->{output_file}."/gapfilling/".$fba->id()."||"); 
+		    	$fba->translate_to_localrefs();
+		    	if ($fba->media_ref() =~ m/\/([^\/]+)$/) {
+		    		$fba->media_ref("/chenry/public/modelsupport/patric-media/".$1."||");
+		    		$oldgfs->[$i]->media_ref($fba->media_ref());
+		    	}	    	
+		    	#Saving FBA object
+		    	$fba->fbamodel_ref("../../".$model->id()."||");
+		    	$self->save_object($folder."/gapfilling/".$fba->id(),$fba,"fba");
+		    	my $solution = $fba->gapfillingSolutions()->[0];
+		    	#Integrating new reactions into model
+				$model->parent($self->PATRICStore());
+				$fba->parent($self->PATRICStore());
+				my $rxns = $solution->gapfillingSolutionReactions();
+				for (my $i=0; $i < @{$rxns}; $i++) {
+					my $rxn = $rxns->[$i];
+					my $rxnid = $rxn->reaction()->id();
+					my $mdlrxn;
+					my $ismdlrxn = 0;
+					$mdlrxn = $model->getObject("modelreactions",$rxnid.$rxn->compartmentIndex());
+					if (!defined($mdlrxn)) {
+						Bio::KBase::ObjectAPI::logging::log("Could not find ".$rxnid." in model ".$parameters->{output_file});
+						$mdlrxn = $model->addModelReaction({
+							reaction => $rxn->reaction()->msid(),
+							compartment => $rxn->reaction()->templatecompartment()->id(),
+							compartmentIndex => $rxn->compartmentIndex(),
+							direction => $rxn->direction()
+						});
+						$mdlrxn->gapfill_data()->{$fba->id()} = "added:".$rxn->direction();
+					} else {
+						my $prots = $mdlrxn->modelReactionProteins();
+						if (@{$prots} == 0) {
+							$mdlrxn->gapfill_data()->{$fba->id()} = "added:".$rxn->direction();
+						} else {
+							$mdlrxn->direction("=");
+							$mdlrxn->gapfill_data()->{$fba->id()} = "reversed:".$rxn->direction();
+						}
+					}
+				}
+				$model->parent($oldparent);
 	    	}
-	    	for (my $j=0; $j < @{$fba->geneKO_refs()}; $j++) {
-	    		if ($fba->geneKO_refs()->[$j] =~ m/\/([^\/]+)$/) {
-    				$fba->geneKO_refs()->[$j] = "../genome||/features/id/".$1;
-    			}
-	    	}
-	    	for (my $j=0; $j < @{$fba->reactionKO_refs()}; $j++) {
-	    		if ($fba->reactionKO_refs()->[$j] =~ m/\/([^\/]+)$/) {
-    				$fba->reactionKO_refs()->[$j] = "../../".$parameters->{output_file}."||/modelreactions/id/".$1;
-    			}
-	    	}
-	    	for (my $j=0; $j < @{$fba->additionalCpd_refs()}; $j++) {
-	    		if ($fba->additionalCpd_refs()->[$j] =~ m/\/([^\/]+)$/) {
-    				$fba->additionalCpd_refs()->[$j] = "../../".$parameters->{output_file}."||/modelcompounds/id/".$1;
-    			}
-	    	}
-	    	my $subobject_ref_trans = {
-	    		FBAReactionBound => ["modelreaction_ref","modelreactions"],
-	    		FBACompoundBound => ["modelcompound_ref","modelcompounds"],
-	    		FBACompoundVariable => ["modelcompound_ref","modelcompounds"],
-	    		FBAReactionVariable => ["modelreaction_ref","modelreactions"],
-	    		FBABiomassVariable => ["biomass_ref","biomasses"],
-	    		FBAMetaboliteProductionResult => ["modelcompound_ref","modelcompounds"]
-	    	};
-	    	foreach my $item (keys(%{$subobject_ref_trans})) {
-	    		my $objects = $fba->$item();
-	    		for (my $j=0; $j < @{$objects}; $j++) {
-	    			my $fn = $subobject_ref_trans->{$item}->[0];
-	    			if ($objects->[$j]->$fn() =~ m/\/([^\/]+)$/) {
-	    				$objects->[$j]->$fn("../../".$parameters->{output_file}."||/".$subobject_ref_trans->{$item}->[1]."/id/".$1)
-	    			}
-	    		}
-	    	}
-	    	my $solutions = $fba->gapfillingSolutions();
-	    	for (my $j=0; $j < @{$solutions}; $j++) {
-	    		my $solution = $solutions->[$j];
-	    		my $gfrxns = $solution->gapfillingSolutionReactions();
-	    		for (my $k=0; $k < @{$gfrxns}; $k++) {
-	    			my $gfrxn = $gfrxns->[$k];
-	    			if ($gfrxn->compartment_ref() =~ m/\/([^\/]+)$/) {
-	    				my $comp = $1;
-	    				$gfrxn->compartment_ref($model->template_ref()."/compartments/id/".$comp);
-	    				if ($gfrxn->reaction_ref() =~ m/\/([^\/]+)$/) {
-		    				my $rxn = $1;
-		    				$gfrxn->reaction_ref($model->template_ref()."/reactions/id/".$rxn."_".$comp);
-		    				my $mdlrxn = $model->get_object("modelreactions",{id => $rxn."_".$comp.$gfrxn->compartmentIndex()});
-		    				if (@{$mdlrxn->modelReactionProteins()} > 0) {
-		    					$mdlrxn->gapfill_data()->{$parameters->{output_file}."/gapfilling/".$fba->id()."||"} = "added:".$rxn->direction();
-		    				} else {
-		    					$mdlrxn->gapfill_data()->{$parameters->{output_file}."/gapfilling/".$fba->id()."||"} = "reversed:".$rxn->direction();
-		    				}
-		    			}
-	    			}
-	    		}
-	    		$gfrxns = $solution->rejectedCandidates();
-	    		for (my $k=0; $k < @{$gfrxns}; $k++) {
-	    			my $gfrxn = $gfrxns->[$k];
-	    			if ($gfrxn->compartment_ref() =~ m/\/([^\/]+)$/) {
-	    				my $comp = $1;
-	    				$gfrxn->compartment_ref($model->template_ref()."/compartments/id/".$comp);
-	    				if ($gfrxn->reaction_ref() =~ m/\/([^\/]+)$/) {
-		    				$gfrxn->reaction_ref($model->template_ref()."/reactions/id/".$1."_".$comp);
-		    			}
-	    			}
-	    		}
-	    		$gfrxns = $solution->activatedReactions();
-	    		for (my $k=0; $k < @{$gfrxns}; $k++) {
-	    			my $gfrxn = $gfrxns->[$k];
-	    			if ($gfrxn->modelreaction_ref() =~ m/\/([^\/]+)$/) {
-	    				$gfrxn->modelreaction_ref("../../".$parameters->{output_file}."||/modelreactions/id/".$1);
-	    			}
-	    		}
-	    		$gfrxns = $solution->failedReaction_refs();
-	    		for (my $k=0; $k < @{$gfrxns}; $k++) {
-	    			if ($gfrxns->[$k] =~ m/\/([^\/]+)$/) {
-	    				$gfrxns->[$k] = "../../".$parameters->{output_file}."||/modelreactions/id/".$1;
-	    			}
-	    		}
-	    	}	    	
-	    	#Saving FBA object
-	    	$self->save_object($fba,$folder."/gapfilling/".$fba->id(),"fba");
     	}
     }
+    $model->parent($self->PATRICStore());
     #Saving model to PATRIC
-	$self->save_object($model,$parameters->{output_path}."/".$parameters->{output_file},"model",{});
-	$jobresult->{path} = $parameters->{output_path}."/".$parameters->{output_file}."/jobresult";
-	return $parameters->{output_path}."/".$parameters->{output_file};
+    $model->wsmeta->[0] = $parameters->{output_file};
+    $model->wsmeta->[2] = $parameters->{output_path};
+    $model->genome_ref($model->id()."/genome||");
+	$self->save_object($parameters->{output_path}.$parameters->{output_file},$model,"model",{});
+	$jobresult->{path} = $parameters->{output_path}.$parameters->{output_file}."/jobresult";
+	return $parameters->{output_path}.$parameters->{output_file};
 }
 
 sub load_to_shock {
@@ -1994,6 +1930,7 @@ sub new {
     my $self = {};
     bless $self, $class;
     $parameters = $self->validate_args($parameters,["token","username"],{
+    	setowner => undef,
     	adminmode => 0,
     	method => "unknown",
     	configfile => $ENV{KB_DEPLOYMENT_CONFIG},
@@ -2019,6 +1956,9 @@ sub new {
     }
     if (defined($parameters->{adminmode})) {
     	Bio::KBase::ObjectAPI::config::adminmode($parameters->{adminmode});
+    }
+    if (defined($parameters->{adminmode})) {
+    	Bio::KBase::ObjectAPI::config::setowner($parameters->{setowner});
     }
     return $self;
 }
