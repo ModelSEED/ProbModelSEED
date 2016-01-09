@@ -3398,7 +3398,9 @@ sub translate_to_localrefs {
 			if ($gfrxn->compartment_ref() =~ m/\/([^\/]+)$/) {
 				my $comp = $1;
 				$gfrxn->compartment_ref("~/fbamodel/template/compartments/id/".$comp);
-				if ($gfrxn->reaction_ref() =~ m/\/([^\/]+)$/) {
+				if ($gfrxn->reaction_ref() =~ m/\/([^\/]+_[a-z])$/) {
+					$gfrxn->reaction_ref("~/fbamodel/template/reactions/id/".$1);
+				} elsif ($gfrxn->reaction_ref() =~ m/\/([^\/]+)$/) {
 					my $rxn = $1;
 					$gfrxn->reaction_ref("~/fbamodel/template/reactions/id/".$rxn."_".$comp);
 				}

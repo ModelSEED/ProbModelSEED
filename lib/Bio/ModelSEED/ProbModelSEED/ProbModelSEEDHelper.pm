@@ -1910,6 +1910,114 @@ sub ImportKBaseModel {
 	return $parameters->{output_path}.$parameters->{output_file};
 }
 
+sub TranslateOlderModels {
+	my($self,$parameters,$jobresult) = @_;
+	$parameters = $self->validate_args($parameters,["model"],{ 
+		output_file => undef,
+		output_path => undef
+    });
+    #Getting the model
+    my $model = $self->get_object($parameters->{model});
+    if (!defined($parameters->{output_file})) {
+    	$parameters->{output_file} = $model->wsmeta()->[0];
+    }
+    if (!defined($parameters->{output_path})) {
+    	$parameters->{output_path} = $model->wsmeta()->[2];
+    }
+    #Making sure the output path has a slash at the end
+	if (substr($parameters->{output_path},-1,1) ne "/") {
+    	$parameters->{output_path} .= "/";
+    }
+    $model->id($parameters->{output_file});
+    $model->source("ModelSEED");
+    #Creating folder for imported model
+	my $folder = $parameters->{output_path}.$parameters->{output_file};
+    $self->save_object($folder,undef,"modelfolder");
+    my $genome = $model->genome();
+    $model->name($genome->scientific_name()." model");
+    if (defined($genome->contigset_ref())) {
+   		$self->save_object($folder."/contigset",$genome->contigs(),"contigset");
+   		#Resetting reference for contigset to local path
+   		$genome->contigset_ref("contigset||");
+   	}
+    #Saving genome inside the model folder - no translation is needed
+   	$self->save_object($folder."/genome",$genome,"genome");
+    $model->translate_to_localrefs();
+    $self->save_object($folder."/gapfilling",undef,"folder");
+    #Transfering gapfillings
+    my $gfs = $model->gapfillings();
+    if (@{$gfs} == 0) {
+    	Bio::KBase::ObjectAPI::logging::log($model->wsmeta()->[2].".".$model->wsmeta()->[0]."/gapfilling");
+    	my $list = $self->call_ws("ls",{
+			paths => [$model->wsmeta()->[2].".".$model->wsmeta()->[0]."/gapfilling"],
+			excludeDirectories => 1,
+			excludeObjects => 0,
+			recursive => 1,
+			query => {type => "fba"}
+		});
+		if (defined($list->{$model->wsmeta()->[2].".".$model->wsmeta()->[0]."/gapfilling"})) {
+			$list = $list->{$model->wsmeta()->[2].".".$model->wsmeta()->[0]."/gapfilling"};
+			for (my $i=0; $i < @{$list}; $i++) {
+				$model->add("gapfillings",{
+					id => $list->[$i]->[0],
+					gapfill_id => $list->[$i]->[0],
+					fba_ref => $list->[$i]->[2]."/".$list->[$i]->[0]."||",
+					integrated => 1,
+					integrated_solution => 0,
+					media_ref => $list->[$i]->[7]->{media}
+				});
+			}
+			$gfs = $model->gapfillings();
+		}
+    }
+    for (my $i=0; $i < @{$gfs}; $i++) {
+    	my $fba = $gfs->[$i]->fba();
+    	if (!defined($fba->gapfillingSolutions()->[0])) {
+    		$model->remove("gapfillings",$gfs->[$i]);
+    	} else {
+    		Bio::KBase::ObjectAPI::logging::log("Valid gapfilling:".$parameters->{output_file}."/gapfilling/gf.".$i);
+	    	$fba->fbamodel($model);
+	    	$gfs->[$i]->fba_ref($parameters->{output_file}."/gapfilling/".$fba->id()."||");
+	    	$fba->translate_to_localrefs();	    	
+	    	#Saving FBA object
+	    	$fba->fbamodel_ref("../../".$model->id()."||");
+	    	$self->save_object($folder."/gapfilling/".$fba->id(),$fba,"fba");
+	    	my $solution = $fba->gapfillingSolutions()->[0];
+	    	#Integrating new reactions into model
+			my $rxns = $solution->gapfillingSolutionReactions();
+			for (my $i=0; $i < @{$rxns}; $i++) {
+				my $rxn = $rxns->[$i];
+				my $rxnid = $rxn->reaction()->id();
+				my $mdlrxn;
+				my $ismdlrxn = 0;
+				$mdlrxn = $model->getObject("modelreactions",$rxnid.$rxn->compartmentIndex());
+				if (!defined($mdlrxn)) {
+					Bio::KBase::ObjectAPI::logging::log("Could not find ".$rxnid." in model ".$parameters->{output_file});
+					$mdlrxn = $model->addModelReaction({
+						reaction => $rxn->reaction()->msid(),
+						compartment => $rxn->reaction()->templatecompartment()->id(),
+						compartmentIndex => $rxn->compartmentIndex(),
+						direction => $rxn->direction()
+					});
+					$mdlrxn->gapfill_data()->{$fba->id()} = "added:".$rxn->direction();
+				} else {
+					my $prots = $mdlrxn->modelReactionProteins();
+					if (@{$prots} == 0) {
+						$mdlrxn->gapfill_data()->{$fba->id()} = "added:".$rxn->direction();
+					} else {
+						$mdlrxn->direction("=");
+						$mdlrxn->gapfill_data()->{$fba->id()} = "reversed:".$rxn->direction();
+					}
+				}
+			}
+    	}
+    }
+    $model->genome_ref($model->id()."/genome||");
+	$self->save_object($parameters->{output_path}.$parameters->{output_file},$model,"model",{});
+	$jobresult->{path} = $parameters->{output_path}.$parameters->{output_file}."/jobresult";
+	return $parameters->{output_path}.$parameters->{output_file};
+}
+
 sub load_to_shock {
 	my($self,$data) = @_;
 	my $uuid = Data::UUID->new()->create_str();
