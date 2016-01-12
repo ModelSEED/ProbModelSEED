@@ -1090,6 +1090,9 @@ sub list_models {
 		$list = $list->{"/".Bio::KBase::ObjectAPI::config::username()."/"};
     }
 	for (my $i=0; $i < @{$list}; $i++) {
+		if ($list->[$i]->[0] ne Bio::KBase::ObjectAPI::config::home_dir()) {
+			next;
+		}
 		my $currentlist = $self->call_ws("ls",{
 			paths => [$list->[$i]->[2].$list->[$i]->[0]],
 			excludeDirectories => 0,
@@ -1114,37 +1117,44 @@ sub list_models {
 				push(@{$fbahash->{$fbalist->[$k]->[2]}},$fbalist->[$k]); 
 			}
 			for (my $j=0; $j < @{$newlist}; $j++) {
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]} = $newlist->[$j]->[8];
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{rundate} = $newlist->[$j]->[3];
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{id} = $newlist->[$j]->[0];
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gene_associated_reactions} = ($output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_reactions} - 22);
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{gapfilled_reactions} = 0;
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = 0;
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{integrated_gapfills} = 0;
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills} = 0;
+				my $key = $newlist->[$j]->[2].$newlist->[$j]->[0];
+				$output->{$key}->{rundate} = $newlist->[$j]->[3];
+				$output->{$key}->{id} = $newlist->[$j]->[0];
+				$output->{$key}->{source} = $newlist->[$j]->[7]->{source};
+				$output->{$key}->{source_id} = $newlist->[$j]->[7]->{source_id};
+				$output->{$key}->{name} = $newlist->[$j]->[7]->{name};
+				$output->{$key}->{type} = $newlist->[$j]->[7]->{type};
+				$output->{$key}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
+				$output->{$key}->{genome_ref} = $newlist->[$j]->[7]->{genome_ref};
+				$output->{$key}->{template_ref} = $newlist->[$j]->[7]->{template_ref};
+				$output->{$key}->{num_genes} = $newlist->[$j]->[7]->{num_genes};
+				$output->{$key}->{num_compounds} = $newlist->[$j]->[7]->{num_compounds};
+				$output->{$key}->{num_reactions} = $newlist->[$j]->[7]->{num_reactions};
+				$output->{$key}->{num_biomasses} = $newlist->[$j]->[7]->{num_biomasses};
+				$output->{$key}->{num_biomass_compounds} = $newlist->[$j]->[7]->{num_biomass_compounds};
+				$output->{$key}->{num_compartments} = $newlist->[$j]->[7]->{num_compartments};				
+				$output->{$key}->{gene_associated_reactions} = $newlist->[$j]->[7]->{gene_associated_reactions};
+				$output->{$key}->{gapfilled_reactions} = $newlist->[$j]->[7]->{gapfilled_reactions};
+				$output->{$key}->{fba_count} = 0;
+				$output->{$key}->{integrated_gapfills} = 0;
+				$output->{$key}->{unintegrated_gapfills} = 0;
 				if (defined($fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/fba/"})) {
-					$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/fba/"}};
+					$output->{$key}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/fba/"}};
 				}
 				if (defined($fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"})) {
 					for (my $k=0; $k < @{$fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"}}; $k++) {
 						my $item = $fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"}->[$k];
 						if ($item->[7]->{integrated} == 1) {
-							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{integrated_gapfills}++;
+							$output->{$key}->{integrated_gapfills}++;
 						} else {
-							$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{unintegrated_gapfills}++;
+							$output->{$key}->{unintegrated_gapfills}++;
 						}
 					}
 				}
-				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{reactions};
-				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{genes};
-				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasses};		
-				$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{num_biomass_compounds} = split(/\//,$output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds});
-				delete $output->{$newlist->[$j]->[2].$newlist->[$j]->[0]}->{biomasscpds};
 			}
 		}
 	}
-	print Data::Dumper->Dump([$output]);
+#	print Data::Dumper->Dump([$output]);
 	return $output;
 }
 
@@ -1392,9 +1402,9 @@ sub ModelReconstruction {
     }
     if (!defined($parameters->{output_path})) {
     	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
-    		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/models/";
+    		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::plantseed_home_dir()."/";
     	} else {
-    		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
+    		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/";
     	}
     }
     if (substr($parameters->{output_path},-1,1) ne "/") {
