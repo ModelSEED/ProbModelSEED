@@ -28,7 +28,7 @@ sub logger {
 				"log4perl.rootLogger=INFO, LOGFILE",
 				"",
 				"log4perl.appender.LOGFILE=Log::Log4perl::Appender::File",
-				"log4perl.appender.LOGFILE.filename=".Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.log",
+				"log4perl.appender.LOGFILE.filename=".Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.log2",
 				"log4perl.appender.LOGFILE.mode=append",
 				"",
 				"log4perl.appender.LOGFILE.layout=PatternLayout",
