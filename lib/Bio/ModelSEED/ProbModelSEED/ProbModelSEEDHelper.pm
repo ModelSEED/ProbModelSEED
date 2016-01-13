@@ -1883,7 +1883,7 @@ sub ImportKBaseModel {
 				my $rxns = $solution->gapfillingSolutionReactions();
 				for (my $i=0; $i < @{$rxns}; $i++) {
 					my $rxn = $rxns->[$i];
-					$rxn->reaction($rxn->_buil_reaction());
+					$rxn->reaction($rxn->_build_reaction());
 					my $rxnid = $rxn->reaction()->id();
 					my $mdlrxn;
 					my $ismdlrxn = 0;
