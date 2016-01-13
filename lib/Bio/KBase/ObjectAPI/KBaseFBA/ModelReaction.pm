@@ -63,7 +63,7 @@ sub _build_reaction {
 	 	$rxn = $self->getLinkedObject($self->reaction_ref());
 	 }
 	 if (!defined($rxn)) {
-	 	$rxn = $self->getLinkedObject("~/template/reactions/id/rxn00000_".$comp);
+	 	$rxn = $self->getLinkedObject("~/template/reactions/id/rxn00000_c");
 	 }
 	 return $rxn
 }
