@@ -58,7 +58,7 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 		Bio::KBase::ObjectAPI::config::setowner($modellist->[$i]->{owner});
 		eval {
 			$helper->app_harness("TranslateOlderModels",{
-				model => "/modelseed/modelseed/".$modellist->[$i]->{id},
+				model => "/modelseed/modelseed/models/".$modellist->[$i]->{id},
 				output_path => "/".$modellist->[$i]->{owner}."/modelseed/"
 			});
 		};
