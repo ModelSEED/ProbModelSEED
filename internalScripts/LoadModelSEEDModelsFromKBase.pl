@@ -21,13 +21,22 @@ while (my $line = <$fh>) {
 	$kbhash->{$array->[1]} = 1;
 }
 close($fh);
+$filename = "/disks/p3dev1/fba/successlist.txt";
+my $completehash = {};
+open(my $fh, "<", $filename);
+while (my $line = <$fh>) {
+	chomp($line);
+	my $array = [split(/:/,$line)];
+	$completehash->{$array->[1]} = 1;
+}
+close($fh);
 $filename = "/homes/chenry/ModelList.txt";
 my $modellist = [];
 open(my $fb, "<", $filename);
 while (my $line = <$fb>) {
 	chomp($line);
 	my $array = [split(/\t/,$line)];
-	if (defined($kbhash->{$array->[0]})) {
+	if (defined($kbhash->{$array->[0]}) && !defined($completehash->{$array->[0]})) {
 		push(@{$modellist},{
 			owner => $array->[2],
 			id => $array->[0]
