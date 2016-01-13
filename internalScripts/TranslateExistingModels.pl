@@ -30,7 +30,7 @@ open(my $fb, "<", $filename);
 while (my $line = <$fb>) {
 	chomp($line);
 	my $array = [split(/\t/,$line)];
-	if (defined($kbhash->{$array->[0]}) && !defined($completehash->{$array->[0]})) {
+	if (defined($kbhash->{$array->[0]})) {
 		push(@{$modellist},{
 			owner => $array->[2],
 			id => $array->[0]
