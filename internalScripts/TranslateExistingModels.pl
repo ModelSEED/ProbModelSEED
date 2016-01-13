@@ -20,8 +20,8 @@ my $kbhash = {};
 open(my $fh, "<", $filename);
 while (my $line = <$fh>) {
 	chomp($line);
-	my $array = [split(/\t/,$line)];
-	$kbhash->{$array->[1]} = 1;
+	my $array = [split(/\s+/,$line)];
+	$kbhash->{$array->[0]} = 1;
 }
 close($fh);
 $filename = "/homes/chenry/ModelList.txt";
