@@ -1885,27 +1885,29 @@ sub ImportKBaseModel {
 				my $rxns = $solution->gapfillingSolutionReactions();
 				for (my $i=0; $i < @{$rxns}; $i++) {
 					my $rxn = $rxns->[$i];
-					Bio::KBase::ObjectAPI::logging::log($rxn->reaction_ref());
-					my $rxnid = $rxn->reaction()->id();
-					my $mdlrxn;
-					my $ismdlrxn = 0;
-					$mdlrxn = $model->getObject("modelreactions",$rxnid.$rxn->compartmentIndex());
-					if (!defined($mdlrxn)) {
-						Bio::KBase::ObjectAPI::logging::log("Could not find ".$rxnid." in model ".$parameters->{output_file});
-						$mdlrxn = $model->addModelReaction({
-							reaction => $rxn->reaction()->msid(),
-							compartment => $rxn->reaction()->templatecompartment()->id(),
-							compartmentIndex => $rxn->compartmentIndex(),
-							direction => $rxn->direction()
-						});
-						$mdlrxn->gapfill_data()->{$fba->id()} = "added:".$rxn->direction();
-					} else {
-						my $prots = $mdlrxn->modelReactionProteins();
-						if (@{$prots} == 0) {
+					my $obj = $rxn->getLinkedObject($rxn->reaction_ref());
+					if (defined($obj)) {
+						my $rxnid = $rxn->reaction()->id();
+						my $mdlrxn;
+						my $ismdlrxn = 0;
+						$mdlrxn = $model->getObject("modelreactions",$rxnid.$rxn->compartmentIndex());
+						if (!defined($mdlrxn)) {
+							Bio::KBase::ObjectAPI::logging::log("Could not find ".$rxnid." in model ".$parameters->{output_file});
+							$mdlrxn = $model->addModelReaction({
+								reaction => $rxn->reaction()->msid(),
+								compartment => $rxn->reaction()->templatecompartment()->id(),
+								compartmentIndex => $rxn->compartmentIndex(),
+								direction => $rxn->direction()
+							});
 							$mdlrxn->gapfill_data()->{$fba->id()} = "added:".$rxn->direction();
 						} else {
-							$mdlrxn->direction("=");
-							$mdlrxn->gapfill_data()->{$fba->id()} = "reversed:".$rxn->direction();
+							my $prots = $mdlrxn->modelReactionProteins();
+							if (@{$prots} == 0) {
+								$mdlrxn->gapfill_data()->{$fba->id()} = "added:".$rxn->direction();
+							} else {
+								$mdlrxn->direction("=");
+								$mdlrxn->gapfill_data()->{$fba->id()} = "reversed:".$rxn->direction();
+							}
 						}
 					}
 				}
