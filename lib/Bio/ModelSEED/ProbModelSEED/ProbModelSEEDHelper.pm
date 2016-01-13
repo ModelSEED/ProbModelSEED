@@ -1839,6 +1839,8 @@ sub ImportKBaseModel {
     	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."GramNegative.modeltemplate||");
     } elsif ($model->template_ref() =~ m/228\/1\/*\d*/) {
     	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."GramPositive.modeltemplate||");
+    } elsif ($model->template_ref() =~ m/228\/4\/*\d*/) {
+    	$model->template_ref(Bio::KBase::ObjectAPI::config::template_dir()."plant.modeltemplate||");
     }
     $model->translate_to_localrefs();
    	#Transfering gapfillings

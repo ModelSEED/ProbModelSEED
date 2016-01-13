@@ -23,7 +23,7 @@ Bio::KBase::ObjectAPI::logging::log("App starting! Current configuration paramet
 my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	token => $script->token()->token(),
 	username => $script->token()->user_id(),
-	method => "ModelReconstruction",
+	method => "RunProbModelSEEDJob",
 });
 $script->{workspace_url} = Bio::KBase::ObjectAPI::config::workspace_url();
 $script->{donot_create_result_folder} = 1;
@@ -38,6 +38,7 @@ sub run_probmodelseed_job
     my($app, $app_def, $raw_params, $params) = @_;
     print "Running job: ", Dumper($app_def, $raw_params, $params);
 	my $command = $params->{command};
+	Bio::KBase::ObjectAPI::config::method($command);
 	my $args = $params->{arguments};
 	if (!ref($args)) {
 		$args = Bio::KBase::ObjectAPI::utilities::FROMJSON($args);
