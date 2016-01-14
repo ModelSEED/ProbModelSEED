@@ -214,14 +214,14 @@ sub process_object {
 				name => "rxn00000",
 				type => "custom",
 				reference => "",
-				direction => "="
+				direction => "=",
 				GapfillDirection => "=",
 				maxforflux => 0,
 				maxrevflux => 0,
 				deltaG => 0,
 				deltaGErr => 0,
-				status => "OK"
-				templatecompartment_ref => "~/compartments/id/c"
+				status => "OK",
+				templatecompartment_ref => "~/compartments/id/c",
 				base_cost => 0,
 		    	forward_penalty => 0,
 		    	reverse_penalty => 0,
