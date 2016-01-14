@@ -435,11 +435,20 @@ for (my $i=0; $i < 3; $i++) {
 			} elsif ($rxn->{directionality} eq "<=") {
 				$rxn->{directionality} = "<";
 			}
+			my $rxnname = $rxn->{REACTION};
+			if (defined($rxndb->{$rxn->{REACTION}}->{name})) {
+				$rxnname = $rxndb->{$rxn->{REACTION}}->{name};
+			}
+			my $enzyme = "";
+			if (defined($rxndb->{$rxn->{REACTION}}->{enzyme})) {
+				$enzyme = $rxndb->{$rxn->{REACTION}}->{enzyme};
+			}
+			
 			my $currentrxn = {
 				id => $rxn->{REACTION}."_".lc($rxn->{compartment})."0",
 				reaction_ref => "~/template/reactions/id/".$rxn->{REACTION}."_".lc($rxn->{compartment}),
-				name => $rxndb->{$rxn->{REACTION}}->{name},
-				enzyme => $rxndb->{$rxn->{REACTION}}->{enzyme},
+				name => $rxnname,
+				enzyme => $enzyme,
 				aliases => [],
 				direction => $rxn->{directionality},
 				protons => 0,
