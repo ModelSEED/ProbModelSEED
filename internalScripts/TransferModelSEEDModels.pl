@@ -367,8 +367,8 @@ for (my $i=0; $i < 3; $i++) {
 	    	gapfillingSolutionReactions => []
 		}]
 	};
-	$addedgf = 0;
-	$reversedgf = 0;
+	my $addedgf = 0;
+	my $reversedgf = 0;
 	for (my $i=0; $i < @{$rxns}; $i++) {
 		my $rxn = $rxns->[$i];
 		print $rxn->{REACTION}.":".$rxn->{pegs}."\n";
