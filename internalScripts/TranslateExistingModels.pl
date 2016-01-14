@@ -3,8 +3,11 @@ use Data::Dumper;
 
 use Bio::P3::Workspace::ScriptHelpers;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
+my $configfile = "/disks/p3dev1/deployment/deployment.cfg";
+#$configfile = "/Users/chenry/code/PATRICClient/config.ini";
+	
 Bio::KBase::ObjectAPI::config::load_config({
-	filename => "/disks/p3dev1/deployment/deployment.cfg",
+	filename => $configfile,
 	service => "ProbModelSEED"
 });
 Bio::KBase::ObjectAPI::logging::log("App starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]));
@@ -12,22 +15,13 @@ Bio::KBase::ObjectAPI::logging::log("App starting! Current configuration paramet
 my $procs = $ARGV[0];
 my $index = $ARGV[1];
 
-my $filename = "/homes/chenry/KBaseModelList.txt";
+my $filename = "/homes/chenry/PMSModelList.txt";
 my $kbhash = {};
 open(my $fh, "<", $filename);
 while (my $line = <$fh>) {
 	chomp($line);
-	my $array = [split(/\t/,$line)];
-	$kbhash->{$array->[1]} = 1;
-}
-close($fh);
-$filename = "/disks/p3dev1/fba/successlist.txt";
-my $completehash = {};
-open(my $fh, "<", $filename);
-while (my $line = <$fh>) {
-	chomp($line);
-	my $array = [split(/:/,$line)];
-	$completehash->{$array->[1]} = 1;
+	my $array = [split(/\s+/,$line)];
+	$kbhash->{$array->[0]} = 1;
 }
 close($fh);
 $filename = "/homes/chenry/ModelList.txt";
@@ -36,7 +30,7 @@ open(my $fb, "<", $filename);
 while (my $line = <$fb>) {
 	chomp($line);
 	my $array = [split(/\t/,$line)];
-	if (defined($kbhash->{$array->[0]}) && !defined($completehash->{$array->[0]})) {
+	if (defined($kbhash->{$array->[0]})) {
 		push(@{$modellist},{
 			owner => $array->[2],
 			id => $array->[0]
@@ -57,18 +51,14 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 				token => Bio::P3::Workspace::ScriptHelpers::token(),
 				username => "chenry",
 				method => "ModelReconstruction",
-				configfile => "/disks/p3dev1/deployment/deployment.cfg"
+				configfile => $configfile
 			});
 			Bio::KBase::ObjectAPI::config::adminmode(1);
 		}
 		Bio::KBase::ObjectAPI::config::setowner($modellist->[$i]->{owner});
 		eval {
-			$helper->app_harness("ImportKBaseModel",{
-				kbws => "ModelSEEDModels",
-				kbid => $modellist->[$i]->{id},
-				output_file => $modellist->[$i]->{id},
-				kbuser => "chenry",
-				kbpassword => "",
+			$helper->app_harness("TranslateOlderModels",{
+				model => "/modelseed/modelseed/models/".$modellist->[$i]->{id},
 				output_path => "/".$modellist->[$i]->{owner}."/modelseed/"
 			});
 		};

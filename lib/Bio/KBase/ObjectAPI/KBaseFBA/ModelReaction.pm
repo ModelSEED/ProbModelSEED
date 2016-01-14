@@ -53,7 +53,7 @@ sub _build_reaction {
 	 	$comp =~ s/\d+//;
 	 	$array = [split(/\//,$self->reaction_ref())];
 	 	my $rxnid = pop(@{$array});
-	 	$self->reaction_ref($self->parent()->template()->_reference()."/reactions/id/".$rxnid."_".$comp);
+	 	$self->reaction_ref("~/template/reactions/id/".$rxnid."_".$comp);
 	 }
 	 my $rxn = $self->getLinkedObject($self->reaction_ref());
 	 if (!defined($rxn)) {
@@ -61,6 +61,9 @@ sub _build_reaction {
 	 	$ref =~ s/_e/_c/;
 	 	$self->reaction_ref($ref);
 	 	$rxn = $self->getLinkedObject($self->reaction_ref());
+	 }
+	 if (!defined($rxn)) {
+	 	$rxn = $self->getLinkedObject("~/template/reactions/id/rxn00000_c");
 	 }
 	 return $rxn
 }

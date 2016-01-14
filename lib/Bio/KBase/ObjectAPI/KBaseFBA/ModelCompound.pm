@@ -33,8 +33,12 @@ sub _build_compound {
 	 my ($self) = @_;
 	 my $array = [split(/\//,$self->compound_ref())];
 	 my $compoundid = pop(@{$array});
-	 $self->compound_ref($self->parent()->template()->_reference()."/compounds/id/".$compoundid);
-	 return $self->getLinkedObject($self->compound_ref());
+	 $self->compound_ref("~/template/compounds/id/".$compoundid);
+	 my $obj = $self->getLinkedObject($self->compound_ref());
+	 if (!defined($obj)) {
+	 	$obj = $self->getLinkedObject("~/template/compounds/id/cpd00000_c");
+	 }
+	 return $obj;
 }
 sub _buildid {
 	my ($self) = @_;
