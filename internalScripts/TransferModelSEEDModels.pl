@@ -369,6 +369,7 @@ for (my $i=0; $i < 3; $i++) {
 	};
 	for (my $i=0; $i < @{$rxns}; $i++) {
 		my $rxn = $rxns->[$i];
+		print $rxn->{REACTION}.":".$rxn->{pegs}."\n";
 		if (!defined($comphash->{lc($rxn->{compartment})})) {
 			push(@{$modelobj->{modelcompartments}},{
 				id => lc($rxn->{compartment})."0",
@@ -398,6 +399,10 @@ for (my $i=0; $i < 3; $i++) {
 			modelReactionReagents => [],
 			modelReactionProteins => []
 		};
+		$currentrxn->{enzyme} =~ s/^\|//;
+		$currentrxn->{enzyme} =~ s/\|$//;
+		my $tempenzymearray = [split(/\|/,$currentrxn->{enzyme})];
+		$currentrxn->{enzyme} = $tempenzymearray->[0];
 		if ($rxn->{directionality} eq "=" && $rxndb->{$rxn->{REACTION}}->{reversibility} eq "=>") {
 			$currentrxn->{gapfill_data}->{"gf.0"} = "reversed:<";
 			push(@{$fba->{gapfillingSolutions}->[0]->{gapfillingSolutionReactions}},{
@@ -422,6 +427,7 @@ for (my $i=0; $i < 3; $i++) {
 		push(@{$modelobj->{modelreactions}},$currentrxn);
 		my $eqn = $rxndb->{$rxn->{REACTION}}->{equation};
 		my $eqarray = [split(/=/,$eqn)];
+		print $rxn->{REACTION}.":".$eqn."\n";
 		for (my $k=0; $k < 2; $k++) {
 			$_ = $eqarray->[$k];
 			my @array = /(\(*\d*\.*\d*\)*\s*cpd\d+\[[a-z]\])/g;
@@ -470,7 +476,7 @@ for (my $i=0; $i < 3; $i++) {
 				});
 				for (my $k=0; $k < @{$gpr->[$m]->[$j]}; $k++) {
 					if ($gpr->[$m]->[$j]->[$k] ne "SPONTANEOUS" && $gpr->[$m]->[$j]->[$k] ne "UNIVERSAL") {
-						push(@{$currentrxn->{modelReactionProteins}->[$m]->{modelReactionProteinSubunits}->[$k]->{feature_refs}},"~/genome/features/id/".$gpr->[$m]->[$j]->[$k]);
+						push(@{$currentrxn->{modelReactionProteins}->[$m]->{modelReactionProteinSubunits}->[$j]->{feature_refs}},"~/genome/features/id/".$gpr->[$m]->[$j]->[$k]);
 					}
 				}
 			}
