@@ -3,6 +3,14 @@ use Data::Dumper;
 use JSON::XS;
 use DBI;
 use Bio::KBase::ObjectAPI::utilities;
+use Bio::KBase::ObjectAPI::config;
+use Bio::KBase::ObjectAPI::KBaseGenomes::Genome;
+use Bio::KBase::ObjectAPI::KBaseFBA::FBAModel;
+use Bio::KBase::ObjectAPI::KBaseFBA::FBA;
+use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
+
+my $configfile = "/disks/p3dev1/deployment/deployment.cfg";
+#$configfile = "/Users/chenry/code/PATRICClient/config.ini";
 
 my $outdirectory = $ARGV[0];
 my $procs = $ARGV[1];
@@ -107,6 +115,7 @@ for (my $i=0; $i < @{$cpds}; $i++) {
 }
 
 print "Model count:".@{$modellist}."\n";
+my $count = 0;
 for (my $i=0; $i < 3; $i++) {
 #for (my $i=0; $i < @{$modellist}; $i++) {
 	if ($i % $procs  == $index) {
@@ -120,6 +129,7 @@ for (my $i=0; $i < 3; $i++) {
 			});
 			Bio::KBase::ObjectAPI::config::adminmode(1);
 		}
+		$count++;
 		Bio::KBase::ObjectAPI::config::setowner($modellist->[$i]->{owner});
 		my $model = $modellist->[$i]->{id};
 		my $owner = $modellist->[$i]->{owner};
@@ -561,9 +571,9 @@ for (my $i=0; $i < 3; $i++) {
 		$genomeobj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genomeobj);
 		$modelobj = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new($modelobj);
 		$modelobj->genome($genomeobj);
-		$fba = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new($fba);
+		$fba = Bio::KBase::ObjectAPI::KBaseFBA::FBA->new($fba);
 		$modelobj->gapfillings()->[0]->fba($fba);
-		$self->save_object("/".$owner."/modelseed/".$model,$modelobj,"model");
-		$self->save_object("/".$owner."/modelseed/".$model."/gapfilling/gf.0",$fba,"fba");
+		$helper->save_object("/".$owner."/modelseed/".$model,$modelobj,"model");
+		$helper->save_object("/".$owner."/modelseed/".$model."/gapfilling/gf.0",$fba,"fba");
 	}
 }
