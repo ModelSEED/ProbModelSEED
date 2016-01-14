@@ -430,18 +430,23 @@ for (my $i=0; $i < 3; $i++) {
 		print $rxn->{REACTION}.":".$eqn."\n";
 		for (my $k=0; $k < 2; $k++) {
 			$_ = $eqarray->[$k];
-			my @array = /(\(*\d*\.*\d*\)*\s*cpd\d+\[[a-z]\])/g;
+			my @array = /(\(*\d*\.*\d*\)*\s*cpd\d+\[*[a-z]*\]*)/g;
 		    for (my $j=0; $j < @array; $j++) {
-		    	if ($array[$j] =~ m/\(*(\d*\.*\d*)\)*\s*(cpd\d+)\[([a-z])\]/) {
+		    	print $array[$j]."\n";
+		    	if ($array[$j] =~ m/\(*(\d*\.*\d*)\)*\s*(cpd\d+)\[*([a-z]*)\]*/) {
 		    		my $coef = $1;
 					my $cpd = $2;
 					my $comp = $3;
 					if (length($coef) == 0) {
 						$coef = 1;
 					}
+					if (length($comp) == 0) {
+						$comp = "c";
+					}
 					if ($k == 0) {
 						$coef = -1*$coef;
 					}
+					print $coef."\t".$cpd."\t".$comp."\n";
 					if (!defined($cpdhash->{$cpd."_".$comp."0"})) {
 				    	push(@{$modelobj->{modelcompounds}},{
 				    		id => $cpd."_".$comp."0",
