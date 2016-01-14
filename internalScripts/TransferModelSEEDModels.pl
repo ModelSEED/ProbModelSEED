@@ -410,7 +410,7 @@ for (my $i=0; $i < 3; $i++) {
 			});
 		} elsif ($rxn->{directionality} eq "=" && $rxndb->{$rxn->{REACTION}}->{reversibility} eq "<=") {
 			$currentrxn->{gapfill_data}->{"gf.0"} = "reversed:>";
-			push(@{$fba->{gapfillingSolutions}->{gapfillingSolutionReactions}},{
+			push(@{$fba->{gapfillingSolutions}->[0]->{gapfillingSolutionReactions}},{
 				round => 0,
     			reaction_ref => "~/fbamodel/template/reactions/id/".$rxn->{REACTION},
     			compartment_ref => "~/fbamodel/template/compartments/id/c",
