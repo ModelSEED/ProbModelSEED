@@ -500,6 +500,7 @@ for (my $i=0; $i < 3; $i++) {
 	}
 	my $JSON = JSON::XS->new->utf8(1);
 	$JSON->pretty(1);
+	print $directory.$model.".model\n";
     open (my $fa, ">", $directory.$model.".model");
     print $fa $JSON->encode($modelobj);
    	close($fa);
