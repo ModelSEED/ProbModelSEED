@@ -456,14 +456,14 @@ sub createEquation {
 	    my $cpd;
 	    my $rgts = $self->modelReactionReagents();
 	    for (my $j=0; $j < @{$rgts}; $j++) {
-	    	if ($printId eq $rgts->[$i]->modelcompound()->compound()->id()) {
-	    		$cpd = $rgts->[$i]->modelcompound()->compound();
+	    	if ($printId eq $rgts->[$j]->modelcompound()->compound()->id()) {
+	    		$cpd = $rgts->[$j]->modelcompound()->compound();
 	    	}
 	    }
 	    if (!defined($cpd)) {
 	    	for (my $j=0; $j < @{$rgts}; $j++) {
-		    	if ($printId eq $rgts->[$i]->modelcompound()->id()) {
-		    		$cpd = $rgts->[$i]->modelcompound();
+		    	if ($printId eq $rgts->[$j]->modelcompound()->id()) {
+		    		$cpd = $rgts->[$j]->modelcompound();
 		    	}
 		    }
 	    }
