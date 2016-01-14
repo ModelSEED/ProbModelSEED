@@ -36,7 +36,7 @@ sub _build_compound {
 	 $self->compound_ref("~/template/compounds/id/".$compoundid);
 	 my $obj = $self->getLinkedObject($self->compound_ref());
 	 if (!defined($obj)) {
-	 	$obj = $self->getLinkedObject("~/template/compounds/id/cpd00000_c");
+	 	$obj = $self->getLinkedObject("~/template/compounds/id/cpd00000");
 	 }
 	 return $obj;
 }
