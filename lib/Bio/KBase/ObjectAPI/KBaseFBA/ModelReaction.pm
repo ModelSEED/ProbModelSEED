@@ -453,10 +453,19 @@ sub createEquation {
 	my $printId=$sortedCpd->[$i];
 
 	if($args->{format} ne "id"){
-	    if (@{$self->modelReactionReagents()} > 0) {
-	    my $cpd = ( grep { $printId eq $_->modelcompound()->compound()->id() } @{$self->modelReactionReagents()} )[0]->modelcompound()->compound();
-	    if(!$cpd){
-		$cpd = ( grep { $printId eq $_->modelcompound()->id() } @{$self->modelReactionReagents()} )[0]->modelcompound()->compound();
+	    my $cpd;
+	    my $rgts = $self->modelReactionReagents();
+	    for (my $i=0; $i < @{$rgts}; $i++) {
+	    	if ($printId eq $rgts->[$i]->modelcompound()->compound()->id()) {
+	    		$cpd = $rgts->[$i]->modelcompound()->compound();
+	    	}
+	    }
+	    if (!defined($cpd)) {
+	    	for (my $i=0; $i < @{$rgts}; $i++) {
+		    	if ($printId eq $rgts->[$i]->modelcompound()->id()) {
+		    		$cpd = $rgts->[$i]->modelcompound();
+		    	}
+		    }
 	    }
 
 	    if($args->{format} eq "name"){
