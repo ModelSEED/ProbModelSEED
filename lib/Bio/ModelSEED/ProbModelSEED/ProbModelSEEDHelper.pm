@@ -1090,9 +1090,6 @@ sub list_models {
 		$list = $list->{"/".Bio::KBase::ObjectAPI::config::username()."/"};
     }
 	for (my $i=0; $i < @{$list}; $i++) {
-		if ($list->[$i]->[0] ne Bio::KBase::ObjectAPI::config::home_dir()) {
-			next;
-		}
 		my $currentlist = $self->call_ws("ls",{
 			paths => [$list->[$i]->[2].$list->[$i]->[0]],
 			excludeDirectories => 0,
