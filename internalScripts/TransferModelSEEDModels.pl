@@ -4,7 +4,7 @@ use JSON::XS;
 use DBI;
 use Bio::KBase::ObjectAPI::utilities;
 
-my $directory = $ARGV[0];
+my $outdirectory = $ARGV[0];
 
 my $filename = "/homes/chenry/KBaseModelList.txt";
 my $kbhash = {};
@@ -500,14 +500,14 @@ for (my $i=0; $i < 3; $i++) {
 	}
 	my $JSON = JSON::XS->new->utf8(1);
 	$JSON->pretty(1);
-	print $directory.$model.".model\n";
-    open (my $fa, ">", $directory.$model.".model");
+	print $outdirectory.$model.".model\n";
+    open (my $fa, ">", $outdirectory.$model.".model");
     print $fa $JSON->encode($modelobj);
    	close($fa);
-   	open (my $fa, ">", $directory.$model.".genome");
+   	open (my $fa, ">", $outdirectory.$model.".genome");
     print $fa $JSON->encode($genomeobj);
    	close($fa);
-	open (my $fa, ">", $directory.$model.".fba");
+	open (my $fa, ">", $outdirectory.$model.".fba");
     print $fa $JSON->encode($fba);
    	close($fa);
 }
