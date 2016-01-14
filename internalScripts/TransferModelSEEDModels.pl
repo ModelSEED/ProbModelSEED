@@ -280,6 +280,7 @@ for (my $i=0; $i < 3; $i++) {
 		my $eqn = $biodata->[0]->{equation};
 		my $eqarray = [split(/=/,$eqn)];
 		my $cpdhash = {};
+		my $comphash = {};
 		for (my $k=0; $k < 2; $k++) {
 			$_ = $eqarray->[$k];
 			my @array = /(\(*\d*\.*\d*\)*\s*cpd\d+\[*[a-z]*\]*)/g;
@@ -309,17 +310,6 @@ for (my $i=0; $i < 3; $i++) {
 					if ($k == 0) {
 						$coef = -1*$coef;
 					}
-					if (!defined($comphash->{lc($comp)})) {
-						push(@{$modelobj->{modelcompartments}},{
-							id => $comp."0",
-							compartment_ref => "~/template/compartments/id/".$comp,
-							compartmentIndex => 0,
-							label => $comp."0",
-							pH => 7,
-							potential => 0
-						});
-						$comphash->{$comp} = 1;
-					}	
 					if (!defined($cpdhash->{$cpd."_".$comp."0"})) {
 				    	my $charge = 0;
 				    	my $formula = "";
@@ -364,8 +354,6 @@ for (my $i=0; $i < 3; $i++) {
 			MODEL => 1,
 			pegs => 1
 		} }, $model);
-		my $comphash = {};
-		my $cpdhash = {};
 		my $fba = {
 			id => "gf.0",
 			fva => 0,
