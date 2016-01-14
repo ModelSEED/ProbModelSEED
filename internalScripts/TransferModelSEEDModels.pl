@@ -477,7 +477,6 @@ for (my $i=0; $i < 3; $i++) {
 			push(@{$modelobj->{modelreactions}},$currentrxn);
 			my $eqn = $rxndb->{$rxn->{REACTION}}->{equation};
 			my $eqarray = [split(/=/,$eqn)];
-			$currentrxn->{equation} = $eqn;
 			for (my $k=0; $k < 2; $k++) {
 				$_ = $eqarray->[$k];
 				my @array = /(\(*\d*\.*\d*\)*\s*cpd\d+\[*[a-z]*\]*)/g;
