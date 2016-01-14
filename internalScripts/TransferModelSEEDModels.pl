@@ -594,9 +594,12 @@ for (my $i=0; $i < 3; $i++) {
 			}
 		}
 		$genomeobj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genomeobj);
+		$genomeobj->parent($helper->PATRICStore());
 		$modelobj = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new($modelobj);
+		$modelobj->parent($helper->PATRICStore());
 		$modelobj->genome($genomeobj);
 		$fba = Bio::KBase::ObjectAPI::KBaseFBA::FBA->new($fba);
+		$fba->parent($helper->PATRICStore());
 		$modelobj->gapfillings()->[0]->fba($fba);
 		$helper->save_object("/".$owner."/modelseed/".$model,$modelobj,"model");
 		$helper->save_object("/".$owner."/modelseed/".$model."/gapfilling/gf.0",$fba,"fba");
