@@ -187,7 +187,7 @@ for (my $i=0; $i < 3; $i++) {
 		features => []
 	};
 	my $select = "SELECT * FROM ModelDB.GENOMESTATS WHERE GENOME = ?";
-	my $genomes = $db->selectall_arrayref($select, { Slice => {{
+	my $genomes = $db->selectall_arrayref($select, { Slice => {
 		genesInSubsystems => 1,
 		owner => 1,
 		source => 1,
@@ -202,7 +202,7 @@ for (my $i=0; $i < 3; $i++) {
 		genesWithFunctions => 1,
 		class => 1,
 		gcContent => 1
-	}}}, $modeldata->[0]->{genome});
+	}}, $modeldata->[0]->{genome});
 	if (defined($genomes) && !defined($genomes->[0]->{GENOME})) {
 		$genomeobj->{gc_content} = $genomes->[0]->{gcContent};
 		$genomeobj->{taxonomy} = $genomes->[0]->{taxonomy};
