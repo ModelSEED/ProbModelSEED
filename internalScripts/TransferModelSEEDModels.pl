@@ -498,7 +498,7 @@ for (my $i=0; $i < 3; $i++) {
 			});
 		}
 	}
-	my $JSON = JSON->new->utf8(1);
+	my $JSON = JSON::XS->new->utf8(1);
 	$JSON->pretty(1);
     open (my $fa, ">", $directory.$model.".model");
     print $fa $JSON->encode($modelobj);
