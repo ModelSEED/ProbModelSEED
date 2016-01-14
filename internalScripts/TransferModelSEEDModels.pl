@@ -367,6 +367,8 @@ for (my $i=0; $i < 3; $i++) {
 	    	gapfillingSolutionReactions => []
 		}]
 	};
+	$addedgf = 0;
+	$reversedgf = 0;
 	for (my $i=0; $i < @{$rxns}; $i++) {
 		my $rxn = $rxns->[$i];
 		print $rxn->{REACTION}.":".$rxn->{pegs}."\n";
@@ -405,6 +407,7 @@ for (my $i=0; $i < 3; $i++) {
 		$currentrxn->{enzyme} = $tempenzymearray->[0];
 		if ($rxn->{directionality} eq "=" && $rxndb->{$rxn->{REACTION}}->{reversibility} eq "=>") {
 			$currentrxn->{gapfill_data}->{"gf.0"} = "reversed:<";
+			$reversedgf++;
 			push(@{$fba->{gapfillingSolutions}->[0]->{gapfillingSolutionReactions}},{
 				round => 0,
     			reaction_ref => "~/fbamodel/template/reactions/id/".$rxn->{REACTION},
@@ -415,6 +418,7 @@ for (my $i=0; $i < 3; $i++) {
 			});
 		} elsif ($rxn->{directionality} eq "=" && $rxndb->{$rxn->{REACTION}}->{reversibility} eq "<=") {
 			$currentrxn->{gapfill_data}->{"gf.0"} = "reversed:>";
+			$reversedgf++;
 			push(@{$fba->{gapfillingSolutions}->[0]->{gapfillingSolutionReactions}},{
 				round => 0,
     			reaction_ref => "~/fbamodel/template/reactions/id/".$rxn->{REACTION},
@@ -484,6 +488,9 @@ for (my $i=0; $i < 3; $i++) {
 						$gpr->[$m]->[$j]->[$k] = "fig|".$genomeobj->{id}.".".$gpr->[$m]->[$j]->[$k];
 						push(@{$currentrxn->{modelReactionProteins}->[$m]->{modelReactionProteinSubunits}->[$j]->{feature_refs}},"~/genome/features/id/".$gpr->[$m]->[$j]->[$k]);
 						$anygenes = 1;
+					} elsif ($gpr->[$m]->[$j]->[$k] =~ m/^fig\|/) {
+						push(@{$currentrxn->{modelReactionProteins}->[$m]->{modelReactionProteinSubunits}->[$j]->{feature_refs}},"~/genome/features/id/".$gpr->[$m]->[$j]->[$k]);
+						$anygenes = 1;
 					} elsif (lc($gpr->[$m]->[$j]->[$k]) eq "unknown") {
 						$unknown = 1;
 					}
@@ -500,8 +507,12 @@ for (my $i=0; $i < 3; $i++) {
     			compartmentIndex => 0,
     			candidateFeature_refs => []
 			});
+			$addedgf++;
 		}
 	}
+	print "Reactions:".@{$modelobj->{modelreactions}}."\n";
+	print "Added:".$addedgf."\n";
+	print "Reversed:".$reversedgf."\n";
 	if (-e $directory."annotations/features.txt") {
 		open (my $fh, "<", $directory."annotations/features.txt");
 		my @lines = <$fh>;
