@@ -453,6 +453,7 @@ sub createEquation {
 	my $printId=$sortedCpd->[$i];
 
 	if($args->{format} ne "id"){
+	    if (@{$self->modelReactionReagents()} > 0) {
 	    my $cpd = ( grep { $printId eq $_->modelcompound()->compound()->id() } @{$self->modelReactionReagents()} )[0]->modelcompound()->compound();
 	    if(!$cpd){
 		$cpd = ( grep { $printId eq $_->modelcompound()->id() } @{$self->modelReactionReagents()} )[0]->modelcompound()->compound();
@@ -464,6 +465,7 @@ sub createEquation {
 		$printId = $cpd->getAlias($args->{format});
 	    }elsif($args->{format} eq "formula"){
 		$printId = $cpd->formula();
+	    }
 	    }
 	}
 
