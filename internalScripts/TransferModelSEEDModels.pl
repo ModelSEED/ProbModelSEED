@@ -427,12 +427,11 @@ for (my $i=0; $i < 3; $i++) {
 		push(@{$modelobj->{modelreactions}},$currentrxn);
 		my $eqn = $rxndb->{$rxn->{REACTION}}->{equation};
 		my $eqarray = [split(/=/,$eqn)];
-		print $rxn->{REACTION}.":".$eqn."\n";
+		$currentrxn->{equation} = $eqn;
 		for (my $k=0; $k < 2; $k++) {
 			$_ = $eqarray->[$k];
 			my @array = /(\(*\d*\.*\d*\)*\s*cpd\d+\[*[a-z]*\]*)/g;
 		    for (my $j=0; $j < @array; $j++) {
-		    	print $array[$j]."\n";
 		    	if ($array[$j] =~ m/\(*(\d*\.*\d*)\)*\s*(cpd\d+)\[*([a-z]*)\]*/) {
 		    		my $coef = $1;
 					my $cpd = $2;
@@ -446,7 +445,6 @@ for (my $i=0; $i < 3; $i++) {
 					if ($k == 0) {
 						$coef = -1*$coef;
 					}
-					print $coef."\t".$cpd."\t".$comp."\n";
 					if (!defined($cpdhash->{$cpd."_".$comp."0"})) {
 				    	push(@{$modelobj->{modelcompounds}},{
 				    		id => $cpd."_".$comp."0",
@@ -480,7 +478,12 @@ for (my $i=0; $i < 3; $i++) {
 					feature_refs => []
 				});
 				for (my $k=0; $k < @{$gpr->[$m]->[$j]}; $k++) {
-					if ($gpr->[$m]->[$j]->[$k] ne "SPONTANEOUS" && $gpr->[$m]->[$j]->[$k] ne "UNIVERSAL") {
+					if (lc($gpr->[$m]->[$j]->[$k]) ne "unknown" && lc($gpr->[$m]->[$j]->[$k]) ne "spontaneous" && lc($gpr->[$m]->[$j]->[$k]) ne "universal") {
+						if ($gpr->[$m]->[$j]->[$k] =~ m/^peg\./) {
+							$gpr->[$m]->[$j]->[$k] = "fig|".$genomeobj->{id}.".".$gpr->[$m]->[$j]->[$k];
+						} else {
+							print $gpr->[$m]->[$j]->[$k]."\n";
+						}
 						push(@{$currentrxn->{modelReactionProteins}->[$m]->{modelReactionProteinSubunits}->[$j]->{feature_refs}},"~/genome/features/id/".$gpr->[$m]->[$j]->[$k]);
 					}
 				}
