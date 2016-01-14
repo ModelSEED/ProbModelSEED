@@ -1,6 +1,7 @@
 use strict;
 use Data::Dumper;
 use JSON::XS;
+use DBI;
 use Bio::KBase::ObjectAPI::utilities;
 
 my $directory = $ARGV[0];
