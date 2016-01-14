@@ -193,6 +193,42 @@ sub process_object {
 		} else {
 			$data = $class->new(Bio::KBase::ObjectAPI::utilities::FROMJSON($data));
 		}
+		if ($meta->[1] eq "modeltemplate") {
+			$data->add("compounds",{
+				id => "cpd00000",
+				compound_ref => "~/biochemistry/compounds/id/cpd00000",
+				name => "cpd00000",
+				abbreviation => "cpd00000",
+				md5 => "",
+				formula => "",
+				isCofactor => 0,
+				aliases => [],
+				defaultCharge => 0,
+				mass => 0,
+    			deltaG => 0,
+    			deltaGErr => 0
+			});
+			$data->add("reactions",{
+				id => "rxn00000",
+				reaction_ref => "~/biochemistry/reactions/id/rxn00000",
+				name => "rxn00000",
+				type => "custom",
+				reference => "",
+				direction => "="
+				GapfillDirection => "=",
+				maxforflux => 0,
+				maxrevflux => 0,
+				deltaG => 0,
+				deltaGErr => 0,
+				status => "OK"
+				templatecompartment_ref => "~/compartments/id/c"
+				base_cost => 0,
+		    	forward_penalty => 0,
+		    	reverse_penalty => 0,
+				templateReactionReagents => [],
+				templatecomplex_refs => []
+			});
+		}
 		$data->wsmeta($meta);
 		$data->parent($self);
 		$data->_reference($meta->[2].$meta->[0]."||");
