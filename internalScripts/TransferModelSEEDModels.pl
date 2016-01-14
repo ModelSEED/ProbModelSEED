@@ -117,8 +117,8 @@ for (my $i=0; $i < @{$cpds}; $i++) {
 
 print "Model count:".@{$modellist}."\n";
 my $count = 0;
-for (my $i=0; $i < 3; $i++) {
-#for (my $i=0; $i < @{$modellist}; $i++) {
+#for (my $i=0; $i < 3; $i++) {
+for (my $i=0; $i < @{$modellist}; $i++) {
 	if ($i % $procs  == $index) {
 		if ($count % 100 == 0) {
 			$helper = undef;
