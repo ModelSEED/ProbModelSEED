@@ -2,6 +2,7 @@ use strict;
 use Data::Dumper;
 use JSON::XS;
 use DBI;
+use Bio::P3::Workspace::ScriptHelpers;
 use Bio::KBase::ObjectAPI::utilities;
 use Bio::KBase::ObjectAPI::config;
 use Bio::KBase::ObjectAPI::KBaseGenomes::Genome;
