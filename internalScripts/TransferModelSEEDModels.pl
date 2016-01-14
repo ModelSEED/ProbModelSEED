@@ -295,12 +295,24 @@ for (my $i=0; $i < 3; $i++) {
 						$coef = -1*$coef;
 					}
 					if (!defined($cpdhash->{$cpd."_".$comp."0"})) {
+				    	my $charge = 0;
+				    	my $formula = "";
+				    	my $name = $cpd;
+				    	if (defined($cpddb->{$cpd}->{name})) {
+				    		$name = $cpddb->{$cpd}->{name};
+				    	}
+				    	if (defined($cpddb->{$cpd}->{formula})) {
+				    		$formula = $cpddb->{$cpd}->{formula};
+				    	}
+				    	if (defined($cpddb->{$cpd}->{charge})) {
+				    		$charge = $cpddb->{$cpd}->{charge};
+				    	}
 				    	push(@{$modelobj->{modelcompounds}},{
 				    		id => $cpd."_".$comp."0",
 							compound_ref => "~/template/compounds/id/".$cpd,
-							name => $cpddb->{$cpd}->{name},
-							charge => $cpddb->{$cpd}->{charge},
-							formula => $cpddb->{$cpd}->{formula},
+							name => $name,
+							charge => $charge,
+							formula => $formula,
 							modelcompartment_ref => "~/modelcompartments/id/".$comp."0"
 				    	});
 				    }
@@ -484,12 +496,24 @@ for (my $i=0; $i < 3; $i++) {
 							$coef = -1*$coef;
 						}
 						if (!defined($cpdhash->{$cpd."_".$comp."0"})) {
+					    	my $charge = 0;
+					    	my $formula = "";
+					    	my $name = $cpd;
+					    	if (defined($cpddb->{$cpd}->{name})) {
+					    		$name = $cpddb->{$cpd}->{name};
+					    	}
+					    	if (defined($cpddb->{$cpd}->{formula})) {
+					    		$formula = $cpddb->{$cpd}->{formula};
+					    	}
+					    	if (defined($cpddb->{$cpd}->{charge})) {
+					    		$charge = $cpddb->{$cpd}->{charge};
+					    	}
 					    	push(@{$modelobj->{modelcompounds}},{
 					    		id => $cpd."_".$comp."0",
 								compound_ref => "~/template/compounds/id/".$cpd,
-								name => $cpddb->{$cpd}->{name},
-								charge => $cpddb->{$cpd}->{charge},
-								formula => $cpddb->{$cpd}->{formula},
+								name => $name,
+								charge => $charge,
+								formula => $formula,
 								modelcompartment_ref => "~/modelcompartments/id/".$comp."0"
 					    	});
 					    }
