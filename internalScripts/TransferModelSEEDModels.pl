@@ -282,18 +282,44 @@ for (my $i=0; $i < 3; $i++) {
 		my $cpdhash = {};
 		for (my $k=0; $k < 2; $k++) {
 			$_ = $eqarray->[$k];
-			my @array = /(\(*\d*\.*\d*\)*\s*cpd\d+\[[a-z]\])/g;
+			my @array = /(\(*\d*\.*\d*\)*\s*cpd\d+\[*[a-z]*\]*)/g;
 		    for (my $j=0; $j < @array; $j++) {
-		    	if ($array[$j] =~ m/\(*(\d*\.*\d*)\)*\s*(cpd\d+)\[([a-z])\]/) {
+		    	if ($array[$j] =~ m/\(*(\d*\.*\d*)\)*\s*(cpd\d+)\[*([a-z]*)\]*/) {
 		    		my $coef = $1;
 					my $cpd = $2;
 					my $comp = $3;
 					if (length($coef) == 0) {
 						$coef = 1;
 					}
+					if (length($comp) == 0) {
+						$comp = "c";
+					}
+					$comp = lc($comp);
+					if (!defined($comphash->{lc($comp)})) {
+						push(@{$modelobj->{modelcompartments}},{
+							id => $comp."0",
+							compartment_ref => "~/template/compartments/id/".$comp,
+							compartmentIndex => 0,
+							label => $comp."0",
+							pH => 7,
+							potential => 0
+						});
+						$comphash->{$comp} = 1;
+					}
 					if ($k == 0) {
 						$coef = -1*$coef;
 					}
+					if (!defined($comphash->{lc($comp)})) {
+						push(@{$modelobj->{modelcompartments}},{
+							id => $comp."0",
+							compartment_ref => "~/template/compartments/id/".$comp,
+							compartmentIndex => 0,
+							label => $comp."0",
+							pH => 7,
+							potential => 0
+						});
+						$comphash->{$comp} = 1;
+					}	
 					if (!defined($cpdhash->{$cpd."_".$comp."0"})) {
 				    	my $charge = 0;
 				    	my $formula = "";
@@ -315,6 +341,7 @@ for (my $i=0; $i < 3; $i++) {
 							formula => $formula,
 							modelcompartment_ref => "~/modelcompartments/id/".$comp."0"
 				    	});
+				    	$cpdhash->{$cpd."_".$comp."0"} = 1;
 				    }
 		    		push(@{$modelobj->{biomasses}->[0]->{biomasscompounds}},{
 			    		modelcompound_ref => "~/modelcompounds/id/".$cpd."_".$comp."0",
@@ -427,6 +454,7 @@ for (my $i=0; $i < 3; $i++) {
 					pH => 7,
 					potential => 0
 				});
+				$comphash->{lc($rxn->{compartment})} = 1;
 			}
 			if ($rxn->{directionality} eq "<=>") {
 				$rxn->{directionality} = "=";
@@ -500,6 +528,18 @@ for (my $i=0; $i < 3; $i++) {
 						if (length($comp) == 0) {
 							$comp = "c";
 						}
+						$comp = lc($comp);
+						if (!defined($comphash->{lc($comp)})) {
+							push(@{$modelobj->{modelcompartments}},{
+								id => $comp."0",
+								compartment_ref => "~/template/compartments/id/".$comp,
+								compartmentIndex => 0,
+								label => $comp."0",
+								pH => 7,
+								potential => 0
+							});
+							$comphash->{$comp} = 1;
+						}
 						if ($k == 0) {
 							$coef = -1*$coef;
 						}
@@ -524,6 +564,7 @@ for (my $i=0; $i < 3; $i++) {
 								formula => $formula,
 								modelcompartment_ref => "~/modelcompartments/id/".$comp."0"
 					    	});
+					    	$cpdhash->{$cpd."_".$comp."0"} = 1;
 					    }
 			    		push(@{$currentrxn->{modelReactionReagents}},{
 				    		modelcompound_ref => "~/modelcompounds/id/".$cpd."_".$comp."0",
@@ -577,6 +618,10 @@ for (my $i=0; $i < 3; $i++) {
 			}
 		}
 		print "Reactions:".@{$modelobj->{modelreactions}}."\n";
+		print "Compounds:".@{$modelobj->{modelcompounds}}."\n";
+		print "Compartments:".@{$modelobj->{modelcompartments}}."\n";
+		print "Biomasses:".@{$modelobj->{biomasses}}."\n";
+		print "Biomass compounds:".@{$modelobj->{biomasses}->[0]->{biomasscompounds}}."\n";
 		print "Added:".$addedgf."\n";
 		print "Reversed:".$reversedgf."\n";
 		if (-e $directory."annotations/features.txt") {
