@@ -371,7 +371,6 @@ for (my $i=0; $i < 3; $i++) {
 	my $reversedgf = 0;
 	for (my $i=0; $i < @{$rxns}; $i++) {
 		my $rxn = $rxns->[$i];
-		print $rxn->{REACTION}.":".$rxn->{pegs}."\n";
 		if (!defined($comphash->{lc($rxn->{compartment})})) {
 			push(@{$modelobj->{modelcompartments}},{
 				id => lc($rxn->{compartment})."0",
