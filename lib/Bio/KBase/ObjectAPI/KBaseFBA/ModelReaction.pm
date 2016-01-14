@@ -455,13 +455,13 @@ sub createEquation {
 	if($args->{format} ne "id"){
 	    my $cpd;
 	    my $rgts = $self->modelReactionReagents();
-	    for (my $i=0; $i < @{$rgts}; $i++) {
+	    for (my $j=0; $j < @{$rgts}; $j++) {
 	    	if ($printId eq $rgts->[$i]->modelcompound()->compound()->id()) {
 	    		$cpd = $rgts->[$i]->modelcompound()->compound();
 	    	}
 	    }
 	    if (!defined($cpd)) {
-	    	for (my $i=0; $i < @{$rgts}; $i++) {
+	    	for (my $j=0; $j < @{$rgts}; $j++) {
 		    	if ($printId eq $rgts->[$i]->modelcompound()->id()) {
 		    		$cpd = $rgts->[$i]->modelcompound();
 		    	}
@@ -474,7 +474,6 @@ sub createEquation {
 		$printId = $cpd->getAlias($args->{format});
 	    }elsif($args->{format} eq "formula"){
 		$printId = $cpd->formula();
-	    }
 	    }
 	}
 
