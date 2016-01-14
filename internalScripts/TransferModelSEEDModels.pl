@@ -463,6 +463,8 @@ for (my $i=0; $i < 3; $i++) {
 		    }
 		}
 		my $gpr = Bio::KBase::ObjectAPI::utilities::translateGPRHash(Bio::KBase::ObjectAPI::utilities::parseGPR($rxn->{pegs}));
+		my $unknown = 0;
+		my $anygenes = 0;
 		for (my $m=0; $m < @{$gpr}; $m++) {
 			push(@{$currentrxn->{modelReactionProteins}},{
 				complex_ref => "",
@@ -478,16 +480,26 @@ for (my $i=0; $i < 3; $i++) {
 					feature_refs => []
 				});
 				for (my $k=0; $k < @{$gpr->[$m]->[$j]}; $k++) {
-					if (lc($gpr->[$m]->[$j]->[$k]) ne "unknown" && lc($gpr->[$m]->[$j]->[$k]) ne "spontaneous" && lc($gpr->[$m]->[$j]->[$k]) ne "universal") {
-						if ($gpr->[$m]->[$j]->[$k] =~ m/^peg\./) {
-							$gpr->[$m]->[$j]->[$k] = "fig|".$genomeobj->{id}.".".$gpr->[$m]->[$j]->[$k];
-						} else {
-							print $gpr->[$m]->[$j]->[$k]."\n";
-						}
+					if ($gpr->[$m]->[$j]->[$k] =~ m/^peg\./) {
+						$gpr->[$m]->[$j]->[$k] = "fig|".$genomeobj->{id}.".".$gpr->[$m]->[$j]->[$k];
 						push(@{$currentrxn->{modelReactionProteins}->[$m]->{modelReactionProteinSubunits}->[$j]->{feature_refs}},"~/genome/features/id/".$gpr->[$m]->[$j]->[$k]);
+						$anygenes = 1;
+					} elsif (lc($gpr->[$m]->[$j]->[$k]) eq "unknown") {
+						$unknown = 1;
 					}
 				}
 			}
+		}
+		if ($anygenes == 0 && $unknown == 1) {
+			$currentrxn->{gapfill_data}->{"gf.0"} = "added:".$rxn->{directionality};
+			push(@{$fba->{gapfillingSolutions}->[0]->{gapfillingSolutionReactions}},{
+				round => 0,
+    			reaction_ref => "~/fbamodel/template/reactions/id/".$rxn->{REACTION},
+    			compartment_ref => "~/fbamodel/template/compartments/id/c",
+    			direction => $rxn->{directionality},
+    			compartmentIndex => 0,
+    			candidateFeature_refs => []
+			});
 		}
 	}
 	if (-e $directory."annotations/features.txt") {
