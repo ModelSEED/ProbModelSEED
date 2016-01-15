@@ -1073,85 +1073,37 @@ sub list_model_gapfills {
 
 sub list_models {
 	my ($self,$input) = @_;
-	$input = $self->validate_args($input,[],{path => undef});
-    my $list;
-    my $output = {};
-    if (defined($input->{path})) {
-    	$list = [["",undef,$input->{path}]];
-    } else {
-    	$list = $self->call_ws("ls",{
-			paths => ["/".Bio::KBase::ObjectAPI::config::username()."/"],
-			adminmode => Bio::KBase::ObjectAPI::config::adminmode()
-		});
-		if (!defined($list->{"/".Bio::KBase::ObjectAPI::config::username()."/"})) {
-			# Just return an empty list if there is no workspace for the user.
-			return $output;
-		}
-		$list = $list->{"/".Bio::KBase::ObjectAPI::config::username()."/"};
+	$input = $self->validate_args($input,[],{
+		path => "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/"
+	});
+    my $list = $self->call_ws("ls",{
+		paths => [$input->{path}],
+		recursive => 0,
+		excludeDirectories => 0,
+	});
+	$list = $list->{$input->{path}};
+    for (my $j=0; $j < @{$list}; $j++) {
+    	my $key = $newlist->[$j]->[2].$newlist->[$j]->[0];
+		$output->{$key}->{rundate} = $newlist->[$j]->[3];
+		$output->{$key}->{id} = $newlist->[$j]->[0];
+		$output->{$key}->{source} = $newlist->[$j]->[7]->{source};
+		$output->{$key}->{source_id} = $newlist->[$j]->[7]->{source_id};
+		$output->{$key}->{name} = $newlist->[$j]->[7]->{name};
+		$output->{$key}->{type} = $newlist->[$j]->[7]->{type};
+		$output->{$key}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
+		$output->{$key}->{template_ref} = $newlist->[$j]->[7]->{template_ref};
+		$output->{$key}->{num_genes} = $newlist->[$j]->[7]->{num_genes};
+		$output->{$key}->{num_compounds} = $newlist->[$j]->[7]->{num_compounds};
+		$output->{$key}->{num_reactions} = $newlist->[$j]->[7]->{num_reactions};
+		$output->{$key}->{num_biomasses} = $newlist->[$j]->[7]->{num_biomasses};
+		$output->{$key}->{num_biomass_compounds} = $newlist->[$j]->[7]->{num_biomass_compounds};
+		$output->{$key}->{num_compartments} = $newlist->[$j]->[7]->{num_compartments};				
+		$output->{$key}->{gene_associated_reactions} = $newlist->[$j]->[7]->{gene_associated_reactions};
+		$output->{$key}->{gapfilled_reactions} = $newlist->[$j]->[7]->{gapfilled_reactions};
+		$output->{$key}->{fba_count} = $newlist->[$j]->[7]->{fba_count};
+		$output->{$key}->{integrated_gapfills} = $newlist->[$j]->[7]->{integrated_gapfills};
+		$output->{$key}->{unintegrated_gapfills} = $newlist->[$j]->[7]->{unintegrated_gapfills};
     }
-	for (my $i=0; $i < @{$list}; $i++) {
-		my $currentlist = $self->call_ws("ls",{
-			paths => [$list->[$i]->[2].$list->[$i]->[0]],
-			excludeDirectories => 0,
-			excludeObjects => 0,
-			recursive => 1,
-			query => {type => ["modelfolder","fba"]},
-			adminmode => Bio::KBase::ObjectAPI::config::adminmode()
-		});
-		if (defined($currentlist->{$list->[$i]->[2].$list->[$i]->[0]})) {
-			$currentlist = $currentlist->{$list->[$i]->[2].$list->[$i]->[0]};
-			my $newlist = [];
-			my $fbalist = [];
-			for (my $k=0; $k < @{$currentlist}; $k++) {
-				if ($currentlist->[$k]->[1] eq "fba") {
-					push(@{$fbalist},$currentlist->[$k]);
-				} elsif ($currentlist->[$k]->[1] eq "modelfolder") {
-					push(@{$newlist},$currentlist->[$k]);
-				}
-			}
-			my $fbahash = {};
-			for (my $k=0; $k < @{$fbalist}; $k++) {
-				push(@{$fbahash->{$fbalist->[$k]->[2]}},$fbalist->[$k]); 
-			}
-			for (my $j=0; $j < @{$newlist}; $j++) {
-				my $key = $newlist->[$j]->[2].$newlist->[$j]->[0];
-				$output->{$key}->{rundate} = $newlist->[$j]->[3];
-				$output->{$key}->{id} = $newlist->[$j]->[0];
-				$output->{$key}->{source} = $newlist->[$j]->[7]->{source};
-				$output->{$key}->{source_id} = $newlist->[$j]->[7]->{source_id};
-				$output->{$key}->{name} = $newlist->[$j]->[7]->{name};
-				$output->{$key}->{type} = $newlist->[$j]->[7]->{type};
-				$output->{$key}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
-				$output->{$key}->{genome_ref} = $newlist->[$j]->[7]->{genome_ref};
-				$output->{$key}->{template_ref} = $newlist->[$j]->[7]->{template_ref};
-				$output->{$key}->{num_genes} = $newlist->[$j]->[7]->{num_genes};
-				$output->{$key}->{num_compounds} = $newlist->[$j]->[7]->{num_compounds};
-				$output->{$key}->{num_reactions} = $newlist->[$j]->[7]->{num_reactions};
-				$output->{$key}->{num_biomasses} = $newlist->[$j]->[7]->{num_biomasses};
-				$output->{$key}->{num_biomass_compounds} = $newlist->[$j]->[7]->{num_biomass_compounds};
-				$output->{$key}->{num_compartments} = $newlist->[$j]->[7]->{num_compartments};				
-				$output->{$key}->{gene_associated_reactions} = $newlist->[$j]->[7]->{gene_associated_reactions};
-				$output->{$key}->{gapfilled_reactions} = $newlist->[$j]->[7]->{gapfilled_reactions};
-				$output->{$key}->{fba_count} = 0;
-				$output->{$key}->{integrated_gapfills} = 0;
-				$output->{$key}->{unintegrated_gapfills} = 0;
-				if (defined($fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/fba/"})) {
-					$output->{$key}->{fba_count} = @{$fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/fba/"}};
-				}
-				if (defined($fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"})) {
-					for (my $k=0; $k < @{$fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"}}; $k++) {
-						my $item = $fbahash->{$newlist->[$j]->[2].$newlist->[$j]->[0]."/gapfilling/"}->[$k];
-						if ($item->[7]->{integrated} == 1) {
-							$output->{$key}->{integrated_gapfills}++;
-						} else {
-							$output->{$key}->{unintegrated_gapfills}++;
-						}
-					}
-				}
-			}
-		}
-	}
-#	print Data::Dumper->Dump([$output]);
 	return $output;
 }
 
