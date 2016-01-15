@@ -1081,28 +1081,29 @@ sub list_models {
 		recursive => 0,
 		excludeDirectories => 0,
 	});
+	my $output;
 	$list = $list->{$input->{path}};
     for (my $j=0; $j < @{$list}; $j++) {
-    	my $key = $newlist->[$j]->[2].$newlist->[$j]->[0];
-		$output->{$key}->{rundate} = $newlist->[$j]->[3];
-		$output->{$key}->{id} = $newlist->[$j]->[0];
-		$output->{$key}->{source} = $newlist->[$j]->[7]->{source};
-		$output->{$key}->{source_id} = $newlist->[$j]->[7]->{source_id};
-		$output->{$key}->{name} = $newlist->[$j]->[7]->{name};
-		$output->{$key}->{type} = $newlist->[$j]->[7]->{type};
-		$output->{$key}->{"ref"} = $newlist->[$j]->[2].$newlist->[$j]->[0];
-		$output->{$key}->{template_ref} = $newlist->[$j]->[7]->{template_ref};
-		$output->{$key}->{num_genes} = $newlist->[$j]->[7]->{num_genes};
-		$output->{$key}->{num_compounds} = $newlist->[$j]->[7]->{num_compounds};
-		$output->{$key}->{num_reactions} = $newlist->[$j]->[7]->{num_reactions};
-		$output->{$key}->{num_biomasses} = $newlist->[$j]->[7]->{num_biomasses};
-		$output->{$key}->{num_biomass_compounds} = $newlist->[$j]->[7]->{num_biomass_compounds};
-		$output->{$key}->{num_compartments} = $newlist->[$j]->[7]->{num_compartments};				
-		$output->{$key}->{gene_associated_reactions} = $newlist->[$j]->[7]->{gene_associated_reactions};
-		$output->{$key}->{gapfilled_reactions} = $newlist->[$j]->[7]->{gapfilled_reactions};
-		$output->{$key}->{fba_count} = $newlist->[$j]->[7]->{fba_count};
-		$output->{$key}->{integrated_gapfills} = $newlist->[$j]->[7]->{integrated_gapfills};
-		$output->{$key}->{unintegrated_gapfills} = $newlist->[$j]->[7]->{unintegrated_gapfills};
+    	my $key = $list->[$j]->[2].$list->[$j]->[0];
+		$output->{$key}->{rundate} = $list->[$j]->[3];
+		$output->{$key}->{id} = $list->[$j]->[0];
+		$output->{$key}->{source} = $list->[$j]->[7]->{source};
+		$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
+		$output->{$key}->{name} = $list->[$j]->[7]->{name};
+		$output->{$key}->{type} = $list->[$j]->[7]->{type};
+		$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
+		$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
+		$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
+		$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
+		$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
+		$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
+		$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
+		$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
+		$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
+		$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
+		$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
+		$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
+		$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};
     }
 	return $output;
 }
