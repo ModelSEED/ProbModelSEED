@@ -587,9 +587,15 @@ sub save_model {
 	#Adding folders and genome if not already present
 	my $listout = [];
 	if ($exists != 1) {
-		$listout = $self->call_ws("create",{
-			objects => [[$ref,"modelfolder",{},undef]]
-		});
+		if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
+			$listout = $self->call_ws("create",{
+				objects => [[$ref,"folder",{},undef]]
+			});
+		} else {
+			$listout = $self->call_ws("create",{
+				objects => [[$ref,"modelfolder",{},undef]]
+			});
+		}
 	}
 	if (!defined($subobjects->{fba})) {
 		push(@{$createinput->{objects}},[$ref."/fba","folder",{},undef]);
@@ -605,6 +611,9 @@ sub save_model {
 	push(@{$createinput->{objects}},[$ref."/model","model",{},undef]);
 	$objectdata->{$ref."/model"} = $object->toJSON();
 	#Saving model SBML format
+	if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
+		$name =~ s/^\.//;
+	}
 	push(@{$createinput->{objects}},[$ref."/".$name.".sbml","string",{
 	   description => "SBML version of model data for use in COBRA toolbox and other applications"
 	},undef]);
@@ -663,6 +672,21 @@ sub save_model {
 		}	
 	}
 	my $summary = $self->helper()->get_model_summary($object);
+	if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
+    	my $path = $ref;
+    	if ($ref =~ m/(.+)\/\.([^\/]+)$/) {
+    		$path = $1."/".$2;
+    		my $data = $object->serializeToDB();
+    		$data->{genome_ref} = ".".$2."/genome||";
+    		if (defined($data->{gapfilling}->[0])) {
+    			$data->{gapfilling}->[0]->{fba_ref} = ".".$2."/gapfilling/".$data->{gapfilling}->[0]->{id}."||";
+    		}
+    		$data = Bio::KBase::ObjectAPI::utilities::TOJSON($data);
+    		my $tempoutput = $self->call_ws("create",{
+    			objects => [[$path,"model",$summary,$data]]
+    		});
+    	}
+    }
 	$self->helper()->update_model_meta($ref,$summary,$object->wsmeta()->[3]);
 	return $output;
 }

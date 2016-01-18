@@ -203,7 +203,7 @@
 			output_file => "TestCommunityModel"
 		},"Merging model test",[],0,undef,1,1);
 		$output = $self->test_harness("ModelReconstruction",{
-			genome => "PATRIC:83333.84",
+			genome => "PATRICSOLR:83333.84",
 			fulldb => "0",
 			output_path => $model_dir,
 			output_file => "PubGenomeModel"

@@ -1,6 +1,7 @@
 package Bio::KBase::ObjectAPI::config;
 use strict;
 
+our $useoldmodels = 0;
 our $setowner = "";
 our $username = "";
 our $method = "";
@@ -8,6 +9,14 @@ our $adminmode = 0;
 our $token = undef;
 our $configfile_loaded = undef;
 our $service_config = undef;
+
+sub old_models {
+	my $input = shift;
+	if (defined($input)) {
+		$useoldmodels = $input;
+	}
+	return $useoldmodels;
+}
 
 sub home_dir {
 	my $input = shift;

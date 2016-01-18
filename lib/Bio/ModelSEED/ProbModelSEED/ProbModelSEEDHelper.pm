@@ -49,6 +49,9 @@ sub get_genome {
 	my $obj;
 	if ($ref =~ m/^PATRIC:(.+)/) {
     	return $self->retrieve_PATRIC_genome($1);
+    } elsif ($ref =~ m/^PATRICSOLR:(.+)/) {
+    	Bio::KBase::ObjectAPI::config::old_models(1);
+    	return $self->retrieve_PATRIC_genome($1);
 	} elsif ($ref =~ m/^REFSEQ:(.+)/) {
     	return $self->retrieve_PATRIC_genome($1,1);
 	} elsif ($ref =~ m/^PUBSEED:(.+)/) {
@@ -1305,6 +1308,7 @@ sub ComputeReactionProbabilities {
 
 sub ModelReconstruction {
 	my($self,$parameters,$jobresult) = @_;
+    Bio::KBase::ObjectAPI::config::old_models(0);
     $parameters = $self->validate_args($parameters,[],{
     	media => undef,
     	template_model => undef,
@@ -1320,6 +1324,9 @@ sub ModelReconstruction {
 	my $genome = $self->get_genome($parameters->{genome});
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $genome->id();
+    }
+    if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
+    	$parameters->{output_file} = ".".$parameters->{output_file};
     }
     if (!defined($parameters->{media})) {
 		if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
@@ -1364,7 +1371,11 @@ sub ModelReconstruction {
     	$parameters->{output_path} .= "/";
     }
     my $folder = $parameters->{output_path}.$parameters->{output_file};   	
-   	$self->save_object($folder,undef,"modelfolder");
+   	if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
+   		$self->save_object($folder,undef,"folder");
+   	} else {
+   		$self->save_object($folder,undef,"modelfolder");
+   	}
    	$self->save_object($folder."/genome",$genome,"genome");
    	my $mdl = $template->buildModel({
 	    genome => $genome,
@@ -1876,6 +1887,58 @@ sub ImportKBaseModel {
 	$self->save_object($parameters->{output_path}.$parameters->{output_file},$model,"model",{});
 	$jobresult->{path} = $parameters->{output_path}.$parameters->{output_file}."/jobresult";
 	return $parameters->{output_path}.$parameters->{output_file};
+}
+
+sub ExportToKBase {
+	my($self,$parameters,$jobresult) = @_;
+	$parameters = $self->validate_args($parameters,["model","kbws","kbid"],{
+		kbwsurl => undef,
+		kbuser => undef,
+		kbpassword => undef,
+		kbtoken => undef,
+    });
+    #Getting model
+    my $model = $self->get_object($parameters->{model});
+    #Getting KBase store
+    my $kbstore = $self->KBaseStore({
+    	kbuser => $parameters->{kbuser},
+		kbpassword => $parameters->{kbpassword},
+		kbtoken => $parameters->{kbtoken},
+		kbwsurl => $parameters->{kbwsurl},
+    });
+    #Getting genome
+    my $genome = $model->genome();
+    #Saving contig set
+    if (defined($genome->{contigset_ref})) {
+    	my $contigs = $genome->contigs();
+    	$kbstore->save_object($contigs,$parameters->{kbws}."/".$parameters->{kbid}.".contigs");
+    	$genome->contigset_ref($parameters->{kbws}."/".$parameters->{kbid}.".contigs");
+    }
+    #Saving genome
+    $kbstore->save_object($genome,$parameters->{kbws}."/".$parameters->{kbid}.".genome");
+    #Saving gapfilling
+    for (my $i=0; $i < @{$model->gapfillings()}; $i++) {
+    	my $fba = $model->gapfillings()->[$i]->fba();
+    	$model->gapfillings()->[$i]->fba_ref($genome,$parameters->{kbws}."/".$parameters->{kbid}.".".$model->gapfillings()->[$i]->id());
+    	$fba->fbamodel_ref($parameters->{kbws}."/".$parameters->{kbid});
+    	if ($fba->media_ref() =~ m/\/([^\/]+)$/) {
+    		$fba->media_ref("KBaseMedia/".$1);
+    	}
+    	$fba->fbamodel_ref($parameters->{kbws}."/".$parameters->{kbid});
+    }
+    #Saving model
+    if ($model->template_ref() =~ m/GramNegative/) {
+    	$model->template_ref("228/2");
+    } elsif ($model->template_ref() =~ m/GramPositive/) {
+    	$model->template_ref("228/1");
+    } elsif ($model->template_ref() =~ m/plant/) {
+    	$model->template_ref("228/4");
+    }
+    $model->genome_ref($parameters->{kbws}."/".$parameters->{kbid}.".genome");
+    $model->parent($kbstore);
+    $kbstore->save_object($model,$parameters->{kbws}."/".$parameters->{kbid});
+    $jobresult->{path} = $parameters->{model}."/kbase_export_jobresult";
+	return $parameters->{kbws}."/".$parameters->{kbid};
 }
 
 sub TranslateOlderModels {
