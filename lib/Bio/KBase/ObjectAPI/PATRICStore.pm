@@ -585,8 +585,11 @@ sub save_model {
 	}
 	my $objectdata = {};
 	#Adding folders and genome if not already present
+	my $listout = [];
 	if ($exists != 1) {
-		push(@{$createinput->{objects}},[$ref,"modelfolder",{},undef]);
+		$listout = $self->call_ws("create",{
+			objects => [[$ref,"modelfolder",{},undef]]
+		});
 	}
 	if (!defined($subobjects->{fba})) {
 		push(@{$createinput->{objects}},[$ref."/fba","folder",{},undef]);
@@ -627,7 +630,10 @@ sub save_model {
 	}
 	$objectdata->{$ref."/".$name.".rxntbl"} = $rxntbl;
 	#Calling create functions
-	my $listout = $self->call_ws("create",$createinput);
+	my $createoutput = $self->call_ws("create",$createinput);
+	for (my $i=0; $i < @{$createoutput}; $i++) {
+		push(@{$listout},$createoutput->[$i]);
+	}
 	#Uploading actual files to shock
 	$output = {};
 	my $modelmeta;

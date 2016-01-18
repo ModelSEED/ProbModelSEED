@@ -259,6 +259,9 @@ sub get_model_summary {
 		integrated_gapfills => $model->integrated_gapfill_count(),
 		unintegrated_gapfills => $model->unintegrated_gapfill_count()
 	};
+	if (defined($model->genome_ref()) && defined($model->genome())) {
+		$output->{genome_source} = $model->genome()->source();
+	}
 	$output->{template_ref} =~ s/\|\|//;
 	my $list = $self->call_ws("ls",{
 		paths => [$modelmeta->[2].$modelmeta->[0]."/fba"],
@@ -1316,7 +1319,7 @@ sub ModelReconstruction {
     });
 	my $genome = $self->get_genome($parameters->{genome});
     if (!defined($parameters->{output_file})) {
-    	$parameters->{output_file} = $genome->id()."_model";	
+    	$parameters->{output_file} = $genome->id();
     }
     if (!defined($parameters->{media})) {
 		if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
