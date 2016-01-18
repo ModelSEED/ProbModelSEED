@@ -13,9 +13,8 @@ use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 my $configfile = "/disks/p3dev1/deployment/deployment.cfg";
 #$configfile = "/Users/chenry/code/PATRICClient/config.ini";
 
-my $outdirectory = $ARGV[0];
-my $procs = $ARGV[1];
-my $index = $ARGV[2];
+my $procs = $ARGV[0];
+my $index = $ARGV[1];
 
 if (!defined($procs)) {
 	$procs = 1;
@@ -42,13 +41,22 @@ while (my $line = <$fh>) {
 	$pmslist->{$array->[1]} = 1;
 }
 close($fh);
+$filename = "/disks/p3dev1/fba/successlist.txt";
+my $completehash = {};
+open(my $fh, "<", $filename);
+while (my $line = <$fh>) {
+	chomp($line);
+	my $array = [split(/:/,$line)];
+	$completehash->{$array->[1]} = 1;
+}
+close($fh);
 $filename = "/homes/chenry/ModelList.txt";
 my $modellist = [];
 open(my $fb, "<", $filename);
 while (my $line = <$fb>) {
 	chomp($line);
 	my $array = [split(/\t/,$line)];
-	if (!defined($kbhash->{$array->[0]}) && !defined($pmslist->{$array->[0]}) && $array->[4] > 0) {
+	if (!defined($completehash->{$array->[0]}) && !defined($kbhash->{$array->[0]}) && !defined($pmslist->{$array->[0]}) && $array->[4] > 0) {
 		push(@{$modellist},{
 			owner => $array->[2],
 			id => $array->[0]
