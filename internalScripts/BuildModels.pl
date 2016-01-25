@@ -63,7 +63,8 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 		eval {
 			$helper->app_harness("ModelReconstruction",{
 				genome => $genome,
-				output_file => $modellist->[$i]->{id}
+				output_file => $modellist->[$i]->{id},
+				output_path => "/".$modellist->[$i]->{owner}."/modelseed/"
 			});
 		};
 		if ($@) {

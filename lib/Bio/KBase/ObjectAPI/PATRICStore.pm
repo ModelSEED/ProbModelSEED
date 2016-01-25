@@ -50,6 +50,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use LWP::UserAgent;
 use HTTP::Request::Common;
+use Data::UUID;
 
 use Class::Autouse qw(
     Bio::KBase::ObjectAPI::KBaseRegulation::Regulome
