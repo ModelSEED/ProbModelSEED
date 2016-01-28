@@ -26,6 +26,14 @@ sub home_dir {
 	return $service_config->{home_dir};
 }
 
+sub plantseed_home_dir {
+	my $input = shift;
+	if (defined($input)) {
+		$service_config->{plantseed_home_dir} = $input;
+	}
+	return $service_config->{plantseed_home_dir};
+}
+
 sub bin_directory {
 	my $input = shift;
 	if (defined($input)) {
