@@ -56,11 +56,15 @@ if (defined($opt->{name})) {
 }
 my $client = Bio::P3::Workspace::ScriptHelpers::msClient();
 my $output = $client->ModelReconstruction($input);
-print "Job ID:".$output."\n";
-my $jobstatus = $client->CheckJobs({jobs => [$output]});
-while ($jobstatus->{$output}->{status} ne "completed") {
-	print "Status:".$jobstatus->{$output}->{status}."\n";
-	sleep(3);
-	$jobstatus = $client->CheckJobs({jobs => [$output]});
+if ($output =~ m/^\/.+/) {
+	print "Job complete. Model Saved to: ".$output."\n";
+} else {
+	print "Job ID:".$output."\n";
+	my $jobstatus = $client->CheckJobs({jobs => [$output]});
+	while ($jobstatus->{$output}->{status} ne "completed") {
+		print "Status:".$jobstatus->{$output}->{status}."\n";
+		sleep(3);
+		$jobstatus = $client->CheckJobs({jobs => [$output]});
+	}
+	print "Finished!\n";
 }
-print "Finished!\n";
