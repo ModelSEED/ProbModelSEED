@@ -47,6 +47,7 @@ has modelcompounds => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { 
 has modelreactions => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(ModelReaction)', metaclass => 'Typed', reader => '_modelreactions', printOrder => '3');
 has modelcompartments => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(ModelCompartment)', metaclass => 'Typed', reader => '_modelcompartments', printOrder => '1');
 has gapfillings => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(ModelGapfill)', metaclass => 'Typed', reader => '_gapfillings', printOrder => '-1');
+has gapfilledcandidates => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(ModelReaction)', metaclass => 'Typed', reader => '_gapfilledcandidates', printOrder => '3');
 
 
 # LINKS:
@@ -335,10 +336,20 @@ my $subobjects = [
             'type' => 'child',
             'class' => 'ModelGapfill',
             'module' => 'KBaseFBA'
+          },
+          {
+            'req' => undef,
+            'printOrder' => 3,
+            'name' => 'gapfilledcandidates',
+            'default' => undef,
+            'description' => undef,
+            'class' => 'ModelReaction',
+            'type' => 'child',
+            'module' => 'KBaseFBA'
           }
         ];
 
-my $subobject_map = {biomasses => 0, quantopts => 1, gapgens => 2, modelcompounds => 3, modelreactions => 4, modelcompartments => 5, gapfillings => 6};
+my $subobject_map = {biomasses => 0, quantopts => 1, gapgens => 2, modelcompounds => 3, modelreactions => 4, modelcompartments => 5, gapfillings => 6,gapfilledcandidates => 7};
 sub _subobjects {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -380,6 +391,10 @@ around 'modelcompartments' => sub {
 around 'gapfillings' => sub {
 	 my ($orig, $self) = @_;
 	 return $self->_build_all_objects('gapfillings');
+};
+around 'gapfilledcandidates' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('gapfilledcandidates');
 };
 
 
