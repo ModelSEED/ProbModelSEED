@@ -548,7 +548,7 @@ sub func_compare_fba_solutions {
     	reactions => [],
     	compounds => []
     });
-    $fbacomp->parent($handler->store());
+    $fbacomp->parent($handler->util_store());
     my $commoncompounds = 0;
     my $commonreactions = 0;
     my $fbahash = {};
@@ -943,7 +943,7 @@ sub func_merge_metabolic_models_into_community_model {
 		gapgens => [],
 		gapfillings => [],
 	});
-	$commdl->parent($handler->store());
+	$commdl->parent($handler->util_store());
 	for (my $i=0; $i < @{$params->{fbamodel_id_list}}; $i++) {
 		$params->{fbamodel_id_list}->[$i] = $params->{fbamodel_workspace}."/".$params->{fbamodel_id_list}->[$i];
 	}
