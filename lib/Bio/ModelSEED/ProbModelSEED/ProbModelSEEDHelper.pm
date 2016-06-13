@@ -196,6 +196,18 @@ sub error {
 	Bio::KBase::ObjectAPI::utilities::error($msg);
 }
 
+#taken from gjoseqlib
+sub read_fasta{
+    my $dataR = shift;
+    my @seqs = map { $_->[2] =~ tr/ \n\r\t//d; $_ }
+    map { /^(\S+)([ \t]+([^\n\r]+)?)?[\n\r]+(.*)$/s ? [ $1, $3 || '', $4 || '' ] : () }
+               split /[\n\r]+>[ \t]*/m, $dataR;
+
+    #  Fix the first sequence, if necessary
+    $seqs[0]->[0] =~ s/^>//;  # remove > if present
+    return \@seqs;
+}
+
 #****************************************************************************
 #Research functions
 #****************************************************************************
@@ -933,20 +945,20 @@ sub build_fba_object {
 sub copy_genome {
 	my($self,$input) = @_;
 	$input = $self->validate_args($input,["genome"],{
-    	destination => undef,
-    	destname => undef,
-		to_kbase => 0,
-		workspace_url => undef,
-		kbase_username => undef,
-		kbase_password => undef,
-		kbase_token => undef,
-		plantseed => 0,
+	    destination => undef,
+	    destname => undef,
+	    to_kbase => 0,
+	    workspace_url => undef,
+	    kbase_username => undef,
+	    kbase_password => undef,
+	    kbase_token => undef,
+	    plantseed => 0,
     });
     my $genome = $self->get_genome($input->{genome});
     if (!defined($input->{destination})) {
     	$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/modelseed/genomes/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/genomes/";
+    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/";
     	}
     }
     if (!defined($input->{destname})) {
@@ -955,11 +967,8 @@ sub copy_genome {
     if ($input->{destination}.$input->{destname} eq $input->{genome}) {
     	$self->error("Copy source and destination identical! Aborting!");
     }
-    if (defined($self->get_model_meta($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0]))) {
-    	$self->copy_object($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
-    }
-    
-    return $self->save_object($input->{destination}.$input->{destname},$genome,"genome");
+	print "Saving genome: ".$input->{destination}.$input->{destname}." from ".$input->{genome}."\n";
+	return $self->save_object($input->{destination}.$input->{destname},$genome,"genome");
 }
 sub copy_model {
 	my($self,$input) = @_;
@@ -974,33 +983,90 @@ sub copy_model {
 		kbase_token => undef,
 		plantseed => 0,
     });
-    my $model = $self->get_object($input->{model});
     if (!defined($input->{destination})) {
     	$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/models/";
+    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/";
     	}
     }
     if (!defined($input->{destname})) {
+	my $model = $self->get_object($input->{model}."/model");
     	$input->{destname} = $model->wsmeta()->[0];
     }
     if ($input->{destination}.$input->{destname} eq $input->{model}) {
     	$self->error("Copy source and destination identical! Aborting!");
     }
-    if (defined($self->get_model_meta($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]))) {
-    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
-    }
-    if ($input->{copy_genome} == 1) {
-    	$self->copy_genome({
-    		genome => $model->genome_ref(),
-    		plantseed => $input->{plantseed}
-    	});
-    	$model->genome_ref($model->genome()->_reference());
-    }
-    my $oldautometa = $model->wsmeta()->[8];
-    my $meta = $self->save_object($input->{destination}.$input->{destname},$model,"model");
-    $meta->[8] = $oldautometa;
+
+#Disabled old copy_genome as its contained within modelfolder
+#    if (defined($self->get_model_meta($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]))) {
+#    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
+#    }
+#    if ($input->{copy_genome} == 1) {
+#    	$self->copy_genome({
+#    		genome => $input->{model}."/genome",
+#    		plantseed => $input->{plantseed}
+#    	});
+#    	$model->genome_ref($model->genome()->_reference());
+#    }
+
+	print "Copying ".$input->{model}." to ".$input->{destination}.$input->{destname}."\n";
+	my $meta = $self->copy_object($input->{model},$input->{destination}.$input->{destname},1);
+
+	#Update internal genome reference
+	my $model = $self->get_object($input->{destination}.$input->{destname}."/model");
+    	$model->genome_ref($input->{destname}."/genome||");
+	$self->save_object($input->{destination}.$input->{destname},$model,"model");
+
     return $self->get_model_summary($model);
+}
+
+sub create_genome_from_shock {
+	my($self,$input)=@_;
+	
+	my $ua = LWP::UserAgent->new();
+	my $shock_url = Bio::KBase::ObjectAPI::config::shock_url()."/node/".$input->{shock_id}."?download";
+	my $token = Bio::KBase::ObjectAPI::config::token();
+	my $res = $ua->get($shock_url,Authorization => "OAuth " . $token);
+	my $raw_data = $res->{_content};
+
+	#This works with data that is both gzipped or plain
+	use IO::Uncompress::Gunzip qw(gunzip);
+	my $data=undef;
+	gunzip \$raw_data => \$data;
+
+	my $Ftrs = read_fasta($data);
+	my %GenomeObj = (id=>$input->{destname},
+			 source=>"User",
+			 scientific_name=>"undefined",
+			 taxonomy=>'',
+			 genetic_code=>11,
+			 domain=>'Plant',
+			 features=>[],
+			 num_contigs => 0,
+			 contig_lengths => [],
+			 contig_ids => []);
+	
+	my $user_meta = { "is_folder"=>0, "taxonomy"=>"undefined", "scientific_name"=>"undefined", "domain"=>"Plant",
+			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname} };
+
+	foreach my $ftr (@$Ftrs){
+	    my $featureObj = {id=>$ftr->[0],
+			      type => 'CDS',
+			      protein_translation=>$ftr->[2],
+			      protein_translation_length=>length($ftr->[2]),
+			      dna_sequence_length=>3*length($ftr->[2]),
+			      md5=>Digest::MD5::md5_hex($ftr->[2]),
+			      function=>""};
+
+	    $user_meta->{dna_size}+=$featureObj->{dna_sequence_length};
+	    $user_meta->{num_features}++;
+
+	    push(@{$GenomeObj{features}},$featureObj);
+	}
+	
+	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/";
+	$self->save_object($folder,undef,"modelfolder");
+	return $self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
 }
 
 sub list_model_fba {
