@@ -1835,8 +1835,8 @@ sub get_feature
     #Retrieve Minimal Genome object (unspecified type)
     my @path = split(/\//, $input->{genome});
     my $genome = pop @path;
-    my $root = join("/",@path)."/";
-    my $min_genome = $root.".".$genome."/minimal_genome";
+    my $root = join("/",@path);
+    my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";
 
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
     $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
@@ -1850,7 +1850,7 @@ sub get_feature
 	return $output;
     }
 
-    my $sim_file = $root.".".$genome."/Sims_".$sim_index;
+    my $sim_file = $input->{genome}."/.plantseed_data/Sims_".$sim_index;
     $sim_file = $self->helper()->get_object($sim_file,"unspecified");
     $sim_file = Bio::KBase::ObjectAPI::utilities::FROMJSON($sim_file);
     
@@ -2022,8 +2022,8 @@ sub save_feature_function
     #Retrieve Minimal Genome object (unspecified type)
     my @path = split(/\//, $input->{genome});
     my $genome = pop @path;
-    my $root = join("/",@path)."/";
-    my $min_genome = $root.".".$genome."/minimal_genome";
+    my $root = join("/",@path);
+    my $min_genome = $root."/.plantseed_data/minimal_genome";
 
     my $min_genome_obj = $self->helper()->get_object($min_genome,"unspecified");
     $min_genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome_obj);
@@ -2358,8 +2358,8 @@ sub plant_annotation_overview
     #Stored in Minimal Genome object
     my @path = split(/\//, $input->{genome});
     my $genome = pop @path;
-    my $root = join("/",@path)."/";
-    my $min_genome = $root.".".$genome."/minimal_genome";
+    my $root = join("/",@path);
+    my $min_genome = $root."/.plantseed_data/minimal_genome";
 
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
     $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
@@ -2447,6 +2447,10 @@ sub create_genome_from_shock
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN create_genome_from_shock
+
+    $input = $self->initialize_call($input);
+    $self->helper()->create_genome_from_shock($input);
+
     #END create_genome_from_shock
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
