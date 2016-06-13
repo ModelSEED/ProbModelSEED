@@ -581,9 +581,11 @@ module ProbModelSEED {
 
 		REQUIRED INPUTS:
 		string shock_id - id in shock with which to retrieve fasta file
+		string name - name under which to store the genome and resulting model
 	*/		
 	typedef structure {
 		string shock_id;
+		string destname;
 	} create_genome_from_shock_params;
 	authentication required;
 	funcdef create_genome_from_shock(create_genome_from_shock_params input) returns (string output);
