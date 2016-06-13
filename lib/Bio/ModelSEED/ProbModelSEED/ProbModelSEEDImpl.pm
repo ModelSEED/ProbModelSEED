@@ -1821,7 +1821,7 @@ sub get_feature
     }
 
     #Retrieve details for plants
-    my $ftr_lu = $self->helper()->get_object("/plantseed/Genomes/feature_lookup","unspecified");
+    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
     $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
 
     $output->{subsystems} = [keys %{$ftr_lu->{$output->{id}}{'subsystems'}}];
@@ -2333,7 +2333,7 @@ sub plant_annotation_overview
     }
 
     #Find Missing annotation
-    my $annotation = $self->helper()->get_object("/plantseed/Genomes/annotation_overview","unspecified");
+    my $annotation = $self->helper()->get_object("/plantseed/Data/annotation_overview","unspecified");
     $annotation = decode_json($annotation);
 
     my %Exemplar_Roles=();
