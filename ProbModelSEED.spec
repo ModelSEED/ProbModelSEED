@@ -575,6 +575,45 @@ module ProbModelSEED {
 	authentication required;
 	funcdef plant_annotation_overview(plant_annotation_overview_params input) returns (annotation_overview output);
 
+	/*
+		FUNCTION: create_genome_from_shock
+		DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+
+		REQUIRED INPUTS:
+		string shock_id - id in shock with which to retrieve fasta file
+	*/		
+	typedef structure {
+		string shock_id;
+	} create_genome_from_shock_params;
+	authentication required;
+	funcdef create_genome_from_shock(create_genome_from_shock_params input) returns (string output);
+
+	/*
+		FUNCTION: annotate_plant_genome
+		DESCRIPTION: This function retrieves the sequences from a plantseed genome object and annotates them
+
+		REQUIRED INPUTS:
+		reference genome - annotated genome to explore
+	*/		
+	typedef structure {
+		reference genome;
+	} annotate_plant_genome_params;
+	authentication required;
+	funcdef annotate_plant_genome(annotate_plant_genome_params input) returns (string output);
+
+	/*
+		FUNCTION: create_featurevalues_from_shock
+		DESCRIPTION: This function retrieves the tsv file from shock and creates a FeatureValues object
+
+		REQUIRED INPUTS:
+		string shock_id - id in shock with which to retrieve tsv file
+	*/		
+	typedef structure {
+		string shock_id;
+	} create_featurevalues_from_shock_params;
+	authentication required;
+	funcdef create_featurevalues_from_shock(create_featurevalues_from_shock_params input) returns (string output);
+
 	/*********************************************************************************
 	Functions corresponding to modeling apps
    	*********************************************************************************/

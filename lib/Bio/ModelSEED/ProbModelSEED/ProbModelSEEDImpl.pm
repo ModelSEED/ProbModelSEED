@@ -2391,6 +2391,218 @@ sub plant_annotation_overview
 
 
 
+=head2 create_genome_from_shock
+
+  $output = $obj->create_genome_from_shock($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a create_genome_from_shock_params
+$output is a string
+create_genome_from_shock_params is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a create_genome_from_shock_params
+$output is a string
+create_genome_from_shock_params is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub create_genome_from_shock
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to create_genome_from_shock:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'create_genome_from_shock');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN create_genome_from_shock
+    #END create_genome_from_shock
+    my @_bad_returns;
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to create_genome_from_shock:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'create_genome_from_shock');
+    }
+    return($output);
+}
+
+
+
+
+=head2 annotate_plant_genome
+
+  $output = $obj->annotate_plant_genome($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is an annotate_plant_genome_params
+$output is a string
+annotate_plant_genome_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+reference is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is an annotate_plant_genome_params
+$output is a string
+annotate_plant_genome_params is a reference to a hash where the following keys are defined:
+	genome has a value which is a reference
+reference is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub annotate_plant_genome
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to annotate_plant_genome:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'annotate_plant_genome');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN annotate_plant_genome
+    #END annotate_plant_genome
+    my @_bad_returns;
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to annotate_plant_genome:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'annotate_plant_genome');
+    }
+    return($output);
+}
+
+
+
+
+=head2 create_featurevalues_from_shock
+
+  $output = $obj->create_featurevalues_from_shock($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a create_featurevalues_from_shock_params
+$output is a string
+create_featurevalues_from_shock_params is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a create_featurevalues_from_shock_params
+$output is a string
+create_featurevalues_from_shock_params is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub create_featurevalues_from_shock
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to create_featurevalues_from_shock:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'create_featurevalues_from_shock');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN create_featurevalues_from_shock
+    #END create_featurevalues_from_shock
+    my @_bad_returns;
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to create_featurevalues_from_shock:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'create_featurevalues_from_shock');
+    }
+    return($output);
+}
+
+
+
+
 =head2 ModelReconstruction
 
   $output = $obj->ModelReconstruction($input)
@@ -2808,7 +3020,12 @@ $input is a CheckJobs_params
 $output is a reference to a hash where the key is a JobID and the value is a Task
 CheckJobs_params is a reference to a hash where the following keys are defined:
 	jobs has a value which is a reference to a list where each element is a JobID
+	include_completed has a value which is a bool
+	include_failed has a value which is a bool
+	include_running has a value which is a bool
+	include_errors has a value which is a bool
 JobID is a string
+bool is an int
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
 	app has a value which is a string
@@ -2829,7 +3046,12 @@ $input is a CheckJobs_params
 $output is a reference to a hash where the key is a JobID and the value is a Task
 CheckJobs_params is a reference to a hash where the following keys are defined:
 	jobs has a value which is a reference to a list where each element is a JobID
+	include_completed has a value which is a bool
+	include_failed has a value which is a bool
+	include_running has a value which is a bool
+	include_errors has a value which is a bool
 JobID is a string
+bool is an int
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
 	app has a value which is a string
@@ -5262,6 +5484,123 @@ genome has a value which is a reference
 
 
 
+=head2 create_genome_from_shock_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: create_genome_from_shock
+DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+
+REQUIRED INPUTS:
+string shock_id - id in shock with which to retrieve fasta file
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 annotate_plant_genome_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: annotate_plant_genome
+DESCRIPTION: This function retrieves the sequences from a plantseed genome object and annotates them
+
+REQUIRED INPUTS:
+reference genome - annotated genome to explore
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+genome has a value which is a reference
+
+
+=end text
+
+=back
+
+
+
+=head2 create_featurevalues_from_shock_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: create_featurevalues_from_shock
+DESCRIPTION: This function retrieves the tsv file from shock and creates a FeatureValues object
+
+REQUIRED INPUTS:
+string shock_id - id in shock with which to retrieve tsv file
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+
+
+=end text
+
+=back
+
+
+
 =head2 ModelReconstruction_params
 
 =over 4
@@ -5537,6 +5876,10 @@ DESCRIPTION: This function checks on the current status of app service jobs
 <pre>
 a reference to a hash where the following keys are defined:
 jobs has a value which is a reference to a list where each element is a JobID
+include_completed has a value which is a bool
+include_failed has a value which is a bool
+include_running has a value which is a bool
+include_errors has a value which is a bool
 
 </pre>
 
@@ -5546,6 +5889,10 @@ jobs has a value which is a reference to a list where each element is a JobID
 
 a reference to a hash where the following keys are defined:
 jobs has a value which is a reference to a list where each element is a JobID
+include_completed has a value which is a bool
+include_failed has a value which is a bool
+include_running has a value which is a bool
+include_errors has a value which is a bool
 
 
 =end text
