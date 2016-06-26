@@ -317,8 +317,8 @@ sub func_build_metabolic_model {
 	$handler->util_log("Retrieving genome.");
 	my $genome = $handler->util_get_object($params->{genome_workspace}."/".$params->{genome_id});
 	#Classifying genome
-	$params->{template_workspace} = "NewKBaseModelTemplates";
 	if ($params->{template_id} eq "auto") {
+		$params->{template_workspace} = "NewKBaseModelTemplates";
     	$handler->util_log("Classifying genome in order to select template.");
     	if ($genome->template_classification() eq "plant") {
     		$params->{template_id} = "PlantModelTemplate";
@@ -327,11 +327,14 @@ sub func_build_metabolic_model {
     	} elsif ($genome->template_classification() eq "Gram positive") {
     		$params->{template_id} = "GramPosModelTemplate";
     	}
-	} elsif ($params->{template_id} eq "grampos") {		
+	} elsif ($params->{template_id} eq "grampos") {
+		$params->{template_workspace} = "NewKBaseModelTemplates";
 		$params->{template_id} = "GramPosModelTemplate";
 	} elsif ($params->{template_id} eq "gramneg") {
+		$params->{template_workspace} = "NewKBaseModelTemplates";
 		$params->{template_id} = "GramNegModelTemplate";
 	} elsif ($params->{template_id} eq "plant") {
+		$params->{template_workspace} = "NewKBaseModelTemplates";
 		$params->{template_id} = "PlantModelTemplate";
 	}
     #Retrieving template
