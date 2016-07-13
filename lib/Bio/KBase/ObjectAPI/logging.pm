@@ -3,6 +3,7 @@ use strict;
 use Bio::KBase::ObjectAPI::config;
 use File::Path;
 use DateTime;
+use Log::Log4perl;
 
 our $logger = undef;
 our $processid = undef;
@@ -43,11 +44,19 @@ sub logger {
 
 sub log {
     my $msg = shift;
+    print $msg."\n";
     my $type = shift;
     if (!defined($type)) {
     	$type = "info";
     }
-    Bio::KBase::ObjectAPI::logging::logger()->$type('<msg type="'.$type.'" time="'.DateTime->now()->datetime().'" pid="'.$processid.'" user="'.Bio::KBase::ObjectAPI::config::username().'">'."\n".$msg."\n</msg>\n");
+    if ($type eq "stdout") {
+    	print $msg."\n";
+    } elsif ($type eq "stderr") {
+    	print STDERR $msg."\n";
+    } else {
+    	print $msg."\n";#TODO - need to fix this
+    	#Bio::KBase::ObjectAPI::logging::logger()->$type('<msg type="'.$type.'" time="'.DateTime->now()->datetime().'" pid="'.$processid.'" user="'.Bio::KBase::ObjectAPI::config::username().'">'."\n".$msg."\n</msg>\n");
+    }
 }
 
 1;

@@ -38,7 +38,7 @@ has genEquationCode => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass =
 has revGenEquationCode => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildgenrevequationcode' );
 has equationFormula => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildequationformula' );
 has complexString => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildcomplexString' );
-has stoichiometry => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildstoichiometry' );
+has stoichiometry => ( is => 'rw', isa => 'ArrayRef', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildstoichiometry' );
 
 has reaction => (is => 'rw', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_build_reaction', clearer => 'clear_reaction', isa => 'Ref', weak_ref => 1);
 
@@ -64,8 +64,22 @@ sub _build_reaction {
 	 }
 	 if (!defined($rxn)) {
 	 	$rxn = $self->getLinkedObject("~/template/reactions/id/rxn00000_c");
+	 	if (!defined($rxn)) {
+		 	$rxn = $self->parent()->template()->add("reactions",{
+		 		id => "rxn00000_c",
+				reaction_ref => "~/biochemistry/reactions/id/rxn00000",
+		    	name => "CustomReaction",
+		    	direction => "=",
+		    	templateReactionReagents => [],
+		    	templatecompartment_ref => "~/compartments/id/c",
+		    	reverse_penalty => 5,
+		    	forward_penalty => 5,
+		    	base_cost => 10,
+		    	GapfillDirection => "="
+		 	});
+		 }
 	 }
-	 return $rxn
+	 return $rxn;
 }
 sub _buildname {
 	my ($self) = @_;
@@ -275,7 +289,11 @@ sub _buildcomplexString {
 }
 sub _buildstoichiometry {
 	my ($self) = @_;
-	return $self->createEquation({format=>"id",stoichiometry=>1});
+	my $stoichiometry = [];
+	foreach my $reagent (@{$self->modelReactionReagents()}) {
+		push(@{$stoichiometry},[$reagent->coefficient(),$reagent->modelcompound()->name(),$reagent->modelcompound()->id()]);
+	}
+	return $stoichiometry;
 }
 
 #***********************************************************************************************************
@@ -285,6 +303,18 @@ sub _buildstoichiometry {
 #***********************************************************************************************************
 # FUNCTIONS:
 #***********************************************************************************************************
+sub reaction_expression {
+	my ($self,$expression_hash) = @_;
+	my $highest_expression = 0;
+	foreach my $protein (@{$self->modelReactionProteins()}) {
+		my $protexp = $protein->protein_expression($expression_hash);
+		if ($protexp > $highest_expression) {
+			$highest_expression = $protexp;
+		}
+	}
+	return $highest_expression;
+}
+
 sub kegg {
     my ($self,$id) = @_;
     if (defined($id)) {
@@ -618,7 +648,7 @@ sub addModelReactionProtein {
 		foreach my $subunit (keys(%{$args->{proteinDataTree}->{subunits}})) {
 			my $data = {
 				triggering => $args->{proteinDataTree}->{subunits}->{$subunit}->{triggering},
-				optionalSubunit => $args->{proteinDataTree}->{subunits}->{$subunit}->{optionalRole},
+				optionalSubunit => $args->{proteinDataTree}->{subunits}->{$subunit}->{optionalSubunit},
 				role => $subunit,
 				feature_refs => [],
 				note => ""

@@ -9,6 +9,7 @@ our $adminmode = 0;
 our $token = undef;
 our $configfile_loaded = undef;
 our $service_config = undef;
+our $provenance = undef;
 
 sub old_models {
 	my $input = shift;
@@ -221,12 +222,28 @@ sub data_api_url {
 	return $service_config->{data_api_url};
 }
 
-sub default_media {
+sub default_plant_media {
 	my $input = shift;
 	if (defined($input)) {
-		$service_config->{default_media} = $input;
+		$service_config->{default_plant_media} = $input;
 	}
-	return $service_config->{default_media};
+	return $service_config->{default_plant_media};
+}
+
+sub default_microbial_media {
+	my $input = shift;
+	if (defined($input)) {
+		$service_config->{default_microbial_media} = $input;
+	}
+	return $service_config->{default_microbial_media};
+}
+
+sub default_media_workspace {
+	my $input = shift;
+	if (defined($input)) {
+		$service_config->{default_media_workspace} = $input;
+	}
+	return $service_config->{default_media_workspace};
 }
 
 sub configfile_loaded {
@@ -285,7 +302,16 @@ sub load_config {
 }
 
 sub all_params {
+	my $input = shift;
+	if (defined($input)) {
+		$service_config = $input;
+	}
 	return $service_config;
+}
+
+sub provenance {
+	my $input = shift;
+	return $provenance;
 }
 
 1;

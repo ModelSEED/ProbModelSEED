@@ -279,6 +279,10 @@ sub serializeToDB {
 		if (defined($self->$name())) {
 			if ($item->{type} eq "Int" || $item->{type} eq "Num" || $item->{type} eq "Bool") {
 				$data->{$name} = $self->$name()+0;
+			} elsif ($name eq "fba_ref" || $name eq "gapfill_ref") {
+				if (defined($self->$name()) && length($self->$name()) > 0) {
+					$data->{$name} = $self->$name();
+				}
 			} elsif ($name eq "cues") {
 				$data->{$name} = $self->$name();
 				foreach my $cue (keys(%{$data->{$name}})) {
@@ -336,31 +340,27 @@ sub serializeToDB {
     foreach my $item (@{$subobjects}) {
     	my $name = "_".$item->{name};
     	my $arrayRef = $self->$name();
-	$data->{$item->{name}} = [];
-	foreach my $subobject (@{$arrayRef}) {
-	    if ($subobject->{created} == 1) {
-		push(@{$data->{$item->{name}}},$subobject->{object}->serializeToDB());	
-	    } else {
-		my $newData;
-		foreach my $key (keys(%{$subobject->{data}})) {
-		    if ($key ne "parent") {
-			$newData->{$key} = $subobject->{data}->{$key};
+		$data->{$item->{name}} = [];
+		foreach my $subobject (@{$arrayRef}) {
+		    if ($subobject->{created} == 1) {
+				push(@{$data->{$item->{name}}},$subobject->{object}->serializeToDB());	
+		    } else {
+				my $newData;
+				foreach my $key (keys(%{$subobject->{data}})) {
+				    if ($key ne "parent") {
+						$newData->{$key} = $subobject->{data}->{$key};
+				    }
+				}
+				push(@{$data->{$item->{name}}},$newData);
 		    }
 		}
-		push(@{$data->{$item->{name}}},$newData);
-	    }
-	}
-	if (defined $item->{"singleton"} && $item->{"singleton"} == 1) {
-	    if (scalar @{$data->{$item->{name}}} > 0) {
-		$data->{$item->{name}} = $data->{$item->{name}}->[0];
-	    }
-	    else {
-		delete $data->{$item->{name}};
-	    }
-	}
-    }
-    if (defined($self->jobresult()) && keys(%{$self->jobresult()}) > 0) {
-    	$data->{jobresult} = $self->jobresult();
+		if (defined $item->{"singleton"} && $item->{"singleton"} == 1) {
+		    if (scalar @{$data->{$item->{name}}} > 0) {
+				$data->{$item->{name}} = $data->{$item->{name}}->[0];
+		    } else {
+				delete $data->{$item->{name}};
+		    }
+		}
     }
     return $data;
 }
@@ -701,6 +701,8 @@ sub getLinkedObject {
     	return $self->store()->get_object($1)->queryObject($2,{$3 => $4});
     } elsif ($ref =~ m/^[:\w]+\/[\w\.\|\-]+$/) {
     	return $self->store()->get_object($ref);
+    } elsif ($ref =~ m/^([:\w]+\/\w+)\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
+    	return $self->store()->get_object($1)->queryObject($2,{$3 => $4});
     }
     Bio::KBase::ObjectAPI::utilities::error("Unrecognized reference format:".$ref);
 }
