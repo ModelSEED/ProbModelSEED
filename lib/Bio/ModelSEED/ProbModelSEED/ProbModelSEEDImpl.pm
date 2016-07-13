@@ -2449,7 +2449,7 @@ sub create_genome_from_shock
     #BEGIN create_genome_from_shock
 
     $input = $self->initialize_call($input);
-    $self->helper()->create_genome_from_shock($input);
+    $output = $self->helper()->create_genome_from_shock($input);
 
     #END create_genome_from_shock
     my @_bad_returns;

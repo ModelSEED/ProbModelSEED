@@ -1078,7 +1078,8 @@ sub create_genome_from_shock {
 	
 	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/";
 	$self->save_object($folder,undef,"modelfolder");
-	return $self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
+	$self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
+	return $folder."genome";
 }
 
 sub list_model_fba {
