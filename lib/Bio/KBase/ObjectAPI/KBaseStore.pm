@@ -56,6 +56,7 @@ use Class::Autouse qw(
     Bio::KBase::ObjectAPI::KBaseGenomes::ContigSet
     Bio::KBase::ObjectAPI::KBaseBiochem::Media
     Bio::KBase::ObjectAPI::KBaseFBA::ModelTemplate
+    Bio::KBase::ObjectAPI::KBaseFBA::FBAComparison
     Bio::KBase::ObjectAPI::KBaseOntology::Mapping
     Bio::KBase::ObjectAPI::KBaseFBA::FBAModel
     Bio::KBase::ObjectAPI::KBaseBiochem::BiochemistryStructures
@@ -74,7 +75,6 @@ has workspace => ( is => 'rw', isa => 'Ref', required => 1);
 has cache => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 has uuid_refs => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 has updated_refs => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
-has provenance => ( is => 'rw', isa => 'ArrayRef',default => sub { return []; });
 has user_override => ( is => 'rw', isa => 'Str',default => "");
 
 #***********************************************************************************************************
@@ -131,12 +131,31 @@ sub get_objects {
 			if ($info->[2] =~ m/^(.+)\.(.+)-/) {
 				my $module = $1;
 				my $type = $2;
+				$type =~ s/^New//;
 				my $class = "Bio::KBase::ObjectAPI::".$module."::".$type;
-				$self->cache()->{$newrefs->[$i]} = $class->new($objdatas->[$i]->{data});
+				if ($type eq "ExpressionMatrix" || $type eq "ProteomeComparison") {
+					$self->cache()->{$newrefs->[$i]} = $objdatas->[$i]->{data};
+					$self->cache()->{$newrefs->[$i]}->{_reference} = $info->[6]."/".$info->[0]."/".$info->[4];
+				} else {
+					$self->cache()->{$newrefs->[$i]} = $class->new($objdatas->[$i]->{data});
+					$self->cache()->{$newrefs->[$i]}->parent($self);
+					$self->cache()->{$newrefs->[$i]}->_wsobjid($info->[0]);
+					$self->cache()->{$newrefs->[$i]}->_wsname($info->[1]);
+					$self->cache()->{$newrefs->[$i]}->_wstype($info->[2]);
+					$self->cache()->{$newrefs->[$i]}->_wssave_date($info->[3]);
+					$self->cache()->{$newrefs->[$i]}->_wsversion($info->[4]);
+					$self->cache()->{$newrefs->[$i]}->_wssaved_by($info->[5]);
+					$self->cache()->{$newrefs->[$i]}->_wswsid($info->[6]);
+					$self->cache()->{$newrefs->[$i]}->_wsworkspace($info->[7]);
+					$self->cache()->{$newrefs->[$i]}->_wschsum($info->[8]);
+					$self->cache()->{$newrefs->[$i]}->_wssize($info->[9]);
+					$self->cache()->{$newrefs->[$i]}->_wsmeta($info->[10]);
+					$self->cache()->{$newrefs->[$i]}->_reference($info->[6]."/".$info->[0]."/".$info->[4]);
+					$self->uuid_refs()->{$self->cache()->{$newrefs->[$i]}->uuid()} = $info->[6]."/".$info->[0]."/".$info->[4];
+				}
 				if (!defined($self->cache()->{$info->[6]."/".$info->[0]."/".$info->[4]})) {
 					$self->cache()->{$info->[6]."/".$info->[0]."/".$info->[4]} = $self->cache()->{$newrefs->[$i]};
 				}
-				$self->cache()->{$newrefs->[$i]}->parent($self);
 				if ($type eq "Biochemistry") {
 					$self->cache()->{$newrefs->[$i]}->add("compounds",{
 						id => "cpd00000",
@@ -172,32 +191,47 @@ sub get_objects {
 				}
 				if ($type eq "FBAModel") {
 					if (defined($self->cache()->{$newrefs->[$i]}->template_ref())) {
-						if ($self->cache()->{$newrefs->[$i]}->template_ref() =~ m/(\w+)\/(\w+)\/\d+/) {
-							$self->cache()->{$newrefs->[$i]}->template_ref($1."/".$2);
+						if ($self->cache()->{$newrefs->[$i]}->template_ref() =~ m/(\w+)\/(\w+)\/*\d*/) {
+							my $output = $self->workspace()->get_object_info([{
+								"ref" => $self->cache()->{$newrefs->[$i]}->template_ref()
+							}],0);
+							if ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "GramPosModelTemplate") {
+								$self->cache()->{$newrefs->[$i]}->template_ref("NewKBaseModelTemplates/GramPosModelTemplate");
+							} elsif ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "GramNegModelTemplate") {
+								$self->cache()->{$newrefs->[$i]}->template_ref("NewKBaseModelTemplates/GramNegModelTemplate");
+							} elsif ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "CoreModelTemplate ") {
+								$self->cache()->{$newrefs->[$i]}->template_ref("NewKBaseModelTemplates/GramNegModelTemplate");
+							} elsif ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "PlantModelTemplate") {
+								$self->cache()->{$newrefs->[$i]}->template_ref("NewKBaseModelTemplates/PlantModelTemplate");
+							} elsif ($output->[0]->[7] eq "NewKBaseModelTemplates") {
+								$self->cache()->{$newrefs->[$i]}->template_ref($output->[0]->[7]."/".$output->[0]->[1]);
+							}
 						}
 					}
 					if (defined($self->cache()->{$newrefs->[$i]}->template_refs())) {
 						my $temprefs = $self->cache()->{$newrefs->[$i]}->template_refs();
-						for (my $i=0; $i < @{$temprefs}; $i++) {
-							if ($temprefs->[$i] =~ m/(\w+)\/(\w+)\/\d+/) {
-								$temprefs->[$i] = $1."/".$2;
+						for (my $j=0; $j < @{$temprefs}; $j++) {
+							my $output = $self->workspace()->get_object_info([{
+								"ref" => $temprefs->[$j]
+							}],0);
+							if ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "GramPosModelTemplate") {
+								$temprefs->[$j] = "NewKBaseModelTemplates/GramPosModelTemplate";
+							} elsif ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "GramNegModelTemplate") {
+								$temprefs->[$j] = "NewKBaseModelTemplates/GramNegModelTemplate";
+							} elsif ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "CoreModelTemplate ") {
+								$temprefs->[$j] = "NewKBaseModelTemplates/GramNegModelTemplate";
+							} elsif ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "PlantModelTemplate") {
+								$temprefs->[$j] = "NewKBaseModelTemplates/PlantModelTemplate";
+							} elsif ($output->[0]->[7] eq "NewKBaseModelTemplates") {
+								$temprefs->[$j] = $output->[0]->[7]."/".$output->[0]->[1];
 							}
 						}
 					}
+					if (!defined($self->cache()->{$newrefs->[$i]}->{_updated})) {
+						my $obj = $self->cache()->{$newrefs->[$i]};
+						$obj->update_from_old_versions();
+					}
 				}
-				$self->cache()->{$newrefs->[$i]}->_wsobjid($info->[0]);
-				$self->cache()->{$newrefs->[$i]}->_wsname($info->[1]);
-				$self->cache()->{$newrefs->[$i]}->_wstype($info->[2]);
-				$self->cache()->{$newrefs->[$i]}->_wssave_date($info->[3]);
-				$self->cache()->{$newrefs->[$i]}->_wsversion($info->[4]);
-				$self->cache()->{$newrefs->[$i]}->_wssaved_by($info->[5]);
-				$self->cache()->{$newrefs->[$i]}->_wswsid($info->[6]);
-				$self->cache()->{$newrefs->[$i]}->_wsworkspace($info->[7]);
-				$self->cache()->{$newrefs->[$i]}->_wschsum($info->[8]);
-				$self->cache()->{$newrefs->[$i]}->_wssize($info->[9]);
-				$self->cache()->{$newrefs->[$i]}->_wsmeta($info->[10]);
-				$self->cache()->{$newrefs->[$i]}->_reference($info->[6]."/".$info->[0]."/".$info->[4]);
-				$self->uuid_refs()->{$self->cache()->{$newrefs->[$i]}->uuid()} = $info->[6]."/".$info->[0]."/".$info->[4];
 			}
 		}
 	}
@@ -217,6 +251,7 @@ sub get_object {
 sub get_object_by_handle {
     my ($self,$handle,$type,$options) = @_;
     my $typehandle = [split(/\./,$type)];
+    $typehandle->[1] =~ s/^New//;
     my $class = "Bio::KBase::ObjectAPI::".$typehandle->[0]."::".$typehandle->[1];
     my $data;
     if ($handle->{type} eq "data") {
@@ -230,7 +265,12 @@ sub get_object_by_handle {
 
 sub save_object {
     my ($self,$object,$ref,$params) = @_;
-    my $output = $self->save_objects({$ref => {hidden => $params->{hidden},meta => $params->{meta},object => $object}});
+    my $args = {$ref => {hidden => $params->{hidden},meta => $params->{meta},object => $object}};
+    if (defined($params->{hash}) && $params->{hash} == 1) {
+    	$args->{$ref}->{hash} = 1;
+    	$args->{$ref}->{type} = $params->{type};
+    }
+    my $output = $self->save_objects($args);
     return $output->{$ref};
 }
 
@@ -240,10 +280,15 @@ sub save_objects {
     foreach my $ref (keys(%{$refobjhash})) {
     	my $obj = $refobjhash->{$ref};
     	my $objdata = {
-    		type => $obj->{object}->_type(),
-    		data => $obj->{object}->serializeToDB(),
-    		provenance => $self->provenance()
+    		provenance => Bio::KBase::ObjectAPI::config::provenance()
     	};
+    	if (defined($obj->{hash}) && $obj->{hash} == 1) {
+    		$objdata->{type} = $obj->{type};
+    		$objdata->{data} = $obj->{object};
+    	} else {
+    		$objdata->{type} = $obj->{object}->_type();
+    		$objdata->{data} = $obj->{object}->serializeToDB();	
+    	}
     	if (defined($obj->{hidden})) {
     		$objdata->{hidden} = $obj->{hidden};
     	}
@@ -287,22 +332,24 @@ sub save_objects {
 	    for (my $i=0; $i < @{$listout}; $i++) {
 	    	$self->cache()->{$listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4]} = $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object};
 	    	$self->cache()->{$listout->[$i]->[7]."/".$listout->[$i]->[1]."/".$listout->[$i]->[4]} = $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object};
-	    	$self->uuid_refs()->{$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->uuid()} = $listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4];
-	    	if ($refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference() =~ m/^\w+\/\w+\/\w+$/) {
-	    		$self->updated_refs()->{$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference()} = $listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4];
+	    	if (!defined($refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{hash}) || $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{hash} == 0) {
+		    	$self->uuid_refs()->{$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->uuid()} = $listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4];
+		    	if ($refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference() =~ m/^\w+\/\w+\/\w+$/) {
+		    		$self->updated_refs()->{$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference()} = $listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4];
+		    	}
+		    	$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference($listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4]);
+		    	$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsobjid($listout->[$i]->[0]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsname($listout->[$i]->[1]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wstype($listout->[$i]->[2]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wssave_date($listout->[$i]->[3]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsversion($listout->[$i]->[4]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wssaved_by($listout->[$i]->[5]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wswsid($listout->[$i]->[6]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsworkspace($listout->[$i]->[7]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wschsum($listout->[$i]->[8]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wssize($listout->[$i]->[9]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsmeta($listout->[$i]->[10]);
 	    	}
-	    	$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference($listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4]);
-	    	$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsobjid($listout->[$i]->[0]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsname($listout->[$i]->[1]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wstype($listout->[$i]->[2]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wssave_date($listout->[$i]->[3]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsversion($listout->[$i]->[4]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wssaved_by($listout->[$i]->[5]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wswsid($listout->[$i]->[6]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsworkspace($listout->[$i]->[7]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wschsum($listout->[$i]->[8]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wssize($listout->[$i]->[9]);
-			$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsmeta($listout->[$i]->[10]);
 	    	$output->{$wsdata->{$ws}->{refs}->[$i]} = $listout->[$i];
 	    }
 	    return $output;

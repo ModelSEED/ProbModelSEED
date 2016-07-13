@@ -15,6 +15,18 @@ use Bio::ModelSEED::Client::SAP;
 use Bio::KBase::AppService::Client;
 use Bio::KBase::ObjectAPI::KBaseStore;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
+use Bio::KBase::ObjectAPI::functions;
+
+my $typetrans = {
+	"KBaseFBA.FBA" => "fba",
+	"KBaseFBA.FBAComparison" => "fbacomparison",
+	"KBaseFBA.FBAModel" => "model",
+	"KBasePhenotypes.PhenotypeSimulationSet" => "phenotypeset",
+	"KBaseGenomes.Genome" => "genome",
+	"KBaseFBA.FBAPathwayAnalysis" => "fpa_path_analysis",
+	"KBaseBiochem.Meda" => "media",
+	"KBaseFBA.ModelComparison" => "modelcomparison",
+};
 
 #****************************************************************************
 #Data retrieval and storage functions functions
@@ -194,6 +206,18 @@ sub validate_args {
 sub error {
 	my($self,$msg) = @_;
 	Bio::KBase::ObjectAPI::utilities::error($msg);
+}
+
+#taken from gjoseqlib
+sub read_fasta{
+    my $dataR = shift;
+    my @seqs = map { $_->[2] =~ tr/ \n\r\t//d; $_ }
+    map { /^(\S+)([ \t]+([^\n\r]+)?)?[\n\r]+(.*)$/s ? [ $1, $3 || '', $4 || '' ] : () }
+               split /[\n\r]+>[ \t]*/m, $dataR;
+
+    #  Fix the first sequence, if necessary
+    $seqs[0]->[0] =~ s/^>//;  # remove > if present
+    return \@seqs;
 }
 
 #****************************************************************************
@@ -933,20 +957,20 @@ sub build_fba_object {
 sub copy_genome {
 	my($self,$input) = @_;
 	$input = $self->validate_args($input,["genome"],{
-    	destination => undef,
-    	destname => undef,
-		to_kbase => 0,
-		workspace_url => undef,
-		kbase_username => undef,
-		kbase_password => undef,
-		kbase_token => undef,
-		plantseed => 0,
+	    destination => undef,
+	    destname => undef,
+	    to_kbase => 0,
+	    workspace_url => undef,
+	    kbase_username => undef,
+	    kbase_password => undef,
+	    kbase_token => undef,
+	    plantseed => 0,
     });
     my $genome = $self->get_genome($input->{genome});
     if (!defined($input->{destination})) {
     	$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/modelseed/genomes/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/genomes/";
+    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/";
     	}
     }
     if (!defined($input->{destname})) {
@@ -955,11 +979,8 @@ sub copy_genome {
     if ($input->{destination}.$input->{destname} eq $input->{genome}) {
     	$self->error("Copy source and destination identical! Aborting!");
     }
-    if (defined($self->get_model_meta($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0]))) {
-    	$self->copy_object($genome->wsmeta()->[2]."/.".$genome->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
-    }
-    
-    return $self->save_object($input->{destination}.$input->{destname},$genome,"genome");
+	print "Saving genome: ".$input->{destination}.$input->{destname}." from ".$input->{genome}."\n";
+	return $self->save_object($input->{destination}.$input->{destname},$genome,"genome");
 }
 sub copy_model {
 	my($self,$input) = @_;
@@ -974,33 +995,90 @@ sub copy_model {
 		kbase_token => undef,
 		plantseed => 0,
     });
-    my $model = $self->get_object($input->{model});
     if (!defined($input->{destination})) {
     	$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
     	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/models/";
+    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/";
     	}
     }
     if (!defined($input->{destname})) {
+	my $model = $self->get_object($input->{model}."/model");
     	$input->{destname} = $model->wsmeta()->[0];
     }
     if ($input->{destination}.$input->{destname} eq $input->{model}) {
     	$self->error("Copy source and destination identical! Aborting!");
     }
-    if (defined($self->get_model_meta($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]))) {
-    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
-    }
-    if ($input->{copy_genome} == 1) {
-    	$self->copy_genome({
-    		genome => $model->genome_ref(),
-    		plantseed => $input->{plantseed}
-    	});
-    	$model->genome_ref($model->genome()->_reference());
-    }
-    my $oldautometa = $model->wsmeta()->[8];
-    my $meta = $self->save_object($input->{destination}.$input->{destname},$model,"model");
-    $meta->[8] = $oldautometa;
+
+#Disabled old copy_genome as its contained within modelfolder
+#    if (defined($self->get_model_meta($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]))) {
+#    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
+#    }
+#    if ($input->{copy_genome} == 1) {
+#    	$self->copy_genome({
+#    		genome => $input->{model}."/genome",
+#    		plantseed => $input->{plantseed}
+#    	});
+#    	$model->genome_ref($model->genome()->_reference());
+#    }
+
+	print "Copying ".$input->{model}." to ".$input->{destination}.$input->{destname}."\n";
+	my $meta = $self->copy_object($input->{model},$input->{destination}.$input->{destname},1);
+
+	#Update internal genome reference
+	my $model = $self->get_object($input->{destination}.$input->{destname}."/model");
+    	$model->genome_ref($input->{destname}."/genome||");
+	$self->save_object($input->{destination}.$input->{destname},$model,"model");
+
     return $self->get_model_summary($model);
+}
+
+sub create_genome_from_shock {
+	my($self,$input)=@_;
+	
+	my $ua = LWP::UserAgent->new();
+	my $shock_url = Bio::KBase::ObjectAPI::config::shock_url()."/node/".$input->{shock_id}."?download";
+	my $token = Bio::KBase::ObjectAPI::config::token();
+	my $res = $ua->get($shock_url,Authorization => "OAuth " . $token);
+	my $raw_data = $res->{_content};
+
+	#This works with data that is both gzipped or plain
+	use IO::Uncompress::Gunzip qw(gunzip);
+	my $data=undef;
+	gunzip \$raw_data => \$data;
+
+	my $Ftrs = read_fasta($data);
+	my %GenomeObj = (id=>$input->{destname},
+			 source=>"User",
+			 scientific_name=>"undefined",
+			 taxonomy=>'',
+			 genetic_code=>11,
+			 domain=>'Plant',
+			 features=>[],
+			 num_contigs => 0,
+			 contig_lengths => [],
+			 contig_ids => []);
+	
+	my $user_meta = { "is_folder"=>0, "taxonomy"=>"undefined", "scientific_name"=>"undefined", "domain"=>"Plant",
+			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname} };
+
+	foreach my $ftr (@$Ftrs){
+	    my $featureObj = {id=>$ftr->[0],
+			      type => 'CDS',
+			      protein_translation=>$ftr->[2],
+			      protein_translation_length=>length($ftr->[2]),
+			      dna_sequence_length=>3*length($ftr->[2]),
+			      md5=>Digest::MD5::md5_hex($ftr->[2]),
+			      function=>""};
+
+	    $user_meta->{dna_size}+=$featureObj->{dna_sequence_length};
+	    $user_meta->{num_features}++;
+
+	    push(@{$GenomeObj{features}},$featureObj);
+	}
+	
+	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/";
+	$self->save_object($folder,undef,"modelfolder");
+	return $self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
 }
 
 sub list_model_fba {
@@ -1087,30 +1165,32 @@ sub list_models {
 		recursive => 0,
 		excludeDirectories => 0,
 	});
-	my $output;
-	$list = $list->{$input->{path}};
-    for (my $j=0; $j < @{$list}; $j++) {
-    	my $key = $list->[$j]->[2].$list->[$j]->[0];
-		$output->{$key}->{rundate} = $list->[$j]->[3];
-		$output->{$key}->{id} = $list->[$j]->[0];
-		$output->{$key}->{source} = $list->[$j]->[7]->{source};
-		$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
-		$output->{$key}->{name} = $list->[$j]->[7]->{name};
-		$output->{$key}->{type} = $list->[$j]->[7]->{type};
-		$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
-		$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
-		$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
-		$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
-		$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
-		$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
-		$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
-		$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
-		$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
-		$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
-		$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
-		$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
-		$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};
-    }
+	my $output = {};
+	if (defined($list->{$input->{path}})) {
+		$list = $list->{$input->{path}};
+	    for (my $j=0; $j < @{$list}; $j++) {
+	    	my $key = $list->[$j]->[2].$list->[$j]->[0];
+			$output->{$key}->{rundate} = $list->[$j]->[3];
+			$output->{$key}->{id} = $list->[$j]->[0];
+			$output->{$key}->{source} = $list->[$j]->[7]->{source};
+			$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
+			$output->{$key}->{name} = $list->[$j]->[7]->{name};
+			$output->{$key}->{type} = $list->[$j]->[7]->{type};
+			$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
+			$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
+			$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
+			$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
+			$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
+			$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
+			$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
+			$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
+			$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
+			$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
+			$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
+			$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
+			$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};
+	    }
+	}
 	return $output;
 }
 
@@ -1293,6 +1373,107 @@ sub app_harness {
 	}
 }
 
+sub util_log {
+	my($self,$message) = @_;
+	Bio::KBase::ObjectAPI::logging::log($message);
+}
+
+sub util_get_object {
+	my($self,$ref,$parameters) = @_;
+	my $obj;
+	if ($ref =~ m/^PATRIC:\/*(.+)/) {
+    	return $self->retrieve_PATRIC_genome($1);
+    } elsif ($ref =~ m/^PATRICSOLR:\/*(.+)/) {
+    	Bio::KBase::ObjectAPI::config::old_models(1);
+    	return $self->retrieve_PATRIC_genome($1);
+	} elsif ($ref =~ m/^REFSEQ:\/*(.+)/) {
+    	return $self->retrieve_PATRIC_genome($1,1);
+	} elsif ($ref =~ m/^PUBSEED:\/*(.+)/) {
+    	return $self->retrieve_SEED_genome($1);
+	} elsif ($ref =~ m/^RAST:\/*(.+)/) {
+    	return $self->retrieve_RAST_genome($1);
+    } elsif ($ref =~ m/^NewKBaseModelTemplates\/(.+)/) {
+    	my $translation = {
+    		GramPosModelTemplate => "GramPositive.modeltemplate",
+    		GramNegModelTemplate => "GramNegative.modeltemplate",
+    		PlantModelTemplate => "plant.modeltemplate"
+    	};
+    	$ref = Bio::KBase::ObjectAPI::config::template_dir().$translation->{$1};
+    	$obj = $self->get_object($ref);
+	} else {
+		$obj = $self->get_object($ref);
+	    if (defined($obj) && ref($obj) ne "Bio::KBase::ObjectAPI::KBaseGenomes::Genome" && ref($obj) ne "" && defined($obj->{output_files})) {
+	    	my $output = $obj->{output_files};
+	    	for (my $i=0; $i < @{$obj->{output_files}}; $i++) {
+	    		if ($obj->{output_files}->[$i]->[0] =~ m/\.genome$/) {
+	    			$ref = $obj->{output_files}->[$i]->[0];
+	    		}
+	    	}
+	    	$obj = $self->get_object($ref,"genome");
+	    }
+	}
+	return $obj;
+}
+
+sub util_save_object {
+	my($self,$object,$ref,$parameters) = @_;
+	print "Saving ".$parameters->{type}.":".$ref."\n";
+	my $original_output;
+	if (defined($parameters->{type}) && defined($typetrans->{$parameters->{type}})) {
+		$parameters->{type} = $typetrans->{$parameters->{type}};
+	}
+	if (!defined($parameters->{metadata})) {
+		$parameters->{metadata} = {};
+	}
+	if ($parameters->{type} eq "fba") {
+		my $gfs = $object->gapfillingSolutions();
+		if (@{$gfs} > 0) {
+			$ref = $object->fbamodel()->_reference()."/gapfilling/".$object->id();
+		} else {
+			$ref = $object->fbamodel()->_reference()."/fba/".$object->id();
+		}
+		$ref =~ s/\|\|//g;
+		print "Saving 1:".$parameters->{type}.":".$ref."\n";
+		$original_output = $self->save_object($ref,$object,$parameters->{type},$parameters->{metadata});
+	} else {
+		print "Saving 2:".$parameters->{type}.":".$ref."\n";
+		$original_output = $self->save_object($ref,$object,$parameters->{type},$parameters->{metadata});
+	}
+	return [
+		$original_output->[0],
+		$original_output->[0],
+		$original_output->[1],
+		$original_output->[3],
+		0,
+		$original_output->[5],
+		$original_output->[2],
+		$original_output->[2],
+		0,
+		$original_output->[6],
+		$original_output->[7],
+		$original_output->[8]
+	];
+}
+
+sub util_store {
+	my($self) = @_;
+	return $self->PATRICStore();
+}
+
+sub util_parserefs {
+	my($self,$ref) = @_;
+	my $ws;
+	my $id;
+	if ($ref =~ m/^(.+)\/([^\/]+)$/) {
+		$ws = $1;
+		$id = $2;
+	} elsif ($ref =~ m/^(.+:)([^\/]+)$/) {
+		$ws = $1;
+		$id = $2;
+	}
+	return ($ws,$id);
+}
+
 sub ComputeReactionProbabilities {
 	my($self,$parameters,$jobresult) = @_;
     $parameters = $self->validate_args($parameters,["genome", "template", "rxnprobs"], {});
@@ -1308,7 +1489,6 @@ sub ComputeReactionProbabilities {
 
 sub ModelReconstruction {
 	my($self,$parameters,$jobresult) = @_;
-    Bio::KBase::ObjectAPI::config::old_models(0);
     $parameters = $self->validate_args($parameters,[],{
     	media => undef,
     	template_model => undef,
@@ -1320,48 +1500,28 @@ sub ModelReconstruction {
     	probannogapfill => 0,
     	probanno => 0,
     	predict_essentiality => 1,
+    	gapfill_model => 0,#This ensures the KBase function does not run gapfilling internally
+    	thermodynamic_constraints => 0,
+    	comprehensive_gapfill => 0,
+    	custom_bound_list => [],
+		media_supplement_list => [],
+		expseries => undef,
+		expression_condition => undef,
+		exp_threshold_percentile => 0.5,
+		exp_threshold_margin => 0.1,
+		activation_coefficient => 0.5,
+		omega => 0,
+		objective_fraction => 0.1,
+		minimum_target_flux => 0.1,
+		number_of_solutions => 1
     });
-	my $genome = $self->get_genome($parameters->{genome});
     if (!defined($parameters->{output_file})) {
-    	$parameters->{output_file} = $genome->id();
-    }
-    if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
-    	$parameters->{output_file} = ".".$parameters->{output_file};
-    }
-    if (!defined($parameters->{media})) {
-		if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
-			$parameters->{media} = "/chenry/public/modelsupport/media/PlantHeterotrophicMedia";
-		} else {
-			$parameters->{media} = Bio::KBase::ObjectAPI::config::default_media();
-		}
-	}
-    my $template;
-    if (!defined($parameters->{templatemodel})) {
-    	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
-    		if (!defined($parameters->{output_path})) {
-    			$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::plantseed_home_dir()."/";
-    		}
-    		$template = $self->get_object(Bio::KBase::ObjectAPI::config::template_dir()."plant.modeltemplate","modeltemplate");
-    	} else {
-    		if (!defined($parameters->{output_path})) {
-    			$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/";
-    		}
-    		my $classifier_data = $self->get_object(Bio::KBase::ObjectAPI::config::classifier(),"string");
-    		my $class = $self->classify_genome($classifier_data,$genome);
-    		if ($class eq "Gram positive") {
-	    		$template = $self->get_object(Bio::KBase::ObjectAPI::config::template_dir()."GramPositive.modeltemplate","modeltemplate");
-	    	} elsif ($class eq "Gram negative") {
-	    		$template = $self->get_object(Bio::KBase::ObjectAPI::config::template_dir()."GramNegative.modeltemplate","modeltemplate");
-	    	}
-    	}
-    } else {
-    	$template = $self->get_object($parameters->{templatemodel},"modeltemplate");
-    }
-    if (!defined($template)) {
-    	$self->error("template retrieval failed!");
+    	$parameters->{output_file} = $parameters->{genome};
+    	$parameters->{output_file} =~ s/.+://;
+    	$parameters->{output_file} =~ s/.+\///;
     }
     if (!defined($parameters->{output_path})) {
-    	if ($genome->domain() eq "Plant" || $genome->taxonomy() =~ /viridiplantae/i) {
+    	if ($parameters->{plant} != 0) {
     		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::plantseed_home_dir()."/";
     	} else {
     		$parameters->{output_path} = "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/";
@@ -1370,25 +1530,23 @@ sub ModelReconstruction {
     if (substr($parameters->{output_path},-1,1) ne "/") {
     	$parameters->{output_path} .= "/";
     }
-    my $folder = $parameters->{output_path}.$parameters->{output_file};   	
-   	if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
-   		$self->save_object($folder,undef,"folder");
-   	} else {
-   		$self->save_object($folder,undef,"modelfolder");
-   	}
-   	$self->save_object($folder."/genome",$genome,"genome");
-   	my $mdl = $template->buildModel({
-	    genome => $genome,
-	    modelid => $parameters->{output_file},
-	    fulldb => $parameters->{fulldb}
-	});
-	$mdl->genome_ref($parameters->{output_file}."/genome||");
-	$mdl->wsmeta()->[2] = $parameters->{output_path};
-	$mdl->wsmeta()->[0] = $parameters->{output_file};
+	if (defined($parameters->{media})) {
+		($parameters->{media_workspace},$parameters->{media_id}) = $self->util_parserefs($parameters->{media});
+		delete $parameters->{media};
+	}
+	($parameters->{template_workspace},$parameters->{template_id}) = $self->util_parserefs($parameters->{template_model});
+	($parameters->{genome_workspace},$parameters->{genome_id}) = $self->util_parserefs($parameters->{genome});	
+	$parameters->{workspace} = $parameters->{output_path};
+	$parameters->{fbamodel_output_id} = $parameters->{output_file};
+	delete $parameters->{genome};
+	delete $parameters->{template_model};
+	my $folder = $parameters->{output_path}."/".$parameters->{output_file};
+	my $datachannel = {};
+	Bio::KBase::ObjectAPI::functions::func_build_metabolic_model($parameters,$datachannel);
 	#Now compute reaction probabilities if they are needed for gapfilling or probanno model building
-    if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
+	if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
     	my $genomeref = $folder."/genome";
-    	my $templateref = $template->_reference();
+    	my $templateref = $datachannel->{fbamodel}->template()->_reference();
     	$templateref =~ s/\|\|$//; # Remove the extraneous || at the end of the reference
     	my $rxnprobsref = $folder."/rxnprobs";
     	$self->ComputeReactionProbabilities({
@@ -1396,22 +1554,34 @@ sub ModelReconstruction {
     		template => $templateref,
     		rxnprobs => $rxnprobsref
     	},$jobresult);
-    	$mdl->rxnprobs_ref($rxnprobsref);
-    }
-    $self->save_object($folder,$mdl,"model");
+    	$datachannel->{fbamodel}->rxnprobs_ref($rxnprobsref);
+	}
    	if ($parameters->{gapfill} == 1) {
     	$self->GapfillModel({
     		model => $folder,
     		media => $parameters->{media},
     		integrate_solution => 1,
     		probanno => $parameters->{probanno},
-    	},$jobresult,$mdl);    	
+    		thermodynamic_constraints => $parameters->{thermodynamic_constraints},
+	    	comprehensive_gapfill => $parameters->{comprehensive_gapfill},
+	    	custom_bound_list => $parameters->{custom_bound_list},
+			media_supplement_list => $parameters->{media_supplement_list},
+			expseries => $parameters->{expseries},
+			expression_condition => $parameters->{expression_condition},
+			exp_threshold_percentile => $parameters->{exp_threshold_percentile},
+			exp_threshold_margin => $parameters->{exp_threshold_margin},
+			activation_coefficient => $parameters->{activation_coefficient},
+			omega => $parameters->{omega},
+			objective_fraction => $parameters->{objective_fraction},
+			minimum_target_flux => $parameters->{minimum_target_flux},
+			number_of_solutions => $parameters->{number_of_solutions}
+    	},$jobresult,$datachannel->{fbamodel});    	
     	if ($parameters->{predict_essentiality} == 1) {
     		$self->FluxBalanceAnalysis({
 	    		model => $folder,
 	    		media => $parameters->{media},
-	    		predict_essentiality => 1
-	    	},$jobresult,$mdl);
+	    		simulate_ko => 1
+	    	},$jobresult,$datachannel->{fbamodel});
     	}	
     }
 	$jobresult->{path} = $folder."/jobresult";
@@ -1423,37 +1593,34 @@ sub FluxBalanceAnalysis {
 	$parameters = $self->validate_args($parameters,["model"],{
 		media => undef,
 		fva => 1,
-		predict_essentiality => 0,
-		minimizeflux => 1,
-		findminmedia => 0,
-		allreversible => 0,
-		thermo_const_type => "None",
-		media_supplement => [],
-		geneko => [],
-		rxnko => [],
+		simulate_ko => 0,
+		minimize_flux => 1,
 		objective_fraction => 1,
-		custom_bounds => [],
-		objective => [["biomassflux","bio1",1]],
-		custom_constraints => [],
-		uptake_limits => [],
+		target_reaction => "bio1",
+		thermodynamic_constraints => 0,
+		find_min_media => 0,
+		all_reversible => 0,
+		feature_ko_list => [],
+		reaction_ko_list => [],
+		custom_bound_list => [],
+		media_supplement_list => [],
+		expseries => undef,
+		expression_condition => undef,
+		exp_threshold_percentile => 0.5,
+		exp_threshold_margin => 0.1,
+		activation_coefficient => 0.5,
+		omega => 0,
+		max_c_uptake => undef,
+		max_n_uptake => undef,
+		max_p_uptake => undef,
+		max_s_uptake => undef,
+		max_o_uptake => undef,
+		default_max_uptake => 0,
+		notes => undef,
+		massbalance => undef
 	});
-	$parameters->{fva} = 1;
-	$parameters->{minimizeflux} = 1;
-	if (!defined($model)) {
-		$model = $self->get_object($parameters->{model});
-	}
-    $parameters->{model} = $model->_reference();
-    if (!defined($parameters->{media})) {
-		if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
-			$parameters->{media} = "/chenry/public/modelsupport/media/PlantHeterotrophicMedia";
-		} else {
-			$parameters->{media} = Bio::KBase::ObjectAPI::config::default_media();
-		}
-	}
-    
-    #Setting output path based on model and then creating results folder
-    $parameters->{output_path} = $model->wsmeta()->[2].$model->wsmeta()->[0]."/fba";
-    if (!defined($parameters->{output_file})) {
+	$parameters->{output_path} = $parameters->{model}."/fba";
+	if (!defined($parameters->{output_file})) {
 	    my $list = $self->call_ws("ls",{
 			adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
 			paths => [$parameters->{output_path}],
@@ -1477,89 +1644,17 @@ sub FluxBalanceAnalysis {
 		$parameters->{output_file} = "fba.".$index;
     }
     my $outputfile = $parameters->{output_path}."/".$parameters->{output_file};
-    my $fba = $self->build_fba_object($model,$parameters);
-    Bio::KBase::ObjectAPI::logging::log("Started solving flux balance problem");
-    my $objective = $fba->runFBA();
-    Bio::KBase::ObjectAPI::logging::log("Objective:".$objective);
-    if (!defined($objective)) {
-    	$self->error("FBA failed with no solution returned! See ".$fba->jobnode());
-    }
-    Bio::KBase::ObjectAPI::logging::log("Got solution for flux balance problem");
-    #Printing essential gene list as feature group and text list
-    my $fbatbl = "ID\tName\tEquation\tFlux\tUpper bound\tLower bound\tMax\tMin\n";
-    my $objs = $fba->FBABiomassVariables();
-    for (my $i=0; $i < @{$objs}; $i++) {
-    	$fbatbl .= $objs->[$i]->biomass()->id()."\t".$objs->[$i]->biomass()->name()."\t".
-    		$objs->[$i]->biomass()->definition()."\t".
-    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
-    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
-    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
-    }
-    $objs = $fba->FBAReactionVariables();
-    for (my $i=0; $i < @{$objs}; $i++) {
-    	$fbatbl .= $objs->[$i]->modelreaction()->id()."\t".$objs->[$i]->modelreaction()->name()."\t".
-    		$objs->[$i]->modelreaction()->definition()."\t".
-    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
-    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
-    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
-    }
-    $objs = $fba->FBACompoundVariables();
-    for (my $i=0; $i < @{$objs}; $i++) {
-    	$fbatbl .= $objs->[$i]->modelcompound()->id()."\t".$objs->[$i]->modelcompound()->name()."\t".
-    		"=> ".$objs->[$i]->modelcompound()->name()."[e]\t".
-    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
-    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
-    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
-    } 
-    $self->save_object($outputfile.".fluxtbl",$fbatbl,"string",{
-	   description => "Tab delimited table containing data on reaction fluxes from flux balance analysis",
-	   fba => $parameters->{output_file},
-	   media => $parameters->{media},
-	   model => $parameters->{model}
-	});
-    if ($parameters->{predict_essentiality} == 1) {
-	    my $esslist = [];
-	    my $ftrlist = [];
-	    my $delresults = $fba->FBADeletionResults();
-	    for (my $i=0; $i < @{$delresults}; $i++) {
-	    	if ($delresults->[$i]->growthFraction < 0.00001) {
-	    		my $ftrs =  $delresults->[$i]->features();
-	    		my $aliases = $ftrs->[0]->aliases();
-	    		my $ftrid;
-	    		for (my $j=0; $j < @{$aliases}; $j++) {
-	    		 	if ($aliases->[$j] =~ m/^PATRIC\./) {
-	    		 		$ftrid = $aliases->[$j];
-	    		 		last;
-	    		 	}
-	    		}
-	    		if (!defined($ftrid)) {
-	    			$ftrid = $ftrs->[0]->id();
-	    		}
-	    		push(@{$ftrlist},$ftrid);
-	    		push(@{$esslist},$ftrs->[0]->id());
-	    	}
-	    }
-	   	$self->save_object($outputfile.".essentials",join("\n",@{$esslist}),"string",{
-	    	description => "Tab delimited table containing list of predicted genes from flux balance analysis",
-	    	media => $parameters->{media},
-	    	model => $parameters->{model}
-	    });
-	    my $ftrgroup = {
-	    	id_list => {
-	    		feature_id => $ftrlist
-	    	},
-	    	name => $model->wsmeta()->[0]."-".$fba->media()->wsmeta()->[0]."-essentials"
-	    };
-	    $self->save_object("/".Bio::KBase::ObjectAPI::config::username()."/home/Feature Groups/".$model->wsmeta()->[0]."-".$fba->media()->wsmeta()->[0]."-essentials",$ftrgroup,"feature_group",{
-	    	description => "Group of essential genes predicted by metabolic models",
-	    	media => $parameters->{media},
-	    	model => $parameters->{model}
-	    });
-    }
-    $self->save_object($outputfile,$fba,"fba",{
-    	objective => $objective,
-    	media => $parameters->{media}
-    });
+	$parameters->{fva} = 1;
+	$parameters->{minimize_flux} = 1;
+	$parameters->{fba_output_id} = $parameters->{output_file};
+	$parameters->{workspace} = $parameters->{output_path};
+	if (defined($parameters->{media})) {
+		($parameters->{media_workspace},$parameters->{media_id}) = $self->util_parserefs($parameters->{media});
+		delete $parameters->{media};
+	}
+	($parameters->{fbamodel_workspace},$parameters->{fbamodel_id}) = $self->util_parserefs($parameters->{model});	
+	delete $parameters->{model};
+	Bio::KBase::ObjectAPI::functions::func_run_flux_balance_analysis($parameters,$model);
     $jobresult->{path} = $outputfile.".jobresult";
     return $outputfile;
 }
@@ -1567,49 +1662,32 @@ sub FluxBalanceAnalysis {
 sub GapfillModel {
 	my($self,$parameters,$jobresult,$model) = @_;
     $parameters = $self->validate_args($parameters,["model"],{
+		expseries => undef,
 		media => undef,
 		probanno => 0,
-		alpha => 0,
-		allreversible => 0,
-		thermo_const_type => "None",
-		media_supplement => [],
-		geneko => [],
-		rxnko => [],
-		objective_fraction => 0.001,
-		uptake_limits => [],
-		custom_bounds => [],
-		objective => [["biomassflux","bio1",1]],
-		custom_constraints => [],
-		low_expression_theshold => 0.5,
-		high_expression_theshold => 0.5,
-		target_reactions => [],
-		completeGapfill => 0,
-		solver => undef,
-		omega => 0,
-		allowunbalanced => 0,
-		blacklistedrxns => [],
-		gauranteedrxns => [],
-		exp_raw_data => {},
 		source_model => undef,
-		integrate_solution => 0,
-		fva => 0,
-		minimizeflux => 0,
-		findminmedia => 0
+		target_reaction => "bio1",
+    	thermodynamic_constraints => 0,
+    	comprehensive_gapfill => 0,
+    	feature_ko_list => [],
+		reaction_ko_list => [],
+		custom_bound_list => [],
+		media_supplement_list => [],
+    	expression_condition => undef,
+    	exp_threshold_percentile => 0.5,
+    	exp_threshold_margin => 0.1,
+    	activation_coefficient => 0.5,
+    	omega => 0,
+    	objective_fraction => 0,
+    	minimum_target_flux => 0.1,
+		number_of_solutions => 1,
+		solver => undef,
+		blacklisted_rxn_list => [],
+		gauranteed_rxn_list => [],
+		integrate_solution => 0
 	});
-	if (!defined($model)) {
-    	$model = $self->get_object($parameters->{model});
-	}
-    $parameters->{model} = $model->_reference();
-    if (!defined($parameters->{media})) {
-		if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
-			$parameters->{media} = "/chenry/public/modelsupport/media/PlantHeterotrophicMedia";
-		} else {
-			$parameters->{media} = Bio::KBase::ObjectAPI::config::default_media();
-		}
-	}
-    #Setting output path based on model and then creating results folder
-    $parameters->{output_path} = $model->wsmeta()->[2].$model->wsmeta()->[0]."/gapfilling";
-    if (!defined($parameters->{output_file})) {
+	$parameters->{output_path} = $parameters->{model}."/gapfilling";
+	if (!defined($parameters->{output_file})) {
 	    my $gflist = $self->call_ws("ls",{
 			adminmode => Bio::KBase::ObjectAPI::config::adminmode(),
 			paths => [$parameters->{output_path}],
@@ -1632,131 +1710,42 @@ sub GapfillModel {
 		}
 		$parameters->{output_file} = "gf.".$index;
     }
-    my $outputfile = $parameters->{output_path}."/".$parameters->{output_file};
-    if (defined($parameters->{source_model})) {
-		$parameters->{source_model} = $self->get_object($parameters->{source_model});
-    }
-    my $fba = $self->build_fba_object($model,$parameters);
-    $fba->PrepareForGapfilling($parameters);
-    Bio::KBase::ObjectAPI::logging::log("Started solving gap fill problem");
-    my $objective = $fba->runFBA();
-    $fba->parseGapfillingOutput();
-    if (!defined($fba->gapfillingSolutions()->[0])) {
-		$self->error("Analysis completed, but no valid solutions found!");
+	if (defined($parameters->{media})) {
+		($parameters->{media_workspace},$parameters->{media_id}) = $self->util_parserefs($parameters->{media});
+		delete $parameters->{media};
 	}
-	if (@{$fba->gapfillingSolutions()->[0]->gapfillingSolutionReactions()} == 0) {
-		Bio::KBase::ObjectAPI::logging::log("No gapfilling needed on specified condition!");
-	}
-    Bio::KBase::ObjectAPI::logging::log("Got solution for gap fill problem");
-	my $gfsols = [];
-	my $gftbl = "Solution\tID\tName\tEquation\tDirection\n";
-	for (my $i=0; $i < @{$fba->gapfillingSolutions()}; $i++) {
-		for (my $j=0; $j < @{$fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()}; $j++) {
-			my $rxn = $fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()->[$j];
-			$gftbl .= $i."\t".$rxn->reaction()->id()."\t".$rxn->reaction()->name()."\t".
-    		$rxn->reaction()->definition()."\t".$rxn->direction()."\n";
-			$gfsols->[$i]->[$j] = $fba->gapfillingSolutions()->[$i]->gapfillingSolutionReactions()->[$j]->serializeToDB();
-		}
-	}
-	my $solutiondata = Bio::KBase::ObjectAPI::utilities::TOJSON($gfsols);
-	$self->save_object($outputfile,$fba,"fba",{
-		integrated_solution => 0,
-		solutiondata => $solutiondata,
-		integratedindex => 0,
-		media => $parameters->{media},
-		integrated => $parameters->{integrate_solution}
-	});
-	$self->save_object($outputfile.".gftbl",$gftbl,"string",{
-	   description => "Tab delimited table of reactions gapfilled in metabolic model",
-	   fba => $parameters->{output_file},
-	   media => $parameters->{media},
-	   model => $parameters->{model}
-	});
-	my $fbatbl = "ID\tName\tEquation\tFlux\tUpper bound\tLower bound\tMax\tMin\n";
-    my $objs = $fba->FBABiomassVariables();
-    for (my $i=0; $i < @{$objs}; $i++) {
-    	$fbatbl .= $objs->[$i]->biomass()->id()."\t".$objs->[$i]->biomass()->name()."\t".
-    		$objs->[$i]->biomass()->definition()."\t".
-    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
-    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
-    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
-    }
-    $objs = $fba->FBAReactionVariables();
-    for (my $i=0; $i < @{$objs}; $i++) {
-    	$fbatbl .= $objs->[$i]->modelreaction()->id()."\t".$objs->[$i]->modelreaction()->name()."\t".
-    		$objs->[$i]->modelreaction()->definition()."\t".
-    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
-    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
-    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
-    }
-    $objs = $fba->FBACompoundVariables();
-    for (my $i=0; $i < @{$objs}; $i++) {
-    	$fbatbl .= $objs->[$i]->modelcompound()->id()."\t".$objs->[$i]->modelcompound()->name()."\t".
-    		"=> ".$objs->[$i]->modelcompound()->name()."[e]\t".
-    		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
-    		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
-    		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
-    } 
-    $self->save_object($outputfile.".fbatbl",$fbatbl,"string",{
-	   description => "Table of fluxes through reactions used in gapfilling solution",
-	   fba => $parameters->{output_file},
-	   media => $parameters->{media},
-	   model => $parameters->{model}
-	});
-	Bio::KBase::ObjectAPI::logging::log("Adding new gapfilling:".$fba->id());
-	$model->add("gapfillings",{
-		id => $fba->id(),
-		gapfill_id => $fba->id(),
-		fba_ref => $fba->_reference(),
-		integrated => $parameters->{integrate_solution},
-		integrated_solution => 0,
-		media_ref => $parameters->{media},
-	});
-	if ($parameters->{integrate_solution}) {
-		my $report = $model->integrateGapfillSolutionFromObject({
-			gapfill => $fba
-		});
-	}
-	$self->save_object($model->wsmeta()->[2].$model->wsmeta()->[0],$model,"model");
-	$jobresult->{path} = $outputfile.".jobresult";
-	return $model->wsmeta()->[2].$model->wsmeta()->[0];
+	($parameters->{fbamodel_workspace},$parameters->{fbamodel_id}) = $self->util_parserefs($parameters->{model});	
+	($parameters->{source_fbamodel_workspace},$parameters->{source_fbamodel_id}) = $self->util_parserefs($parameters->{source_model});	
+	($parameters->{expseries_workspace},$parameters->{expseries_id}) = $self->util_parserefs($parameters->{exp_series});
+	($parameters->{probanno_workspace},$parameters->{probanno_id}) = $self->util_parserefs($parameters->{probanno});
+	$parameters->{fbamodel_output_id} = $parameters->{fbamodel_id};
+	$parameters->{gapfill_output_id} = $parameters->{output_file};
+	$parameters->{workspace} = $parameters->{fbamodel_workspace};
+	delete $parameters->{model};
+	delete $parameters->{source_model};
+	delete $parameters->{exp_series};
+	delete $parameters->{probanno};
+	Bio::KBase::ObjectAPI::functions::func_gapfill_metabolic_model($parameters,$model);
+	$jobresult->{path} = $parameters->{output_path}."/".$parameters->{output_file}.".jobresult";
+	return $parameters->{model};
 }
 
 sub MergeModels {
 	my($self,$parameters,$jobresult) = @_;
 	$parameters = $self->validate_args($parameters,["models","output_file"],{
-		output_path => "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/"
-    });
-    #Pulling first model to obtain biochemistry ID
-	my $model = $self->get_object($parameters->{models}->[0]->[0]);
-	#Creating new community model
-	my $commdl = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new({
-		source_id => $parameters->{output_file},
-		source => Bio::KBase::ObjectAPI::config::source(),
-		id => $parameters->{output_file},
-		type => "CommunityModel",
-		name => $parameters->{output_file},
-		template_ref => $model->template_ref(),
-		template_refs => [$model->template_ref()],
-		genome_ref => $parameters->{output_path}."/".$parameters->{output_file}."/genome||",
-		modelreactions => [],
-		modelcompounds => [],
-		modelcompartments => [],
-		biomasses => [],
-		gapgens => [],
-		gapfillings => [],
+		output_path => "/".Bio::KBase::ObjectAPI::config::username()."/".Bio::KBase::ObjectAPI::config::home_dir()."/",
+    	mixed_bag_model => 0
 	});
-	for (my $i=0; $i < @{$parameters->{models}}; $i++) {
-		$parameters->{models}->[$i]->[0] .= "||";
-	}
-	$commdl->wsmeta()->[2] = $parameters->{output_path};
-	$commdl->wsmeta()->[0] = $parameters->{output_file};
-	$commdl->parent($self->PATRICStore());
-	my $genomeObj = $commdl->merge_models({
-		models => $parameters->{models}
-	});
-	$commdl->genome_ref($parameters->{output_file}."/genome||");
-	$self->save_object($parameters->{output_path}."/".$parameters->{output_file},$commdl,"model",{});
+    $parameters->{fbamodel_id_list} = [];
+    for (my $i=0; $i< @{$parameters->{models}}; $i++) {
+    	(my $ws,my $id) = $self->util_parserefs($parameters->{models}->[$i]->[0]);
+    	$parameters->{fbamodel_id_list}->[$i] = $id;
+    	$parameters->{fbamodel_workspace} = $ws;
+    }
+    $parameters->{fbamodel_output_id} = $parameters->{output_file};
+	$parameters->{workspace} = $parameters->{output_path};
+    delete $parameters->{models};
+    Bio::KBase::ObjectAPI::functions::func_merge_metabolic_models_into_community_model($parameters);
 	$jobresult->{path} = $parameters->{output_path}."/".$parameters->{output_file}."/jobresult";
 	return $parameters->{output_path}."/".$parameters->{output_file};
 }
@@ -2098,6 +2087,7 @@ sub new {
     if (defined($parameters->{adminmode})) {
     	Bio::KBase::ObjectAPI::config::setowner($parameters->{setowner});
     }
+    Bio::KBase::ObjectAPI::functions::set_handler($self);
     return $self;
 }
 

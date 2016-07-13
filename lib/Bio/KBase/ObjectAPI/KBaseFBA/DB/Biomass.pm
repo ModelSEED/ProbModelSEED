@@ -31,7 +31,7 @@ has id => (is => 'rw', isa => 'Str', printOrder => '0', default => '', type => '
 
 # SUBOBJECTS:
 has biomasscompounds => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(BiomassCompound)', metaclass => 'Typed', reader => '_biomasscompounds', printOrder => '-1');
-
+has removedcompounds => (is => 'rw', isa => 'ArrayRef[HashRef]', default => sub { return []; }, type => 'child(BiomassCompound)', metaclass => 'Typed', reader => '_removedcompounds', printOrder => '-1');
 
 # LINKS:
 
@@ -182,10 +182,20 @@ my $subobjects = [
             'class' => 'BiomassCompound',
             'type' => 'child',
             'module' => 'KBaseFBA'
+          },
+          {
+            'req' => undef,
+            'printOrder' => -1,
+            'name' => 'removedcompounds',
+            'default' => undef,
+            'description' => undef,
+            'class' => 'BiomassCompound',
+            'type' => 'child',
+            'module' => 'KBaseFBA'
           }
         ];
 
-my $subobject_map = {biomasscompounds => 0};
+my $subobject_map = {biomasscompounds => 0,removedcompounds => 1};
 sub _subobjects {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {
@@ -203,6 +213,11 @@ sub _subobjects {
 around 'biomasscompounds' => sub {
 	 my ($orig, $self) = @_;
 	 return $self->_build_all_objects('biomasscompounds');
+};
+
+around 'removedcompounds' => sub {
+	 my ($orig, $self) = @_;
+	 return $self->_build_all_objects('removedcompounds');
 };
 
 
