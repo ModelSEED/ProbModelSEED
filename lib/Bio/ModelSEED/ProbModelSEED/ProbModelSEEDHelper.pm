@@ -1058,6 +1058,15 @@ sub create_genome_from_shock {
 			 contig_lengths => [],
 			 contig_ids => []);
 	
+
+	my %MinGenomeObj = (source => "User",
+			    scientific_name => "undefined",
+			    similarities_index => {},
+			    features => [],
+			    exemplars => {},
+			    id => $input->{destname},
+			    taxonomy => '');
+
 	my $user_meta = { "is_folder"=>0, "taxonomy"=>"undefined", "scientific_name"=>"undefined", "domain"=>"Plant",
 			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname} };
 
@@ -1070,15 +1079,25 @@ sub create_genome_from_shock {
 			      md5=>Digest::MD5::md5_hex($ftr->[2]),
 			      function=>""};
 
+	    my $minftrObj = {id=>$ftr->[0],
+			     subsystems=>[],
+			     function=>""};
+
 	    $user_meta->{dna_size}+=$featureObj->{dna_sequence_length};
 	    $user_meta->{num_features}++;
 
 	    push(@{$GenomeObj{features}},$featureObj);
+	    push(@{$MinGenomeObj{features}},$minftrObj);
 	}
 	
 	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/";
 	$self->save_object($folder,undef,"modelfolder");
 	$self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
+
+	$folder.=".plantseed_data/";
+	$self->save_object($folder,undef,"folder");
+	$self->call_ws("create", {objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
+
 	return $folder."genome";
 }
 
