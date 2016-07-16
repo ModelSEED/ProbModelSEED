@@ -249,6 +249,21 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def create_genome_from_shock(self, input):
+        resp = self._call('ProbModelSEED.create_genome_from_shock',
+                          [input])
+        return resp[0]
+
+    def annotate_plant_genome(self, input):
+        resp = self._call('ProbModelSEED.annotate_plant_genome',
+                          [input])
+        return resp[0]
+
+    def create_featurevalues_from_shock(self, input):
+        resp = self._call('ProbModelSEED.create_featurevalues_from_shock',
+                          [input])
+        return resp[0]
+
     def ModelReconstruction(self, input):
         resp = self._call('ProbModelSEED.ModelReconstruction',
                           [input])

@@ -17,6 +17,8 @@ our $source = undef;
 our $defbio = undef;
 our $globalparams = {"gapfill name" => "none"};
 our $startime = undef;
+our $classifierdata = undef;
+our $full_trace = 1;
 
 =head1 Bio::KBase::ObjectAPI::utilities
 
@@ -180,8 +182,6 @@ sub args {
     return $args;
 }
 
-sub error { Carp::confess($_[0]); }
-
 =head3 ARGS
 
 Definition:
@@ -197,7 +197,7 @@ sub ARGS {
 	    $args = {};
 	}
 	if (ref($args) ne "HASH") {
-		Bio::KBase::ObjectAPI::utilities::ERROR("Arguments not hash");	
+		Bio::KBase::ObjectAPI::utilities::error("Arguments not hash");	
 	}
 	if (defined($substitutions) && ref($substitutions) eq "HASH") {
 		foreach my $original (keys(%{$substitutions})) {
@@ -211,7 +211,7 @@ sub ARGS {
 			}
 		}
 	}
-	Bio::KBase::ObjectAPI::utilities::ERROR("Mandatory arguments ".join("; ",@{$args->{_error}})." missing. Usage:".Bio::KBase::ObjectAPI::utilities::USAGE($mandatoryArguments,$optionalArguments,$args)) if (defined($args->{_error}));
+	Bio::KBase::ObjectAPI::utilities::error("Mandatory arguments ".join("; ",@{$args->{_error}})." missing. Usage:".Bio::KBase::ObjectAPI::utilities::USAGE($mandatoryArguments,$optionalArguments,$args)) if (defined($args->{_error}));
 	if (defined($optionalArguments)) {
 		foreach my $argument (keys(%{$optionalArguments})) {
 			if (!defined($args->{$argument})) {
@@ -277,18 +277,21 @@ sub USAGE {
 	return $call."{".$usage."}";
 }
 
-=head3 ERROR
+=head3 error
 
 Definition:
-	void Bio::KBase::ObjectAPI::utilities::ERROR();
+	void Bio::KBase::ObjectAPI::utilities::error();
 Description:	
 
 =cut
 
-sub ERROR {	
+sub error {	
 	my ($message) = @_;
-    $message = "\"\"$message\"\"";
-	Carp::confess($message);
+    if ($full_trace == 1) {
+		Carp::confess($message);
+    } else {
+    	die $message;
+    }
 }
 
 =head3 USEERROR
@@ -327,7 +330,7 @@ Description:
 
 sub PRINTFILE {
     my ($filename,$arrayRef) = @_;
-    open ( my $fh, ">", $filename) || Bio::KBase::ObjectAPI::utilities::ERROR("Failure to open file: $filename, $!");
+    open ( my $fh, ">", $filename) || Bio::KBase::ObjectAPI::utilities::error("Failure to open file: $filename, $!");
     foreach my $Item (@{$arrayRef}) {
     	print $fh $Item."\n";
     }
@@ -377,7 +380,7 @@ Description:
 sub LOADFILE {
     my ($filename) = @_;
     my $DataArrayRef = [];
-    open (my $fh, "<", $filename) || Bio::KBase::ObjectAPI::utilities::ERROR("Couldn't open $filename: $!");
+    open (my $fh, "<", $filename) || Bio::KBase::ObjectAPI::utilities::error("Couldn't open $filename: $!");
     while (my $Line = <$fh>) {
         $Line =~ s/\r//;
         chomp($Line);
@@ -515,7 +518,7 @@ sub PRINTHTMLTABLE {
     }
 
     if ($error) {
-        ERROR("Call to PRINTHTMLTABLE failed: incorrect arguments and/or argument structure");
+        error("Call to PRINTHTMLTABLE failed: incorrect arguments and/or argument structure");
     }
 
     # now create the table
@@ -1086,6 +1089,42 @@ sub kblogin {
 	}
 	my $data = decode_json $res->content;
 	return $data->{token};
+}
+
+sub classifier_data {
+	if (!defined($classifierdata)) {
+		my $data;
+		if (Bio::KBase::ObjectAPI::config::classifier() =~ m/^WS:(.+)/) {
+			$data = Bio::KBase::ObjectAPI::functions::util_get_object($1);
+			$data = [split(/\n/,$data)];
+		} else {
+			if (!-e Bio::KBase::ObjectAPI::config::classifier()) {
+				system("curl https://raw.githubusercontent.com/kbase/KBaseFBAModeling/dev/classifier/classifier.txt > ".Bio::KBase::ObjectAPI::config::classifier());
+			}
+			$data = Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::ObjectAPI::config::classifier());
+		}
+		my $headings = [split(/\t/,$data->[0])];
+		my $popprob = [split(/\t/,$data->[1])];
+		for (my $i=1; $i < @{$headings}; $i++) {
+			$classifierdata->{classifierClassifications}->{$headings->[$i]} = {
+				name => $headings->[$i],
+				populationProbability => $popprob->[$i]
+			};
+		}
+		my $cfRoleHash = {};
+		for (my $i=2;$i < @{$data}; $i++) {
+			my $row = [split(/\t/,$data->[$i])];
+			my $searchrole = Bio::KBase::ObjectAPI::utilities::convertRoleToSearchRole($row->[0]);
+			$classifierdata->{classifierRoles}->{$searchrole} = {
+				classificationProbabilities => {},
+				role => $row->[0]
+			};
+			for (my $j=1; $j < @{$headings}; $j++) {
+				$classifierdata->{classifierRoles}->{$searchrole}->{classificationProbabilities}->{$headings->[$j]} = $row->[$j];
+			}
+		}
+	}
+	return $classifierdata;
 }
 
 1;

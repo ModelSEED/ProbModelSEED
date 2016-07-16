@@ -3,7 +3,7 @@ use Bio::P3::Workspace::ScriptHelpers;
 use Bio::KBase::AppService::Client;
 
 my($opt, $usage) = Bio::P3::Workspace::ScriptHelpers::options("%c %o <model>",[
-	["media|m", "Media formulation"],
+	["media|m=s", "Media formulation"],
 	["fva","Flux variability analysis"],
 	["ess","Predict essentiality"],
 	["minflux","Minimize fluxes"],

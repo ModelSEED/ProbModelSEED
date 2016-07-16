@@ -24,12 +24,22 @@ has msid => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', met
 has msname => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildmsname' );
 has msabbreviation => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildmsabbreviation' );
 has isTransporter => ( is => 'rw', isa => 'Bool',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildisTransporter' );
-
+has stoichiometry => ( is => 'rw', isa => 'ArrayRef', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildstoichiometry' );
+has equationCode => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildequationcode' );
+has revEquationCode => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildrevequationcode' );
 has reaction_ref => ( is => 'rw', isa => 'Str',printOrder => '-1', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildreaction_ref' );
 
 #***********************************************************************************************************
 # BUILDERS:
 #***********************************************************************************************************
+sub _buildequationcode {
+	my ($self) = @_;
+	return $self->createEquation({format=>"id",hashed=>1,protons=>0,direction=>0});
+}
+sub _buildrevequationcode {
+	my ($self) = @_;
+	return $self->createEquation({format=>"id",hashed=>1,protons=>0,reverse=>1,direction=>0});
+}
 sub _builddefinition {
 	my ($self) = @_;
 	return $self->createEquation({format=>"name"});
@@ -112,6 +122,15 @@ sub _buildisTransporter {
 		}
 	}
 	return 0;
+}
+
+sub _buildstoichiometry {
+	my ($self) = @_;
+	my $stoichiometry = [];
+	foreach my $reagent (@{$self->templateReactionReagents()}) {
+		push(@{$stoichiometry},[$reagent->coefficient(),$reagent->templatecompcompound()->templatecompound()->name(),$reagent->templatecompcompound()->id()]);
+	}
+	return $stoichiometry;
 }
 
 #***********************************************************************************************************
@@ -362,12 +381,12 @@ sub addRxnToModel {
 						}
 					}
 					$subunits->{$cpxrole->templaterole()->name()}->{triggering} = $cpxrole->triggering();
-					$subunits->{$cpxrole->templaterole()->name()}->{optional} = $cpxrole->optional();
+					$subunits->{$cpxrole->templaterole()->name()}->{optionalSubunit} = $cpxrole->optional_role();
 					if (!defined($roleFeatures->{$cpxrole->templaterole()->id()}->{$compartment}->[0])) {
 						$subunits->{$cpxrole->templaterole()->name()}->{note} = "Role-based-annotation";
 					} else {
 						foreach my $feature (@{$roleFeatures->{$cpxrole->templaterole()->id()}->{$compartment}}) {
-							$subunits->{$cpxrole->templaterole()->name()}->{genes}->{$feature->_reference()} = $feature;	
+							$subunits->{$cpxrole->templaterole()->name()}->{genes}->{"~/genome/features/id/".$feature->id()} = $feature;	
 						}
 					}
 				}
@@ -376,9 +395,9 @@ sub addRxnToModel {
 		if ($present == 1) {
 			for (my $j=0; $j < @{$complexroles}; $j++) {
 				my $cpxrole = $complexroles->[$j];
-				if ($cpxrole->optional() == 0 && !defined($subunits->{$cpxrole->templaterole()->name()})) {
+				if ($cpxrole->optional_role() == 0 && !defined($subunits->{$cpxrole->templaterole()->name()})) {
 					$subunits->{$cpxrole->templaterole()->name()}->{triggering} = $cpxrole->triggering();
-					$subunits->{$cpxrole->templaterole()->name()}->{optional} = $cpxrole->optional();
+					$subunits->{$cpxrole->templaterole()->name()}->{optionalSubunit} = $cpxrole->optional_role();
 					$subunits->{$cpxrole->templaterole()->name()}->{note} = "Complex-based-gapfilling";
 				}
 			}
@@ -395,9 +414,9 @@ sub addRxnToModel {
 	$mdlrxn = $mdl->add("modelreactions",{
 		id => $self->msid()."_".$mdlcmp->id(),
 		probability => 0,
-		reaction_ref => $self->_reference(),
+		reaction_ref => "~/template/reactions/id/".$self->id(),
 		direction => $self->direction(),
-		modelcompartment_ref => $mdlcmp->_reference(),
+		modelcompartment_ref => "~/modelcompartments/id/".$mdlcmp->id(),
 		modelReactionReagents => [],
 		modelReactionProteins => []
 	});
@@ -412,23 +431,22 @@ sub addRxnToModel {
 		});
 		$mdlrxn->addReagentToReaction({
 			coefficient => $coefficient,
-			modelcompound_ref => $mdlcpd->_reference()
+			modelcompound_ref => "~/modelcompounds/id/".$mdlcpd->id()
 		});
 	}
     }
     if (@{$proteins} > 0 && scalar(@{$mdlrxn->modelReactionProteins()})==0) {
-	foreach my $protein (@{$proteins}) {
-	    $mdlrxn->addModelReactionProtein({
-		proteinDataTree => $protein,
-		complex_ref => $protein->{cpx}->_reference()
-					     });
-	}
+		foreach my $protein (@{$proteins}) {
+	    	$mdlrxn->addModelReactionProtein({
+				proteinDataTree => $protein,
+				complex_ref => "~/template/complexes/id/".$protein->{cpx}->id()
+			});
+		}
     } elsif (scalar(@{$mdlrxn->modelReactionProteins()})==0) {
-	$mdlrxn->addModelReactionProtein({
-	    proteinDataTree => {note => $self->type()},
-					 });
+		$mdlrxn->addModelReactionProtein({
+	    	proteinDataTree => {note => $self->type()},
+		});
     }
-
     return $mdlrxn;
 }
 
