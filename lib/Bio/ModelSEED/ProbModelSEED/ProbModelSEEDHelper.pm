@@ -1101,6 +1101,94 @@ sub create_genome_from_shock {
 	return $folder."genome";
 }
 
+sub create_featurevalues_from_shock {
+	my($self,$input)=@_;
+	
+	my $ua = LWP::UserAgent->new();
+	my $shock_url = Bio::KBase::ObjectAPI::config::shock_url()."/node/".$input->{shock_id}."?download";
+	my $token = Bio::KBase::ObjectAPI::config::token();
+	my $res = $ua->get($shock_url,Authorization => "OAuth " . $token);
+	my $raw_data = $res->{_content};
+
+	#This works with data that is both gzipped or plain
+	use IO::Uncompress::Gunzip qw(gunzip);
+	my $data=undef;
+	gunzip \$raw_data => \$data;
+
+	print $data,"\n";
+
+#	my %FloatMatrix2D = ( "row_ids" => [], "col_ids" => [], "values" => [] );
+#	my @Experiments = (); #sort keys %{$Experiments_Genes{$Species}};
+#	$FloatMatrix2D{"col_ids"}=\@Experiments;
+
+#	foreach my $Gene (sort keys %{$Genes_Experiments{$Species}}){
+#	    push(@{$FloatMatrix2D{"row_ids"}},$Gene);
+#	    foreach my $col (@Experiments){
+#		my @Values = map { $Genes_Experiments{$Species}{$Gene}{$_} } @Experiments;
+#		push(@{$FloatMatrix2D{"values"}},\@Values);
+#	    }
+#	}
+
+#    my %ExpressionMatrix = ( "type" => "level", "scale" => "log2",
+#                            "feature_mapping" => {}, "genome_ref" => "",
+#                             "data" => \%FloatMatrix2D );
+
+#	$WS_Client->save_object({workspace=>$WS,auth=>$AToken,id=>$Species,type=>"KBaseFeatureValues.ExpressionMatrix",data=>\%ExpressionMatrix});
+
+#	my $Ftrs = read_fasta($data);
+#	my %GenomeObj = (id=>$input->{destname},
+#			 source=>"User",
+#			 scientific_name=>"undefined",
+#			 taxonomy=>'',
+#			 genetic_code=>11,
+#			 domain=>'Plant',
+#			 features=>[],
+#			 num_contigs => 0,
+#			 contig_lengths => [],
+#			 contig_ids => []);
+	
+#	my %MinGenomeObj = (source => "User",
+#			    scientific_name => "undefined",
+#			    similarities_index => {},
+#			    features => [],
+#			    exemplars => {},
+#			    id => $input->{destname},
+#			    taxonomy => '');
+
+#	my $user_meta = { "is_folder"=>0, "taxonomy"=>"undefined", "scientific_name"=>"undefined", "domain"=>"Plant",
+#			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname} };
+
+#	foreach my $ftr (@$Ftrs){
+#	    my $featureObj = {id=>$ftr->[0],
+#			      type => 'CDS',
+#			      protein_translation=>$ftr->[2],
+#			      protein_translation_length=>length($ftr->[2]),
+#			      dna_sequence_length=>3*length($ftr->[2]),
+#			      md5=>Digest::MD5::md5_hex($ftr->[2]),
+#			      function=>""};
+
+#	    my $minftrObj = {id=>$ftr->[0],
+#			     subsystems=>[],
+#			     function=>""};
+
+#	    $user_meta->{dna_size}+=$featureObj->{dna_sequence_length};
+#	    $user_meta->{num_features}++;
+
+#	    push(@{$GenomeObj{features}},$featureObj);
+#	    push(@{$MinGenomeObj{features}},$minftrObj);
+#	}
+	
+#	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/";
+#	$self->save_object($folder,undef,"modelfolder");
+#	$self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
+
+#	$folder.=".plantseed_data/";
+#	$self->save_object($folder,undef,"folder");
+#	$self->call_ws("create", {objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
+
+	return; # $folder."genome";
+}
+
 sub list_model_fba {
 	my($self,$model) = @_;
 	my $list = $self->call_ws("ls",{
