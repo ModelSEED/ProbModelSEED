@@ -1101,6 +1101,54 @@ sub create_genome_from_shock {
 	return $folder."genome";
 }
 
+sub create_featurevalues_from_shock {
+	my($self,$input)=@_;
+	
+	my $ua = LWP::UserAgent->new();
+	my $shock_url = Bio::KBase::ObjectAPI::config::shock_url()."/node/".$input->{shock_id}."?download";
+	my $token = Bio::KBase::ObjectAPI::config::token();
+	my $res = $ua->get($shock_url,Authorization => "OAuth " . $token);
+	my $raw_data = $res->{_content};
+
+	#This works with data that is both gzipped or plain
+	use IO::Uncompress::Gunzip qw(gunzip);
+	my $data=undef;
+	gunzip \$raw_data => \$data;
+
+	my %FloatMatrix2D = ( "row_ids" => [], "col_ids" => [], "values" => [] );
+	my @Experiments = ();
+	my @temp=();
+	foreach my $line (split(/^/,$data)){
+	    #chomping possibly needs to match CR
+	    $line =~ s/\r?\n$//;
+	    @temp=split(/\t/,$line);
+	    
+	    #Header line should contain experiment names
+	    if(scalar(@Experiments)==0){
+		shift(@temp);
+		@Experiments=@temp;
+		$FloatMatrix2D{"col_ids"}=\@Experiments;
+		next;
+	    }
+
+	    my $Gene = shift(@temp);
+	    push(@{$FloatMatrix2D{"row_ids"}},$Gene);
+	    push(@{$FloatMatrix2D{"values"}},\@temp);
+	}
+
+	my %ExpressionMatrix = ( "type" => "level", "scale" => "log2",
+				 "feature_mapping" => {}, "genome_ref" => "",
+				 "data" => \%FloatMatrix2D );
+
+#	$WS_Client->save_object({workspace=>$WS,auth=>$AToken,id=>$Species,type=>"KBaseFeatureValues.ExpressionMatrix",data=>\%ExpressionMatrix});
+	
+	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel}."/.expression_data/";
+	$self->save_object($folder,undef,"folder");
+	$self->call_ws("create", {objects => [ [$folder.$input->{destname}, "unspecified", {}, \%ExpressionMatrix] ]});
+
+	return $folder.$input->{destname};
+}
+
 sub list_model_fba {
 	my($self,$model) = @_;
 	my $list = $self->call_ws("ls",{
