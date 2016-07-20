@@ -1057,7 +1057,6 @@ sub create_genome_from_shock {
 			 num_contigs => 0,
 			 contig_lengths => [],
 			 contig_ids => []);
-	
 
 	my %MinGenomeObj = (source => "User",
 			    scientific_name => "undefined",
@@ -1068,7 +1067,7 @@ sub create_genome_from_shock {
 			    taxonomy => '');
 
 	my $user_meta = { "is_folder"=>0, "taxonomy"=>"undefined", "scientific_name"=>"undefined", "domain"=>"Plant",
-			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname} };
+			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname},"shock_id"=>$input->{shock_id} };
 
 	foreach my $ftr (@$Ftrs){
 	    my $featureObj = {id=>$ftr->[0],
@@ -1140,13 +1139,151 @@ sub create_featurevalues_from_shock {
 				 "feature_mapping" => {}, "genome_ref" => "",
 				 "data" => \%FloatMatrix2D );
 
-#	$WS_Client->save_object({workspace=>$WS,auth=>$AToken,id=>$Species,type=>"KBaseFeatureValues.ExpressionMatrix",data=>\%ExpressionMatrix});
+	my $user_meta = { "is_folder"=>0, "model_id"=>$input->{destmodel},"shock_id"=>$input->{shock_id} };
 	
 	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel}."/.expression_data/";
 	$self->save_object($folder,undef,"folder");
-	$self->call_ws("create", {objects => [ [$folder.$input->{destname}, "unspecified", {}, \%ExpressionMatrix] ]});
+	$self->call_ws("create", {objects => [ [$folder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ]});
 
 	return $folder.$input->{destname};
+}
+
+sub annotate_plant_genome {
+    my ($self,$input)=@_;
+
+    #Need to check genome sequences for amino acids and if not, translate
+    my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/genome"] })->[0];
+    my $Usermeta = $output->[0][8];
+    my $Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+
+    #Retrieve minimal genome
+    my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/.plantseed_data/minimal_genome"] })->[0];
+    my $Min_Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+
+    my $return_object = {destmodel=>$input->{destmodel},kmers=>"Not attempted",blast=>"Not attempted"};
+    if(exists($input->{kmers}) && $input->{kmers}==1){
+	$return_object->{kmers}="Attempted";
+	my $hits = $self->annotate_plant_genome_kmers($Genome);
+
+	foreach my $ftr (@{$Genome->{features}}){
+	    if(exists($hits->{$ftr->{id}})){
+		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+	    }
+	}
+
+	foreach my $ftr (@{$Min_Genome->{features}}){
+	    if(exists($hits->{$ftr->{id}})){
+		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+	    }
+	}
+
+	my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Genome,1);
+	$Usermeta->{hit_proteins}=scalar(keys %$hits);
+	$self->call_ws("create",{ objects => [[$input->{destmodel}."/genome","genome",$Usermeta,$JSON]], overwrite=>1 });
+
+	$JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
+	$self->call_ws("create",{ objects => [[$input->{destmodel}."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
+
+	$return_object->{kmers}=scalar(keys %$hits);
+    }
+
+    if(exists($input->{blast}) && $input->{blast}==1){
+	$return_object->{blast}="Attempted";
+	my $blast = $self->annotate_plant_genome_blast($Genome);
+	$return_object->{kmers}=$blast if $blast;
+    }
+    my $return_string = join("\n", map { $_.":".$return_object->{$_} } sort keys %$return_object)."\n";
+    return $return_string;
+}
+
+sub annotate_plant_genome_kmers {
+    my ($self,$Genome) = @_;
+
+    #Load Kmers
+    my $output = $self->call_ws("get", { objects => ["/plantseed/Data/functions_kmers"] })->[0][1];
+    my %Functions_Kmers = %{Bio::KBase::ObjectAPI::utilities::FROMJSON($output)};
+
+    my %Kmers_Functions=();
+    foreach my $function (keys %Functions_Kmers){
+	foreach my $kmer (@{$Functions_Kmers{$function}}){
+	    $Kmers_Functions{$kmer}=$function;
+	}
+    }
+
+    my $Kmer_Length=8;
+    my %Hit_Proteins=();
+    foreach my $ftr (@{$Genome->{features}}){
+	my $Seq = $ftr->{protein_translation};
+	my $SeqLen = length($Seq);
+	next if $SeqLen < 10;
+	
+	for (my $frame = 0; $frame <= $Kmer_Length; $frame++){
+	    # run through frames
+	    my $SeqString = substr($Seq,$frame,$SeqLen);
+	    # take the relevant substring
+	    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
+		if(exists($Kmers_Functions{$1})){
+		    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
+		}
+	    }
+	}
+    }
+
+    #Eliminate hits that have a small number of kmers
+    #Not employed at time
+    my $Kmer_Threshold = 1;
+    my %Deleted_Proteins=();
+    foreach my $protein (keys %Hit_Proteins){
+	my %Deleted_Functions=();
+	foreach my $function (keys %{$Hit_Proteins{$protein}}){
+	    my $N_Kmers = scalar(keys %{$Hit_Proteins{$protein}{$function}});
+	    if($N_Kmers <= $Kmer_Threshold){
+		$Deleted_Functions{$function}=1;
+	    }
+	}
+
+	foreach my $function (keys %Deleted_Functions){
+	    delete($Hit_Proteins{$protein}{$function});
+	}
+
+	if(scalar(keys %{$Hit_Proteins{$protein}})==0){
+	    $Deleted_Proteins{$protein}=1;
+	}
+    }
+
+    foreach my $protein (keys %Deleted_Proteins){
+	delete($Hit_Proteins{$protein});
+    }
+
+    #Scan for multi-hits, and, for now, ignore them
+    undef(%Deleted_Proteins);
+    foreach my $protein (keys %Hit_Proteins){
+	next if scalar(keys %{$Hit_Proteins{$protein}})==1;
+
+	my %Top_Functions=();
+	foreach my $function (keys %{$Hit_Proteins{$protein}}){
+	    print $function,"\t",join("|",keys %{$Hit_Proteins{$protein}{$function}}),"\n";
+	    $Top_Functions{scalar(keys %{$Hit_Proteins{$protein}{$function}})}{$function}=1;
+	}
+
+	my $Top_Number = ( sort { $b <=> $a } keys %Top_Functions )[0];
+	my $Top_Function = ( keys %{$Top_Functions{$Top_Number}} )[0];
+	if(scalar(keys %{$Top_Functions{$Top_Number}})>1){
+	    $Deleted_Proteins{$protein}=1;
+	}else{
+	    $Hit_Proteins{$protein}={ $Top_Function => $Hit_Proteins{$protein}{$Top_Function} };
+	}
+    }
+
+    foreach my $protein (keys %Deleted_Proteins){
+	delete($Hit_Proteins{$protein});
+    }
+
+    return \%Hit_Proteins;
+}
+
+sub annotate_plant_genome_blast {
+    return "Not finished";
 }
 
 sub list_model_fba {
