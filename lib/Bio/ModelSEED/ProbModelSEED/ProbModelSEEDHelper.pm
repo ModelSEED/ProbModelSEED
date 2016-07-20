@@ -1222,6 +1222,16 @@ sub annotate_plant_genome {
 	}
     }
 
+    #Retrieve subsystems
+    my $output = $self->call_ws("get", { objects => ["/plantseed/Data/annotation_overview"] })->[0];
+    my $Annotation = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+    my %Roles_Subsystems=();
+    foreach my $role (@{$Annotation}){
+	foreach my $ss (keys %{$role->{subsystems}}){
+	    $Roles_Subsystems{$role->{role}}{$ss}=1;
+	}
+    }
+
     #Retrieve minimal genome
     my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/.plantseed_data/minimal_genome"] })->[0];
     my $Min_Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
@@ -1238,9 +1248,16 @@ sub annotate_plant_genome {
 	}
 
 	foreach my $ftr (@{$Min_Genome->{features}}){
+	    my %SSs = ();
 	    if(exists($hits->{$ftr->{id}})){
 		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+		foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{function})){
+		    foreach my $ss (keys %{$Roles_Subsystems{$role}}){
+			$SSs{$ss}=1;
+		    }
+		}
 	    }
+	    $ftr->{subsystems}=[sort keys %SSs];
 	}
 
 	my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Genome,1);
