@@ -28,6 +28,23 @@ my $typetrans = {
 	"KBaseFBA.ModelComparison" => "modelcomparison",
 };
 
+my %genetic_code = (TTT => 'F',  TCT => 'S',  TAT => 'Y',  TGT => 'C',
+                    TTC => 'F',  TCC => 'S',  TAC => 'Y',  TGC => 'C',
+                    TTA => 'L',  TCA => 'S',  TAA => '*',  TGA => '*',
+                    TTG => 'L',  TCG => 'S',  TAG => '*',  TGG => 'W',
+                    CTT => 'L',  CCT => 'P',  CAT => 'H',  CGT => 'R',
+                    CTC => 'L',  CCC => 'P',  CAC => 'H',  CGC => 'R',
+                    CTA => 'L',  CCA => 'P',  CAA => 'Q',  CGA => 'R',
+                    CTG => 'L',  CCG => 'P',  CAG => 'Q',  CGG => 'R',
+                    ATT => 'I',  ACT => 'T',  AAT => 'N',  AGT => 'S',
+                    ATC => 'I',  ACC => 'T',  AAC => 'N',  AGC => 'S',
+                    ATA => 'I',  ACA => 'T',  AAA => 'K',  AGA => 'R',
+                    ATG => 'M',  ACG => 'T',  AAG => 'K',  AGG => 'R',
+                    GTT => 'V',  GCT => 'A',  GAT => 'D',  GGT => 'G',
+                    GTC => 'V',  GCC => 'A',  GAC => 'D',  GGC => 'G',
+                    GTA => 'V',  GCA => 'A',  GAA => 'E',  GGA => 'G',
+                    GTG => 'V',  GCG => 'A',  GAG => 'E',  GGG => 'G');
+
 #****************************************************************************
 #Data retrieval and storage functions functions
 #****************************************************************************
@@ -1069,14 +1086,23 @@ sub create_genome_from_shock {
 	my $user_meta = { "is_folder"=>0, "taxonomy"=>"undefined", "scientific_name"=>"undefined", "domain"=>"Plant",
 			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname},"shock_id"=>$input->{shock_id} };
 
+        #Test first sequence for NAs
+	my $IsDNA = $self->is_dna($Ftrs->[0][2]);
+
 	foreach my $ftr (@$Ftrs){
 	    my $featureObj = {id=>$ftr->[0],
 			      type => 'CDS',
-			      protein_translation=>$ftr->[2],
-			      protein_translation_length=>length($ftr->[2]),
-			      dna_sequence_length=>3*length($ftr->[2]),
-			      md5=>Digest::MD5::md5_hex($ftr->[2]),
 			      function=>""};
+
+	    if(!$IsDNA){
+		$featureObj->{protein_translation}=$ftr->[2];
+		$featureObj->{protein_translation_length}=length($ftr->[2]);
+		$featureObj->{dna_sequence_length}=3*length($ftr->[2]);
+		$featureObj->{md5}=Digest::MD5::md5_hex($ftr->[2]);
+	    }else{
+		$featureObj->{dna_sequence}=$ftr->[2];
+		$featureObj->{dna_sequence_length}=length($ftr->[2]);
+	    }
 
 	    my $minftrObj = {id=>$ftr->[0],
 			     subsystems=>[],
@@ -1098,6 +1124,23 @@ sub create_genome_from_shock {
 	$self->call_ws("create", {objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
 
 	return $folder."genome";
+}
+
+sub is_dna{
+    my ($self,$seq)=@_;
+
+    my $IsDNA=0;
+    my %Letters = ();
+    foreach my $letter ( map { lc($_) } split(//,$seq) ){
+	$Letters{$letter};
+    }
+    my $Sum = $Letters{'a'}+$Letters{'g'}+$Letters{'c'}+$Letters{'t'}+$Letters{'u'};
+
+    if ( $Sum / length($seq) > 0.75 ){
+	return 1;
+    }else{
+	return 0;
+    }
 }
 
 sub create_featurevalues_from_shock {
@@ -1156,6 +1199,29 @@ sub annotate_plant_genome {
     my $Usermeta = $output->[0][8];
     my $Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
 
+    #Test first protein sequences for NAs
+    #Might have been incorrectly assigned
+    if( exists($Genome->{features}[0]{protein_translation}) && $self->is_dna($Genome->{features}[0]{protein_translation}) ){
+	#Need to re-assign these
+	foreach my $ftr (@{$Genome->{features}}){
+	    $ftr->{dna_sequence}=$ftr->{protein_translation};
+	    $ftr->{dna_sequence_length}=length($ftr->{dna_sequence_length});
+
+	    delete($ftr->{protein_translation});
+	    delete($ftr->{protein_translation_length});
+	    delete($ftr->{md5});
+	}
+    }
+
+    #Translate nucleotides
+    foreach my $ftr (@{$Genome->{features}}){
+	if(exists($ftr->{dna_sequence})){
+	    $ftr->{protein_translation}=$self->translate_nucleotides($ftr->{dna_sequence});
+	    $ftr->{protein_translation_length}=length($ftr->{protein_translation});
+	    $ftr->{md5}=Digest::MD5::md5_hex($ftr->{protein_translation});
+	}
+    }
+
     #Retrieve minimal genome
     my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/.plantseed_data/minimal_genome"] })->[0];
     my $Min_Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
@@ -1194,6 +1260,31 @@ sub annotate_plant_genome {
     }
     my $return_string = join("\n", map { $_.":".$return_object->{$_} } sort keys %$return_object)."\n";
     return $return_string;
+}
+
+#This function could probably do better if we use BioPerl, I am borrowing code from:
+#http://cpansearch.perl.org/src/CJFIELDS/BioPerl-1.6.924/Bio/Tools/CodonTable.pm
+#because I didn't want to create a dependency on BioPerl right now
+sub translate_nucleotides {
+    my ($self,$nucleotides) = @_;
+
+    $nucleotides = lc $nucleotides;
+    $nucleotides =~ tr/u/t/;
+
+    my $amino_acids="";
+    #This is a case of strict translation and doesn't account for all ambiguities
+    for (my $i = 0; $i < (length($nucleotides) - 2); $i+=3) {
+	my $triplet = substr($nucleotides, $i, 3); 
+	if( $triplet eq "---" ) {
+	    $amino_acids .= "-";
+        } if (exists $genetic_code{$triplet}) {
+	    $amino_acids .= $genetic_code{$triplet};
+        } else {
+	    $amino_acids .= 'X';
+	}
+    }
+
+    return $amino_acids;
 }
 
 sub annotate_plant_genome_kmers {
