@@ -2523,6 +2523,10 @@ sub annotate_plant_genome
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN annotate_plant_genome
+    
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->annotate_plant_genome($input);
+
     #END annotate_plant_genome
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
