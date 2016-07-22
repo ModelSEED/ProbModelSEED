@@ -254,6 +254,11 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
+    def plant_pipeline(self, input):
+        resp = self._call('ProbModelSEED.plant_pipeline',
+                          [input])
+        return resp[0]
+
     def annotate_plant_genome(self, input):
         resp = self._call('ProbModelSEED.annotate_plant_genome',
                           [input])
