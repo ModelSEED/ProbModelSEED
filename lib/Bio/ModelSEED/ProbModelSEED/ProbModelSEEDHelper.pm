@@ -28,6 +28,23 @@ my $typetrans = {
 	"KBaseFBA.ModelComparison" => "modelcomparison",
 };
 
+my %genetic_code = (TTT => 'F',  TCT => 'S',  TAT => 'Y',  TGT => 'C',
+                    TTC => 'F',  TCC => 'S',  TAC => 'Y',  TGC => 'C',
+                    TTA => 'L',  TCA => 'S',  TAA => '*',  TGA => '*',
+                    TTG => 'L',  TCG => 'S',  TAG => '*',  TGG => 'W',
+                    CTT => 'L',  CCT => 'P',  CAT => 'H',  CGT => 'R',
+                    CTC => 'L',  CCC => 'P',  CAC => 'H',  CGC => 'R',
+                    CTA => 'L',  CCA => 'P',  CAA => 'Q',  CGA => 'R',
+                    CTG => 'L',  CCG => 'P',  CAG => 'Q',  CGG => 'R',
+                    ATT => 'I',  ACT => 'T',  AAT => 'N',  AGT => 'S',
+                    ATC => 'I',  ACC => 'T',  AAC => 'N',  AGC => 'S',
+                    ATA => 'I',  ACA => 'T',  AAA => 'K',  AGA => 'R',
+                    ATG => 'M',  ACG => 'T',  AAG => 'K',  AGG => 'R',
+                    GTT => 'V',  GCT => 'A',  GAT => 'D',  GGT => 'G',
+                    GTC => 'V',  GCC => 'A',  GAC => 'D',  GGC => 'G',
+                    GTA => 'V',  GCA => 'A',  GAA => 'E',  GGA => 'G',
+                    GTG => 'V',  GCG => 'A',  GAG => 'E',  GGG => 'G');
+
 #****************************************************************************
 #Data retrieval and storage functions functions
 #****************************************************************************
@@ -1063,7 +1080,6 @@ sub create_genome_from_shock {
 			 num_contigs => 0,
 			 contig_lengths => [],
 			 contig_ids => []);
-	
 
 	my %MinGenomeObj = (source => "User",
 			    scientific_name => "undefined",
@@ -1074,16 +1090,25 @@ sub create_genome_from_shock {
 			    taxonomy => '');
 
 	my $user_meta = { "is_folder"=>0, "taxonomy"=>"undefined", "scientific_name"=>"undefined", "domain"=>"Plant",
-			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname} };
+			  "num_contigs"=>0,"gc_content"=>0.5,"dna_size"=>0,"num_features"=>0,"genome_id"=>$input->{destname},"shock_id"=>$input->{shock_id} };
+
+        #Test first sequence for NAs
+	my $IsDNA = $self->is_dna($Ftrs->[0][2]);
 
 	foreach my $ftr (@$Ftrs){
 	    my $featureObj = {id=>$ftr->[0],
 			      type => 'CDS',
-			      protein_translation=>$ftr->[2],
-			      protein_translation_length=>length($ftr->[2]),
-			      dna_sequence_length=>3*length($ftr->[2]),
-			      md5=>Digest::MD5::md5_hex($ftr->[2]),
 			      function=>""};
+
+	    if(!$IsDNA){
+		$featureObj->{protein_translation}=$ftr->[2];
+		$featureObj->{protein_translation_length}=length($ftr->[2]);
+		$featureObj->{dna_sequence_length}=3*length($ftr->[2]);
+		$featureObj->{md5}=Digest::MD5::md5_hex($ftr->[2]);
+	    }else{
+		$featureObj->{dna_sequence}=$ftr->[2];
+		$featureObj->{dna_sequence_length}=length($ftr->[2]);
+	    }
 
 	    my $minftrObj = {id=>$ftr->[0],
 			     subsystems=>[],
@@ -1105,6 +1130,274 @@ sub create_genome_from_shock {
 	$self->call_ws("create", {objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
 
 	return $folder."genome";
+}
+
+sub is_dna{
+    my ($self,$seq)=@_;
+
+    my $IsDNA=0;
+    my %Letters = ();
+    foreach my $letter ( map { lc($_) } split(//,$seq) ){
+	$Letters{$letter};
+    }
+    my $Sum = $Letters{'a'}+$Letters{'g'}+$Letters{'c'}+$Letters{'t'}+$Letters{'u'};
+
+    if ( $Sum / length($seq) > 0.75 ){
+	return 1;
+    }else{
+	return 0;
+    }
+}
+
+sub create_featurevalues_from_shock {
+	my($self,$input)=@_;
+	
+	my $ua = LWP::UserAgent->new();
+	my $shock_url = Bio::KBase::ObjectAPI::config::shock_url()."/node/".$input->{shock_id}."?download";
+	my $token = Bio::KBase::ObjectAPI::config::token();
+	my $res = $ua->get($shock_url,Authorization => "OAuth " . $token);
+	my $raw_data = $res->{_content};
+
+	#This works with data that is both gzipped or plain
+	use IO::Uncompress::Gunzip qw(gunzip);
+	my $data=undef;
+	gunzip \$raw_data => \$data;
+
+	my %FloatMatrix2D = ( "row_ids" => [], "col_ids" => [], "values" => [] );
+	my @Experiments = ();
+	my @temp=();
+	foreach my $line (split(/^/,$data)){
+	    #chomping possibly needs to match CR
+	    $line =~ s/\r?\n$//;
+	    @temp=split(/\t/,$line);
+	    
+	    #Header line should contain experiment names
+	    if(scalar(@Experiments)==0){
+		shift(@temp);
+		@Experiments=@temp;
+		$FloatMatrix2D{"col_ids"}=\@Experiments;
+		next;
+	    }
+
+	    my $Gene = shift(@temp);
+	    push(@{$FloatMatrix2D{"row_ids"}},$Gene);
+	    push(@{$FloatMatrix2D{"values"}},\@temp);
+	}
+
+	my %ExpressionMatrix = ( "type" => "level", "scale" => "log2",
+				 "feature_mapping" => {}, "genome_ref" => "",
+				 "data" => \%FloatMatrix2D );
+
+	my $user_meta = { "is_folder"=>0, "model_id"=>$input->{destmodel},"shock_id"=>$input->{shock_id} };
+	
+	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel}."/.expression_data/";
+	$self->save_object($folder,undef,"folder");
+	$self->call_ws("create", {objects => [ [$folder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ]});
+
+	return $folder.$input->{destname};
+}
+
+sub annotate_plant_genome {
+    my ($self,$input)=@_;
+
+    #Need to check genome sequences for amino acids and if not, translate
+    my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/genome"] })->[0];
+    my $Usermeta = $output->[0][8];
+    my $Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+
+    #Test first protein sequences for NAs
+    #Might have been incorrectly assigned
+    if( exists($Genome->{features}[0]{protein_translation}) && $self->is_dna($Genome->{features}[0]{protein_translation}) ){
+	#Need to re-assign these
+	foreach my $ftr (@{$Genome->{features}}){
+	    $ftr->{dna_sequence}=$ftr->{protein_translation};
+	    $ftr->{dna_sequence_length}=length($ftr->{dna_sequence_length});
+
+	    delete($ftr->{protein_translation});
+	    delete($ftr->{protein_translation_length});
+	    delete($ftr->{md5});
+	}
+    }
+
+    #Translate nucleotides
+    foreach my $ftr (@{$Genome->{features}}){
+	if(exists($ftr->{dna_sequence})){
+	    $ftr->{protein_translation}=$self->translate_nucleotides($ftr->{dna_sequence});
+	    $ftr->{protein_translation_length}=length($ftr->{protein_translation});
+	    $ftr->{md5}=Digest::MD5::md5_hex($ftr->{protein_translation});
+	}
+    }
+
+    #Retrieve subsystems
+    my $output = $self->call_ws("get", { objects => ["/plantseed/Data/annotation_overview"] })->[0];
+    my $Annotation = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+    my %Roles_Subsystems=();
+    foreach my $role (@{$Annotation}){
+	foreach my $ss (keys %{$role->{subsystems}}){
+	    $Roles_Subsystems{$role->{role}}{$ss}=1;
+	}
+    }
+
+    #Retrieve minimal genome
+    my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/.plantseed_data/minimal_genome"] })->[0];
+    my $Min_Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+
+    my $return_object = {destmodel=>$input->{destmodel},kmers=>"Not attempted",blast=>"Not attempted"};
+    if(exists($input->{kmers}) && $input->{kmers}==1){
+	$return_object->{kmers}="Attempted";
+	my $hits = $self->annotate_plant_genome_kmers($Genome);
+
+	foreach my $ftr (@{$Genome->{features}}){
+	    if(exists($hits->{$ftr->{id}})){
+		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+	    }
+	}
+
+	foreach my $ftr (@{$Min_Genome->{features}}){
+	    my %SSs = ();
+	    if(exists($hits->{$ftr->{id}})){
+		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+		foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{function})){
+		    foreach my $ss (keys %{$Roles_Subsystems{$role}}){
+			$SSs{$ss}=1;
+		    }
+		}
+	    }
+	    $ftr->{subsystems}=[sort keys %SSs];
+	}
+
+	my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Genome,1);
+	$Usermeta->{hit_proteins}=scalar(keys %$hits);
+	$self->call_ws("create",{ objects => [[$input->{destmodel}."/genome","genome",$Usermeta,$JSON]], overwrite=>1 });
+
+	$JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
+	$self->call_ws("create",{ objects => [[$input->{destmodel}."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
+
+	$return_object->{kmers}=scalar(keys %$hits);
+    }
+
+    if(exists($input->{blast}) && $input->{blast}==1){
+	$return_object->{blast}="Attempted";
+	my $blast = $self->annotate_plant_genome_blast($Genome);
+	$return_object->{kmers}=$blast if $blast;
+    }
+    my $return_string = join("\n", map { $_.":".$return_object->{$_} } sort keys %$return_object)."\n";
+    return $return_string;
+}
+
+#This function could probably do better if we use BioPerl, I am borrowing code from:
+#http://cpansearch.perl.org/src/CJFIELDS/BioPerl-1.6.924/Bio/Tools/CodonTable.pm
+#because I didn't want to create a dependency on BioPerl right now
+sub translate_nucleotides {
+    my ($self,$nucleotides) = @_;
+
+    $nucleotides = lc $nucleotides;
+    $nucleotides =~ tr/u/t/;
+
+    my $amino_acids="";
+    #This is a case of strict translation and doesn't account for all ambiguities
+    for (my $i = 0; $i < (length($nucleotides) - 2); $i+=3) {
+	my $triplet = substr($nucleotides, $i, 3); 
+	if( $triplet eq "---" ) {
+	    $amino_acids .= "-";
+        } if (exists $genetic_code{$triplet}) {
+	    $amino_acids .= $genetic_code{$triplet};
+        } else {
+	    $amino_acids .= 'X';
+	}
+    }
+
+    return $amino_acids;
+}
+
+sub annotate_plant_genome_kmers {
+    my ($self,$Genome) = @_;
+
+    #Load Kmers
+    my $output = $self->call_ws("get", { objects => ["/plantseed/Data/functions_kmers"] })->[0][1];
+    my %Functions_Kmers = %{Bio::KBase::ObjectAPI::utilities::FROMJSON($output)};
+
+    my %Kmers_Functions=();
+    foreach my $function (keys %Functions_Kmers){
+	foreach my $kmer (@{$Functions_Kmers{$function}}){
+	    $Kmers_Functions{$kmer}=$function;
+	}
+    }
+
+    my $Kmer_Length=8;
+    my %Hit_Proteins=();
+    foreach my $ftr (@{$Genome->{features}}){
+	my $Seq = $ftr->{protein_translation};
+	my $SeqLen = length($Seq);
+	next if $SeqLen < 10;
+	
+	for (my $frame = 0; $frame <= $Kmer_Length; $frame++){
+	    # run through frames
+	    my $SeqString = substr($Seq,$frame,$SeqLen);
+	    # take the relevant substring
+	    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
+		if(exists($Kmers_Functions{$1})){
+		    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
+		}
+	    }
+	}
+    }
+
+    #Eliminate hits that have a small number of kmers
+    #Not employed at time
+    my $Kmer_Threshold = 1;
+    my %Deleted_Proteins=();
+    foreach my $protein (keys %Hit_Proteins){
+	my %Deleted_Functions=();
+	foreach my $function (keys %{$Hit_Proteins{$protein}}){
+	    my $N_Kmers = scalar(keys %{$Hit_Proteins{$protein}{$function}});
+	    if($N_Kmers <= $Kmer_Threshold){
+		$Deleted_Functions{$function}=1;
+	    }
+	}
+
+	foreach my $function (keys %Deleted_Functions){
+	    delete($Hit_Proteins{$protein}{$function});
+	}
+
+	if(scalar(keys %{$Hit_Proteins{$protein}})==0){
+	    $Deleted_Proteins{$protein}=1;
+	}
+    }
+
+    foreach my $protein (keys %Deleted_Proteins){
+	delete($Hit_Proteins{$protein});
+    }
+
+    #Scan for multi-hits, and, for now, ignore them
+    undef(%Deleted_Proteins);
+    foreach my $protein (keys %Hit_Proteins){
+	next if scalar(keys %{$Hit_Proteins{$protein}})==1;
+
+	my %Top_Functions=();
+	foreach my $function (keys %{$Hit_Proteins{$protein}}){
+	    print $function,"\t",join("|",keys %{$Hit_Proteins{$protein}{$function}}),"\n";
+	    $Top_Functions{scalar(keys %{$Hit_Proteins{$protein}{$function}})}{$function}=1;
+	}
+
+	my $Top_Number = ( sort { $b <=> $a } keys %Top_Functions )[0];
+	my $Top_Function = ( keys %{$Top_Functions{$Top_Number}} )[0];
+	if(scalar(keys %{$Top_Functions{$Top_Number}})>1){
+	    $Deleted_Proteins{$protein}=1;
+	}else{
+	    $Hit_Proteins{$protein}={ $Top_Function => $Hit_Proteins{$protein}{$Top_Function} };
+	}
+    }
+
+    foreach my $protein (keys %Deleted_Proteins){
+	delete($Hit_Proteins{$protein});
+    }
+
+    return \%Hit_Proteins;
+}
+
+sub annotate_plant_genome_blast {
+    return "Not finished";
 }
 
 sub list_model_fba {
@@ -1190,31 +1483,34 @@ sub list_models {
 		paths => [$input->{path}],
 		recursive => 0,
 		excludeDirectories => 0,
+		query => {type => "modelfolder"}
 	});
 	my $output = {};
 	if (defined($list->{$input->{path}})) {
 		$list = $list->{$input->{path}};
 	    for (my $j=0; $j < @{$list}; $j++) {
+		#Skip empty models
+		next if !$list->[$j]->[7]->{num_reactions};
 	    	my $key = $list->[$j]->[2].$list->[$j]->[0];
-			$output->{$key}->{rundate} = $list->[$j]->[3];
-			$output->{$key}->{id} = $list->[$j]->[0];
-			$output->{$key}->{source} = $list->[$j]->[7]->{source};
-			$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
-			$output->{$key}->{name} = $list->[$j]->[7]->{name};
-			$output->{$key}->{type} = $list->[$j]->[7]->{type};
-			$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
-			$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
-			$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
-			$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
-			$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
-			$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
-			$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
-			$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
-			$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
-			$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
-			$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
-			$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
-			$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};
+		$output->{$key}->{rundate} = $list->[$j]->[3];
+		$output->{$key}->{id} = $list->[$j]->[0];
+		$output->{$key}->{source} = $list->[$j]->[7]->{source};
+		$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
+		$output->{$key}->{name} = $list->[$j]->[7]->{name};
+		$output->{$key}->{type} = $list->[$j]->[7]->{type};
+		$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
+		$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
+		$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
+		$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
+		$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
+		$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
+		$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
+		$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
+		$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
+		$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
+		$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
+		$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
+		$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};
 	    }
 	}
 	return $output;
@@ -1459,10 +1755,8 @@ sub util_save_object {
 			$ref = $object->fbamodel()->_reference()."/fba/".$object->id();
 		}
 		$ref =~ s/\|\|//g;
-		print "Saving 1:".$parameters->{type}.":".$ref."\n";
 		$original_output = $self->save_object($ref,$object,$parameters->{type},$parameters->{metadata});
 	} else {
-		print "Saving 2:".$parameters->{type}.":".$ref."\n";
 		$original_output = $self->save_object($ref,$object,$parameters->{type},$parameters->{metadata});
 	}
 	return [
