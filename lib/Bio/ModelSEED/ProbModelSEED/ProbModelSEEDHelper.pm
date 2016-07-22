@@ -17,6 +17,8 @@ use Bio::KBase::ObjectAPI::KBaseStore;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
 use Bio::KBase::ObjectAPI::functions;
 
+our $logger = undef;
+
 my $typetrans = {
 	"KBaseFBA.FBA" => "fba",
 	"KBaseFBA.FBAComparison" => "fbacomparison",
@@ -1394,7 +1396,44 @@ sub app_harness {
 }
 
 sub util_log {
-	my($self,$message) = @_;
+	my($self,$message,$type,$processid) = @_;
+	if (!defined($logger)) {
+    	if (!-e Bio::KBase::ObjectAPI::config::config_directory()."/ProbModelSEED.conf") {
+	    	if (!-d Bio::KBase::ObjectAPI::config::config_directory()) {
+	    		File::Path::mkpath (Bio::KBase::ObjectAPI::config::config_directory());
+	    	}
+	    	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.conf",[
+		    	"############################################################",
+				"# A simple root logger with a Log::Log4perl::Appender::File ",
+				"# file appender in Perl.",
+				"############################################################",
+				"log4perl.rootLogger=INFO, LOGFILE",
+				"",
+				"log4perl.appender.LOGFILE=Log::Log4perl::Appender::File",
+				"log4perl.appender.LOGFILE.filename=".Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.log",
+				"log4perl.appender.LOGFILE.mode=append",
+				"",
+				"log4perl.appender.LOGFILE.layout=PatternLayout",
+				"log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n",
+	    	]);
+	    }
+    	Log::Log4perl::init(Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.conf");
+    	$logger = Log::Log4perl->get_logger("ProbModelSEEDHelper");
+    }
+    if (!defined($type)) {
+    	$type = "stdout";
+    }
+    if ($type eq "stdout") {
+    	print $msg."\n";
+    } elsif ($type eq "stderr") {
+    	print STDERR $msg."\n";
+    } else {
+    	$logger->$type('<msg type="'.$type.'" time="'.DateTime->now()->datetime().'" pid="'.$processid.'" user="'.Bio::KBase::ObjectAPI::config::username().'">'."\n".$msg."\n</msg>\n");
+    }
+}
+	
+	
+	
 	Bio::KBase::ObjectAPI::logging::log($message);
 }
 
@@ -2107,6 +2146,7 @@ sub new {
     if (defined($parameters->{adminmode})) {
     	Bio::KBase::ObjectAPI::config::setowner($parameters->{setowner});
     }
+    Bio::KBase::ObjectAPI::logging::set_handler($self);
     Bio::KBase::ObjectAPI::functions::set_handler($self);
     return $self;
 }
