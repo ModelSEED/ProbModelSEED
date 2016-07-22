@@ -1032,6 +1032,12 @@ sub copy_model {
     return $self->get_model_summary($model);
 }
 
+sub plant_pipeline {
+    my($self,$input)=@_;
+
+    $self->create_genome_from_shock($input);
+}
+
 sub create_genome_from_shock {
 	my($self,$input)=@_;
 	

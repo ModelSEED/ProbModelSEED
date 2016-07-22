@@ -2525,6 +2525,10 @@ sub plant_pipeline
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN plant_pipeline
+
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->plant_pipeline($input);
+
     #END plant_pipeline
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
