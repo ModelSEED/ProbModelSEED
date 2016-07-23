@@ -1049,6 +1049,30 @@ sub copy_model {
     return $self->get_model_summary($model);
 }
 
+sub plant_pipeline {
+    my($self,$input)=@_;
+
+    $self->create_genome_from_shock($input);
+
+    #Add parameters for annotation
+    $input->{destmodel} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname};
+    $input->{kmers}=1;
+    $input->{blast}=0;
+
+    $self->annotate_plant_genome($input);
+
+    #Reform parameters for reconstruction
+    my $MR_input = {};
+    $MR_input->{plant}=1;
+    $MR_input->{gapfill}=0;
+    $MR_input->{output_file}=$input->{destname};
+    $MR_input->{genome}=$input->{destmodel}."/genome";
+
+    $self->ModelReconstruction($MR_input);
+
+    return "Complete";
+}
+
 sub create_genome_from_shock {
 	my($self,$input)=@_;
 	
@@ -1803,6 +1827,7 @@ sub ComputeReactionProbabilities {
 
 sub ModelReconstruction {
 	my($self,$parameters,$jobresult) = @_;
+	print STDERR "Input Parameters: ".join("\n", map { $_.":".$parameters->{$_} } keys %$parameters)."\n";
     $parameters = $self->validate_args($parameters,[],{
     	media => undef,
     	template_model => undef,
@@ -1856,6 +1881,8 @@ sub ModelReconstruction {
 	delete $parameters->{template_model};
 	my $folder = $parameters->{output_path}."/".$parameters->{output_file};
 	my $datachannel = {};
+	print STDERR "Output Parameters: ".join("\n", map { $_.":".$parameters->{$_} } keys %$parameters)."\n";
+
 	Bio::KBase::ObjectAPI::functions::func_build_metabolic_model($parameters,$datachannel);
 	#Now compute reaction probabilities if they are needed for gapfilling or probanno model building
 	if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {

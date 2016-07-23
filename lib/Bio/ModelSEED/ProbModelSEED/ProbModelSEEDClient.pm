@@ -2239,6 +2239,7 @@ $input is a create_genome_from_shock_params
 $output is a string
 create_genome_from_shock_params is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
+	destname has a value which is a string
 
 </pre>
 
@@ -2250,6 +2251,7 @@ $input is a create_genome_from_shock_params
 $output is a string
 create_genome_from_shock_params is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
+	destname has a value which is a string
 
 
 =end text
@@ -2303,6 +2305,93 @@ sub create_genome_from_shock
         Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method create_genome_from_shock",
 					    status_line => $self->{client}->status_line,
 					    method_name => 'create_genome_from_shock',
+				       );
+    }
+}
+
+
+
+=head2 plant_pipeline
+
+  $output = $obj->plant_pipeline($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a plant_pipeline_params
+$output is a string
+plant_pipeline_params is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+	destname has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a plant_pipeline_params
+$output is a string
+plant_pipeline_params is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+	destname has a value which is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub plant_pipeline
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function plant_pipeline (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to plant_pipeline:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'plant_pipeline');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.plant_pipeline",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'plant_pipeline',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method plant_pipeline",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'plant_pipeline',
 				       );
     }
 }
@@ -5429,7 +5518,7 @@ roles has a value which is a reference to a hash where the key is a string and t
 =item Description
 
 FUNCTION: plant_annotation_overview
-DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome's PlantSEED annotation
+DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome PlantSEED annotation
 
 REQUIRED INPUTS:
 reference genome - annotated genome to explore
@@ -5472,6 +5561,7 @@ DESCRIPTION: This function retrieves the fasta file of sequences from shock and 
 
 REQUIRED INPUTS:
 string shock_id - id in shock with which to retrieve fasta file
+string name - name under which to store the genome and resulting model
 
 
 =item Definition
@@ -5481,6 +5571,7 @@ string shock_id - id in shock with which to retrieve fasta file
 <pre>
 a reference to a hash where the following keys are defined:
 shock_id has a value which is a string
+destname has a value which is a string
 
 </pre>
 
@@ -5490,6 +5581,49 @@ shock_id has a value which is a string
 
 a reference to a hash where the following keys are defined:
 shock_id has a value which is a string
+destname has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 plant_pipeline_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: plant_pipeline
+DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+
+REQUIRED INPUTS:
+string shock_id - id in shock with which to retrieve fasta file
+string name - name under which to store the genome and resulting model
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+destname has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+destname has a value which is a string
 
 
 =end text

@@ -564,7 +564,7 @@ module ProbModelSEED {
 
 	/*
 		FUNCTION: plant_annotation_overview
-		DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome's PlantSEED annotation
+		DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome PlantSEED annotation
 
 		REQUIRED INPUTS:
 		reference genome - annotated genome to explore
@@ -589,6 +589,21 @@ module ProbModelSEED {
 	} create_genome_from_shock_params;
 	authentication required;
 	funcdef create_genome_from_shock(create_genome_from_shock_params input) returns (string output);
+
+	/*
+		FUNCTION: plant_pipeline
+		DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+
+		REQUIRED INPUTS:
+		string shock_id - id in shock with which to retrieve fasta file
+		string name - name under which to store the genome and resulting model
+	*/		
+	typedef structure {
+		string shock_id;
+		string destname;
+	} plant_pipeline_params;
+	authentication required;
+	funcdef plant_pipeline(plant_pipeline_params input) returns (string output);
 
 	/*
 		FUNCTION: annotate_plant_genome
