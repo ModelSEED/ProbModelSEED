@@ -1156,7 +1156,7 @@ sub is_dna{
     my $IsDNA=0;
     my %Letters = ();
     foreach my $letter ( map { lc($_) } split(//,$seq) ){
-	$Letters{$letter};
+	$Letters{$letter}++;
     }
     my $Sum = $Letters{'a'}+$Letters{'g'}+$Letters{'c'}+$Letters{'t'}+$Letters{'u'};
 
@@ -1226,6 +1226,7 @@ sub annotate_plant_genome {
     #Test first protein sequences for NAs
     #Might have been incorrectly assigned
     if( exists($Genome->{features}[0]{protein_translation}) && $self->is_dna($Genome->{features}[0]{protein_translation}) ){
+	print "Moving sequences\n";
 	#Need to re-assign these
 	foreach my $ftr (@{$Genome->{features}}){
 	    $ftr->{dna_sequence}=$ftr->{protein_translation};
@@ -1291,7 +1292,7 @@ sub annotate_plant_genome {
 	$JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
 	$self->call_ws("create",{ objects => [[$input->{destmodel}."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
 
-	$return_object->{kmers}=scalar(keys %$hits);
+	$return_object->{kmers}=scalar(keys %$hits)." kmer hits";
     }
 
     if(exists($input->{blast}) && $input->{blast}==1){
@@ -1309,8 +1310,8 @@ sub annotate_plant_genome {
 sub translate_nucleotides {
     my ($self,$nucleotides) = @_;
 
-    $nucleotides = lc $nucleotides;
-    $nucleotides =~ tr/u/t/;
+    $nucleotides = uc $nucleotides;
+    $nucleotides =~ tr/U/T/;
 
     my $amino_acids="";
     #This is a case of strict translation and doesn't account for all ambiguities
@@ -1394,7 +1395,7 @@ sub annotate_plant_genome_kmers {
 
 	my %Top_Functions=();
 	foreach my $function (keys %{$Hit_Proteins{$protein}}){
-	    print $function,"\t",join("|",keys %{$Hit_Proteins{$protein}{$function}}),"\n";
+#	    print $function,"\t",join("|",keys %{$Hit_Proteins{$protein}{$function}}),"\n";
 	    $Top_Functions{scalar(keys %{$Hit_Proteins{$protein}{$function}})}{$function}=1;
 	}
 
@@ -1415,6 +1416,33 @@ sub annotate_plant_genome_kmers {
 }
 
 sub annotate_plant_genome_blast {
+    system("mkdir -p /tmp/blastjobs");
+
+    #Print out protein sequences
+    my ($self,$Genome) = @_;
+    open(OUT, "> /tmp/blastjobs/".$Genome->{id}.".fasta");
+    foreach my $ftr (@{$Genome->{features}}){
+	print OUT ">".$ftr->{id}."\n";
+	print OUT join("\n", $ftr->{protein_translation} =~ m/.{1,60}/g)."\n";
+    }
+    close(OUT);
+	    
+    #BLAST against NR
+    my $ua = LWP::UserAgent->new();
+
+    my $output = $self->call_ws("get", { objects => ["/plantseed/Data/plants_nr"] })->[0];
+    my $shock_url = $output->[0][11]."?download";
+
+    my $token = Bio::KBase::ObjectAPI::config::token();
+    my $res = $ua->get($shock_url,Authorization => "OAuth " . $token);
+    my $raw_data = $res->{_content};
+
+    open(OUT, "> /tmp/blastjobs/plants_nr.tar.gz");
+    binmode(OUT);
+    print OUT $raw_data;
+    close(OUT);
+    system("tar -xzf /tmp/blastjobs/plants_nr.tar.gz -C /tmp/blastjobs/");
+    
     return "Not finished";
 }
 
