@@ -1001,52 +1001,32 @@ sub copy_genome {
 }
 sub copy_model {
 	my($self,$input) = @_;
-	$input = $self->validate_args($input,["model"],{
-    	destination => undef,
-		destname => undef,
-		to_kbase => 0,
-		copy_genome => 1,
-		workspace_url => undef,
-		kbase_username => undef,
-		kbase_password => undef,
-		kbase_token => undef,
-		plantseed => 0,
-    });
-    if (!defined($input->{destination})) {
-    	$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
-    	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/";
-    	}
-    }
-    if (!defined($input->{destname})) {
-	my $model = $self->get_object($input->{model}."/model");
-    	$input->{destname} = $model->wsmeta()->[0];
-    }
-    if ($input->{destination}.$input->{destname} eq $input->{model}) {
-    	$self->error("Copy source and destination identical! Aborting!");
-    }
+	$input = $self->validate_args($input,["source_model_path"],{
+	    dest_model_path => undef,
+	    plantseed => 0
+	});
 
-#Disabled old copy_genome as its contained within modelfolder
-#    if (defined($self->get_model_meta($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]))) {
-#    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
-#    }
-#    if ($input->{copy_genome} == 1) {
-#    	$self->copy_genome({
-#    		genome => $input->{model}."/genome",
-#    		plantseed => $input->{plantseed}
-#    	});
-#    	$model->genome_ref($model->genome()->_reference());
-#    }
+	if(!$input->{destmodel}){
+	    my $path = "/".Bio::KBase::ObjectAPI::config::username()."/modelseed/";
+	    if ($input->{plantseed} == 1) {
+		$path = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/";
+	    }
+	    
+	    my @temp=split(/\//,$input->{source_model_path});
+	    my $model = $temp[$#temp];
+	    
+	    $input->{dest_model_path}=$path.$model;
+	}
+	
+	#Save object as modelfolder
+	$self->save_object($input->{dest_model_path},undef,"modelfolder");
+	$self->call_ws("copy", { objects => [ [$input->{source_model_path},$input->{dest_model_path}] ], overwrite=>1, recursive=>1 });							 
 
-	print "Copying ".$input->{model}." to ".$input->{destination}.$input->{destname}."\n";
-	my $meta = $self->copy_object($input->{model},$input->{destination}.$input->{destname},1);
+	#Copy user meta
+	my $UserMeta = Bio::P3::Workspace::ScriptHelpers::wscall("get",{ objects => [$input->{source_model_path}], metadata_only=>1 })->[0][0][7];
+	Bio::P3::Workspace::ScriptHelpers::wscall("update_metadata",{ objects => [[$input->{dest_model_path},$UserMeta]] });
 
-	#Update internal genome reference
-	my $model = $self->get_object($input->{destination}.$input->{destname}."/model");
-    	$model->genome_ref($input->{destname}."/genome||");
-	$self->save_object($input->{destination}.$input->{destname},$model,"model");
-
-    return $self->get_model_summary($model);
+	return $UserMeta;
 }
 
 sub plant_pipeline {
