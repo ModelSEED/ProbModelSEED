@@ -1019,7 +1019,7 @@ sub copy_model {
 	}
 	
 	#Save object as modelfolder
-	$self->save_object($input->{dest_model_path},undef,"modelfolder");
+	$self->call_ws("create", { objects => [ [$input->{dest_model_path},"modelfolder",{},{}] ]}));
 	$self->call_ws("copy", { objects => [ [$input->{source_model_path},$input->{dest_model_path}] ], overwrite=>1, recursive=>1 });							 
 
 	#Copy user meta
@@ -1120,12 +1120,12 @@ sub create_genome_from_shock {
 	}
 	
 	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/";
-	$self->save_object($folder,undef,"modelfolder");
+	$self->call_ws("create", { objects => [ [$folder, "modelfolder", {}, {}] ] });
 	$self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
 
 	$folder.=".plantseed_data/";
-	$self->save_object($folder,undef,"folder");
-	$self->call_ws("create", {objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
+	$self->call_ws("create", { objects => [ [$folder,"folder",{},{}] ] });
+	$self->call_ws("create", { objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
 
 	return $folder."genome";
 }
@@ -1190,7 +1190,7 @@ sub create_featurevalues_from_shock {
 	
 	my $modelfolder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel};
 	my $expressionfolder = $modelfolder."/.expression_data/";
-	$self->save_object($expressionfolder,undef,"folder");
+	$self->call_ws("create", {objects => [ [$expressionfolder,"folder",{},{}] ]});
 	$self->call_ws("create", {objects => [ [$expressionfolder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ]});
 
 	#Update metadata of modelfolder
