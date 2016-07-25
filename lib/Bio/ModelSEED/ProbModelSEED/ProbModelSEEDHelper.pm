@@ -1019,7 +1019,7 @@ sub copy_model {
 	}
 	
 	#Save object as modelfolder
-	$self->call_ws("create", { objects => [ [$input->{dest_model_path},"modelfolder",{},{}] ]}));
+	$self->call_ws("create", { objects => [ [$input->{dest_model_path},"modelfolder",{},{}] ]});
 	$self->call_ws("copy", { objects => [ [$input->{source_model_path},$input->{dest_model_path}] ], overwrite=>1, recursive=>1 });							 
 
 	#Copy user meta
