@@ -1278,17 +1278,6 @@ sub copy_model
     my($output);
     #BEGIN copy_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{
-    	destination => undef,
-    	destname => undef,
-		plantseed => 0,
-		copy_genome => 1,
-		to_kbase => 0,
-		workspace_url => undef,
-		kbase_username => undef,
-		kbase_password => undef,
-		kbase_token => undef
-    });
     $output = $self->helper()->copy_model($input);
     #END copy_model
     my @_bad_returns;
