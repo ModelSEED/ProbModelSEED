@@ -192,7 +192,25 @@
 			fulldb => "0",
 			output_path => $model_dir,
 			output_file => $model_name
-		},"Reconstruct from workspace genome test",[],0,undef,1,1);
+		},"Reconstruct from workspace genome test",[],0,undef,1,0);
+		$output = $self->test_harness("edit_model",{
+			model => $model,
+			reactions_to_add => [["test","c",">","fig|315750.3.peg.3166 and fig|315750.3.peg.1782","Test pathway","Test name","Test reference","1.1.1.1","(1) cpd00001[c0] + (1) cpd00794[c0] <=> (2) cpd00027[c0]"]],
+			biomass_changes => [["bio1","cpd00019_c0",-1]]
+		},"Adding reaction and biomass",[],0,undef,1,0);
+		$output = $self->test_harness("edit_model",{
+			model => $model,
+			reactions_to_modify => [["test_c0","=","fig|315750.3.peg.3166","Test pathway 2","Test name 2","Test reference 2","1.1.1.2"]],
+			biomass_changes => [["bio1","cpd00019_c0",-0.5]]
+		},"Changing reaction and biomass",[],0,undef,1,0);
+		$output = $self->test_harness("edit_model",{
+			model => $model,
+			reactions_to_remove => ["test_c0"],
+			biomass_changes => [["bio1","cpd00019_c0",0]]
+		},"Removing reaction and biomass",[],0,undef,1,0);
+		$output = $self->test_harness("list_model_edits",{
+			model => $model,
+		},"listing model edits",[],0,undef,1,0);
 		$output = $self->test_harness("export_media",{
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
 			to_shock => 1,
@@ -201,13 +219,13 @@
 			models => [[$model,1],[$model,1]],
 			output_path => $model_dir,
 			output_file => "TestCommunityModel"
-		},"Merging model test",[],0,undef,1,1);
+		},"Merging model test",[],0,undef,1,0);
 		$output = $self->test_harness("ModelReconstruction",{
 			genome => "PATRICSOLR:83333.84",
 			fulldb => "0",
 			output_path => $model_dir,
 			output_file => "PubGenomeModel"
-		},"Reconstruct public PATRIC genome test",[],0,undef,1,1);
+		},"Reconstruct public PATRIC genome test",[],0,undef,1,0);
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => $model
 		},"List ".$model_name." gapfill solutions",[["defined(\$output->[0]) && !defined(\$output->[1])","Model should have only one gapfilling"]],0,"Reconstruct from workspace genome test",1);
@@ -221,7 +239,7 @@
 			model => $model,
 			integrate_solution => "1",
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
-		},"Gapfill ".$model_name." in minimal media",[],0,"Reconstruct from workspace genome test",1,1);
+		},"Gapfill ".$model_name." in minimal media",[],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("export_model",{
 			model => $model,
 			format => "sbml",
@@ -230,12 +248,12 @@
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => $model,
 		#},"FBA of ".$model_name." in complete media",[["\$output->{objective} >= 0.0001","Model should grow in Complete media"]],0,"Reconstruct from workspace genome test",1);
-		},"FBA of ".$model_name." in complete media",[],0,"Reconstruct from workspace genome test",1,1);
+		},"FBA of ".$model_name." in complete media",[],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => $model,
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose"
 		#},"FBA of ".$model_name." in minimal media",[["\$output->{objective} >= 0.0001","Model should grow in minimal media"]],0,"Gapfill ".$model_name." in minimal media",1);
-		},"FBA of ".$model_name." in minimal media",[],0,"Gapfill ".$model_name." in minimal media",1,1);
+		},"FBA of ".$model_name." in minimal media",[],0,"Gapfill ".$model_name." in minimal media",1,0);
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => $model
 		},"List ".$model_name." gapfill solutions again",[["defined(\$output->[1])","Model should have two gapfillings"]],0,"Gapfill ".$model_name." in minimal media",1);

@@ -1713,9 +1713,46 @@ sub app_harness {
 	}
 }
 
+sub logger {
+	my($self) = @_;
+	if (!defined($self->{_logger})) {
+	   	if (!-e Bio::KBase::ObjectAPI::config::config_directory()."/ProbModelSEED.conf") {
+	    	if (!-d Bio::KBase::ObjectAPI::config::config_directory()) {
+	    		File::Path::mkpath (Bio::KBase::ObjectAPI::config::config_directory());
+	    	}
+	    	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.conf",[
+		    	"############################################################",
+				"# A simple root logger with a Log::Log4perl::Appender::File ",
+				"# file appender in Perl.",
+				"############################################################",
+				"log4perl.rootLogger=INFO, LOGFILE",
+				"",
+				"log4perl.appender.LOGFILE=Log::Log4perl::Appender::File",
+				"log4perl.appender.LOGFILE.filename=".Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.log",
+				"log4perl.appender.LOGFILE.mode=append",
+				"",
+				"log4perl.appender.LOGFILE.layout=PatternLayout",
+				"log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n",
+	    	]);
+	    }
+	   	Log::Log4perl::init(Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.conf");
+	   	$self->{_logger} = Log::Log4perl->get_logger("ProbModelSEEDHelper");
+    }
+    return $self->{_logger};
+}
+
 sub util_log {
-	my($self,$message) = @_;
-	Bio::KBase::ObjectAPI::logging::log($message);
+	my($self,$message,$type) = @_;
+    if (!defined($type)) {
+    	$type = "info";
+    }
+    if ($type eq "stdout") {
+    	print $message."\n";
+    } elsif ($type eq "stderr") {
+    	print STDERR $message."\n";
+    } else {
+    	$self->logger()->$type('<msg type="'.$type.'" time="'.DateTime->now()->datetime().'" pid="'.$self->{_processid}.'" user="'.Bio::KBase::ObjectAPI::config::username().'">'."\n".$message."\n</msg>\n");
+    }
 }
 
 sub util_get_object {
@@ -1757,7 +1794,6 @@ sub util_get_object {
 
 sub util_save_object {
 	my($self,$object,$ref,$parameters) = @_;
-	print "Saving ".$parameters->{type}.":".$ref."\n";
 	my $original_output;
 	if (defined($parameters->{type}) && defined($typetrans->{$parameters->{type}})) {
 		$parameters->{type} = $typetrans->{$parameters->{type}};
@@ -1812,6 +1848,11 @@ sub util_parserefs {
 	return ($ws,$id);
 }
 
+sub util_report {
+	my($self,$args) = @_;
+	#TODO: may need to do something with this report data
+}
+
 sub ComputeReactionProbabilities {
 	my($self,$parameters,$jobresult) = @_;
     $parameters = $self->validate_args($parameters,["genome", "template", "rxnprobs"], {});
@@ -1825,10 +1866,25 @@ sub ComputeReactionProbabilities {
 	return $parameters->{rxnprobs};
 }
 
+sub EditModel {
+	my($self,$parameters) = @_;
+	(my $ws,my $id) = $self->util_parserefs($parameters->{model});
+	my $output = Bio::KBase::ObjectAPI::functions::func_edit_metabolic_model({
+		workspace => $ws,
+		fbamodel_id => $id,
+		data => {
+			biomass_changes => $parameters->{biomass_changes},
+			reactions_to_remove => $parameters->{reactions_to_remove},
+			reactions_to_add => $parameters->{reactions_to_add},
+			reactions_to_modify => $parameters->{reactions_to_modify},
+		}
+	});
+	return $output->{detailed_edit_results};
+}
+
 sub ModelReconstruction {
 	my($self,$parameters,$jobresult) = @_;
-	print STDERR "Input Parameters: ".join("\n", map { $_.":".$parameters->{$_} } keys %$parameters)."\n";
-    $parameters = $self->validate_args($parameters,[],{
+	$parameters = $self->validate_args($parameters,[],{
     	media => undef,
     	template_model => undef,
     	fulldb => 0,
@@ -1881,8 +1937,6 @@ sub ModelReconstruction {
 	delete $parameters->{template_model};
 	my $folder = $parameters->{output_path}."/".$parameters->{output_file};
 	my $datachannel = {};
-	print STDERR "Output Parameters: ".join("\n", map { $_.":".$parameters->{$_} } keys %$parameters)."\n";
-
 	Bio::KBase::ObjectAPI::functions::func_build_metabolic_model($parameters,$datachannel);
 	#Now compute reaction probabilities if they are needed for gapfilling or probanno model building
 	if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
@@ -2397,6 +2451,9 @@ sub new {
     my($class, $parameters) = @_;
     my $self = {};
     bless $self, $class;
+    $self->{_processid} = Data::UUID->new()->create_str();
+    Bio::KBase::ObjectAPI::logging::set_handler($self);
+    Bio::KBase::ObjectAPI::functions::set_handler($self);
     $parameters = $self->validate_args($parameters,["token","username"],{
     	setowner => undef,
     	adminmode => 0,
@@ -2428,7 +2485,7 @@ sub new {
     if (defined($parameters->{adminmode})) {
     	Bio::KBase::ObjectAPI::config::setowner($parameters->{setowner});
     }
-    Bio::KBase::ObjectAPI::functions::set_handler($self);
+   
     return $self;
 }
 
