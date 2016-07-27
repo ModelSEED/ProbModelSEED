@@ -1028,7 +1028,6 @@ Description:
 sub unintegrateGapfillSolution {
     my $self = shift;
 	my $args = Bio::KBase::ObjectAPI::utilities::args(["gapfill"], {}, @_);
-	Bio::KBase::ObjectAPI::utilities::verbose("Now integrating gapfill solution into model");
 	my $gfmeta = $self->getObject("gapfillings",$args->{gapfill});
 	if (!defined($gfmeta)) {
 		Bio::KBase::ObjectAPI::utilities::error("Gapfill ".$args->{gapfill}." not found!");
@@ -1089,7 +1088,7 @@ Description:
 sub add_gapfilling {
     my $self = shift;
 	my $args = Bio::KBase::ObjectAPI::utilities::args(["object","id"], {solution_to_integrate => undef}, @_);
-	Bio::KBase::ObjectAPI::logging::log("Integrating gapfill solution into model","stdout");
+	Bio::KBase::ObjectAPI::logging::log("Integrating gapfill solution into model");
 	#Adding gapfill object to model
 	my $gfobj = {
 		id => $args->{id},
