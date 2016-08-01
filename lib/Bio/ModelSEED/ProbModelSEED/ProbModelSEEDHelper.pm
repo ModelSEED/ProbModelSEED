@@ -1136,7 +1136,7 @@ sub is_dna{
     my $IsDNA=0;
     my %Letters = ();
     foreach my $letter ( map { lc($_) } split(//,$seq) ){
-	$Letters{$letter};
+	$Letters{$letter}++;
     }
     my $Sum = $Letters{'a'}+$Letters{'g'}+$Letters{'c'}+$Letters{'t'}+$Letters{'u'};
 
@@ -1207,14 +1207,17 @@ sub create_featurevalues_from_shock {
 sub annotate_plant_genome {
     my ($self,$input)=@_;
 
+    my $modelfolder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel};
+
     #Need to check genome sequences for amino acids and if not, translate
-    my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/genome"] })->[0];
+    my $output = $self->call_ws("get", { objects => [$modelfolder."/genome"] })->[0];
     my $Usermeta = $output->[0][8];
     my $Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
 
     #Test first protein sequences for NAs
     #Might have been incorrectly assigned
     if( exists($Genome->{features}[0]{protein_translation}) && $self->is_dna($Genome->{features}[0]{protein_translation}) ){
+
 	#Need to re-assign these
 	foreach my $ftr (@{$Genome->{features}}){
 	    $ftr->{dna_sequence}=$ftr->{protein_translation};
@@ -1246,14 +1249,13 @@ sub annotate_plant_genome {
     }
 
     #Retrieve minimal genome
-    my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/.plantseed_data/minimal_genome"] })->[0];
+    my $output = $self->call_ws("get", { objects => [$modelfolder."/.plantseed_data/minimal_genome"] })->[0];
     my $Min_Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
 
     my $return_object = {destmodel=>$input->{destmodel},kmers=>"Not attempted",blast=>"Not attempted"};
     if(exists($input->{kmers}) && $input->{kmers}==1){
 	$return_object->{kmers}="Attempted";
 	my $hits = $self->annotate_plant_genome_kmers($Genome);
-
 	foreach my $ftr (@{$Genome->{features}}){
 	    if(exists($hits->{$ftr->{id}})){
 		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
@@ -1275,10 +1277,10 @@ sub annotate_plant_genome {
 
 	my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Genome,1);
 	$Usermeta->{hit_proteins}=scalar(keys %$hits);
-	$self->call_ws("create",{ objects => [[$input->{destmodel}."/genome","genome",$Usermeta,$JSON]], overwrite=>1 });
+	$self->call_ws("create",{ objects => [[$modelfolder."/genome","genome",$Usermeta,$JSON]], overwrite=>1 });
 
 	$JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
-	$self->call_ws("create",{ objects => [[$input->{destmodel}."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
+	$self->call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
 
 	$return_object->{kmers}=scalar(keys %$hits);
     }
@@ -1286,7 +1288,7 @@ sub annotate_plant_genome {
     if(exists($input->{blast}) && $input->{blast}==1){
 	$return_object->{blast}="Attempted";
 	my $blast = $self->annotate_plant_genome_blast($Genome);
-	$return_object->{kmers}=$blast if $blast;
+	$return_object->{blast}=$blast if $blast;
     }
     my $return_string = join("\n", map { $_.":".$return_object->{$_} } sort keys %$return_object)."\n";
     return $return_string;
@@ -1298,8 +1300,8 @@ sub annotate_plant_genome {
 sub translate_nucleotides {
     my ($self,$nucleotides) = @_;
 
-    $nucleotides = lc $nucleotides;
-    $nucleotides =~ tr/u/t/;
+    $nucleotides = uc $nucleotides;
+    $nucleotides =~ tr/U/T/;
 
     my $amino_acids="";
     #This is a case of strict translation and doesn't account for all ambiguities
