@@ -1019,12 +1019,12 @@ sub copy_model {
 	}
 	
 	#Save object as modelfolder
-	$self->call_ws("create", { objects => [ [$input->{dest_model_path},"modelfolder",{},{}] ]});
+	$self->call_ws("create", { objects => [ [$input->{dest_model_path},"modelfolder",{},{}] ], overwrite=>1});
 	$self->call_ws("copy", { objects => [ [$input->{source_model_path},$input->{dest_model_path}] ], overwrite=>1, recursive=>1 });							 
 
 	#Copy user meta
-	my $UserMeta = Bio::P3::Workspace::ScriptHelpers::wscall("get",{ objects => [$input->{source_model_path}], metadata_only=>1 })->[0][0][7];
-	Bio::P3::Workspace::ScriptHelpers::wscall("update_metadata",{ objects => [[$input->{dest_model_path},$UserMeta]] });
+	my $UserMeta = $self->call_ws("get",{ objects => [$input->{source_model_path}], metadata_only=>1 })->[0][0][7];
+	$self->call_ws("update_metadata",{ objects => [[$input->{dest_model_path},$UserMeta]] });
 
 	return $UserMeta;
 }
@@ -1035,18 +1035,19 @@ sub plant_pipeline {
     $self->create_genome_from_shock($input);
 
     #Add parameters for annotation
-    $input->{destmodel} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname};
-    $input->{kmers}=1;
-    $input->{blast}=0;
+    my $AP_input = {};
+    $AP_input->{destmodel} = $input->{destname};
+    $AP_input->{kmers}=1;
+    $AP_input->{blast}=1;
 
-    $self->annotate_plant_genome($input);
+    $self->annotate_plant_genome($AP_input);
 
     #Reform parameters for reconstruction
     my $MR_input = {};
     $MR_input->{plant}=1;
     $MR_input->{gapfill}=0;
     $MR_input->{output_file}=$input->{destname};
-    $MR_input->{genome}=$input->{destmodel}."/genome";
+    $MR_input->{genome}="/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel}."/genome";
 
     $self->ModelReconstruction($MR_input);
 
