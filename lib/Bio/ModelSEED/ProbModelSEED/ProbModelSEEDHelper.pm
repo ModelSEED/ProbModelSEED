@@ -1031,7 +1031,6 @@ sub copy_model {
 
 sub plant_pipeline {
     my($self,$input)=@_;
-
     $self->create_genome_from_shock($input);
 
     #Add parameters for annotation
@@ -1039,7 +1038,6 @@ sub plant_pipeline {
     $AP_input->{destmodel} = $input->{destname};
     $AP_input->{kmers}=1;
     $AP_input->{blast}=1;
-
     $self->annotate_plant_genome($AP_input);
 
     #Reform parameters for reconstruction
@@ -1047,8 +1045,7 @@ sub plant_pipeline {
     $MR_input->{plant}=1;
     $MR_input->{gapfill}=0;
     $MR_input->{output_file}=$input->{destname};
-    $MR_input->{genome}="/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel}."/genome";
-
+    $MR_input->{genome}="/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/genome";
     $self->ModelReconstruction($MR_input);
 
     return "Complete";
