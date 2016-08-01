@@ -1195,12 +1195,12 @@ sub create_featurevalues_from_shock {
 	$self->call_ws("create", {objects => [ [$expressionfolder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ]});
 
 	#Update metadata of modelfolder
-	my $UserMeta = Bio::P3::Workspace::ScriptHelpers::wscall("get",{ objects => [$modelfolder], metadata_only=>1 })->[0][0][7];
+	my $UserMeta = $self->call_ws("get",{ objects => [$modelfolder], metadata_only=>1 })->[0][0][7];
 	if(!exists($UserMeta->{'expression_data'})){
 	    $UserMeta->{'expression_data'}={};
 	}
 	$UserMeta->{'expression_data'}{$input->{destname}}=\@Experiments;
-	Bio::P3::Workspace::ScriptHelpers::wscall("update_metadata",{ objects => [[$modelfolder,$UserMeta]] });
+	$self->call_ws("update_metadata",{ objects => [[$modelfolder,$UserMeta]] });
 
 	return $expressionfolder.$input->{destname};
 }
