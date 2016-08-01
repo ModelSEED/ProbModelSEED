@@ -1442,7 +1442,27 @@ sub annotate_plant_genome_blast {
     print OUT $raw_data;
     close(OUT);
     system("tar -xzf /tmp/blastjobs/plants_nr.tar.gz -C /tmp/blastjobs/");
-    
+
+#Run command    
+#    my $BLAST="/sw/bin/blastp";
+#    my @Command = ($BLAST);
+#    push(@Command,"-FF");
+#    push(@Command,"-e");push(@Command,"1.0e-3");
+#    push(@Command,"-m");push(@Command,"8");
+#    push(@Command,"-d");push(@Command,"PlantSEED_Plants_NR");
+#    push(@Command,"-i");push(@Command,$Genome->{id}.".fasta");
+#    push(@Command,"-o");push(@Command,"job_similarities");
+#    my $cmd=join(" ",@Command);
+#    /sw/bin/blastp -evalue 1.0e-5 -outfmt 6 -db PlantSEED_Plants_NR -query Fvesca_Transcript.fasta -out job_similarities
+#    print $cmd,"\n";
+
+    #Load Exemplars
+    my $output = $self->call_ws("get", { objects => ["/plantseed/Data/annotation_overview"] })->[0][1];
+    my $annotation = from_json($output);
+#    foreach my $role (@$annotation){
+#	foreach my $ftr
+#    }
+
     return "Not finished";
 }
 
