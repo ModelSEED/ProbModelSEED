@@ -999,6 +999,7 @@ sub copy_genome {
 	print "Saving genome: ".$input->{destination}.$input->{destname}." from ".$input->{genome}."\n";
 	return $self->save_object($input->{destination}.$input->{destname},$genome,"genome");
 }
+
 sub copy_model {
 	my($self,$input) = @_;
 	$input = $self->validate_args($input,["source_model_path"],{
@@ -1122,7 +1123,6 @@ sub create_genome_from_shock {
 	$self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
 
 	$folder.=".plantseed_data/";
-	$self->call_ws("create", { objects => [ [$folder,"folder",{},{}] ] });
 	$self->call_ws("create", { objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
 
 	return $folder."genome";
@@ -1188,7 +1188,6 @@ sub create_featurevalues_from_shock {
 	
 	my $modelfolder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel};
 	my $expressionfolder = $modelfolder."/.expression_data/";
-	$self->call_ws("create", {objects => [ [$expressionfolder,"folder",{},{}] ]});
 	$self->call_ws("create", {objects => [ [$expressionfolder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ]});
 
 	#Update metadata of modelfolder
