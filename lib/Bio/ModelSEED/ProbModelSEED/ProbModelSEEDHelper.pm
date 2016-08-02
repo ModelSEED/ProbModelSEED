@@ -1188,10 +1188,13 @@ sub create_featurevalues_from_shock {
 	
 	my $modelfolder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel};
 	my $expressionfolder = $modelfolder."/.expression_data/";
-	$self->call_ws("create", {objects => [ [$expressionfolder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ]});
+	$self->call_ws("create", {objects => [ [$expressionfolder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ], overwrite=>1});
 
 	#Update metadata of modelfolder
 	my $UserMeta = $self->call_ws("get",{ objects => [$modelfolder], metadata_only=>1 })->[0][0][7];
+	if(!$UserMeta){
+	    $UserMeta = {};
+	}
 	if(!exists($UserMeta->{'expression_data'})){
 	    $UserMeta->{'expression_data'}={};
 	}
