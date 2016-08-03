@@ -1210,31 +1210,33 @@ sub annotate_plant_genome {
     my $modelfolder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel};
 
     #Need to check genome sequences for amino acids and if not, translate
-    my $output = $self->call_ws("get", { objects => [$modelfolder."/genome"] })->[0];
-    my $Usermeta = $output->[0][8];
-    my $Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+    my $Genome = $self->get_object($modelfolder."/genome","genome");
+    my $Usermeta = $self->call_ws("get", { objects => [$modelfolder."/genome"], metadata_only => 1 })->[0][0][8];
+
+    my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Usermeta,1);
 
     #Test first protein sequences for NAs
     #Might have been incorrectly assigned
-    if( exists($Genome->{features}[0]{protein_translation}) && $self->is_dna($Genome->{features}[0]{protein_translation}) ){
+    my $First_Ftr = $Genome->features()->[0];
+    if( $First_Ftr->protein_translation() && $self->is_dna($First_Ftr->protein_translation()) ){
 
 	#Need to re-assign these
-	foreach my $ftr (@{$Genome->{features}}){
-	    $ftr->{dna_sequence}=$ftr->{protein_translation};
-	    $ftr->{dna_sequence_length}=length($ftr->{dna_sequence_length});
+	foreach my $ftr (@{$Genome->features()}){
+	    $ftr->dna_sequence()=$ftr->protein_translation();
+	    $ftr->dna_sequence_length()=length($ftr->dna_sequence_length());
 
-	    delete($ftr->{protein_translation});
-	    delete($ftr->{protein_translation_length});
-	    delete($ftr->{md5});
+	    $ftr->protein_translation("");
+	    $ftr->protein_translation_length(0);
+	    $ftr->md5("");
 	}
     }
 
     #Translate nucleotides
-    foreach my $ftr (@{$Genome->{features}}){
-	if(exists($ftr->{dna_sequence})){
-	    $ftr->{protein_translation}=$self->translate_nucleotides($ftr->{dna_sequence});
-	    $ftr->{protein_translation_length}=length($ftr->{protein_translation});
-	    $ftr->{md5}=Digest::MD5::md5_hex($ftr->{protein_translation});
+    foreach my $ftr (@{$Genome->features()}){
+	if($ftr->dna_sequence()){
+	    $ftr->protein_translation()=$self->translate_nucleotides($ftr->dna_sequence());
+	    $ftr->protein_translation_length()=length($ftr->protein_translation());
+	    $ftr->md5()=Digest::MD5::md5_hex($ftr->protein_translation());
 	}
     }
 
@@ -1256,9 +1258,9 @@ sub annotate_plant_genome {
     if(exists($input->{kmers}) && $input->{kmers}==1){
 	$return_object->{kmers}="Attempted";
 	my $hits = $self->annotate_plant_genome_kmers($Genome);
-	foreach my $ftr (@{$Genome->{features}}){
-	    if(exists($hits->{$ftr->{id}})){
-		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+	foreach my $ftr (@{$Genome->features()}){
+	    if(exists($hits->{$ftr->id()})){
+		$ftr->function(join(" / ",sort keys %{$hits->{$ftr->id()}}));
 	    }
 	}
 
@@ -1275,9 +1277,8 @@ sub annotate_plant_genome {
 	    $ftr->{subsystems}=[sort keys %SSs];
 	}
 
-	my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Genome,1);
 	$Usermeta->{hit_proteins}=scalar(keys %$hits);
-	$self->call_ws("create",{ objects => [[$modelfolder."/genome","genome",$Usermeta,$JSON]], overwrite=>1 });
+	$self->save_object($modelfolder."/genome",$Genome,"genome");
 
 	$JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
 	$self->call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
@@ -1335,8 +1336,8 @@ sub annotate_plant_genome_kmers {
 
     my $Kmer_Length=8;
     my %Hit_Proteins=();
-    foreach my $ftr (@{$Genome->{features}}){
-	my $Seq = $ftr->{protein_translation};
+    foreach my $ftr (@{$Genome->features()}){
+	my $Seq = $ftr->protein_translation();
 	my $SeqLen = length($Seq);
 	next if $SeqLen < 10;
 	
@@ -1346,7 +1347,7 @@ sub annotate_plant_genome_kmers {
 	    # take the relevant substring
 	    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
 		if(exists($Kmers_Functions{$1})){
-		    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
+		    $Hit_Proteins{$ftr->id()}{$Kmers_Functions{$1}}{$1}=1;
 		}
 	    }
 	}
