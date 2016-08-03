@@ -1789,6 +1789,7 @@ sub get_feature
     foreach my $ftr (@{$genome->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $output = $ftr->{data};
+	    delete($output->{parent});
 	}
     }
 
@@ -1809,7 +1810,7 @@ sub get_feature
     my $genome = pop @path;
     my $root = join("/",@path);
     my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";
-
+    
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
     $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
 
