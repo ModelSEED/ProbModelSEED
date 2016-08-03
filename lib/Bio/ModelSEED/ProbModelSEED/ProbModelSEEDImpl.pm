@@ -1780,7 +1780,7 @@ sub get_feature
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["genome","feature"],{});
 
-    my $genome = $self->helper()->get_object($input->{genome},"genome");
+    my $genome = $self->helper()->get_object($input->{genome}."/genome","genome");
     if(!$genome){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
