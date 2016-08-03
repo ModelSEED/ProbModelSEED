@@ -2039,6 +2039,7 @@ sub FluxBalanceAnalysis {
 		delete $parameters->{media};
 	}
 	($parameters->{fbamodel_workspace},$parameters->{fbamodel_id}) = $self->util_parserefs($parameters->{model});	
+	($parameters->{expseries_workspace},$parameters->{expseries_id}) = $self->util_parserefs($parameters->{expseries});
 	delete $parameters->{model};
 	Bio::KBase::ObjectAPI::functions::func_run_flux_balance_analysis($parameters,$model);
     $jobresult->{path} = $outputfile.".jobresult";
@@ -2102,7 +2103,7 @@ sub GapfillModel {
 	}
 	($parameters->{fbamodel_workspace},$parameters->{fbamodel_id}) = $self->util_parserefs($parameters->{model});	
 	($parameters->{source_fbamodel_workspace},$parameters->{source_fbamodel_id}) = $self->util_parserefs($parameters->{source_model});	
-	($parameters->{expseries_workspace},$parameters->{expseries_id}) = $self->util_parserefs($parameters->{exp_series});
+	($parameters->{expseries_workspace},$parameters->{expseries_id}) = $self->util_parserefs($parameters->{expseries});
 	($parameters->{probanno_workspace},$parameters->{probanno_id}) = $self->util_parserefs($parameters->{probanno});
 	$parameters->{fbamodel_output_id} = $parameters->{fbamodel_id};
 	$parameters->{gapfill_output_id} = $parameters->{output_file};
