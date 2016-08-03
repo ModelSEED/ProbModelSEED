@@ -459,56 +459,183 @@ sub retrieve_PATRIC_genome {
 	my $params = {};
 	my $loopcount = 0;
 	my $ftrcount = 0;
+	my $allftrs = [];
 	while ($start >= 0 && $loopcount < 100) {
 		$loopcount++;#Insurance that no matter what, this loop won't run for more than 100 iterations
 		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => Bio::KBase::ObjectAPI::config::data_api_url()."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => Bio::KBase::ObjectAPI::config::token()},$params);
 		if (defined($ftrdata) && @{$ftrdata} > 0) {
-			my $currentcount = @{$ftrdata};
-			$ftrcount += $currentcount;
-			for (my $i=0; $i < @{$ftrdata}; $i++) {
-				$data = $ftrdata->[$i];
-				if (($data->{feature_id} =~ m/^PATRIC/ && $refseq == 0) || ($data->{feature_id} =~ m/^RefSeq/ && $refseq == 1)) {
-					my $id;
-					if ($refseq == 1) {
-						$id = $data->{refseq_locus_tag};
-					} else {
-						$id = $data->{patric_id};
-					}
-					if (defined($id)) {
-						my $ftrobj = {id => $id,type => "CDS",aliases=>[]};
-						if (defined($data->{start})) {
-							$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
-						}
-						if (defined($data->{feature_type})) {
-							$ftrobj->{type} = $data->{feature_type};
-						}
-						if (defined($data->{product})) {
-							$ftrobj->{function} = $data->{product};
-						}
-						if (defined($data->{na_sequence})) {
-							$ftrobj->{dna_sequence} = $data->{na_sequence};
-							$ftrobj->{dna_sequence_length} = $data->{na_length};
-						}
-						if (defined($data->{aa_sequence})) {
-							$ftrobj->{protein_translation} = $data->{aa_sequence};
-							$ftrobj->{protein_translation_length} = $data->{aa_length};
-							$ftrobj->{md5} = $data->{aa_sequence_md5};
-						}
-						my $list = ["feature_id","alt_locus_tag","refseq_locus_tag","protein_id","figfam_id"];
-						for (my $j=0; $j < @{$list}; $j++) {
-							if (defined($data->{$list->[$j]})) {
-								push(@{$ftrobj->{aliases}},$data->{$list->[$j]});
-							}
-						}
-						push(@{$genome->{features}},$ftrobj);
-					}
-				}
-			}
+			push(@{$allftrs},@{$ftrdata});
 		}
+		my $currentcount = @{$ftrdata};
+		$ftrcount += $currentcount;
 		if ($ftrcount < $params->{count}) {
 			$start = $ftrcount;
 		} else {
 			$start = -1;
+		}
+	}
+	my $patricids = {};
+	my $refseqids = {};
+	my $stops = {};
+	for (my $i=0; $i < @{$allftrs}; $i++) {
+		my $ftrdata = $allftrs->[$i];
+		if ($ftrdata->{strand} eq "-" && $ftrdata->{annotation} eq "RefSeq") {
+			$stops->{$ftrdata->{start}} = $ftrdata;
+		} elsif ($ftrdata->{annotation} eq "RefSeq") {
+			$stops->{$ftrdata->{end}} = $ftrdata;
+		}
+	}
+	my $refseqgenes = 0;
+	my $patricgenes = 0;
+	my $match = 0;
+	my $weakermatch = 0;
+	for (my $i=0; $i < @{$allftrs}; $i++) {
+		my $ftrdata = $allftrs->[$i];
+		if ($ftrdata->{annotation} eq "PATRIC") {
+			$patricgenes++;
+			$patricids->{$ftrdata->{feature_id}} = $ftrdata;
+			if ($ftrdata->{strand} eq "-" && defined($stops->{$ftrdata->{start}}) && $ftrdata->{strand} eq $stops->{$ftrdata->{start}}->{strand}){
+				$match++;
+				$ftrdata->{refseqgene} = $stops->{$ftrdata->{start}};
+				if (defined($stops->{$ftrdata->{start}}->{patricgene})) {
+					delete($stops->{$ftrdata->{start}}->{refseqgene});
+					$weakermatch--;
+				}
+				$stops->{$ftrdata->{start}}->{patricgene} = $ftrdata;
+			} elsif ($ftrdata->{strand} eq "+" && defined($stops->{$ftrdata->{end}}) && $ftrdata->{strand} eq $stops->{$ftrdata->{end}}->{strand}){
+				$match++;
+				$ftrdata->{refseqgene} = $stops->{$ftrdata->{end}};
+				if (defined($stops->{$ftrdata->{end}}->{patricgene})) {
+					delete($stops->{$ftrdata->{end}}->{refseqgene});
+					$weakermatch--;
+				}
+				$stops->{$ftrdata->{end}}->{patricgene} = $ftrdata;
+			} elsif ($ftrdata->{strand} eq "+") {
+				for (my $j=0; $j < 100; $j++) {
+					my $startindex = ($ftrdata->{end} - 50 + $j);
+					if (defined($stops->{$startindex}) && !defined($stops->{$startindex}->{patricgene}) && $ftrdata->{strand} eq $stops->{$startindex}->{strand} && abs($ftrdata->{start}-$stops->{$startindex}->{start}) < 50) {
+						$weakermatch++;
+						$ftrdata->{refseqgene} = $stops->{$startindex};
+						$stops->{$startindex}->{patricgene} = $ftrdata;
+						last;
+					}
+				}
+			} elsif ($ftrdata->{strand} eq "-") {
+				for (my $j=0; $j < 100; $j++) {
+					my $startindex = ($ftrdata->{start} - 50 + $j);
+					if (defined($stops->{$startindex}) && !defined($stops->{$startindex}->{patricgene}) && $ftrdata->{strand} eq $stops->{$startindex}->{strand} && abs($ftrdata->{end}-$stops->{$startindex}->{end}) < 50) {
+						$weakermatch++;
+						$ftrdata->{refseqgene} = $stops->{$startindex};
+						$stops->{$startindex}->{patricgene} = $ftrdata;
+						last;
+					}
+				}
+			}
+		} else {
+			$refseqgenes++;
+			$refseqids->{$ftrdata->{feature_id}} = $ftrdata;
+		}
+	}
+	my $unsortedftrlist = [];
+	foreach my $pid (keys(%{$patricids})) {
+		if ($refseq == 0 || defined($patricids->{$pid}->{refseqgene})) {
+			push(@{$unsortedftrlist},$patricids->{$pid});
+		}
+	}
+	my $sortedftrlist = [sort { $b->{start} cmp $a->{start} } @{$unsortedftrlist}];
+	my $funchash = Bio::KBase::ObjectAPI::utilities::get_SSO();
+	for (my $i=0; $i < @{$sortedftrlist}; $i++) {
+		my $id;
+		if ($refseq == 1) {
+			$id = $data->{refseqgene}->{refseq_locus_tag};
+		} else {
+			$id = $data->{patric_id};
+		}
+		if (defined($id)) {		
+			my $ftrobj = {id => $id,type => "CDS",aliases=>[]};		
+			if (defined($data->{start})) {
+				$ftrobj->{location} = [[$data->{sequence_id},$data->{start},$data->{strand},$data->{na_length}]];
+			}
+			if (defined($data->{feature_type})) {
+				$ftrobj->{type} = $data->{feature_type};
+			}
+			if (defined($data->{product})) {
+				$ftrobj->{function} = $data->{product};
+			}
+			if (defined($data->{na_sequence})) {
+				$ftrobj->{dna_sequence} = $data->{na_sequence};
+				$ftrobj->{dna_sequence_length} = $data->{na_length};
+			}
+			if (defined($data->{aa_sequence})) {
+				$ftrobj->{protein_translation} = $data->{aa_sequence};
+				$ftrobj->{protein_translation_length} = $data->{aa_length};
+				$ftrobj->{md5} = $data->{aa_sequence_md5};
+			}
+			if (defined($data->{refseqgene}->{refseq_locus_tag})) {
+				$ftrobj->{ontology_terms}->{RefSeq}->{$data->{refseqgene}->{refseq_locus_tag}} = {
+					id => $data->{refseqgene}->{refseq_locus_tag},
+					term_name => $data->{refseqgene}->{product}
+				};
+				if (defined($data->{refseqgene}->{gene})) {
+					$ftrobj->{ontology_terms}->{GeneName}->{$data->{refseqgene}->{gene}} = {
+						id => $data->{refseqgene}->{gene}
+					};
+				}
+			}
+			if (defined($data->{patric_id})) {
+				$ftrobj->{ontology_terms}->{PATRIC}->{$data->{patric_id}} = {
+					id => $data->{patric_id}
+				};
+			}
+			if (defined($data->{figfam_id})) {
+				$ftrobj->{ontology_terms}->{FigFam}->{$data->{figfam_id}} = {
+					id => $data->{figfam_id}
+				};
+			}
+			if (defined($data->{pgfam_id})) {
+				$ftrobj->{ontology_terms}->{PGFam}->{$data->{pgfam_id}} = {
+					id => $data->{pgfam_id}
+				};
+			}
+			if (defined($data->{plfam_id})) {
+				$ftrobj->{ontology_terms}->{PLFam}->{$data->{plfam_id}} = {
+					id => $data->{plfam_id}
+				};
+			}
+			if (defined($data->{accession})) {
+				$ftrobj->{ontology_terms}->{Accession}->{$data->{accession}} = {
+					id => $data->{accession}
+				};
+			}
+			if (defined($data->{product})) {
+				my $function = $data->{product};
+	  			my $array = [split(/\#/,$function)];
+	  			$function = shift(@{$array});
+				$function =~ s/\s+$//;
+				$array = [split(/\s*;\s+|\s+[\@\/]\s+/,$function)];
+				for (my $k=0; $k < @{$array}; $k++) {
+					my $rolename = lc($array->[$k]);
+					$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
+					$rolename =~ s/\s//g;
+					$rolename =~ s/\#.*$//g;
+					if (defined($funchash->{$rolename})) {
+						$ftrobj->{ontology_terms}->{SSO}->{$funchash->{$rolename}->{id}} = {
+							id => $funchash->{$rolename}->{id},
+							term_name => $funchash->{$rolename}->{name}
+						};
+					}
+				}
+			}
+			if (defined($data->{go})) {
+				for (my $k=0; $k < @{$data->{go}}; $k++) {
+					my $array = [split(/\|/,$data->{go}->[$k])];
+					$ftrobj->{ontology_terms}->{GO}->{$array->[0]} = {
+						id => $array->[0],
+						term_name => $array->[1]
+					};
+				}
+			}
+			push(@{$genome->{features}},$ftrobj);
 		}
 	}
 	my $genome = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome);
@@ -1023,8 +1150,8 @@ sub copy_model {
 	$self->call_ws("copy", { objects => [ [$input->{source_model_path},$input->{dest_model_path}] ], overwrite=>1, recursive=>1 });							 
 
 	#Copy user meta
-	my $UserMeta = Bio::P3::Workspace::ScriptHelpers::wscall("get",{ objects => [$input->{source_model_path}], metadata_only=>1 })->[0][0][7];
-	Bio::P3::Workspace::ScriptHelpers::wscall("update_metadata",{ objects => [[$input->{dest_model_path},$UserMeta]] });
+	my $UserMeta = $self->call_ws("get",{ objects => [$input->{source_model_path}], metadata_only=>1 })->[0][0][7];
+	$self->call_ws("update_metadata",{ objects => [[$input->{dest_model_path},$UserMeta]] });
 
 	return $UserMeta;
 }
@@ -1529,6 +1656,9 @@ sub delete_model_objects {
 	my $idhash = {};
 	for (my $i=0; $i < @{$ids}; $i++) {
 		$idhash->{$ids->[$i]} = 1;
+		$idhash->{$ids->[$i].".fluxtbl"} = 1;
+		$idhash->{$ids->[$i].".jobresult"} = 1;
+		$idhash->{$ids->[$i].".gftbl"} = 1;
 	}
 	my $folder = "/fba";
 	my $modelobj;

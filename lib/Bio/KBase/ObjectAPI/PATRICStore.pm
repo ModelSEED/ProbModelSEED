@@ -729,9 +729,13 @@ sub save_fba {
 	#Adding folders and genome if not already present
 	my $listout = [];
 	#Saving model JSON structure
+	my $mediaref = $object->media_ref();
+    my $modelref = $object->fbamodel_ref();
+    $mediaref =~ s/\|\|//;
+    $modelref =~ s/\|\|//;
 	my $fbameta = {
 		objective => $object->objectiveValue(),
-    	media => $object->media_ref()
+    	media => $mediaref
 	};
 	#Checking if gapfilling
 	my $gfs = $object->gapfillingSolutions();
@@ -754,8 +758,8 @@ sub save_fba {
 		push(@{$createinput->{objects}},[$ref.".gftbl","string",{
 		   description => "Tab delimited table of reactions gapfilled in metabolic model",
 		   fba => $ref,
-		   media => $object->media_ref(),
-		   model => $object->fbamodel_ref()
+		   media => $mediaref,
+		   model => $modelref
 		},undef]);
 		$objectdata->{$ref.".gftbl"} = $gftbl;
 	}
@@ -766,8 +770,8 @@ sub save_fba {
 		   description => "Tab delimited table of reactions gapfilled in metabolic model",
 		   fba => $ref,
 		   objective => $object->objectiveValue(),
-		   media => $object->media_ref(),
-		   model => $object->fbamodel_ref()
+		   media => $mediaref,
+		   model => $modelref
 		},undef]);
 	}
 	#Saving fba flux table
@@ -795,13 +799,13 @@ sub save_fba {
     		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
     		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
     		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
-    } 
+    }
     push(@{$createinput->{objects}},[$ref.".fluxtbl","string",{
 	   description => "Tab delimited table containing data on reaction fluxes from flux balance analysis",
 	   fba => $ref,
 	   objective => $object->objectiveValue(),
-	   media => $object->media_ref(),
-	   model => $object->fbamodel_ref()
+	   media => $mediaref,
+	   model => $modelref
 	},undef]);
 	$objectdata->{$ref.".fluxtbl"} = $fbatbl;
     #Saving essential gene lists
@@ -831,8 +835,8 @@ sub save_fba {
 		   description => "List of predicted essential genes from flux balance analysis",
 		   fba => $ref,
 		   objective => $object->objectiveValue(),
-		   media => $object->media_ref(),
-		   model => $object->fbamodel_ref()
+		   media => $mediaref,
+		   model => $modelref
 		},undef]);
 		$objectdata->{$ref.".essentials"} = join("\n",@{$esslist});
 	    my $ftrgroup = {
@@ -845,8 +849,8 @@ sub save_fba {
 		   description => "Group of essential genes predicted by metabolic models",
 		   fba => $ref,
 		   objective => $object->objectiveValue(),
-		   media => $object->media_ref(),
-		   model => $object->fbamodel_ref()
+		   media => $mediaref,
+		   model => $modelref
 		},undef]);
 		$objectdata->{"/".Bio::KBase::ObjectAPI::config::username()."/home/Feature Groups/".$object->fbamodel()->wsmeta()->[0]."-".$object->media()->wsmeta()->[0]."-essentials"} = Bio::KBase::ObjectAPI::utilities::TOJSON($ftrgroup);
     }
