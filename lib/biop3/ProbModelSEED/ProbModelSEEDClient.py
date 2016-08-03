@@ -225,8 +225,8 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
-    def manage_model_edits(self, input):
-        resp = self._call('ProbModelSEED.manage_model_edits',
+    def edit_model(self, input):
+        resp = self._call('ProbModelSEED.edit_model',
                           [input])
         return resp[0]
 

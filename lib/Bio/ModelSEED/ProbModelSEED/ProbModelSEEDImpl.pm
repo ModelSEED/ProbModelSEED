@@ -67,7 +67,7 @@ sub initialize_call {
 	if (defined($params->{wsurl})) {
 		$CallContext->{"_workspace-url"} = $params->{wsurl};
 	}
-	Bio::KBase::ObjectAPI::utilities::elaspedtime();
+	Bio::KBase::ObjectAPI::utilities::elapsedtime();
 	Bio::KBase::ObjectAPI::config::username($self->user_id());
 	Bio::KBase::ObjectAPI::config::token($self->token());
 	Bio::KBase::ObjectAPI::config::adminmode($self->adminmode());
@@ -106,7 +106,7 @@ sub new
     	filename => $ENV{KB_DEPLOYMENT_CONFIG},
 		service => "ProbModelSEED"
     });
-	Bio::KBase::ObjectAPI::logging::log("Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]),"info");
+	print "Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]);
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
@@ -1278,17 +1278,6 @@ sub copy_model
     my($output);
     #BEGIN copy_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{
-    	destination => undef,
-    	destname => undef,
-		plantseed => 0,
-		copy_genome => 1,
-		to_kbase => 0,
-		workspace_url => undef,
-		kbase_username => undef,
-		kbase_password => undef,
-		kbase_token => undef
-    });
     $output = $self->helper()->copy_model($input);
     #END copy_model
     my @_bad_returns;
@@ -1462,38 +1451,21 @@ sub copy_genome
 
 <pre>
 $input is a list_model_edits_params
-$output is a reference to a list where each element is an edit_data
+$output is a reference to a list where each element is a simple_edit_output
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-edit_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
+simple_edit_output is a reference to a hash where the following keys are defined:
 	id has a value which is an edit_id
-	ref has a value which is a reference
-	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-	altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-	0: a float
-	1: a compartment_id
-
-Timestamp is a string
+	timestamp has a value which is a Timestamp
+	reactions_removed has a value which is a reference to a list where each element is a string
+	reactions_added has a value which is a reference to a list where each element is a string
+	reactions_modified has a value which is a reference to a list where each element is a string
+	biomass_added has a value which is a reference to a list where each element is a string
+	biomass_changed has a value which is a reference to a list where each element is a string
+	biomass_removed has a value which is a reference to a list where each element is a string
 edit_id is a string
-reaction_id is a string
-reaction_direction is a string
-feature_id is a string
-edit_reaction is a reference to a hash where the following keys are defined:
-	id has a value which is a reaction_id
-	reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-	0: (compound) a string
-	1: (coefficient) a float
-	2: (compartment) a string
-
-	gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	direction has a value which is a reaction_direction
-compound_id is a string
-compartment_id is a string
+Timestamp is a string
 
 </pre>
 
@@ -1502,38 +1474,21 @@ compartment_id is a string
 =begin text
 
 $input is a list_model_edits_params
-$output is a reference to a list where each element is an edit_data
+$output is a reference to a list where each element is a simple_edit_output
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-edit_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
+simple_edit_output is a reference to a hash where the following keys are defined:
 	id has a value which is an edit_id
-	ref has a value which is a reference
-	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-	altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-	0: a float
-	1: a compartment_id
-
-Timestamp is a string
+	timestamp has a value which is a Timestamp
+	reactions_removed has a value which is a reference to a list where each element is a string
+	reactions_added has a value which is a reference to a list where each element is a string
+	reactions_modified has a value which is a reference to a list where each element is a string
+	biomass_added has a value which is a reference to a list where each element is a string
+	biomass_changed has a value which is a reference to a list where each element is a string
+	biomass_removed has a value which is a reference to a list where each element is a string
 edit_id is a string
-reaction_id is a string
-reaction_direction is a string
-feature_id is a string
-edit_reaction is a reference to a hash where the following keys are defined:
-	id has a value which is a reaction_id
-	reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-	0: (compound) a string
-	1: (coefficient) a float
-	2: (compartment) a string
-
-	gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	direction has a value which is a reaction_direction
-compound_id is a string
-compartment_id is a string
+Timestamp is a string
 
 
 =end text
@@ -1565,7 +1520,9 @@ sub list_model_edits
     my($output);
     #BEGIN list_model_edits
     $input = $self->initialize_call($input);
-    $output = [];
+    $input = $self->helper()->validate_args($input,["model"],{});
+    my $model = $self->helper()->get_object($input->{model});
+    $output = $model->model_edits();
     #END list_model_edits
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -1580,9 +1537,9 @@ sub list_model_edits
 
 
 
-=head2 manage_model_edits
+=head2 edit_model
 
-  $output = $obj->manage_model_edits($input)
+  $output = $obj->edit_model($input)
 
 =over 4
 
@@ -1591,42 +1548,48 @@ sub list_model_edits
 =begin html
 
 <pre>
-$input is a manage_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
-manage_model_edits_params is a reference to a hash where the following keys are defined:
+$input is an edit_model_params
+$output is a detailed_edit_output
+edit_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
-	commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
-	new_edit has a value which is an edit_data
+	biomass_changes has a value which is a reference to a list where each element is a reference to a list containing 3 items:
+	0: (biomass_id) a string
+	1: (compound_id) a string
+	2: (coefficient) a float
+
+	reactions_to_remove has a value which is a reference to a list where each element is a string
+	reactions_to_add has a value which is a reference to a list where each element is a reference to a list containing 9 items:
+	0: (reaction_id) a string
+	1: (compartment) a string
+	2: (direction) a string
+	3: (gpr) a string
+	4: (pathway) a string
+	5: (name) a string
+	6: (reference) a string
+	7: (enzyme) a string
+	8: (equation) a string
+
+	reactions_to_modify has a value which is a reference to a list where each element is a reference to a list containing 7 items:
+	0: (reaction_id) a string
+	1: (direction) a string
+	2: (gpr) a string
+	3: (pathway) a string
+	4: (name) a string
+	5: (reference) a string
+	6: (enzyme) a string
+
 reference is a string
-edit_id is a string
-gapfill_command is a string
-edit_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
+detailed_edit_output is a reference to a hash where the following keys are defined:
 	id has a value which is an edit_id
-	ref has a value which is a reference
-	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-	altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-	0: a float
-	1: a compartment_id
-
+	timestamp has a value which is a Timestamp
+	reactions_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	reactions_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	reactions_modified has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_changed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+edit_id is a string
 Timestamp is a string
-reaction_id is a string
-reaction_direction is a string
-feature_id is a string
-edit_reaction is a reference to a hash where the following keys are defined:
-	id has a value which is a reaction_id
-	reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-	0: (compound) a string
-	1: (coefficient) a float
-	2: (compartment) a string
-
-	gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	direction has a value which is a reaction_direction
-compound_id is a string
-compartment_id is a string
 
 </pre>
 
@@ -1634,42 +1597,48 @@ compartment_id is a string
 
 =begin text
 
-$input is a manage_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
-manage_model_edits_params is a reference to a hash where the following keys are defined:
+$input is an edit_model_params
+$output is a detailed_edit_output
+edit_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
-	commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
-	new_edit has a value which is an edit_data
+	biomass_changes has a value which is a reference to a list where each element is a reference to a list containing 3 items:
+	0: (biomass_id) a string
+	1: (compound_id) a string
+	2: (coefficient) a float
+
+	reactions_to_remove has a value which is a reference to a list where each element is a string
+	reactions_to_add has a value which is a reference to a list where each element is a reference to a list containing 9 items:
+	0: (reaction_id) a string
+	1: (compartment) a string
+	2: (direction) a string
+	3: (gpr) a string
+	4: (pathway) a string
+	5: (name) a string
+	6: (reference) a string
+	7: (enzyme) a string
+	8: (equation) a string
+
+	reactions_to_modify has a value which is a reference to a list where each element is a reference to a list containing 7 items:
+	0: (reaction_id) a string
+	1: (direction) a string
+	2: (gpr) a string
+	3: (pathway) a string
+	4: (name) a string
+	5: (reference) a string
+	6: (enzyme) a string
+
 reference is a string
-edit_id is a string
-gapfill_command is a string
-edit_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
+detailed_edit_output is a reference to a hash where the following keys are defined:
 	id has a value which is an edit_id
-	ref has a value which is a reference
-	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-	altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-	0: a float
-	1: a compartment_id
-
+	timestamp has a value which is a Timestamp
+	reactions_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	reactions_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	reactions_modified has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_changed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+edit_id is a string
 Timestamp is a string
-reaction_id is a string
-reaction_direction is a string
-feature_id is a string
-edit_reaction is a reference to a hash where the following keys are defined:
-	id has a value which is a reaction_id
-	reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-	0: (compound) a string
-	1: (coefficient) a float
-	2: (compartment) a string
-
-	gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	direction has a value which is a reaction_direction
-compound_id is a string
-compartment_id is a string
 
 
 =end text
@@ -1684,7 +1653,7 @@ compartment_id is a string
 
 =cut
 
-sub manage_model_edits
+sub edit_model
 {
     my $self = shift;
     my($input) = @_;
@@ -1692,26 +1661,29 @@ sub manage_model_edits
     my @_bad_arguments;
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
-	my $msg = "Invalid arguments passed to manage_model_edits:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	my $msg = "Invalid arguments passed to edit_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'manage_model_edits');
+							       method_name => 'edit_model');
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
-    #BEGIN manage_model_edits
+    #BEGIN edit_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model","commands"],{
-    	new_edit => {}
+    $input = $self->helper()->validate_args($input,["model"],{
+    	biomass_changes => [],
+    	reactions_to_remove => [],
+    	reactions_to_add => [],
+    	reactions_to_modify => []
     });
-    $output = {};
-    #END manage_model_edits
+    $output = $self->helper()->EditModel($input);
+    #END edit_model
     my @_bad_returns;
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
-	my $msg = "Invalid returns passed to manage_model_edits:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	my $msg = "Invalid returns passed to edit_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'manage_model_edits');
+							       method_name => 'edit_model');
     }
     return($output);
 }
@@ -1808,7 +1780,7 @@ sub get_feature
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["genome","feature"],{});
 
-    my $genome = $self->helper()->get_object($input->{genome},"genome");
+    my $genome = $self->helper()->get_object($input->{genome}."/genome","genome");
     if(!$genome){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
@@ -1817,6 +1789,7 @@ sub get_feature
     foreach my $ftr (@{$genome->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $output = $ftr->{data};
+	    delete($output->{parent});
 	}
     }
 
@@ -1837,7 +1810,7 @@ sub get_feature
     my $genome = pop @path;
     my $root = join("/",@path);
     my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";
-
+    
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
     $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
 
@@ -4135,100 +4108,6 @@ objective_function has a value which is a string
 
 
 
-=head2 edit_reaction
-
-=over 4
-
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-id has a value which is a reaction_id
-reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-0: (compound) a string
-1: (coefficient) a float
-2: (compartment) a string
-
-gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-direction has a value which is a reaction_direction
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-id has a value which is a reaction_id
-reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-0: (compound) a string
-1: (coefficient) a float
-2: (compartment) a string
-
-gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-direction has a value which is a reaction_direction
-
-
-=end text
-
-=back
-
-
-
-=head2 edit_data
-
-=over 4
-
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-rundate has a value which is a Timestamp
-id has a value which is an edit_id
-ref has a value which is a reference
-reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-0: a float
-1: a compartment_id
-
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-rundate has a value which is a Timestamp
-id has a value which is an edit_id
-ref has a value which is a reference
-reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-0: a float
-1: a compartment_id
-
-
-
-=end text
-
-=back
-
-
-
 =head2 ModelStats
 
 =over 4
@@ -5089,7 +4968,7 @@ plantseed has a value which is a bool
 
 
 
-=head2 list_model_edits_params
+=head2 simple_edit_output
 
 =over 4
 
@@ -5100,6 +4979,103 @@ plantseed has a value which is a bool
 ********************************************************************************
     Functions for editing models
    	********************************************************************************
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is an edit_id
+timestamp has a value which is a Timestamp
+reactions_removed has a value which is a reference to a list where each element is a string
+reactions_added has a value which is a reference to a list where each element is a string
+reactions_modified has a value which is a reference to a list where each element is a string
+biomass_added has a value which is a reference to a list where each element is a string
+biomass_changed has a value which is a reference to a list where each element is a string
+biomass_removed has a value which is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is an edit_id
+timestamp has a value which is a Timestamp
+reactions_removed has a value which is a reference to a list where each element is a string
+reactions_added has a value which is a reference to a list where each element is a string
+reactions_modified has a value which is a reference to a list where each element is a string
+biomass_added has a value which is a reference to a list where each element is a string
+biomass_changed has a value which is a reference to a list where each element is a string
+biomass_removed has a value which is a reference to a list where each element is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 detailed_edit_output
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is an edit_id
+timestamp has a value which is a Timestamp
+reactions_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+reactions_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+reactions_modified has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_changed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is an edit_id
+timestamp has a value which is a Timestamp
+reactions_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+reactions_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+reactions_modified has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_changed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 list_model_edits_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: list_model_edits
+DESCRIPTION: This function lists all model edits submitted by the user
+
+REQUIRED INPUTS:
+    reference model - reference to model for which to list edits
 
 
 =item Definition
@@ -5126,7 +5102,7 @@ model has a value which is a reference
 
 
 
-=head2 manage_model_edits_params
+=head2 edit_model_params
 
 =over 4
 
@@ -5152,8 +5128,32 @@ edit_data new_edit - list of new edits to add
 <pre>
 a reference to a hash where the following keys are defined:
 model has a value which is a reference
-commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
-new_edit has a value which is an edit_data
+biomass_changes has a value which is a reference to a list where each element is a reference to a list containing 3 items:
+0: (biomass_id) a string
+1: (compound_id) a string
+2: (coefficient) a float
+
+reactions_to_remove has a value which is a reference to a list where each element is a string
+reactions_to_add has a value which is a reference to a list where each element is a reference to a list containing 9 items:
+0: (reaction_id) a string
+1: (compartment) a string
+2: (direction) a string
+3: (gpr) a string
+4: (pathway) a string
+5: (name) a string
+6: (reference) a string
+7: (enzyme) a string
+8: (equation) a string
+
+reactions_to_modify has a value which is a reference to a list where each element is a reference to a list containing 7 items:
+0: (reaction_id) a string
+1: (direction) a string
+2: (gpr) a string
+3: (pathway) a string
+4: (name) a string
+5: (reference) a string
+6: (enzyme) a string
+
 
 </pre>
 
@@ -5163,8 +5163,32 @@ new_edit has a value which is an edit_data
 
 a reference to a hash where the following keys are defined:
 model has a value which is a reference
-commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
-new_edit has a value which is an edit_data
+biomass_changes has a value which is a reference to a list where each element is a reference to a list containing 3 items:
+0: (biomass_id) a string
+1: (compound_id) a string
+2: (coefficient) a float
+
+reactions_to_remove has a value which is a reference to a list where each element is a string
+reactions_to_add has a value which is a reference to a list where each element is a reference to a list containing 9 items:
+0: (reaction_id) a string
+1: (compartment) a string
+2: (direction) a string
+3: (gpr) a string
+4: (pathway) a string
+5: (name) a string
+6: (reference) a string
+7: (enzyme) a string
+8: (equation) a string
+
+reactions_to_modify has a value which is a reference to a list where each element is a reference to a list containing 7 items:
+0: (reaction_id) a string
+1: (direction) a string
+2: (gpr) a string
+3: (pathway) a string
+4: (name) a string
+5: (reference) a string
+6: (enzyme) a string
+
 
 
 =end text

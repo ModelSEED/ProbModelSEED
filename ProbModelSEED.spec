@@ -110,24 +110,6 @@ module ProbModelSEED {
     } fba_data;
     
     typedef structure {
-		reaction_id id;
-		list<tuple<string compound,float coefficient,string compartment>> reagents;
-		list<list<list<feature_id> > > gpr;
-		reaction_direction direction;
-    } edit_reaction;
-    
-    typedef structure {
-		Timestamp rundate;
-		edit_id id;
-		reference ref;
-		list<reaction_id> reactions_to_delete;
-		mapping<reaction_id,reaction_direction> altered_directions;
-		mapping<reaction_id,list<list<list<feature_id> > > > altered_gpr;
-		list<edit_reaction> reactions_to_add;
-		mapping<compound_id,tuple<float,compartment_id>> altered_biomass_compound;
-    } edit_data;
-    
-    typedef structure {
  		Timestamp rundate;
 		string id;
 		string source;
@@ -427,6 +409,28 @@ module ProbModelSEED {
     Functions for editing models
    	*********************************************************************************/
 	
+    typedef structure {
+		edit_id id;
+    	Timestamp timestamp;
+    	list<string> reactions_removed;
+    	list<string> reactions_added;
+    	list<string> reactions_modified;
+    	list<string> biomass_added;
+		list<string> biomass_changed;
+		list<string> biomass_removed;
+	} simple_edit_output;
+	
+	typedef structure {
+		edit_id id;
+    	Timestamp timestamp;
+    	list<mapping<string,string>> reactions_removed;
+    	list<mapping<string,string>> reactions_added;
+    	list<mapping<string,string>> reactions_modified;
+    	list<mapping<string,string>> biomass_added;
+		list<mapping<string,string>> biomass_changed;
+		list<mapping<string,string>> biomass_removed;
+	} detailed_edit_output;
+	
 	/* 
     	FUNCTION: list_model_edits
     	DESCRIPTION: This function lists all model edits submitted by the user
@@ -439,7 +443,7 @@ module ProbModelSEED {
 		reference model;
     } list_model_edits_params;
     authentication required;
-    funcdef list_model_edits(list_model_edits_params input) returns (list<edit_data> output);
+    funcdef list_model_edits(list_model_edits_params input) returns (list<simple_edit_output> output);
 
 	/* 
 		FUNCTION: manage_model_edits
@@ -454,12 +458,13 @@ module ProbModelSEED {
 	*/
     typedef structure {
 		reference model;
-		mapping<edit_id,gapfill_command> commands;
-		edit_data new_edit;
-    } manage_model_edits_params;
+		list<tuple<string biomass_id,string compound_id, float coefficient>> biomass_changes;
+    	list<string> reactions_to_remove;
+    	list<tuple<string reaction_id,string compartment,string direction,string gpr,string pathway,string name,string reference,string enzyme,string equation>> reactions_to_add;
+    	list<tuple<string reaction_id,string direction,string gpr,string pathway,string name,string reference,string enzyme>> reactions_to_modify;
+    } edit_model_params;
     authentication required;
-	funcdef manage_model_edits(manage_model_edits_params input) returns (mapping<edit_id,edit_data> output);
-
+	funcdef edit_model(edit_model_params input) returns (detailed_edit_output output);
 	/*********************************************************************************
 	Functions corresponding to use of PlantSEED web-pages
    	*********************************************************************************/

@@ -999,75 +999,54 @@ sub copy_genome {
 	print "Saving genome: ".$input->{destination}.$input->{destname}." from ".$input->{genome}."\n";
 	return $self->save_object($input->{destination}.$input->{destname},$genome,"genome");
 }
+
 sub copy_model {
 	my($self,$input) = @_;
-	$input = $self->validate_args($input,["model"],{
-    	destination => undef,
-		destname => undef,
-		to_kbase => 0,
-		copy_genome => 1,
-		workspace_url => undef,
-		kbase_username => undef,
-		kbase_password => undef,
-		kbase_token => undef,
-		plantseed => 0,
-    });
-    if (!defined($input->{destination})) {
-    	$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/home/models/";
-    	if ($input->{plantseed} == 1) {
-    		$input->{destination} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/";
-    	}
-    }
-    if (!defined($input->{destname})) {
-	my $model = $self->get_object($input->{model}."/model");
-    	$input->{destname} = $model->wsmeta()->[0];
-    }
-    if ($input->{destination}.$input->{destname} eq $input->{model}) {
-    	$self->error("Copy source and destination identical! Aborting!");
-    }
+	$input = $self->validate_args($input,["source_model_path"],{
+	    dest_model_path => undef,
+	    plantseed => 0
+	});
 
-#Disabled old copy_genome as its contained within modelfolder
-#    if (defined($self->get_model_meta($model->wsmeta()->[2]."/.".$model->wsmeta()->[0]))) {
-#    	$self->copy_object($model->wsmeta()->[2]."/.".$model->wsmeta()->[0],$input->{destination}.".".$input->{destname},1);
-#    }
-#    if ($input->{copy_genome} == 1) {
-#    	$self->copy_genome({
-#    		genome => $input->{model}."/genome",
-#    		plantseed => $input->{plantseed}
-#    	});
-#    	$model->genome_ref($model->genome()->_reference());
-#    }
+	if(!$input->{destmodel}){
+	    my $path = "/".Bio::KBase::ObjectAPI::config::username()."/modelseed/";
+	    if ($input->{plantseed} == 1) {
+		$path = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/";
+	    }
+	    
+	    my @temp=split(/\//,$input->{source_model_path});
+	    my $model = $temp[$#temp];
+	    
+	    $input->{dest_model_path}=$path.$model;
+	}
+	
+	#Save object as modelfolder
+	$self->call_ws("create", { objects => [ [$input->{dest_model_path},"modelfolder",{},{}] ], overwrite=>1});
+	$self->call_ws("copy", { objects => [ [$input->{source_model_path},$input->{dest_model_path}] ], overwrite=>1, recursive=>1 });							 
 
-	print "Copying ".$input->{model}." to ".$input->{destination}.$input->{destname}."\n";
-	my $meta = $self->copy_object($input->{model},$input->{destination}.$input->{destname},1);
+	#Copy user meta
+	my $UserMeta = $self->call_ws("get",{ objects => [$input->{source_model_path}], metadata_only=>1 })->[0][0][7];
+	$self->call_ws("update_metadata",{ objects => [[$input->{dest_model_path},$UserMeta]] });
 
-	#Update internal genome reference
-	my $model = $self->get_object($input->{destination}.$input->{destname}."/model");
-    	$model->genome_ref($input->{destname}."/genome||");
-	$self->save_object($input->{destination}.$input->{destname},$model,"model");
-
-    return $self->get_model_summary($model);
+	return $UserMeta;
 }
 
 sub plant_pipeline {
     my($self,$input)=@_;
-
     $self->create_genome_from_shock($input);
 
     #Add parameters for annotation
-    $input->{destmodel} = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname};
-    $input->{kmers}=1;
-    $input->{blast}=0;
-
-    $self->annotate_plant_genome($input);
+    my $AP_input = {};
+    $AP_input->{destmodel} = $input->{destname};
+    $AP_input->{kmers}=1;
+    $AP_input->{blast}=0;
+    $self->annotate_plant_genome($AP_input);
 
     #Reform parameters for reconstruction
     my $MR_input = {};
     $MR_input->{plant}=1;
     $MR_input->{gapfill}=0;
     $MR_input->{output_file}=$input->{destname};
-    $MR_input->{genome}=$input->{destmodel}."/genome";
-
+    $MR_input->{genome}="/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/genome";
     $self->ModelReconstruction($MR_input);
 
     return "Complete";
@@ -1140,12 +1119,11 @@ sub create_genome_from_shock {
 	}
 	
 	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destname}."/";
-	$self->save_object($folder,undef,"modelfolder");
+	$self->call_ws("create", { objects => [ [$folder, "modelfolder", {}, {}] ] });
 	$self->call_ws("create", { objects => [ [$folder."genome", "genome", $user_meta, \%GenomeObj] ] });
 
 	$folder.=".plantseed_data/";
-	$self->save_object($folder,undef,"folder");
-	$self->call_ws("create", {objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
+	$self->call_ws("create", { objects => [ [$folder."minimal_genome", "unspecified", {}, \%MinGenomeObj] ]});
 
 	return $folder."genome";
 }
@@ -1208,42 +1186,56 @@ sub create_featurevalues_from_shock {
 
 	my $user_meta = { "is_folder"=>0, "model_id"=>$input->{destmodel},"shock_id"=>$input->{shock_id} };
 	
-	my $folder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel}."/.expression_data/";
-	$self->save_object($folder,undef,"folder");
-	$self->call_ws("create", {objects => [ [$folder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ]});
+	my $modelfolder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel};
+	my $expressionfolder = $modelfolder."/.expression_data/";
+	$self->call_ws("create", {objects => [ [$expressionfolder.$input->{destname}, "unspecified", $user_meta, \%ExpressionMatrix] ], overwrite=>1});
 
-	return $folder.$input->{destname};
+	#Update metadata of modelfolder
+	my $UserMeta = $self->call_ws("get",{ objects => [$modelfolder], metadata_only=>1 })->[0][0][7];
+	if(!$UserMeta){
+	    $UserMeta = {};
+	}
+	if(!exists($UserMeta->{'expression_data'})){
+	    $UserMeta->{'expression_data'}={};
+	}
+	$UserMeta->{'expression_data'}{$input->{destname}}=\@Experiments;
+	$self->call_ws("update_metadata",{ objects => [[$modelfolder,$UserMeta]] });
+
+	return $expressionfolder.$input->{destname};
 }
 
 sub annotate_plant_genome {
     my ($self,$input)=@_;
 
+    my $modelfolder = "/".Bio::KBase::ObjectAPI::config::username()."/plantseed/".$input->{destmodel};
+
     #Need to check genome sequences for amino acids and if not, translate
-    my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/genome"] })->[0];
-    my $Usermeta = $output->[0][8];
-    my $Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+    my $Genome = $self->get_object($modelfolder."/genome","genome");
+    my $Usermeta = $self->call_ws("get", { objects => [$modelfolder."/genome"], metadata_only => 1 })->[0][0][8];
+
+    my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Usermeta,1);
 
     #Test first protein sequences for NAs
     #Might have been incorrectly assigned
-    if( exists($Genome->{features}[0]{protein_translation}) && $self->is_dna($Genome->{features}[0]{protein_translation}) ){
-	print "Moving sequences\n";
+    my $First_Ftr = $Genome->features()->[0];
+    if( $First_Ftr->protein_translation() && $self->is_dna($First_Ftr->protein_translation()) ){
 	#Need to re-assign these
-	foreach my $ftr (@{$Genome->{features}}){
-	    $ftr->{dna_sequence}=$ftr->{protein_translation};
-	    $ftr->{dna_sequence_length}=length($ftr->{dna_sequence_length});
+	foreach my $ftr (@{$Genome->features()}){
+	    $ftr->dna_sequence()=$ftr->protein_translation();
+	    $ftr->dna_sequence_length()=length($ftr->dna_sequence_length());
 
-	    delete($ftr->{protein_translation});
-	    delete($ftr->{protein_translation_length});
-	    delete($ftr->{md5});
+	    $ftr->protein_translation("");
+	    $ftr->protein_translation_length(0);
+	    $ftr->md5("");
 	}
     }
 
     #Translate nucleotides
-    foreach my $ftr (@{$Genome->{features}}){
-	if(exists($ftr->{dna_sequence})){
-	    $ftr->{protein_translation}=$self->translate_nucleotides($ftr->{dna_sequence});
-	    $ftr->{protein_translation_length}=length($ftr->{protein_translation});
-	    $ftr->{md5}=Digest::MD5::md5_hex($ftr->{protein_translation});
+    foreach my $ftr (@{$Genome->features()}){
+	if($ftr->dna_sequence()){
+	    $ftr->protein_translation()=$self->translate_nucleotides($ftr->dna_sequence());
+	    $ftr->protein_translation_length()=length($ftr->protein_translation());
+	    $ftr->md5()=Digest::MD5::md5_hex($ftr->protein_translation());
 	}
     }
 
@@ -1258,17 +1250,16 @@ sub annotate_plant_genome {
     }
 
     #Retrieve minimal genome
-    my $output = $self->call_ws("get", { objects => [$input->{destmodel}."/.plantseed_data/minimal_genome"] })->[0];
+    my $output = $self->call_ws("get", { objects => [$modelfolder."/.plantseed_data/minimal_genome"] })->[0];
     my $Min_Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
 
     my $return_object = {destmodel=>$input->{destmodel},kmers=>"Not attempted",blast=>"Not attempted"};
     if(exists($input->{kmers}) && $input->{kmers}==1){
 	$return_object->{kmers}="Attempted";
 	my $hits = $self->annotate_plant_genome_kmers($Genome);
-
-	foreach my $ftr (@{$Genome->{features}}){
-	    if(exists($hits->{$ftr->{id}})){
-		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+	foreach my $ftr (@{$Genome->features()}){
+	    if(exists($hits->{$ftr->id()})){
+		$ftr->function(join(" / ",sort keys %{$hits->{$ftr->id()}}));
 	    }
 	}
 
@@ -1285,12 +1276,11 @@ sub annotate_plant_genome {
 	    $ftr->{subsystems}=[sort keys %SSs];
 	}
 
-	my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Genome,1);
 	$Usermeta->{hit_proteins}=scalar(keys %$hits);
-	$self->call_ws("create",{ objects => [[$input->{destmodel}."/genome","genome",$Usermeta,$JSON]], overwrite=>1 });
+	$self->save_object($modelfolder."/genome",$Genome,"genome");
 
 	$JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
-	$self->call_ws("create",{ objects => [[$input->{destmodel}."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
+	$self->call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
 
 	$return_object->{kmers}=scalar(keys %$hits)." kmer hits";
     }
@@ -1298,7 +1288,7 @@ sub annotate_plant_genome {
     if(exists($input->{blast}) && $input->{blast}==1){
 	$return_object->{blast}="Attempted";
 	my $blast = $self->annotate_plant_genome_blast($Genome);
-	$return_object->{kmers}=$blast if $blast;
+	$return_object->{blast}=$blast if $blast;
     }
     my $return_string = join("\n", map { $_.":".$return_object->{$_} } sort keys %$return_object)."\n";
     return $return_string;
@@ -1345,8 +1335,8 @@ sub annotate_plant_genome_kmers {
 
     my $Kmer_Length=8;
     my %Hit_Proteins=();
-    foreach my $ftr (@{$Genome->{features}}){
-	my $Seq = $ftr->{protein_translation};
+    foreach my $ftr (@{$Genome->features()}){
+	my $Seq = $ftr->protein_translation();
 	my $SeqLen = length($Seq);
 	next if $SeqLen < 10;
 	
@@ -1356,7 +1346,7 @@ sub annotate_plant_genome_kmers {
 	    # take the relevant substring
 	    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
 		if(exists($Kmers_Functions{$1})){
-		    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
+		    $Hit_Proteins{$ftr->id()}{$Kmers_Functions{$1}}{$1}=1;
 		}
 	    }
 	}
@@ -1761,9 +1751,46 @@ sub app_harness {
 	}
 }
 
+sub logger {
+	my($self) = @_;
+	if (!defined($self->{_logger})) {
+	   	if (!-e Bio::KBase::ObjectAPI::config::config_directory()."/ProbModelSEED.conf") {
+	    	if (!-d Bio::KBase::ObjectAPI::config::config_directory()) {
+	    		File::Path::mkpath (Bio::KBase::ObjectAPI::config::config_directory());
+	    	}
+	    	Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.conf",[
+		    	"############################################################",
+				"# A simple root logger with a Log::Log4perl::Appender::File ",
+				"# file appender in Perl.",
+				"############################################################",
+				"log4perl.rootLogger=INFO, LOGFILE",
+				"",
+				"log4perl.appender.LOGFILE=Log::Log4perl::Appender::File",
+				"log4perl.appender.LOGFILE.filename=".Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.log",
+				"log4perl.appender.LOGFILE.mode=append",
+				"",
+				"log4perl.appender.LOGFILE.layout=PatternLayout",
+				"log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n",
+	    	]);
+	    }
+	   	Log::Log4perl::init(Bio::KBase::ObjectAPI::config::config_directory()."ProbModelSEED.conf");
+	   	$self->{_logger} = Log::Log4perl->get_logger("ProbModelSEEDHelper");
+    }
+    return $self->{_logger};
+}
+
 sub util_log {
-	my($self,$message) = @_;
-	Bio::KBase::ObjectAPI::logging::log($message);
+	my($self,$message,$type) = @_;
+    if (!defined($type)) {
+    	$type = "info";
+    }
+    if ($type eq "stdout") {
+    	print $message."\n";
+    } elsif ($type eq "stderr") {
+    	print STDERR $message."\n";
+    } else {
+    	$self->logger()->$type('<msg type="'.$type.'" time="'.DateTime->now()->datetime().'" pid="'.$self->{_processid}.'" user="'.Bio::KBase::ObjectAPI::config::username().'">'."\n".$message."\n</msg>\n");
+    }
 }
 
 sub util_get_object {
@@ -1805,7 +1832,6 @@ sub util_get_object {
 
 sub util_save_object {
 	my($self,$object,$ref,$parameters) = @_;
-	print "Saving ".$parameters->{type}.":".$ref."\n";
 	my $original_output;
 	if (defined($parameters->{type}) && defined($typetrans->{$parameters->{type}})) {
 		$parameters->{type} = $typetrans->{$parameters->{type}};
@@ -1860,6 +1886,11 @@ sub util_parserefs {
 	return ($ws,$id);
 }
 
+sub util_report {
+	my($self,$args) = @_;
+	#TODO: may need to do something with this report data
+}
+
 sub ComputeReactionProbabilities {
 	my($self,$parameters,$jobresult) = @_;
     $parameters = $self->validate_args($parameters,["genome", "template", "rxnprobs"], {});
@@ -1873,10 +1904,25 @@ sub ComputeReactionProbabilities {
 	return $parameters->{rxnprobs};
 }
 
+sub EditModel {
+	my($self,$parameters) = @_;
+	(my $ws,my $id) = $self->util_parserefs($parameters->{model});
+	my $output = Bio::KBase::ObjectAPI::functions::func_edit_metabolic_model({
+		workspace => $ws,
+		fbamodel_id => $id,
+		data => {
+			biomass_changes => $parameters->{biomass_changes},
+			reactions_to_remove => $parameters->{reactions_to_remove},
+			reactions_to_add => $parameters->{reactions_to_add},
+			reactions_to_modify => $parameters->{reactions_to_modify},
+		}
+	});
+	return $output->{detailed_edit_results};
+}
+
 sub ModelReconstruction {
 	my($self,$parameters,$jobresult) = @_;
-	print STDERR "Input Parameters: ".join("\n", map { $_.":".$parameters->{$_} } keys %$parameters)."\n";
-    $parameters = $self->validate_args($parameters,[],{
+	$parameters = $self->validate_args($parameters,[],{
     	media => undef,
     	template_model => undef,
     	fulldb => 0,
@@ -1929,8 +1975,6 @@ sub ModelReconstruction {
 	delete $parameters->{template_model};
 	my $folder = $parameters->{output_path}."/".$parameters->{output_file};
 	my $datachannel = {};
-	print STDERR "Output Parameters: ".join("\n", map { $_.":".$parameters->{$_} } keys %$parameters)."\n";
-
 	Bio::KBase::ObjectAPI::functions::func_build_metabolic_model($parameters,$datachannel);
 	#Now compute reaction probabilities if they are needed for gapfilling or probanno model building
 	if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
@@ -2445,6 +2489,9 @@ sub new {
     my($class, $parameters) = @_;
     my $self = {};
     bless $self, $class;
+    $self->{_processid} = Data::UUID->new()->create_str();
+    Bio::KBase::ObjectAPI::logging::set_handler($self);
+    Bio::KBase::ObjectAPI::functions::set_handler($self);
     $parameters = $self->validate_args($parameters,["token","username"],{
     	setowner => undef,
     	adminmode => 0,
@@ -2476,7 +2523,7 @@ sub new {
     if (defined($parameters->{adminmode})) {
     	Bio::KBase::ObjectAPI::config::setowner($parameters->{setowner});
     }
-    Bio::KBase::ObjectAPI::functions::set_handler($self);
+   
     return $self;
 }
 
