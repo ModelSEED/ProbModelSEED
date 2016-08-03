@@ -1038,7 +1038,7 @@ sub plant_pipeline {
     my $AP_input = {};
     $AP_input->{destmodel} = $input->{destname};
     $AP_input->{kmers}=1;
-    $AP_input->{blast}=1;
+    $AP_input->{blast}=0;
     $self->annotate_plant_genome($AP_input);
 
     #Reform parameters for reconstruction
