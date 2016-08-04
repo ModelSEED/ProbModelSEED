@@ -1970,7 +1970,8 @@ sub save_feature_function
 	if ($input->{genome} =~ m/\/plantseed\/[^\/]+$/) {
 		$input->{genome} .= "/genome";
 	}
-    my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
+    my $genome_obj = $self->helper()->get_object($input->{genome},undef,{data_only => 1});
+    $genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($genome_obj);
     if(!$genome_obj){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
@@ -2000,7 +2001,7 @@ sub save_feature_function
     my $root = join("/",@path);
     my $min_genome = $root."/.plantseed_data/minimal_genome";
 
-    my $min_genome_obj = $self->helper()->get_object($min_genome,"unspecified");
+    my $min_genome_obj = $self->helper()->get_object($min_genome,undef,{data_only => 1});
     $min_genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome_obj);
 
     $found_ftr = undef;
