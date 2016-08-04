@@ -1585,7 +1585,8 @@ sub annotate_plant_genome_blast {
     use IPC::Open3;
 
     #my $Command = "/vol/kbase/runtime/bin/blastp";
-    my $Command = "/sw/bin/blastp";
+    #my $Command = "/sw/bin/blastp";
+    my $Command = "blastp";
 
     my @Command_Array = ("nice -n 10 ".$Command);
     push(@Command_Array,"-evalue");push(@Command_Array,"1.0e-7");
