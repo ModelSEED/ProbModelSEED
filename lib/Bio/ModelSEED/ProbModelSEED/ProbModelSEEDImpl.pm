@@ -1978,13 +1978,13 @@ sub save_feature_function
 
     my $found_ftr=undef;
     foreach my $ftr (@{$genome_obj->{features}}){
-	if($ftr->{data}{id} eq $input->{feature}){
-	    $ftr->{data}{function} = $input->{function};
+	if($ftr->{id} eq $input->{feature}){
+	    $ftr->{function} = $input->{function};
 	    $found_ftr = 1;
 
 	    if(defined($input->{user})){
 		my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
-		push(@{$ftr->{data}{annotations}},\@Annotation);
+		push(@{$ftr->{annotations}},\@Annotation);
 	    }
 
 	    last;
