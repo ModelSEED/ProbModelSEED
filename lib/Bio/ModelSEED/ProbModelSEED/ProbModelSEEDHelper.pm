@@ -1348,8 +1348,8 @@ sub annotate_plant_genome {
     if( $First_Ftr->protein_translation() && $self->is_dna($First_Ftr->protein_translation()) ){
 	#Need to re-assign these
 	foreach my $ftr (@{$Genome->features()}){
-	    $ftr->dna_sequence()=$ftr->protein_translation();
-	    $ftr->dna_sequence_length()=length($ftr->dna_sequence_length());
+	    $ftr->dna_sequence($ftr->protein_translation());
+	    $ftr->dna_sequence_length(length($ftr->dna_sequence_length()));
 
 	    $ftr->protein_translation("");
 	    $ftr->protein_translation_length(0);
