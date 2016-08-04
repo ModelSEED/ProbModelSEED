@@ -1584,8 +1584,8 @@ sub annotate_plant_genome_blast {
     use Symbol 'gensym'; $err = gensym;
     use IPC::Open3;
 
-    #my $Command = "/vol/kbase/runtime/bin/blastp";
-    #my $Command = "/sw/bin/blastp";
+#    my $Command = "/vol/kbase/runtime/bin/blastp";
+#    my $Command = "/sw/bin/blastp";
     my $Command = "blastp";
 
     my @Command_Array = ("nice -n 10 ".$Command);
@@ -1627,11 +1627,12 @@ sub annotate_plant_genome_blast {
 	next unless $temp[10] < 1e-10;
 
 	$Current_Ftr = $temp[0];
-	$Ftrs_Sims{$Current_Ftr}{$temp[1]}={bitscore=>$temp[11],identity=>$temp[2],line=>$_};
+	my $identity = $temp[2]/100.0;
+	$Ftrs_Sims{$Current_Ftr}{$temp[1]}={bitscore=>$temp[11],identity=>sprintf("%.2f",$identity),line=>$_};
 
 	if(exists($exemplars->{$temp[1]})){
 	    foreach my $ortholog_spp (keys %{$families->{$exemplars->{$temp[1]}}}){
-		my ($ortholog,$spp)=split(/\|\|/,$ortholog_spp);
+		my ($spp,$ortholog)=split(/\|\|/,$ortholog_spp);
 		my $line = $Current_Ftr."\t".$ortholog."\t".$families->{$exemplars->{$temp[1]}}{$ortholog_spp}."\t".join("\t",@temp[3..$#temp]);
 		$Ftrs_Sims{$Current_Ftr}{$ortholog}={bitscore=>$temp[11],identity=>$families->{$exemplars->{$temp[1]}}{$ortholog_spp},line=>$line};
 	    }
@@ -1651,7 +1652,12 @@ sub annotate_plant_genome_blast {
 	    my $line = $Ftrs_Sims{$ftr}{$sim}{line};
 	    my @temp=split(/\t/,$line,-1);
 	    my ($query,$hit,$percent,$evalue,$bitscore) = @temp[0,1,2,10,11];
-	    
+
+	    if($percent > 1){
+		$percent = $percent/100.0;
+		$percent = sprintf("%.2f",$percent);
+	    }
+
 	    if(exists($exemplars->{$hit})){
 		$Exems->{$hit}{$query}=1;
 	    }
