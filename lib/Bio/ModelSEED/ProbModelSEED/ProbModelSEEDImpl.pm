@@ -2745,7 +2745,7 @@ sub ModelReconstruction
     my($output);
     #BEGIN ModelReconstruction
     $input = $self->initialize_call($input);
-    if ($input->{model} =~ m/\/plantseed\//) {
+    if ($input->{genome} =~ m/\/plantseed\//) {
     	Bio::KBase::ObjectAPI::config::run_as_app(0);
     } else { 
     	Bio::KBase::ObjectAPI::config::run_as_app(1);
