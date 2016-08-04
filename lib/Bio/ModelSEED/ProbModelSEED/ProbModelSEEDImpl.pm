@@ -1967,7 +1967,9 @@ sub save_feature_function
     #BEGIN save_feature_function
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["genome","feature","function"],{"user"=>undef});
-
+	if ($input->{genome} =~ m/\/plantseed\/([^\/]+$/) {
+		$input->{genome} .= "/genome";
+	}
     my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
     if(!$genome_obj){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
