@@ -1360,8 +1360,8 @@ sub annotate_plant_genome {
     #Translate nucleotides
     foreach my $ftr (@{$Genome->features()}){
 	if($ftr->dna_sequence()){
-	    $ftr->protein_translation()=$self->translate_nucleotides($ftr->dna_sequence());
-	    $ftr->protein_translation_length()=length($ftr->protein_translation());
+	    $ftr->protein_translation($self->translate_nucleotides($ftr->dna_sequence()));
+	    $ftr->protein_translation_length(length($ftr->protein_translation()));
 	    $ftr->md5()=Digest::MD5::md5_hex($ftr->protein_translation());
 	}
     }
