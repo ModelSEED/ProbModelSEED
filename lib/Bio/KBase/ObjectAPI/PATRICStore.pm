@@ -469,7 +469,7 @@ sub transform_media_from_ws {
 		type => $meta->[7]->{type},
 		isMinimal => $meta->[7]->{isMinimal},
 		isDefined => $meta->[7]->{isDefined},
-		source_id => $meta->[7]->{source_id},
+		source_id => $meta->[0],
 		mediacompounds => []
 	};
 	my $array = [split(/\n/,$data)];
