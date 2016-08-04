@@ -1277,19 +1277,30 @@ sub annotate_plant_genome {
 	}
 
 	$Usermeta->{hit_proteins}=scalar(keys %$hits);
-	$self->save_object($modelfolder."/genome",$Genome,"genome");
-
-	$JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
-	$self->call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
-
 	$return_object->{kmers}=scalar(keys %$hits)." kmer hits";
     }
 
     if(exists($input->{blast}) && $input->{blast}==1){
 	$return_object->{blast}="Attempted";
-	my $blast = $self->annotate_plant_genome_blast($Genome);
-	$return_object->{blast}=$blast if $blast;
+	my $blast_results = $self->annotate_plant_genome_blast($Genome);
+
+	$Min_Genome->{similarities_index}=$blast_results->{index};
+	$Min_Genome->{exemplars}=$blast_results->{exems};
+
+	for(my $i=0;$i<scalar(@{$blast_results->{sims}});$i++){
+	    $self->call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/Sims_".$i,"unspecified",{},$blast_results->{sims}->[$i]]], overwrite=>1 });
+	}
+
+	$Usermeta->{hit_sims}=$blast_results->{hits};
+	$return_object->{blast}=$blast_results->{hits};
     }
+
+    $self->save_object($modelfolder."/genome",$Genome,"genome");
+    $self->call_ws("update_metadata",{ objects => [[$modelfolder."/genome",$Usermeta]] });
+
+    $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
+    $self->call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
+
     my $return_string = join("\n", map { $_.":".$return_object->{$_} } sort keys %$return_object)."\n";
     return $return_string;
 }
@@ -1406,14 +1417,23 @@ sub annotate_plant_genome_kmers {
 }
 
 sub annotate_plant_genome_blast {
-    system("mkdir -p /tmp/blastjobs");
+    my ($self,$Genome) = @_;
+
+    #Create job directory
+    my @chars = ("A".."Z", "a".."z", 0..9);
+    my $job = "";;
+    $job .= $chars[rand @chars] for 1..8;
+    #$job = "hWJcfo6K";
+
+    my $jobDir = "/tmp/blastjobs/".$job."/";
+    system("mkdir -p ".$jobDir);
+    my $jobFiles = $jobDir.$Genome->id();
 
     #Print out protein sequences
-    my ($self,$Genome) = @_;
-    open(OUT, "> /tmp/blastjobs/".$Genome->{id}.".fasta");
-    foreach my $ftr (@{$Genome->{features}}){
-	print OUT ">".$ftr->{id}."\n";
-	print OUT join("\n", $ftr->{protein_translation} =~ m/.{1,60}/g)."\n";
+    open(OUT, "> ".$jobFiles.".fasta");
+    foreach my $ftr (@{$Genome->features()}){
+	print OUT ">".$ftr->id()."\n";
+	print OUT join("\n", $ftr->protein_translation() =~ m/.{1,60}/g)."\n";
     }
     close(OUT);
 	    
@@ -1427,33 +1447,110 @@ sub annotate_plant_genome_blast {
     my $res = $ua->get($shock_url,Authorization => "OAuth " . $token);
     my $raw_data = $res->{_content};
 
-    open(OUT, "> /tmp/blastjobs/plants_nr.tar.gz");
+    open(OUT, "> ".$jobDir."plants_nr.tar.gz");
     binmode(OUT);
     print OUT $raw_data;
     close(OUT);
-    system("tar -xzf /tmp/blastjobs/plants_nr.tar.gz -C /tmp/blastjobs/");
+    system("tar -xzf ".$jobDir."plants_nr.tar.gz -C ".$jobDir);
 
-#Run command    
-#    my $BLAST="/sw/bin/blastp";
-#    my @Command = ($BLAST);
-#    push(@Command,"-FF");
-#    push(@Command,"-e");push(@Command,"1.0e-3");
-#    push(@Command,"-m");push(@Command,"8");
-#    push(@Command,"-d");push(@Command,"PlantSEED_Plants_NR");
-#    push(@Command,"-i");push(@Command,$Genome->{id}.".fasta");
-#    push(@Command,"-o");push(@Command,"job_similarities");
-#    my $cmd=join(" ",@Command);
-#    /sw/bin/blastp -evalue 1.0e-5 -outfmt 6 -db PlantSEED_Plants_NR -query Fvesca_Transcript.fasta -out job_similarities
-#    print $cmd,"\n";
+    my($wtr, $rdr, $err, $errstr, $pid);
+    use Symbol 'gensym'; $err = gensym;
+    use IPC::Open3;
 
-    #Load Exemplars
-    my $output = $self->call_ws("get", { objects => ["/plantseed/Data/annotation_overview"] })->[0][1];
-    my $annotation = from_json($output);
-#    foreach my $role (@$annotation){
-#	foreach my $ftr
-#    }
+    #my $Command = "/vol/kbase/runtime/bin/blastp";
+    my $Command = "/sw/bin/blastp";
 
-    return "Not finished";
+    my @Command_Array = ("nice -n 10 ".$Command);
+    push(@Command_Array,"-evalue");push(@Command_Array,"1.0e-7");
+    push(@Command_Array,"-outfmt");push(@Command_Array,"6");
+    push(@Command_Array,"-db");push(@Command_Array,$jobDir."PlantSEED_Plants_NR");
+    push(@Command_Array,"-query");push(@Command_Array,$jobFiles.".fasta");
+    push(@Command_Array,"-out");push(@Command_Array,$jobFiles.".sims");
+    my $cmd=join(" ",@Command_Array);
+
+    open(OUT, "> ".$jobDir."Run_Blast.sh");
+    print OUT "#!/bin/bash\n".$cmd."\n";
+    close(OUT);
+
+    $pid=open3($wtr, $rdr, $err,$cmd);
+
+    $errstr="";
+    while(<$err>){$errstr.=$_;}
+
+    waitpid($pid, 0);
+
+    if(length($errstr)>0){print "ERR: ".$errstr;}
+
+    my $output;
+    $output = $self->call_ws("get", { objects => ["/plantseed/Data/exemplar_families"] })->[0][1];
+    my $exemplars = Bio::KBase::ObjectAPI::utilities::FROMJSON($output);
+
+    $output = $self->call_ws("get", { objects => ["/plantseed/Data/isofunctional_families"] })->[0][1];
+    my $families = Bio::KBase::ObjectAPI::utilities::FROMJSON($output);
+
+    open(FH, "< ".$jobFiles.".sims");
+    my @Lines=();
+    my %Ftrs_Sims=();
+    my $Current_Ftr="";
+    while(<FH>){
+	chomp;
+    
+	my @temp=split(/\t/,$_,-1);
+	next unless $temp[10] < 1e-10;
+
+	$Current_Ftr = $temp[0];
+	$Ftrs_Sims{$Current_Ftr}{$temp[1]}={bitscore=>$temp[11],identity=>$temp[2],line=>$_};
+
+	if(exists($exemplars->{$temp[1]})){
+	    foreach my $ortholog_spp (keys %{$families->{$exemplars->{$temp[1]}}}){
+		my ($ortholog,$spp)=split(/\|\|/,$ortholog_spp);
+		my $line = $Current_Ftr."\t".$ortholog."\t".$families->{$exemplars->{$temp[1]}}{$ortholog_spp}."\t".join("\t",@temp[3..$#temp]);
+		$Ftrs_Sims{$Current_Ftr}{$ortholog}={bitscore=>$temp[11],identity=>$families->{$exemplars->{$temp[1]}}{$ortholog_spp},line=>$line};
+	    }
+	}
+    }
+    close(FH);
+
+    my @Sim_Objects=();
+    my $Sims = {};
+    my $Sims_Index = 0;
+    my $N_Sims = 0;
+    my $Ftr_Index = {};
+    my $Exems = {};
+    foreach my $ftr (sort keys %Ftrs_Sims){
+	foreach my $sim ( sort { $Ftrs_Sims{$ftr}{$a}{bitscore} <=> $Ftrs_Sims{$ftr}{$b}{bitscore} || $Ftrs_Sims{$ftr}{$a}{identity} <=> $Ftrs_Sims{$ftr}{$b}{identity} } keys %{$Ftrs_Sims{$ftr}} ){
+	    
+	    my $line = $Ftrs_Sims{$ftr}{$sim}{line};
+	    my @temp=split(/\t/,$line,-1);
+	    my ($query,$hit,$percent,$evalue,$bitscore) = @temp[0,1,2,10,11];
+	    
+	    if(exists($exemplars->{$hit})){
+		$Exems->{$hit}{$query}=1;
+	    }
+	    
+	    if(scalar(keys %$Sims)>=1000 && !exists($Sims->{$query})){
+		push(@Sim_Objects,Bio::KBase::ObjectAPI::utilities::TOJSON($Sims));
+		
+		undef($Sims);
+		$Sims_Index++;
+	    }
+	    
+	    my $ftr_json = { hit_id => $hit, percent_id => $percent, e_value => $evalue, bit_score => $bitscore };
+	    $Sims->{$query} = [] if !exists($Sims->{$query});
+	    push(@{$Sims->{$query}},$ftr_json);
+	    $N_Sims++;
+	    if(exists($Ftr_Index->{$query}) && $Ftr_Index->{$query} != $Sims_Index){
+		print "Warning";
+	    }
+	    $Ftr_Index->{$query}=$Sims_Index;
+	}
+    }
+
+    #Last one
+    push(@Sim_Objects,Bio::KBase::ObjectAPI::utilities::TOJSON($Sims));
+
+    my $output = { hits => $N_Sims, sims => \@Sim_Objects, index => $Ftr_Index, exems => $Exems };
+    return $output;
 }
 
 sub list_model_fba {
