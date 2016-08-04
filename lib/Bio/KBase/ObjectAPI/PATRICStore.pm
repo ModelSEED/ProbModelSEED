@@ -465,10 +465,10 @@ sub transform_media_from_ws {
 	my ($self,$data,$meta) = @_;
 	my $object = {
 		id => $meta->[0],
-		name => $meta->[7]->{name},
-		type => $meta->[7]->{type},
-		isMinimal => $meta->[7]->{isMinimal},
-		isDefined => $meta->[7]->{isDefined},
+		name => $meta->[0],
+		type => "custom",
+		isMinimal => 1,
+		isDefined => 1,
 		source_id => $meta->[0],
 		mediacompounds => []
 	};
