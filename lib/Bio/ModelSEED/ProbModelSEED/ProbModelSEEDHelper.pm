@@ -2280,6 +2280,9 @@ sub FluxBalanceAnalysis {
 		notes => undef,
 		massbalance => undef
 	});
+	if (ref($parameters->{reaction_ko_list}) ne 'ARRAY') {
+		$parameters->{reaction_ko_list} = [split(/;/,$parameters->{reaction_ko_list})];
+	}
 	$parameters->{output_path} = $parameters->{model}."/fba";
 	if (!defined($parameters->{output_file})) {
 	    my $list = $self->call_ws("ls",{
