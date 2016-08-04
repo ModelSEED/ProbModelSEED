@@ -763,6 +763,10 @@ sub loadGPRFromString {
 	my $geneAliases = $self->parent()->genome()->geneAliasHash();
 	my $gpr = Bio::KBase::ObjectAPI::utilities::translateGPRHash(Bio::KBase::ObjectAPI::utilities::parseGPR($gprstring));
 	my $missingGenes;
+	my $prots = $self->modelReactionProteins();
+	for (my $m=0; $m < @{$prots}; $m++) {
+		$self->remove("modelReactionProteins",$prots->[$m]);
+	}
 	for (my $m=0; $m < @{$gpr}; $m++) {
 		my $protObj = $self->add("modelReactionProteins",{
 			complex_ref => "",

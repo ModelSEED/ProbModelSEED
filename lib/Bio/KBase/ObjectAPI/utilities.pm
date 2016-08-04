@@ -19,6 +19,7 @@ our $globalparams = {"gapfill name" => "none"};
 our $startime = undef;
 our $classifierdata = undef;
 our $full_trace = 1;
+our $ssohash = undef;
 
 =head1 Bio::KBase::ObjectAPI::utilities
 
@@ -1066,7 +1067,7 @@ sub rest_download {
 	Bio::KBase::ObjectAPI::utilities::error("REST download failed at URL:".$args->{url});
 }
 
-sub elaspedtime {
+sub elapsedtime {
 	if (!defined($startime)) {
 		$startime = time();
 	}
@@ -1125,6 +1126,26 @@ sub classifier_data {
 		}
 	}
 	return $classifierdata;
+}
+
+sub get_SSO {
+	#if (!defined($ssohash)) {
+		#Getting the seed ontology dictionary
+		#my $output = $ws->get_objects([{
+		#	workspace => "KBaseOntology",
+		#	name => "seed_subsystem_ontology"
+		#}]);
+		#Building a hash of standardized seed function strings
+		#my $funchash = {};
+		#foreach my $term (keys(%{$output->[0]->{data}->{term_hash}})) {
+		#	my $rolename = lc($output->[0]->{data}->{term_hash}->{$term}->{name});
+		#	$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
+		#	$rolename =~ s/\s//g;
+		#	$rolename =~ s/\#.*$//g;
+		 # 	$funchash->{$rolename} = $output->[0]->{data}->{term_hash}->{$term};
+		#}
+	#}
+	#return $ssohash;
 }
 
 1;

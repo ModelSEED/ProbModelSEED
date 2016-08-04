@@ -225,8 +225,8 @@ class ProbModelSEED(object):
                           [input])
         return resp[0]
 
-    def manage_model_edits(self, input):
-        resp = self._call('ProbModelSEED.manage_model_edits',
+    def edit_model(self, input):
+        resp = self._call('ProbModelSEED.edit_model',
                           [input])
         return resp[0]
 
@@ -251,6 +251,11 @@ class ProbModelSEED(object):
 
     def create_genome_from_shock(self, input):
         resp = self._call('ProbModelSEED.create_genome_from_shock',
+                          [input])
+        return resp[0]
+
+    def plant_pipeline(self, input):
+        resp = self._call('ProbModelSEED.plant_pipeline',
                           [input])
         return resp[0]
 

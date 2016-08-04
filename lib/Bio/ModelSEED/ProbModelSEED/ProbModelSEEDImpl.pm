@@ -67,7 +67,7 @@ sub initialize_call {
 	if (defined($params->{wsurl})) {
 		$CallContext->{"_workspace-url"} = $params->{wsurl};
 	}
-	Bio::KBase::ObjectAPI::utilities::elaspedtime();
+	Bio::KBase::ObjectAPI::utilities::elapsedtime();
 	Bio::KBase::ObjectAPI::config::username($self->user_id());
 	Bio::KBase::ObjectAPI::config::token($self->token());
 	Bio::KBase::ObjectAPI::config::adminmode($self->adminmode());
@@ -106,7 +106,7 @@ sub new
     	filename => $ENV{KB_DEPLOYMENT_CONFIG},
 		service => "ProbModelSEED"
     });
-	Bio::KBase::ObjectAPI::logging::log("Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]),"info");
+	print "Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]);
     #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
@@ -1278,17 +1278,6 @@ sub copy_model
     my($output);
     #BEGIN copy_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{
-    	destination => undef,
-    	destname => undef,
-		plantseed => 0,
-		copy_genome => 1,
-		to_kbase => 0,
-		workspace_url => undef,
-		kbase_username => undef,
-		kbase_password => undef,
-		kbase_token => undef
-    });
     $output = $self->helper()->copy_model($input);
     #END copy_model
     my @_bad_returns;
@@ -1462,38 +1451,21 @@ sub copy_genome
 
 <pre>
 $input is a list_model_edits_params
-$output is a reference to a list where each element is an edit_data
+$output is a reference to a list where each element is a simple_edit_output
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-edit_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
+simple_edit_output is a reference to a hash where the following keys are defined:
 	id has a value which is an edit_id
-	ref has a value which is a reference
-	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-	altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-	0: a float
-	1: a compartment_id
-
-Timestamp is a string
+	timestamp has a value which is a Timestamp
+	reactions_removed has a value which is a reference to a list where each element is a string
+	reactions_added has a value which is a reference to a list where each element is a string
+	reactions_modified has a value which is a reference to a list where each element is a string
+	biomass_added has a value which is a reference to a list where each element is a string
+	biomass_changed has a value which is a reference to a list where each element is a string
+	biomass_removed has a value which is a reference to a list where each element is a string
 edit_id is a string
-reaction_id is a string
-reaction_direction is a string
-feature_id is a string
-edit_reaction is a reference to a hash where the following keys are defined:
-	id has a value which is a reaction_id
-	reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-	0: (compound) a string
-	1: (coefficient) a float
-	2: (compartment) a string
-
-	gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	direction has a value which is a reaction_direction
-compound_id is a string
-compartment_id is a string
+Timestamp is a string
 
 </pre>
 
@@ -1502,38 +1474,21 @@ compartment_id is a string
 =begin text
 
 $input is a list_model_edits_params
-$output is a reference to a list where each element is an edit_data
+$output is a reference to a list where each element is a simple_edit_output
 list_model_edits_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
 reference is a string
-edit_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
+simple_edit_output is a reference to a hash where the following keys are defined:
 	id has a value which is an edit_id
-	ref has a value which is a reference
-	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-	altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-	0: a float
-	1: a compartment_id
-
-Timestamp is a string
+	timestamp has a value which is a Timestamp
+	reactions_removed has a value which is a reference to a list where each element is a string
+	reactions_added has a value which is a reference to a list where each element is a string
+	reactions_modified has a value which is a reference to a list where each element is a string
+	biomass_added has a value which is a reference to a list where each element is a string
+	biomass_changed has a value which is a reference to a list where each element is a string
+	biomass_removed has a value which is a reference to a list where each element is a string
 edit_id is a string
-reaction_id is a string
-reaction_direction is a string
-feature_id is a string
-edit_reaction is a reference to a hash where the following keys are defined:
-	id has a value which is a reaction_id
-	reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-	0: (compound) a string
-	1: (coefficient) a float
-	2: (compartment) a string
-
-	gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	direction has a value which is a reaction_direction
-compound_id is a string
-compartment_id is a string
+Timestamp is a string
 
 
 =end text
@@ -1565,7 +1520,9 @@ sub list_model_edits
     my($output);
     #BEGIN list_model_edits
     $input = $self->initialize_call($input);
-    $output = [];
+    $input = $self->helper()->validate_args($input,["model"],{});
+    my $model = $self->helper()->get_object($input->{model});
+    $output = $model->model_edits();
     #END list_model_edits
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -1580,9 +1537,9 @@ sub list_model_edits
 
 
 
-=head2 manage_model_edits
+=head2 edit_model
 
-  $output = $obj->manage_model_edits($input)
+  $output = $obj->edit_model($input)
 
 =over 4
 
@@ -1591,42 +1548,48 @@ sub list_model_edits
 =begin html
 
 <pre>
-$input is a manage_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
-manage_model_edits_params is a reference to a hash where the following keys are defined:
+$input is an edit_model_params
+$output is a detailed_edit_output
+edit_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
-	commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
-	new_edit has a value which is an edit_data
+	biomass_changes has a value which is a reference to a list where each element is a reference to a list containing 3 items:
+	0: (biomass_id) a string
+	1: (compound_id) a string
+	2: (coefficient) a float
+
+	reactions_to_remove has a value which is a reference to a list where each element is a string
+	reactions_to_add has a value which is a reference to a list where each element is a reference to a list containing 9 items:
+	0: (reaction_id) a string
+	1: (compartment) a string
+	2: (direction) a string
+	3: (gpr) a string
+	4: (pathway) a string
+	5: (name) a string
+	6: (reference) a string
+	7: (enzyme) a string
+	8: (equation) a string
+
+	reactions_to_modify has a value which is a reference to a list where each element is a reference to a list containing 7 items:
+	0: (reaction_id) a string
+	1: (direction) a string
+	2: (gpr) a string
+	3: (pathway) a string
+	4: (name) a string
+	5: (reference) a string
+	6: (enzyme) a string
+
 reference is a string
-edit_id is a string
-gapfill_command is a string
-edit_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
+detailed_edit_output is a reference to a hash where the following keys are defined:
 	id has a value which is an edit_id
-	ref has a value which is a reference
-	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-	altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-	0: a float
-	1: a compartment_id
-
+	timestamp has a value which is a Timestamp
+	reactions_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	reactions_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	reactions_modified has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_changed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+edit_id is a string
 Timestamp is a string
-reaction_id is a string
-reaction_direction is a string
-feature_id is a string
-edit_reaction is a reference to a hash where the following keys are defined:
-	id has a value which is a reaction_id
-	reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-	0: (compound) a string
-	1: (coefficient) a float
-	2: (compartment) a string
-
-	gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	direction has a value which is a reaction_direction
-compound_id is a string
-compartment_id is a string
 
 </pre>
 
@@ -1634,42 +1597,48 @@ compartment_id is a string
 
 =begin text
 
-$input is a manage_model_edits_params
-$output is a reference to a hash where the key is an edit_id and the value is an edit_data
-manage_model_edits_params is a reference to a hash where the following keys are defined:
+$input is an edit_model_params
+$output is a detailed_edit_output
+edit_model_params is a reference to a hash where the following keys are defined:
 	model has a value which is a reference
-	commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
-	new_edit has a value which is an edit_data
+	biomass_changes has a value which is a reference to a list where each element is a reference to a list containing 3 items:
+	0: (biomass_id) a string
+	1: (compound_id) a string
+	2: (coefficient) a float
+
+	reactions_to_remove has a value which is a reference to a list where each element is a string
+	reactions_to_add has a value which is a reference to a list where each element is a reference to a list containing 9 items:
+	0: (reaction_id) a string
+	1: (compartment) a string
+	2: (direction) a string
+	3: (gpr) a string
+	4: (pathway) a string
+	5: (name) a string
+	6: (reference) a string
+	7: (enzyme) a string
+	8: (equation) a string
+
+	reactions_to_modify has a value which is a reference to a list where each element is a reference to a list containing 7 items:
+	0: (reaction_id) a string
+	1: (direction) a string
+	2: (gpr) a string
+	3: (pathway) a string
+	4: (name) a string
+	5: (reference) a string
+	6: (enzyme) a string
+
 reference is a string
-edit_id is a string
-gapfill_command is a string
-edit_data is a reference to a hash where the following keys are defined:
-	rundate has a value which is a Timestamp
+detailed_edit_output is a reference to a hash where the following keys are defined:
 	id has a value which is an edit_id
-	ref has a value which is a reference
-	reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-	altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-	altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-	altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-	0: a float
-	1: a compartment_id
-
+	timestamp has a value which is a Timestamp
+	reactions_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	reactions_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	reactions_modified has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_changed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+	biomass_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+edit_id is a string
 Timestamp is a string
-reaction_id is a string
-reaction_direction is a string
-feature_id is a string
-edit_reaction is a reference to a hash where the following keys are defined:
-	id has a value which is a reaction_id
-	reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-	0: (compound) a string
-	1: (coefficient) a float
-	2: (compartment) a string
-
-	gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-	direction has a value which is a reaction_direction
-compound_id is a string
-compartment_id is a string
 
 
 =end text
@@ -1684,7 +1653,7 @@ compartment_id is a string
 
 =cut
 
-sub manage_model_edits
+sub edit_model
 {
     my $self = shift;
     my($input) = @_;
@@ -1692,26 +1661,29 @@ sub manage_model_edits
     my @_bad_arguments;
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
-	my $msg = "Invalid arguments passed to manage_model_edits:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	my $msg = "Invalid arguments passed to edit_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'manage_model_edits');
+							       method_name => 'edit_model');
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
-    #BEGIN manage_model_edits
+    #BEGIN edit_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model","commands"],{
-    	new_edit => {}
+    $input = $self->helper()->validate_args($input,["model"],{
+    	biomass_changes => [],
+    	reactions_to_remove => [],
+    	reactions_to_add => [],
+    	reactions_to_modify => []
     });
-    $output = {};
-    #END manage_model_edits
+    $output = $self->helper()->EditModel($input);
+    #END edit_model
     my @_bad_returns;
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
-	my $msg = "Invalid returns passed to manage_model_edits:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	my $msg = "Invalid returns passed to edit_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'manage_model_edits');
+							       method_name => 'edit_model');
     }
     return($output);
 }
@@ -1808,7 +1780,7 @@ sub get_feature
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["genome","feature"],{});
 
-    my $genome = $self->helper()->get_object($input->{genome},"genome");
+    my $genome = $self->helper()->get_object($input->{genome}."/genome","genome");
     if(!$genome){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
@@ -1817,27 +1789,37 @@ sub get_feature
     foreach my $ftr (@{$genome->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $output = $ftr->{data};
+	    delete($output->{parent});
 	}
     }
-
-    #Retrieve details for plants
-    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
-    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
-
-    $output->{subsystems} = [keys %{$ftr_lu->{$output->{id}}{'subsystems'}}];
-    $output->{aliases}={'SEED' => $ftr_lu->{$output->{id}}{'seed'}};
-    $output->{aliases}{'transcript'} = $ftr_lu->{$output->{id}}{'transcript'} if exists($ftr_lu->{$output->{id}}{'transcript'});
 
     if(!$output){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
 
-    #Retrieve Minimal Genome object (unspecified type)
-    my @path = split(/\//, $input->{genome});
-    my $genome = pop @path;
-    my $root = join("/",@path);
-    my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";
+    #Retrieve subsystems
+    my $Annotation = $self->helper()->get_object("/plantseed/Data/annotation_overview","unspecified");
+    $Annotation = Bio::KBase::ObjectAPI::utilities::FROMJSON($Annotation);
+    my %Roles_Subsystems=();
+    foreach my $role (@{$Annotation}){
+	foreach my $ss (keys %{$role->{subsystems}}){
+	    $Roles_Subsystems{$role->{role}}{$ss}=1;
+	}
+    }
 
+    my %SSs=();
+    foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$output->{function})){
+	foreach my $ss (keys %{$Roles_Subsystems{$role}}){
+	    $SSs{$ss}=1;
+	}
+    }
+    $output->{subsystems} = [sort keys %SSs];
+
+#    $output->{aliases}={'SEED' => $ftr_lu->{$output->{id}}{'seed'}};
+#    $output->{aliases}{'transcript'} = $ftr_lu->{$output->{id}}{'transcript'} if exists($ftr_lu->{$output->{id}}{'transcript'});
+
+    #Retrieve Minimal Genome object (unspecified type)
+    my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";    
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
     $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
 
@@ -1859,63 +1841,69 @@ sub get_feature
     #percent_id|hit_id|bit_score|e_value
     my ($plant_count,$prokaryotic_count)=(0,0);
     foreach my $hit (@{$sim_file->{$input->{feature}}}){
-	last if $plant_count>=10 && $prokaryotic_count>=10;
+	last if $plant_count>=10; # && $prokaryotic_count>=10;
 
-	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/ && $prokaryotic_count<10){
-	    push(@{$output->{prokaryotic_similarities}},$hit);
-	    $prokaryotic_count++;
-	}elsif($plant_count<10){
+#	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/ && $prokaryotic_count<10){
+#	    push(@{$output->{prokaryotic_similarities}},$hit);
+#	    $prokaryotic_count++;
+#	}elsif($plant_count<10){
+	if($plant_count<10){
 	    push(@{$output->{plant_similarities}},$hit);
 	    $plant_count++;
 	}
     }
 
+    #Retrieve details for plants
+    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
+    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
+
     my @Plants = @{$output->{plant_similarities}};
     undef(@{$output->{plant_similarities}});
     foreach my $plant ( @Plants ){
+	print $plant->{hit_id},"\n";
 	my $Obj = { hit_id => $plant->{hit_id}, percent_id => $plant->{percent_id},
 		    genome => $ftr_lu->{$plant->{hit_id}}{genome}, aliases => { 'SEED' => $ftr_lu->{$plant->{hit_id}}{'seed'} },
 		    function => $ftr_lu->{$plant->{hit_id}}{function} };
 	push(@{$output->{plant_similarities}},$Obj);
     }
 
-    use Bio::ModelSEED::Client::SAP;
-    my $sapsvr = Bio::ModelSEED::Client::SAP->new();
+    #use Bio::ModelSEED::Client::SAP;
+    #my $sapsvr = Bio::ModelSEED::Client::SAP->new();
 
-    my @Proks = @{$output->{prokaryotic_similarities}};
-    undef(@{$output->{prokaryotic_similarities}});
+    #my @Proks = @{$output->{prokaryotic_similarities}};
+    #undef(@{$output->{prokaryotic_similarities}});
     
     #Collect Bulk
-    my %Prok_Genomes = ();
-    my %Prok_IDs = ();
-    foreach my $prok (@Proks){
-	$Prok_IDs{$prok->{hit_id}}=1;
+    #my %Prok_Genomes = ();
+    #my %Prok_IDs = ();
+    #foreach my $prok (@Proks){
+	#$Prok_IDs{$prok->{hit_id}}=1;
 
-	my $genome_id = $prok->{hit_id};
-	$genome_id =~ s/\.peg\.\d+$//;
-	$genome_id =~ s/^fig\|//;
-	$Prok_Genomes{$genome_id}{$prok->{hit_id}}=1;
-    }
+	#my $genome_id = $prok->{hit_id};
+	#$genome_id =~ s/\.peg\.\d+$//;
+	#$genome_id =~ s/^fig\|//;
+	#$Prok_Genomes{$genome_id}{$prok->{hit_id}}=1;
+    #}
 
-    my $names = $sapsvr->genome_data({ -ids => [ keys %Prok_Genomes ], -data => [ 'name' ] });
-    my $functions = $sapsvr->ids_to_functions({ -ids => [ keys %Prok_IDs ] });
+    #my $names = $sapsvr->genome_data({ -ids => [ keys %Prok_Genomes ], -data => [ 'name' ] });
+    #my $functions = $sapsvr->ids_to_functions({ -ids => [ keys %Prok_IDs ] });
 
-    foreach my $prok (@Proks){
-	my $Obj = { hit_id => $prok->{hit_id}, percent_id => $prok->{percent_id},
-		    genome => '', aliases => {}, function => '' };
+    #foreach my $prok (@Proks){
+	#my $Obj = { hit_id => $prok->{hit_id}, percent_id => $prok->{percent_id},
+	#	    genome => '', aliases => {}, function => '' };
 
-	my $genome_id = $prok->{hit_id};
-	$genome_id =~ s/\.peg\.\d+$//;
-	$genome_id =~ s/^fig\|//;
+	#my $genome_id = $prok->{hit_id};
+	#$genome_id =~ s/\.peg\.\d+$//;
+	#$genome_id =~ s/^fig\|//;
 	
-	my $name = $names->{$genome_id}[0];
-	$Obj->{genome}=$name;
+	#my $name = $names->{$genome_id}[0];
+	#$Obj->{genome}=$name;
 	
-	my $function = $functions->{$prok->{hit_id}};
-	$Obj->{function}=$function;
+	#my $function = $functions->{$prok->{hit_id}};
+	#$Obj->{function}=$function;
 	
-	push(@{$output->{prokaryotic_similarities}},$Obj);
-    }
+	#push(@{$output->{prokaryotic_similarities}},$Obj);
+    #}
 
     #END get_feature
     my @_bad_returns;
@@ -1994,21 +1982,24 @@ sub save_feature_function
     #BEGIN save_feature_function
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["genome","feature","function"],{"user"=>undef});
-
-    my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
+	if ($input->{genome} =~ m/\/plantseed\/[^\/]+$/) {
+		$input->{genome} .= "/genome";
+	}
+    my $genome_obj = $self->helper()->get_object($input->{genome},undef,{data_only => 1});
+    $genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($genome_obj);
     if(!$genome_obj){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
 
     my $found_ftr=undef;
     foreach my $ftr (@{$genome_obj->{features}}){
-	if($ftr->{data}{id} eq $input->{feature}){
-	    $ftr->{data}{function} = $input->{function};
+	if($ftr->{id} eq $input->{feature}){
+	    $ftr->{function} = $input->{function};
 	    $found_ftr = 1;
 
 	    if(defined($input->{user})){
 		my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
-		push(@{$ftr->{data}{annotations}},\@Annotation);
+		push(@{$ftr->{annotations}},\@Annotation);
 	    }
 
 	    last;
@@ -2025,7 +2016,7 @@ sub save_feature_function
     my $root = join("/",@path);
     my $min_genome = $root."/.plantseed_data/minimal_genome";
 
-    my $min_genome_obj = $self->helper()->get_object($min_genome,"unspecified");
+    my $min_genome_obj = $self->helper()->get_object($min_genome,undef,{data_only => 1});
     $min_genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome_obj);
 
     $found_ftr = undef;
@@ -2406,6 +2397,7 @@ $input is a create_genome_from_shock_params
 $output is a string
 create_genome_from_shock_params is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
+	destname has a value which is a string
 
 </pre>
 
@@ -2417,6 +2409,7 @@ $input is a create_genome_from_shock_params
 $output is a string
 create_genome_from_shock_params is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
+	destname has a value which is a string
 
 
 =end text
@@ -2458,6 +2451,82 @@ sub create_genome_from_shock
 	my $msg = "Invalid returns passed to create_genome_from_shock:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
 							       method_name => 'create_genome_from_shock');
+    }
+    return($output);
+}
+
+
+
+
+=head2 plant_pipeline
+
+  $output = $obj->plant_pipeline($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a plant_pipeline_params
+$output is a string
+plant_pipeline_params is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+	destname has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a plant_pipeline_params
+$output is a string
+plant_pipeline_params is a reference to a hash where the following keys are defined:
+	shock_id has a value which is a string
+	destname has a value which is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub plant_pipeline
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to plant_pipeline:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'plant_pipeline');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN plant_pipeline
+
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->plant_pipeline($input);
+
+    #END plant_pipeline
+    my @_bad_returns;
+    (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to plant_pipeline:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'plant_pipeline');
     }
     return($output);
 }
@@ -2523,6 +2592,10 @@ sub annotate_plant_genome
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN annotate_plant_genome
+    
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->annotate_plant_genome($input);
+
     #END annotate_plant_genome
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2593,6 +2666,10 @@ sub create_featurevalues_from_shock
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN create_featurevalues_from_shock
+
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->create_featurevalues_from_shock($input);
+
     #END create_featurevalues_from_shock
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2668,6 +2745,11 @@ sub ModelReconstruction
     my($output);
     #BEGIN ModelReconstruction
     $input = $self->initialize_call($input);
+    if ($input->{model} =~ m/\/plantseed\//) {
+    	Bio::KBase::ObjectAPI::config::run_as_app(0);
+    } else { 
+    	Bio::KBase::ObjectAPI::config::run_as_app(1);
+    }
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
     #END ModelReconstruction
     my @_bad_returns;
@@ -2744,6 +2826,11 @@ sub FluxBalanceAnalysis
     my($output);
     #BEGIN FluxBalanceAnalysis
     $input = $self->initialize_call($input);
+    if ($input->{model} =~ m/\/plantseed\//) {
+    	Bio::KBase::ObjectAPI::config::run_as_app(0);
+    } else { 
+    	Bio::KBase::ObjectAPI::config::run_as_app(1);
+    }
     $output = $self->helper()->app_harness("FluxBalanceAnalysis",$input);
     #END FluxBalanceAnalysis
     my @_bad_returns;
@@ -2820,6 +2907,11 @@ sub GapfillModel
     my($output);
     #BEGIN GapfillModel
     $input = $self->initialize_call($input);
+    if ($input->{model} =~ m/\/plantseed\//) {
+    	Bio::KBase::ObjectAPI::config::run_as_app(0);
+    } else { 
+    	Bio::KBase::ObjectAPI::config::run_as_app(1);
+    }
     $output = $self->helper()->app_harness("GapfillModel",$input);
     #END GapfillModel
     my @_bad_returns;
@@ -4049,100 +4141,6 @@ objective_function has a value which is a string
 
 
 
-=head2 edit_reaction
-
-=over 4
-
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-id has a value which is a reaction_id
-reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-0: (compound) a string
-1: (coefficient) a float
-2: (compartment) a string
-
-gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-direction has a value which is a reaction_direction
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-id has a value which is a reaction_id
-reagents has a value which is a reference to a list where each element is a reference to a list containing 3 items:
-0: (compound) a string
-1: (coefficient) a float
-2: (compartment) a string
-
-gpr has a value which is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-direction has a value which is a reaction_direction
-
-
-=end text
-
-=back
-
-
-
-=head2 edit_data
-
-=over 4
-
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-rundate has a value which is a Timestamp
-id has a value which is an edit_id
-ref has a value which is a reference
-reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-0: a float
-1: a compartment_id
-
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-rundate has a value which is a Timestamp
-id has a value which is an edit_id
-ref has a value which is a reference
-reactions_to_delete has a value which is a reference to a list where each element is a reaction_id
-altered_directions has a value which is a reference to a hash where the key is a reaction_id and the value is a reaction_direction
-altered_gpr has a value which is a reference to a hash where the key is a reaction_id and the value is a reference to a list where each element is a reference to a list where each element is a reference to a list where each element is a feature_id
-reactions_to_add has a value which is a reference to a list where each element is an edit_reaction
-altered_biomass_compound has a value which is a reference to a hash where the key is a compound_id and the value is a reference to a list containing 2 items:
-0: a float
-1: a compartment_id
-
-
-
-=end text
-
-=back
-
-
-
 =head2 ModelStats
 
 =over 4
@@ -5003,7 +5001,7 @@ plantseed has a value which is a bool
 
 
 
-=head2 list_model_edits_params
+=head2 simple_edit_output
 
 =over 4
 
@@ -5014,6 +5012,103 @@ plantseed has a value which is a bool
 ********************************************************************************
     Functions for editing models
    	********************************************************************************
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is an edit_id
+timestamp has a value which is a Timestamp
+reactions_removed has a value which is a reference to a list where each element is a string
+reactions_added has a value which is a reference to a list where each element is a string
+reactions_modified has a value which is a reference to a list where each element is a string
+biomass_added has a value which is a reference to a list where each element is a string
+biomass_changed has a value which is a reference to a list where each element is a string
+biomass_removed has a value which is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is an edit_id
+timestamp has a value which is a Timestamp
+reactions_removed has a value which is a reference to a list where each element is a string
+reactions_added has a value which is a reference to a list where each element is a string
+reactions_modified has a value which is a reference to a list where each element is a string
+biomass_added has a value which is a reference to a list where each element is a string
+biomass_changed has a value which is a reference to a list where each element is a string
+biomass_removed has a value which is a reference to a list where each element is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 detailed_edit_output
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is an edit_id
+timestamp has a value which is a Timestamp
+reactions_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+reactions_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+reactions_modified has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_changed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is an edit_id
+timestamp has a value which is a Timestamp
+reactions_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+reactions_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+reactions_modified has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_added has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_changed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+biomass_removed has a value which is a reference to a list where each element is a reference to a hash where the key is a string and the value is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 list_model_edits_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: list_model_edits
+DESCRIPTION: This function lists all model edits submitted by the user
+
+REQUIRED INPUTS:
+    reference model - reference to model for which to list edits
 
 
 =item Definition
@@ -5040,7 +5135,7 @@ model has a value which is a reference
 
 
 
-=head2 manage_model_edits_params
+=head2 edit_model_params
 
 =over 4
 
@@ -5066,8 +5161,32 @@ edit_data new_edit - list of new edits to add
 <pre>
 a reference to a hash where the following keys are defined:
 model has a value which is a reference
-commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
-new_edit has a value which is an edit_data
+biomass_changes has a value which is a reference to a list where each element is a reference to a list containing 3 items:
+0: (biomass_id) a string
+1: (compound_id) a string
+2: (coefficient) a float
+
+reactions_to_remove has a value which is a reference to a list where each element is a string
+reactions_to_add has a value which is a reference to a list where each element is a reference to a list containing 9 items:
+0: (reaction_id) a string
+1: (compartment) a string
+2: (direction) a string
+3: (gpr) a string
+4: (pathway) a string
+5: (name) a string
+6: (reference) a string
+7: (enzyme) a string
+8: (equation) a string
+
+reactions_to_modify has a value which is a reference to a list where each element is a reference to a list containing 7 items:
+0: (reaction_id) a string
+1: (direction) a string
+2: (gpr) a string
+3: (pathway) a string
+4: (name) a string
+5: (reference) a string
+6: (enzyme) a string
+
 
 </pre>
 
@@ -5077,8 +5196,32 @@ new_edit has a value which is an edit_data
 
 a reference to a hash where the following keys are defined:
 model has a value which is a reference
-commands has a value which is a reference to a hash where the key is an edit_id and the value is a gapfill_command
-new_edit has a value which is an edit_data
+biomass_changes has a value which is a reference to a list where each element is a reference to a list containing 3 items:
+0: (biomass_id) a string
+1: (compound_id) a string
+2: (coefficient) a float
+
+reactions_to_remove has a value which is a reference to a list where each element is a string
+reactions_to_add has a value which is a reference to a list where each element is a reference to a list containing 9 items:
+0: (reaction_id) a string
+1: (compartment) a string
+2: (direction) a string
+3: (gpr) a string
+4: (pathway) a string
+5: (name) a string
+6: (reference) a string
+7: (enzyme) a string
+8: (equation) a string
+
+reactions_to_modify has a value which is a reference to a list where each element is a reference to a list containing 7 items:
+0: (reaction_id) a string
+1: (direction) a string
+2: (gpr) a string
+3: (pathway) a string
+4: (name) a string
+5: (reference) a string
+6: (enzyme) a string
+
 
 
 =end text
@@ -5458,7 +5601,7 @@ roles has a value which is a reference to a hash where the key is a string and t
 =item Description
 
 FUNCTION: plant_annotation_overview
-DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome's PlantSEED annotation
+DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome PlantSEED annotation
 
 REQUIRED INPUTS:
 reference genome - annotated genome to explore
@@ -5501,6 +5644,7 @@ DESCRIPTION: This function retrieves the fasta file of sequences from shock and 
 
 REQUIRED INPUTS:
 string shock_id - id in shock with which to retrieve fasta file
+string name - name under which to store the genome and resulting model
 
 
 =item Definition
@@ -5510,6 +5654,7 @@ string shock_id - id in shock with which to retrieve fasta file
 <pre>
 a reference to a hash where the following keys are defined:
 shock_id has a value which is a string
+destname has a value which is a string
 
 </pre>
 
@@ -5519,6 +5664,49 @@ shock_id has a value which is a string
 
 a reference to a hash where the following keys are defined:
 shock_id has a value which is a string
+destname has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 plant_pipeline_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: plant_pipeline
+DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+
+REQUIRED INPUTS:
+string shock_id - id in shock with which to retrieve fasta file
+string name - name under which to store the genome and resulting model
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+destname has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+shock_id has a value which is a string
+destname has a value which is a string
 
 
 =end text

@@ -151,7 +151,7 @@ sub get_objects {
     		#Checking file cache for object
     		my $output = $self->read_object_from_file_cache($refs->[$i]);
     		if (defined($output)) {
-    			$self->process_object($output->[0],$output->[1]);
+    			$self->process_object($output->[0],$output->[1],$options);
     		} else {
     			push(@{$newrefs},$refs->[$i]);
     		}
@@ -161,7 +161,7 @@ sub get_objects {
 	if (@{$newrefs} > 0) {
 		my $objdatas = $self->call_ws("get",{adminmode => $self->adminmode(),objects => $newrefs});
 		for (my $i=0; $i < @{$objdatas}; $i++) {
-			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1]);
+			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1],$options);
 		}
 	}
 	my $objs = [];
@@ -172,7 +172,7 @@ sub get_objects {
 }
 
 sub process_object {
-	my ($self,$meta,$data) = @_;
+	my ($self,$meta,$data,$options) = @_;
 	if ($meta->[1] eq "modelfolder") {
 		my $mdldata = $self->load_model($meta,$data);
 		$meta = $mdldata->[0];
@@ -183,7 +183,7 @@ sub process_object {
 	#Writing target object to file cache if they are not already there
 	$self->write_object_to_file_cache($meta,$data);
 	#Handling all transforms of objects
-	if (defined($typetrans->{$meta->[1]})) {
+	if (defined($typetrans->{$meta->[1]}) && !defined($options->{data_only})) {
 		my $class = $typetrans->{$meta->[1]};
 		if (defined($transform->{$meta->[1]}->{in})) {
     		my $function = $transform->{$meta->[1]}->{in};
@@ -311,7 +311,7 @@ sub save_objects {
     		$self->save_model($obj->{object},$ref);
     	} elsif ($obj->{type} eq "fba") {
     		$self->save_fba($obj->{object},$ref);
-    	} elsif (defined($typetrans->{$obj->{type}})) {
+    	} elsif (defined($typetrans->{$obj->{type}}) && ref($obj->{object}) ne 'HASH') {
     		$objecthash->{$ref} = 1;
     		$obj->{object}->parent($self);
     		if (defined($transform->{$obj->{type}}->{out})) {
@@ -322,7 +322,7 @@ sub save_objects {
     			$objectdata->{$ref} = $obj->{object}->toJSON();
     			push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     		}
-    	} elsif (defined($jsontypes->{$obj->{type}})) {
+    	} elsif (defined($jsontypes->{$obj->{type}}) || ref($obj->{object}) eq 'HASH') {
     		$objectdata->{$ref} = Bio::KBase::ObjectAPI::utilities::TOJSON($obj->{object});
     		push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     	} else {
@@ -729,9 +729,13 @@ sub save_fba {
 	#Adding folders and genome if not already present
 	my $listout = [];
 	#Saving model JSON structure
+	my $mediaref = $object->media_ref();
+    my $modelref = $object->fbamodel_ref();
+    $mediaref =~ s/\|\|//;
+    $modelref =~ s/\|\|//;
 	my $fbameta = {
 		objective => $object->objectiveValue(),
-    	media => $object->media_ref()
+    	media => $mediaref
 	};
 	#Checking if gapfilling
 	my $gfs = $object->gapfillingSolutions();
@@ -754,8 +758,8 @@ sub save_fba {
 		push(@{$createinput->{objects}},[$ref.".gftbl","string",{
 		   description => "Tab delimited table of reactions gapfilled in metabolic model",
 		   fba => $ref,
-		   media => $object->media_ref(),
-		   model => $object->fbamodel_ref()
+		   media => $mediaref,
+		   model => $modelref
 		},undef]);
 		$objectdata->{$ref.".gftbl"} = $gftbl;
 	}
@@ -766,8 +770,8 @@ sub save_fba {
 		   description => "Tab delimited table of reactions gapfilled in metabolic model",
 		   fba => $ref,
 		   objective => $object->objectiveValue(),
-		   media => $object->media_ref(),
-		   model => $object->fbamodel_ref()
+		   media => $mediaref,
+		   model => $modelref
 		},undef]);
 	}
 	#Saving fba flux table
@@ -795,13 +799,13 @@ sub save_fba {
     		$objs->[$i]->value()."\t".$objs->[$i]->upperBound()."\t".
     		$objs->[$i]->lowerBound()."\t".$objs->[$i]->max()."\t".
     		$objs->[$i]->min()."\t".$objs->[$i]->class()."\n";
-    } 
+    }
     push(@{$createinput->{objects}},[$ref.".fluxtbl","string",{
 	   description => "Tab delimited table containing data on reaction fluxes from flux balance analysis",
 	   fba => $ref,
 	   objective => $object->objectiveValue(),
-	   media => $object->media_ref(),
-	   model => $object->fbamodel_ref()
+	   media => $mediaref,
+	   model => $modelref
 	},undef]);
 	$objectdata->{$ref.".fluxtbl"} = $fbatbl;
     #Saving essential gene lists
@@ -831,8 +835,8 @@ sub save_fba {
 		   description => "List of predicted essential genes from flux balance analysis",
 		   fba => $ref,
 		   objective => $object->objectiveValue(),
-		   media => $object->media_ref(),
-		   model => $object->fbamodel_ref()
+		   media => $mediaref,
+		   model => $modelref
 		},undef]);
 		$objectdata->{$ref.".essentials"} = join("\n",@{$esslist});
 	    my $ftrgroup = {
@@ -845,8 +849,8 @@ sub save_fba {
 		   description => "Group of essential genes predicted by metabolic models",
 		   fba => $ref,
 		   objective => $object->objectiveValue(),
-		   media => $object->media_ref(),
-		   model => $object->fbamodel_ref()
+		   media => $mediaref,
+		   model => $modelref
 		},undef]);
 		$objectdata->{"/".Bio::KBase::ObjectAPI::config::username()."/home/Feature Groups/".$object->fbamodel()->wsmeta()->[0]."-".$object->media()->wsmeta()->[0]."-essentials"} = Bio::KBase::ObjectAPI::utilities::TOJSON($ftrgroup);
     }
