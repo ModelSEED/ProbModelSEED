@@ -151,7 +151,7 @@ sub get_objects {
     		#Checking file cache for object
     		my $output = $self->read_object_from_file_cache($refs->[$i]);
     		if (defined($output)) {
-    			$self->process_object($output->[0],$output->[1]);
+    			$self->process_object($output->[0],$output->[1],$options);
     		} else {
     			push(@{$newrefs},$refs->[$i]);
     		}
@@ -161,7 +161,7 @@ sub get_objects {
 	if (@{$newrefs} > 0) {
 		my $objdatas = $self->call_ws("get",{adminmode => $self->adminmode(),objects => $newrefs});
 		for (my $i=0; $i < @{$objdatas}; $i++) {
-			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1]);
+			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1],$options);
 		}
 	}
 	my $objs = [];
@@ -172,7 +172,7 @@ sub get_objects {
 }
 
 sub process_object {
-	my ($self,$meta,$data) = @_;
+	my ($self,$meta,$data,$options) = @_;
 	if ($meta->[1] eq "modelfolder") {
 		my $mdldata = $self->load_model($meta,$data);
 		$meta = $mdldata->[0];
@@ -183,7 +183,7 @@ sub process_object {
 	#Writing target object to file cache if they are not already there
 	$self->write_object_to_file_cache($meta,$data);
 	#Handling all transforms of objects
-	if (defined($typetrans->{$meta->[1]})) {
+	if (defined($typetrans->{$meta->[1]}) && !defined($options->{data_only})) {
 		my $class = $typetrans->{$meta->[1]};
 		if (defined($transform->{$meta->[1]}->{in})) {
     		my $function = $transform->{$meta->[1]}->{in};
@@ -311,7 +311,7 @@ sub save_objects {
     		$self->save_model($obj->{object},$ref);
     	} elsif ($obj->{type} eq "fba") {
     		$self->save_fba($obj->{object},$ref);
-    	} elsif (defined($typetrans->{$obj->{type}})) {
+    	} elsif (defined($typetrans->{$obj->{type}}) && ref($obj->{object}) ne 'HASH') {
     		$objecthash->{$ref} = 1;
     		$obj->{object}->parent($self);
     		if (defined($transform->{$obj->{type}}->{out})) {
@@ -322,7 +322,7 @@ sub save_objects {
     			$objectdata->{$ref} = $obj->{object}->toJSON();
     			push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     		}
-    	} elsif (defined($jsontypes->{$obj->{type}})) {
+    	} elsif (defined($jsontypes->{$obj->{type}}) || ref($obj->{object}) eq 'HASH') {
     		$objectdata->{$ref} = Bio::KBase::ObjectAPI::utilities::TOJSON($obj->{object});
     		push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     	} else {

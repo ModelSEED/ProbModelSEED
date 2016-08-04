@@ -1982,21 +1982,24 @@ sub save_feature_function
     #BEGIN save_feature_function
     $input = $self->initialize_call($input);
     $input = $self->helper()->validate_args($input,["genome","feature","function"],{"user"=>undef});
-
-    my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
+	if ($input->{genome} =~ m/\/plantseed\/[^\/]+$/) {
+		$input->{genome} .= "/genome";
+	}
+    my $genome_obj = $self->helper()->get_object($input->{genome},undef,{data_only => 1});
+    $genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($genome_obj);
     if(!$genome_obj){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
 
     my $found_ftr=undef;
     foreach my $ftr (@{$genome_obj->{features}}){
-	if($ftr->{data}{id} eq $input->{feature}){
-	    $ftr->{data}{function} = $input->{function};
+	if($ftr->{id} eq $input->{feature}){
+	    $ftr->{function} = $input->{function};
 	    $found_ftr = 1;
 
 	    if(defined($input->{user})){
 		my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
-		push(@{$ftr->{data}{annotations}},\@Annotation);
+		push(@{$ftr->{annotations}},\@Annotation);
 	    }
 
 	    last;
@@ -2013,7 +2016,7 @@ sub save_feature_function
     my $root = join("/",@path);
     my $min_genome = $root."/.plantseed_data/minimal_genome";
 
-    my $min_genome_obj = $self->helper()->get_object($min_genome,"unspecified");
+    my $min_genome_obj = $self->helper()->get_object($min_genome,undef,{data_only => 1});
     $min_genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome_obj);
 
     $found_ftr = undef;
