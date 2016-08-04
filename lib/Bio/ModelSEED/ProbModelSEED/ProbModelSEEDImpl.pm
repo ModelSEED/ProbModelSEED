@@ -1793,24 +1793,33 @@ sub get_feature
 	}
     }
 
-    #Retrieve details for plants
-    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
-    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
-
-    $output->{subsystems} = [keys %{$ftr_lu->{$output->{id}}{'subsystems'}}];
-    $output->{aliases}={'SEED' => $ftr_lu->{$output->{id}}{'seed'}};
-    $output->{aliases}{'transcript'} = $ftr_lu->{$output->{id}}{'transcript'} if exists($ftr_lu->{$output->{id}}{'transcript'});
-
     if(!$output){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
 
+    #Retrieve subsystems
+    my $Annotation = $self->helper()->get_object("/plantseed/Data/annotation_overview","unspecified");
+    $Annotation = Bio::KBase::ObjectAPI::utilities::FROMJSON($Annotation);
+    my %Roles_Subsystems=();
+    foreach my $role (@{$Annotation}){
+	foreach my $ss (keys %{$role->{subsystems}}){
+	    $Roles_Subsystems{$role->{role}}{$ss}=1;
+	}
+    }
+
+    my %SSs=();
+    foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$output->{function})){
+	foreach my $ss (keys %{$Roles_Subsystems{$role}}){
+	    $SSs{$ss}=1;
+	}
+    }
+    $output->{subsystems} = [sort keys %SSs];
+
+#    $output->{aliases}={'SEED' => $ftr_lu->{$output->{id}}{'seed'}};
+#    $output->{aliases}{'transcript'} = $ftr_lu->{$output->{id}}{'transcript'} if exists($ftr_lu->{$output->{id}}{'transcript'});
+
     #Retrieve Minimal Genome object (unspecified type)
-    my @path = split(/\//, $input->{genome});
-    my $genome = pop @path;
-    my $root = join("/",@path);
-    my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";
-    
+    my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";    
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
     $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
 
@@ -1832,63 +1841,69 @@ sub get_feature
     #percent_id|hit_id|bit_score|e_value
     my ($plant_count,$prokaryotic_count)=(0,0);
     foreach my $hit (@{$sim_file->{$input->{feature}}}){
-	last if $plant_count>=10 && $prokaryotic_count>=10;
+	last if $plant_count>=10; # && $prokaryotic_count>=10;
 
-	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/ && $prokaryotic_count<10){
-	    push(@{$output->{prokaryotic_similarities}},$hit);
-	    $prokaryotic_count++;
-	}elsif($plant_count<10){
+#	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/ && $prokaryotic_count<10){
+#	    push(@{$output->{prokaryotic_similarities}},$hit);
+#	    $prokaryotic_count++;
+#	}elsif($plant_count<10){
+	if($plant_count<10){
 	    push(@{$output->{plant_similarities}},$hit);
 	    $plant_count++;
 	}
     }
 
+    #Retrieve details for plants
+    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
+    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
+
     my @Plants = @{$output->{plant_similarities}};
     undef(@{$output->{plant_similarities}});
     foreach my $plant ( @Plants ){
+	print $plant->{hit_id},"\n";
 	my $Obj = { hit_id => $plant->{hit_id}, percent_id => $plant->{percent_id},
 		    genome => $ftr_lu->{$plant->{hit_id}}{genome}, aliases => { 'SEED' => $ftr_lu->{$plant->{hit_id}}{'seed'} },
 		    function => $ftr_lu->{$plant->{hit_id}}{function} };
 	push(@{$output->{plant_similarities}},$Obj);
     }
 
-    use Bio::ModelSEED::Client::SAP;
-    my $sapsvr = Bio::ModelSEED::Client::SAP->new();
+    #use Bio::ModelSEED::Client::SAP;
+    #my $sapsvr = Bio::ModelSEED::Client::SAP->new();
 
-    my @Proks = @{$output->{prokaryotic_similarities}};
-    undef(@{$output->{prokaryotic_similarities}});
+    #my @Proks = @{$output->{prokaryotic_similarities}};
+    #undef(@{$output->{prokaryotic_similarities}});
     
     #Collect Bulk
-    my %Prok_Genomes = ();
-    my %Prok_IDs = ();
-    foreach my $prok (@Proks){
-	$Prok_IDs{$prok->{hit_id}}=1;
+    #my %Prok_Genomes = ();
+    #my %Prok_IDs = ();
+    #foreach my $prok (@Proks){
+	#$Prok_IDs{$prok->{hit_id}}=1;
 
-	my $genome_id = $prok->{hit_id};
-	$genome_id =~ s/\.peg\.\d+$//;
-	$genome_id =~ s/^fig\|//;
-	$Prok_Genomes{$genome_id}{$prok->{hit_id}}=1;
-    }
+	#my $genome_id = $prok->{hit_id};
+	#$genome_id =~ s/\.peg\.\d+$//;
+	#$genome_id =~ s/^fig\|//;
+	#$Prok_Genomes{$genome_id}{$prok->{hit_id}}=1;
+    #}
 
-    my $names = $sapsvr->genome_data({ -ids => [ keys %Prok_Genomes ], -data => [ 'name' ] });
-    my $functions = $sapsvr->ids_to_functions({ -ids => [ keys %Prok_IDs ] });
+    #my $names = $sapsvr->genome_data({ -ids => [ keys %Prok_Genomes ], -data => [ 'name' ] });
+    #my $functions = $sapsvr->ids_to_functions({ -ids => [ keys %Prok_IDs ] });
 
-    foreach my $prok (@Proks){
-	my $Obj = { hit_id => $prok->{hit_id}, percent_id => $prok->{percent_id},
-		    genome => '', aliases => {}, function => '' };
+    #foreach my $prok (@Proks){
+	#my $Obj = { hit_id => $prok->{hit_id}, percent_id => $prok->{percent_id},
+	#	    genome => '', aliases => {}, function => '' };
 
-	my $genome_id = $prok->{hit_id};
-	$genome_id =~ s/\.peg\.\d+$//;
-	$genome_id =~ s/^fig\|//;
+	#my $genome_id = $prok->{hit_id};
+	#$genome_id =~ s/\.peg\.\d+$//;
+	#$genome_id =~ s/^fig\|//;
 	
-	my $name = $names->{$genome_id}[0];
-	$Obj->{genome}=$name;
+	#my $name = $names->{$genome_id}[0];
+	#$Obj->{genome}=$name;
 	
-	my $function = $functions->{$prok->{hit_id}};
-	$Obj->{function}=$function;
+	#my $function = $functions->{$prok->{hit_id}};
+	#$Obj->{function}=$function;
 	
-	push(@{$output->{prokaryotic_similarities}},$Obj);
-    }
+	#push(@{$output->{prokaryotic_similarities}},$Obj);
+    #}
 
     #END get_feature
     my @_bad_returns;
