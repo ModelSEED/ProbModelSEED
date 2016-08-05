@@ -28,6 +28,8 @@ my $typetrans = {
 	"KBaseFBA.ModelComparison" => "modelcomparison",
 };
 
+my $analysis_type = "";
+
 my %genetic_code = (TTT => 'F',  TCT => 'S',  TAT => 'Y',  TGT => 'C',
                     TTC => 'F',  TCC => 'S',  TAC => 'Y',  TGC => 'C',
                     TTA => 'L',  TCA => 'S',  TAA => '*',  TGA => '*',
@@ -2074,8 +2076,7 @@ sub util_save_object {
 		$parameters->{metadata} = {};
 	}
 	if ($parameters->{type} eq "fba") {
-		my $gfs = $object->gapfillingSolutions();
-		if (@{$gfs} > 0) {
+		if ($analysis_type eq "GF") {
 			$ref = $object->fbamodel()->_reference()."/gapfilling/".$object->id();
 		} else {
 			$ref = $object->fbamodel()->_reference()."/fba/".$object->id();
@@ -2305,7 +2306,7 @@ sub FluxBalanceAnalysis {
 			$index = @{$list};
 			for (my $i=0; $i < @{$list}; $i++) {
 				if ($list->[$i]->[0] =~ /^fba\.(\d+)$/) {
-					if ($1 > $index) {
+					if ($1 >= $index) {
 						$index = $1+1;
 					}
 				}
@@ -2335,6 +2336,7 @@ sub FluxBalanceAnalysis {
 
 sub GapfillModel {
 	my($self,$parameters,$jobresult,$model) = @_;
+    $analysis_type = "GF";
     $parameters = $self->validate_args($parameters,["model"],{
 		expseries => undef,
 		media => undef,
