@@ -90,6 +90,7 @@ my $transform = {
 	}
 };
 my $jsontypes = {
+	unspecified => 1,
 	job_result => 1,
 	feature_group => 1,
 	rxnprobs => 1

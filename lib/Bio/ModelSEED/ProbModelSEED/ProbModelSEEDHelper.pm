@@ -2322,6 +2322,10 @@ sub FluxBalanceAnalysis {
 		($parameters->{media_workspace},$parameters->{media_id}) = $self->util_parserefs($parameters->{media});
 		delete $parameters->{media};
 	}
+	if (defined($parameters->{expseries})) {
+		($parameters->{expseries_workspace},$parameters->{expseries_id}) = $self->util_parserefs($parameters->{expseries});
+		delete $parameters->{expseries};
+	}
 	($parameters->{fbamodel_workspace},$parameters->{fbamodel_id}) = $self->util_parserefs($parameters->{model});	
 	delete $parameters->{model};
 	Bio::KBase::ObjectAPI::functions::func_run_flux_balance_analysis($parameters,$model);

@@ -503,11 +503,6 @@ sub func_run_flux_balance_analysis {
     	$handler->util_log("Retrieving model.");
 		$model = $handler->util_get_object($params->{fbamodel_workspace}."/".$params->{fbamodel_id});
     }
-    my $expseries;
-    if (defined($params->{expseries_id})) {
-    	$handler->util_log("Retrieving expression matrix.");
-    	$expseries = $handler->util_get_object($params->{expseries_workspace}."/".$params->{expseries_id});
-    }
     if (!defined($params->{media_id})) {
     	if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
 			$params->{media_id} = Bio::KBase::ObjectAPI::config::default_plant_media();
