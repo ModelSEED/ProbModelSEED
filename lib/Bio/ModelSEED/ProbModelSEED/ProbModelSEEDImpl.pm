@@ -2325,8 +2325,6 @@ sub plant_annotation_overview
 
     #Find Missing annotation
     my $annotation = $self->helper()->get_object("/plantseed/Data/annotation_overview","unspecified");
-    $annotation = decode_json($annotation);
-
     my %Exemplar_Roles=();
     foreach my $row (@{$annotation}){
 	foreach my $ftr (keys %{$row->{features}}){
@@ -2351,9 +2349,7 @@ sub plant_annotation_overview
     my $genome = pop @path;
     my $root = join("/",@path);
     my $min_genome = $root."/.plantseed_data/minimal_genome";
-
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
-    $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
     
     foreach my $role (keys %$output){
 	foreach my $exemplar ( grep { exists($min_genome->{exemplars}{$_}) } keys %{$Exemplar_Roles{$role}}){
