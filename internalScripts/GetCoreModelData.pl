@@ -31,7 +31,7 @@ for (my $i=0; $i < @{$list->{"/chenry/public/PATRICCoreModels/"}}; $i++) {
 			}
 		};
 		if ($@) {
-		    die "Error ".$current.":\n".$@."\n\n";
+		    print "Error ".$current.":\n".$@."\n\n";
 		}
 	}
 }
