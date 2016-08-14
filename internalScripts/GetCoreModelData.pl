@@ -13,8 +13,8 @@ my $directory = $ARGV[0];
 print "looping!\n";
 for (my $i=0; $i < @{$list->{"/chenry/public/PATRICCoreModels/"}}; $i++) {
 #for (my $i=0; $i < 5; $i++) {
+	my $current = $list->{"/chenry/public/PATRICCoreModels/"}->[$i]->[0];	
 	if (!-e $directory."/".$current.".rxntbl") {
-		my $current = $list->{"/chenry/public/PATRICCoreModels/"}->[$i]->[0];	
 		print $current."\n";
 	    eval {
 		    my $output = $ws->get({objects => [$list->{"/chenry/public/PATRICCoreModels/"}->[$i]->[2]."/".$list->{"/chenry/public/PATRICCoreModels/"}->[$i]->[0]."/".$list->{"/chenry/public/PATRICCoreModels/"}->[$i]->[0].".rxntbl"]});
