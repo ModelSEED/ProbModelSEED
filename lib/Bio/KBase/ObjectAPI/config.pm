@@ -255,7 +255,7 @@ sub configfile_loaded {
 }
 
 sub load_config {
-	my ($args) = @_;
+	my ($args,$essentials,$options) = @_;
 	$args = Bio::KBase::ObjectAPI::utilities::ARGS($args,[],{
 		filename => $ENV{KB_DEPLOYMENT_CONFIG},
 		service => $ENV{KB_SERVICE_NAME},

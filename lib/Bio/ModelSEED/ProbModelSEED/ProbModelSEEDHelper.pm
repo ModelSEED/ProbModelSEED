@@ -481,21 +481,24 @@ sub retrieve_PATRIC_genome {
 	my $stops = {};
 	for (my $i=0; $i < @{$allftrs}; $i++) {
 		my $ftrdata = $allftrs->[$i];
-		if ($ftrdata->{strand} eq "-" && $ftrdata->{annotation} eq "RefSeq") {
-			$stops->{$ftrdata->{start}} = $ftrdata;
-		} elsif ($ftrdata->{annotation} eq "RefSeq") {
-			$stops->{$ftrdata->{end}} = $ftrdata;
+		if ($ftrdata->{feature_type} ne "pseudogene") {
+			if ($ftrdata->{strand} eq "-" && $ftrdata->{annotation} eq "RefSeq") {
+				$stops->{$ftrdata->{start}} = $ftrdata;
+			} elsif ($ftrdata->{annotation} eq "RefSeq") {
+				$stops->{$ftrdata->{end}} = $ftrdata;
+			}
 		}
 	}
 	my $refseqgenes = 0;
 	my $patricgenes = 0;
 	my $match = 0;
 	my $weakermatch = 0;
+	my $unsortedftrlist = [];
 	for (my $i=0; $i < @{$allftrs}; $i++) {
 		my $ftrdata = $allftrs->[$i];
 		if ($ftrdata->{annotation} eq "PATRIC") {
+			push(@{$unsortedftrlist},$ftrdata);
 			$patricgenes++;
-			$patricids->{$ftrdata->{feature_id}} = $ftrdata;
 			if ($ftrdata->{strand} eq "-" && defined($stops->{$ftrdata->{start}}) && $ftrdata->{strand} eq $stops->{$ftrdata->{start}}->{strand}){
 				$match++;
 				$ftrdata->{refseqgene} = $stops->{$ftrdata->{start}};
@@ -503,7 +506,7 @@ sub retrieve_PATRIC_genome {
 					delete($stops->{$ftrdata->{start}}->{refseqgene});
 					$weakermatch--;
 				}
-				$stops->{$ftrdata->{start}}->{patricgene} = $ftrdata;
+				$stops->{$ftrdata->{start}}->{patricgene} = $ftrdata->{feature_id};
 			} elsif ($ftrdata->{strand} eq "+" && defined($stops->{$ftrdata->{end}}) && $ftrdata->{strand} eq $stops->{$ftrdata->{end}}->{strand}){
 				$match++;
 				$ftrdata->{refseqgene} = $stops->{$ftrdata->{end}};
@@ -511,45 +514,40 @@ sub retrieve_PATRIC_genome {
 					delete($stops->{$ftrdata->{end}}->{refseqgene});
 					$weakermatch--;
 				}
-				$stops->{$ftrdata->{end}}->{patricgene} = $ftrdata;
-			} elsif ($ftrdata->{strand} eq "+") {
-				for (my $j=0; $j < 100; $j++) {
-					my $startindex = ($ftrdata->{end} - 50 + $j);
-					if (defined($stops->{$startindex}) && !defined($stops->{$startindex}->{patricgene}) && $ftrdata->{strand} eq $stops->{$startindex}->{strand} && abs($ftrdata->{start}-$stops->{$startindex}->{start}) < 50) {
-						$weakermatch++;
-						$ftrdata->{refseqgene} = $stops->{$startindex};
-						$stops->{$startindex}->{patricgene} = $ftrdata;
-						last;
-					}
-				}
-			} elsif ($ftrdata->{strand} eq "-") {
-				for (my $j=0; $j < 100; $j++) {
-					my $startindex = ($ftrdata->{start} - 50 + $j);
-					if (defined($stops->{$startindex}) && !defined($stops->{$startindex}->{patricgene}) && $ftrdata->{strand} eq $stops->{$startindex}->{strand} && abs($ftrdata->{end}-$stops->{$startindex}->{end}) < 50) {
-						$weakermatch++;
-						$ftrdata->{refseqgene} = $stops->{$startindex};
-						$stops->{$startindex}->{patricgene} = $ftrdata;
-						last;
-					}
-				}
+				$stops->{$ftrdata->{end}}->{patricgene} = $ftrdata->{feature_id};
+#			} elsif ($ftrdata->{strand} eq "+") {
+#				for (my $j=0; $j < 100; $j++) {
+#					my $startindex = ($ftrdata->{end} - 50 + $j);
+#					if (defined($stops->{$startindex}) && !defined($stops->{$startindex}->{patricgene}) && $ftrdata->{strand} eq $stops->{$startindex}->{strand} && abs($ftrdata->{start}-$stops->{$startindex}->{start}) < 50) {
+#						$weakermatch++;
+#						$ftrdata->{refseqgene} = $stops->{$startindex};
+#						$stops->{$startindex}->{patricgene} = $ftrdata->{feature_id};
+#						last;
+#					}
+#				}
+#			} elsif ($ftrdata->{strand} eq "-") {
+#				for (my $j=0; $j < 100; $j++) {
+#					my $startindex = ($ftrdata->{start} - 50 + $j);
+#					if (defined($stops->{$startindex}) && !defined($stops->{$startindex}->{patricgene}) && $ftrdata->{strand} eq $stops->{$startindex}->{strand} && abs($ftrdata->{end}-$stops->{$startindex}->{end}) < 50) {
+#						$weakermatch++;
+#						$ftrdata->{refseqgene} = $stops->{$startindex};
+#						$stops->{$startindex}->{patricgene} = $ftrdata->{feature_id};
+#						last;
+#					}
+#				}
 			}
 		} else {
 			$refseqgenes++;
 			$refseqids->{$ftrdata->{feature_id}} = $ftrdata;
 		}
 	}
-	my $unsortedftrlist = [];
-	foreach my $pid (keys(%{$patricids})) {
-		if ($refseq == 0 || defined($patricids->{$pid}->{refseqgene})) {
-			push(@{$unsortedftrlist},$patricids->{$pid});
-		}
-	}
 	my $sortedftrlist = [sort { $b->{start} cmp $a->{start} } @{$unsortedftrlist}];
 	my $funchash = Bio::KBase::ObjectAPI::utilities::get_SSO();
 	for (my $i=0; $i < @{$sortedftrlist}; $i++) {
 		my $id;
-		if ($refseq == 1) {
-			$id = $data->{refseqgene}->{refseq_locus_tag};
+		my $data = $sortedftrlist->[$i];
+		if ($refseq == 1 && defined($data->{refseqgene}->{refseq_locus_tag})) {
+			$id = $data->{refseqgene}->{refseq_locus_tag}; 
 		} else {
 			$id = $data->{patric_id};
 		}
@@ -640,7 +638,7 @@ sub retrieve_PATRIC_genome {
 			push(@{$genome->{features}},$ftrobj);
 		}
 	}
-	my $genome = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome);
+	$genome = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome);
 	$genome->wsmeta($meta);
 	if ($refseq == 1) {
 		$genome->_reference("REFSEQ:".$genomeid);

@@ -4,7 +4,6 @@ use Bio::P3::Workspace::ScriptHelpers;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 my $configfile = "/disks/p3dev2/deployment/deployment.cfg";
 #$configfile = "/Users/chenry/code/PATRICClient/config.ini";
-
 	
 Bio::KBase::ObjectAPI::config::load_config({
 	filename => $configfile,
@@ -21,6 +20,13 @@ my $modellist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/homes/chenry/PATRIC
 my $helper;
 Bio::KBase::ObjectAPI::config::adminmode(1);
 
+$helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
+	token => Bio::P3::Workspace::ScriptHelpers::token(),
+	username => "chenry",
+	method => "ModelReconstruction",
+	configfile => $configfile
+});
+
 my $count = 0;
 for (my $i=0; $i < @{$modellist}; $i++) {
 	if ($i % $procs  == $index) {
@@ -35,7 +41,7 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 			Bio::KBase::ObjectAPI::config::adminmode(1);
 		}
 		Bio::KBase::ObjectAPI::config::setowner("chenry");
-		my $genome = "PATRIC:".$modellist->[$i];
+		my $genome = "REFSEQ:".$modellist->[$i];
 		eval {
 			$helper->app_harness("ModelReconstruction",{
 				template_model => "/chenry/public/modelsupport/templates/Core.modeltemplate",
@@ -53,6 +59,5 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 			Bio::KBase::ObjectAPI::logging::log($i.":".$modellist->[$i].":success");
 		}
 		$count++;
-		exit();
 	}
 }
