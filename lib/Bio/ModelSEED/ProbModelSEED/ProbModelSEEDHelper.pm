@@ -2197,10 +2197,6 @@ sub ModelReconstruction {
     if (substr($parameters->{output_path},-1,1) ne "/") {
     	$parameters->{output_path} .= "/";
     }
-	if (defined($parameters->{media})) {
-		($parameters->{media_workspace},$parameters->{media_id}) = $self->util_parserefs($parameters->{media});
-		delete $parameters->{media};
-	}
 	($parameters->{template_workspace},$parameters->{template_id}) = $self->util_parserefs($parameters->{template_model});
 	($parameters->{genome_workspace},$parameters->{genome_id}) = $self->util_parserefs($parameters->{genome});	
 	$parameters->{workspace} = $parameters->{output_path};
