@@ -16,6 +16,7 @@ use Bio::KBase::AppService::Client;
 use Bio::KBase::ObjectAPI::KBaseStore;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
 use Bio::KBase::ObjectAPI::functions;
+use Bio::KBase::ObjectAPI::config;
 
 my $typetrans = {
 	"KBaseFBA.FBA" => "fba",
@@ -199,7 +200,7 @@ sub KBaseStore {
 			"time" => DateTime->now()->datetime()."+0000",
 			service_ver => $VERSION,
 			service => "ProbModelSEED",
-			method => Bio::KBase::ObjectAPI::config::method,
+			method => Bio::KBase::ObjectAPI::config::method(),
 			method_params => [],
 			input_ws_objects => [],
 			resolved_ws_objects => [],
