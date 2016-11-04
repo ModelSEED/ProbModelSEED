@@ -50,6 +50,7 @@ use Bio::KBase::ObjectAPI::utilities;
 
 use Class::Autouse qw(
     Bio::KBase::workspace::Client
+    Bio::KBase::utilities
     Bio::KBase::ObjectAPI::KBaseRegulation::Regulome
     Bio::KBase::ObjectAPI::KBaseBiochem::Biochemistry
     Bio::KBase::ObjectAPI::KBaseGenomes::Genome
@@ -71,7 +72,6 @@ use Module::Load;
 #***********************************************************************************************************
 # ATTRIBUTES:
 #***********************************************************************************************************
-has workspace => ( is => 'rw', isa => 'Ref', required => 1);
 has cache => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 has uuid_refs => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 has updated_refs => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
@@ -124,7 +124,7 @@ sub get_objects {
 			}
 			push(@{$objids},$objid);
 		}
-		my $objdatas = $self->workspace()->get_objects($objids);
+		my $objdatas = Bio::KBase::utilities::get_objects($objids);
 		for (my $i=0; $i < @{$objdatas}; $i++) {
 			my $info = $objdatas->[$i]->{info};
 			#print "Retreived:".join("|",@{$info})."\n";
@@ -133,13 +133,18 @@ sub get_objects {
 				my $type = $2;
 				$type =~ s/^New//;
 				my $class = "Bio::KBase::ObjectAPI::".$module."::".$type;
-				if ($type eq "GenomeAnnotation") {
-					my $output = Bio::KBase::ObjectAPI::utilities::runexecutable(Bio::KBase::ObjectAPI::config::all_params()->{"DataAPICommand"}.' "'.Bio::KBase::ObjectAPI::config::workspace_url().'" "'.Bio::KBase::ObjectAPI::config::shock_url().'" "'.Bio::KBase::ObjectAPI::config::all_params()->{"handle-service"}.'" "'.Bio::KBase::ObjectAPI::config::token().'" "'.$info->[6]."/".$info->[0]."/".$info->[4].'" "'.$info->[1].'"');
-					my $last = pop(@{$output});
-					if ($last !~ m/SUCCESS/) {
-						Bio::KBase::ObjectAPI::utilities->error("Genome failed to load!");
-					}
-					$objdatas->[$i]->{data} = Bio::KBase::ObjectAPI::utilities::FROMJSON(pop(@{$output}));
+				if ($type eq "Genome" && Bio::KBase::utilities::conf("fba_tools","use_data_api") == 1) {
+					require "GenomeAnnotationAPI/GenomeAnnotationAPIClient.pm";
+					my $ga = new GenomeAnnotationAPI::GenomeAnnotationAPIClient(Bio::KBase::ObjectAPI::config::all_params()->{call_back_url});
+					my $gaoutput = $ga->get_genome_v1({
+						genomes => [{
+							"ref" => $info->[6]."/".$info->[0]."/".$info->[4]
+						}],
+						ignore_errors => 1,
+						no_data => 0,
+						no_metadata => 1
+					});
+					$objdatas->[$i]->{data} = $gaoutput->{genomes}->[0]->{data};
 					$class = "Bio::KBase::ObjectAPI::KBaseGenomes::Genome";
 				}
 				if ($type eq "ExpressionMatrix" || $type eq "ProteomeComparison") {
@@ -201,7 +206,7 @@ sub get_objects {
 				if ($type eq "FBAModel") {
 					if (defined($self->cache()->{$newrefs->[$i]}->template_ref())) {
 						if ($self->cache()->{$newrefs->[$i]}->template_ref() =~ m/(\w+)\/(\w+)\/*\d*/) {
-							my $output = $self->workspace()->get_object_info([{
+							my $output = Bio::KBase::utilities::get_object_info([{
 								"ref" => $self->cache()->{$newrefs->[$i]}->template_ref()
 							}],0);
 							if ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "GramPosModelTemplate") {
@@ -220,7 +225,7 @@ sub get_objects {
 					if (defined($self->cache()->{$newrefs->[$i]}->template_refs())) {
 						my $temprefs = $self->cache()->{$newrefs->[$i]}->template_refs();
 						for (my $j=0; $j < @{$temprefs}; $j++) {
-							my $output = $self->workspace()->get_object_info([{
+							my $output = Bio::KBase::utilities::get_object_info([{
 								"ref" => $temprefs->[$j]
 							}],0);
 							if ($output->[0]->[7] eq "KBaseTemplateModels" && $output->[0]->[1] eq "GramPosModelTemplate") {
@@ -286,6 +291,7 @@ sub save_object {
 sub save_objects {
     my ($self,$refobjhash) = @_;
     my $wsdata;
+    my $output = {};
     foreach my $ref (keys(%{$refobjhash})) {
     	my $obj = $refobjhash->{$ref};
     	my $objdata = {
@@ -316,6 +322,35 @@ sub save_objects {
 		} else {
 			$objdata->{name} = $array->[1];
 		}
+		if ($objdata->{type} eq "KBaseGenomes.Genome" && Bio::KBase::ObjectAPI::config::all_params()->{use_data_api} == 1) {
+			require "GenomeAnnotationAPI/GenomeAnnotationAPIClient.pm";
+			my $ga = new GenomeAnnotationAPI::GenomeAnnotationAPIClient(Bio::KBase::ObjectAPI::config::all_params()->{call_back_url});
+			my $gaout = $ga->save_one_genome_v1({
+				workspace => $array->[0],
+		        name => $array->[1],
+		        data => $objdata->{data},
+		        provenance => $objdata->{provenance},
+		        hidden => $obj->{hidden}
+			});
+			my $info = $gaout->{info};
+	    	$self->cache()->{$gaout->{info}->[6]."/".$gaout->{info}->[0]."/".$gaout->{info}->[4]} = $obj->{object};
+	    	$self->cache()->{$gaout->{info}->[7]."/".$gaout->{info}->[1]."/".$gaout->{info}->[4]} = $obj->{object};
+		    $self->uuid_refs()->{$obj->{object}->uuid()} = $gaout->{info}->[7]."/".$gaout->{info}->[1]."/".$gaout->{info}->[4];
+		    $refobjhash->{$ref}->{object}->_reference($gaout->{info}->[6]."/".$gaout->{info}->[0]."/".$gaout->{info}->[4]);
+	    	$refobjhash->{$ref}->{object}->_wsobjid($gaout->{info}->[0]);
+			$refobjhash->{$ref}->{object}->_wsname($gaout->{info}->[1]);
+			$refobjhash->{$ref}->{object}->_wstype($gaout->{info}->[2]);
+			$refobjhash->{$ref}->{object}->_wssave_date($gaout->{info}->[3]);
+			$refobjhash->{$ref}->{object}->_wsversion($gaout->{info}->[4]);
+			$refobjhash->{$ref}->{object}->_wssaved_by($gaout->{info}->[5]);
+			$refobjhash->{$ref}->{object}->_wswsid($gaout->{info}->[6]);
+			$refobjhash->{$ref}->{object}->_wsworkspace($gaout->{info}->[7]);
+			$refobjhash->{$ref}->{object}->_wschsum($gaout->{info}->[8]);
+			$refobjhash->{$ref}->{object}->_wssize($gaout->{info}->[9]);
+			$refobjhash->{$ref}->{object}->_wsmeta($gaout->{info}->[10]);
+	    	$output->{$ref} = $gaout->{info};
+			next;
+		}
 		push(@{$wsdata->{$array->[0]}->{refs}},$ref);
 		push(@{$wsdata->{$array->[0]}->{objects}},$objdata);
     }
@@ -328,16 +363,15 @@ sub save_objects {
     	}
     	my $listout;
     	if (defined($self->user_override()) && length($self->user_override()) > 0) {
-    		$listout = $self->workspace()->administer({
+    		$listout = Bio::KBase::utilities::administer({
     			"command" => "saveObjects",
     			"user" => $self->user_override(),
     			"params" => $input
     		});
     	} else {
-    		$listout = $self->workspace()->save_objects($input);
+    		$listout = Bio::KBase::utilities::save_objects($input);
     	}    	
 	    #Placing output into a hash of references pointing to object infos
-	    my $output = {};
 	    for (my $i=0; $i < @{$listout}; $i++) {
 	    	$self->cache()->{$listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4]} = $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object};
 	    	$self->cache()->{$listout->[$i]->[7]."/".$listout->[$i]->[1]."/".$listout->[$i]->[4]} = $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object};

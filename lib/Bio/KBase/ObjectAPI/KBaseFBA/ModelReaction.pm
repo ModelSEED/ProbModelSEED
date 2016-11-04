@@ -759,13 +759,10 @@ sub ImportExternalEquation {
 sub loadGPRFromString {
 	my $self = shift;
 	my $gprstring = shift;
+	my $genetranslation = shift;
 	my $geneAliases = $self->parent()->genome()->geneAliasHash();
 	my $gpr = Bio::KBase::ObjectAPI::utilities::translateGPRHash(Bio::KBase::ObjectAPI::utilities::parseGPR($gprstring));
 	my $missingGenes;
-	my $prots = $self->modelReactionProteins();
-	for (my $m=0; $m < @{$prots}; $m++) {
-		$self->remove("modelReactionProteins",$prots->[$m]);
-	}
 	for (my $m=0; $m < @{$gpr}; $m++) {
 		my $protObj = $self->add("modelReactionProteins",{
 			complex_ref => "",
@@ -782,6 +779,16 @@ sub loadGPRFromString {
 			});		
 			for (my $k=0; $k < @{$gpr->[$m]->[$j]}; $k++) {
 				my $ftrID = $gpr->[$m]->[$j]->[$k];
+				if (defined($genetranslation) && defined($genetranslation->{$ftrID})) {
+					for (my $n=0; $n < @{$genetranslation->{$ftrID}}; $n++) {
+						$ftrID = $genetranslation->{$ftrID}->[$n];
+						if (!defined($geneAliases->{$ftrID})) {
+							$missingGenes->{$ftrID} = 1;
+						} else {
+							$subObj->addLinkArrayItem("features",$geneAliases->{$ftrID});
+						}
+					}
+				}
 				if (!defined($geneAliases->{$ftrID})) {
 					$missingGenes->{$ftrID} = 1;
 				} else {

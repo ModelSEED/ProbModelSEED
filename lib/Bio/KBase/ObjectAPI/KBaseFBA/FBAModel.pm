@@ -212,7 +212,8 @@ sub addCompoundToModel {
 		charge => undef,
 		formula => undef
 	}, @_);
-	my $mdlcpd = $self->queryObject("modelcompounds",{compound_ref => $args->{compound}->_reference(),modelcompartment_ref => "~/modelcompartments/id/".$args->{modelCompartment}->id()});
+	my $cpdid = $args->{compound}->id()."_".$args->{modelCompartment}->id();
+	my $mdlcpd = $self->getObject("modelcompounds",$cpdid);
 	if (!defined($mdlcpd)) {
 		if (!defined($args->{charge})) {
 			$args->{charge} = $args->{compound}->defaultCharge();
@@ -1028,6 +1029,7 @@ Description:
 sub unintegrateGapfillSolution {
     my $self = shift;
 	my $args = Bio::KBase::ObjectAPI::utilities::args(["gapfill"], {}, @_);
+	Bio::KBase::ObjectAPI::utilities::verbose("Now integrating gapfill solution into model");
 	my $gfmeta = $self->getObject("gapfillings",$args->{gapfill});
 	if (!defined($gfmeta)) {
 		Bio::KBase::ObjectAPI::utilities::error("Gapfill ".$args->{gapfill}." not found!");
@@ -1056,6 +1058,8 @@ sub unintegrateGapfillSolution {
 					}
 				}
 			}
+			#deleting entry
+			delete $rxn->gapfill_data()->{$gfmeta->id()};
 			#removing direction if no other gapfilling was found
 			if ($found == 0) {
 				if ($rxn->direction() eq $gfarray->[1]) {
@@ -1066,8 +1070,6 @@ sub unintegrateGapfillSolution {
 					$rxn->direction(">");
 				}
 			}
-			#deleting entry
-			delete $rxn->gapfill_data()->{$gfmeta->id()};
 		}
 	}
 	return $gfmeta;
@@ -1088,7 +1090,7 @@ Description:
 sub add_gapfilling {
     my $self = shift;
 	my $args = Bio::KBase::ObjectAPI::utilities::args(["object","id"], {solution_to_integrate => undef}, @_);
-	Bio::KBase::ObjectAPI::logging::log("Integrating gapfill solution into model");
+	Bio::KBase::ObjectAPI::logging::log("Integrating gapfill solution into model","stdout");
 	#Adding gapfill object to model
 	my $gfobj = {
 		id => $args->{id},

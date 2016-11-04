@@ -1067,7 +1067,7 @@ sub rest_download {
 	Bio::KBase::ObjectAPI::utilities::error("REST download failed at URL:".$args->{url});
 }
 
-sub elapsedtime {
+sub elaspedtime {
 	if (!defined($startime)) {
 		$startime = time();
 	}
