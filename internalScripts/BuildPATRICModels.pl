@@ -59,6 +59,5 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 			Bio::KBase::ObjectAPI::logging::log($i.":".$modellist->[$i].":success");
 		}
 		$count++;
-		exit;
 	}
 }
