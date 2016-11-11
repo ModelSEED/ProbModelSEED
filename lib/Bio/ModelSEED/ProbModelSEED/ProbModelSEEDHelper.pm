@@ -17,6 +17,8 @@ use Bio::KBase::ObjectAPI::KBaseStore;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
 use Bio::KBase::ObjectAPI::functions;
 use Bio::KBase::ObjectAPI::config;
+use MongoDB::Connection;
+use MongoDB::Collection;
 
 my $typetrans = {
 	"KBaseFBA.FBA" => "fba",
@@ -1886,45 +1888,139 @@ sub unintegrate_model_gapfills {
 	$self->save_object($model->wsmeta()->[2].$model->wsmeta()->[0],$model,"model");
 }
 
+sub util_mongodb {
+	my($self,$dbname) = @_;
+	if (!defined($self->{_mongodb}->{$dbname})) {
+		my $config = {
+			host => Bio::KBase::ObjectAPI::config::all_params()->{"mongodb-host"},
+			username => Bio::KBase::ObjectAPI::config::all_params()->{"mongodb-user"},
+			password => Bio::KBase::ObjectAPI::config::all_params()->{"mongodb-pwd"},
+			db_name => "modelseed",
+			auto_connect => 1,
+			auto_reconnect => 1
+		};
+		if(!defined($config->{username}) || length($config->{username}) == 0 || $config->{username} eq "null") {
+			delete $config->{username};
+			delete $config->{password};
+		}
+		my $conn = MongoDB::Connection->new(%$config);
+		if (!defined($conn)) {
+			Bio::KBase::ObjectAPI::utilities::error("Unable to connect: $@");
+		}
+		$self->{_mongodb}->{$dbname} = $conn->get_database($dbname);
+	}
+	return $self->{_mongodb}->{$dbname};	
+}
+
+sub create_jobs {
+	my($self,$input) = @_;
+	$input = $self->validate_args($input,["jobs"],{});
+	my $output = {};
+	for (my $i=0; $i < @{$input->{jobs}}; $i++) {
+		my $idobj = $self->util_mongodb("modelseed")->get_collection('counters')->find_one_and_update({ _id => "job_ids" },{ '$inc' => { seq => 1 } },{'new' => 'true'});
+		my $id = $idobj->{seq};
+		my $job = {
+			id => $id,
+			app => $input->{jobs}->[$i]->{app},
+			parameters => $input->{jobs}->[$i]->{parameters},
+			status => "queued",
+			submit_time => DateTime->now()->datetime(),
+			error => "none",
+			owner => Bio::KBase::ObjectAPI::config::username()
+		};
+		$self->util_mongodb("modelseed")->get_collection('jobs')->insert($job);
+		$output->{$job->{id}} = $job;
+	}
+	return $output;
+}
+
+sub manage_jobs {
+	my($self,$input) = @_;
+	$input = $self->validate_args($input,["jobs","action"],{
+		errors => {},
+		reports => {}
+	});
+	for (my $i=0; $i < @{$input->{jobs}}; $i++) {
+		$input->{jobs}->[$i] += "";
+	}
+	my $output = {};
+	my $cursor = $self->util_mongodb("modelseed")->get_collection('jobs')->find({id => {'$in' => $input->{jobs}}});
+	while (my $object = $cursor->next) {
+		$output->{$object->{id}} = $object;
+	};
+	foreach my $key (keys(%{$output})) {
+		my $obj = $output->{$key};
+		if ($input->{action} eq "delete") {
+			my $query = {id => $obj->{id}};
+			$self->util_mongodb("modelseed")->get_collection('jobs')->remove($query);
+			$obj->{status} = "deleted";
+		} elsif ($input->{action} eq "finish") {
+			my $update = {
+				status => "completed",
+				completed_time => DateTime->now()->datetime()
+			};
+			$obj->{status} = $update->{status};
+			$obj->{completed_time} = $update->{completed_time};
+			if (defined($input->{reports}->{$obj->{id}})) {
+				$update->{report} => $input->{reports}->{$obj->{id}};
+			}
+			$obj->{report} = $input->{reports}->{$obj->{id}};
+			if (defined($input->{errors}->{$obj->{id}})) {
+				$update->{error} => $input->{errors}->{$obj->{id}};
+				$obj->{status} = "failed";
+				$update->{status} = "failed";
+			}
+			$obj->{error} = $input->{errors}->{$obj->{id}};
+			$self->util_mongodb("modelseed")->get_collection('jobs')->find_one_and_update({ id => $obj->{id} },{ '$set' => $update});
+		} elsif ($input->{action} eq "start") {
+			my $update = {
+				status => "running",
+				start_time => DateTime->now()->datetime(),
+				error => "",
+				report => ""
+			};
+			$obj->{status} = $update->{status};
+			$obj->{start_time} = $update->{start_time};
+			$obj->{error} = $update->{error};
+			$obj->{report} = $update->{report};
+			$self->util_mongodb("modelseed")->get_collection('jobs')->find_one_and_update({ id => $obj->{id} },{ '$set' => $update});
+		}
+	}
+	return $output;
+}
+
 sub check_jobs {
 	my($self,$input) = @_;
 	$input = $self->validate_args($input,[],{
-		jobs => [],
-		return_errors => 0,
+		jobs => undef,
 		exclude_failed => 0,
 		exclude_running => 0,
-		exclude_complete => 0,
+		exclude_complete => 0
 	});
 	my $output = {};
-	if (@{$input->{jobs}} == 0) {
-		my $enumoutput = $self->app_service()->enumerate_tasks(0,10000);
-		for (my $i=0; $i < @{$enumoutput}; $i++) {
-			if ($enumoutput->[$i]->{app} eq "RunProbModelSEEDJob") {
-				$output->{$enumoutput->[$i]->{id}} = $enumoutput->[$i];
-			}
-		}
-	} else {
-		$output = $self->app_service()->query_tasks($input->{jobs});
+	my $query = {
+		owner => Bio::KBase::ObjectAPI::config::username()
+	};
+	if (defined($input->{jobs})) {
+		$query->{id} = {'$in' => $input->{jobs}};
 	}
-	foreach my $key (keys(%{$output})) {
-		if ($input->{exclude_failed} == 1 && $output->{$key}->{status} eq "failed") {
-			delete $output->{$key};
+	if ($input->{exclude_failed} == 1 || $input->{exclude_running} == 1 || $input->{exclude_complete} == 1) {
+		my $status = [];
+		if ($input->{exclude_failed} == 0) {
+			push(@{$status},"failed");
 		}
-		if ($input->{exclude_running} == 1 && $output->{$key}->{status} eq "running") {
-			delete $output->{$key};
+		if ($input->{exclude_running} == 0) {
+			push(@{$status},"running");
 		}
-		if ($input->{exclude_complete} == 1 && $output->{$key}->{status} eq "completed") {
-			delete $output->{$key};
+		if ($input->{exclude_complete} == 0) {
+			push(@{$status},"completed");
 		}
+		$query->{status} = {'$in' => $status};
 	}
-	if ($input->{return_errors} == 1 || keys(%{$output}) == 1) {
-		foreach my $key (keys(%{$output})) {
-			if ($output->{$key}->{status} eq "failed") {
-				my $commandoutput = Bio::KBase::ObjectAPI::utilities::runexecutable("curl ".Bio::KBase::ObjectAPI::config::appservice_url()."/task_info/".$output->{$key}->{id}."/stderr");
-				$output->{$key}->{errors} = join("\n",@{$commandoutput});
-			}
-		}
-	}
+	my $cursor = $self->util_mongodb("modelseed")->get_collection('jobs')->find($query);
+	while (my $object = $cursor->next) {
+		$output->{$object->{id}} = $object;
+	};
 	return $output;
 }
 #****************************************************************************

@@ -298,3 +298,13 @@ class ProbModelSEED(object):
         resp = self._call('ProbModelSEED.CheckJobs',
                           [input])
         return resp[0]
+
+    def ManageJobs(self, input):
+        resp = self._call('ProbModelSEED.ManageJobs',
+                          [input])
+        return resp[0]
+
+    def CreateJobs(self, input):
+        resp = self._call('ProbModelSEED.CreateJobs',
+                          [input])
+        return resp[0]

@@ -168,6 +168,56 @@
 		my $model_dir = "/".$self->{user}."/home/modeltesting";
 		my $model_name = "TestModel";
 		my $model = $model_dir."/".$model_name;
+		
+		my $output = $self->test_harness("CreateJobs",{
+			jobs => [{
+				app => "ModelReconstruction",
+				parameters => {
+					genome => "RAST:315750.3",
+					fulldb => "0",
+					output_path => $model_dir,
+					output_file => $model_name
+				}
+			},{
+				app => "ModelReconstruction",
+				parameters => {
+					genome => "RAST:315750.3",
+					fulldb => "0",
+					output_path => $model_dir,
+					output_file => $model_name
+				}
+			},{
+				app => "ModelReconstruction",
+				parameters => {
+					genome => "RAST:315750.3",
+					fulldb => "0",
+					output_path => $model_dir,
+					output_file => $model_name
+				}
+			}]
+		},"Create jobs",[],0,undef,1,0);
+		my $ids = [sort(keys(%{$output}))];
+		print Data::Dumper->Dump([$output]);
+		print Data::Dumper->Dump([$ids]);
+		$output = $self->test_harness("ManageJobs",{
+			jobs => [$ids->[0]],
+			errors => {$ids->[0] => "test error"},
+			action => "finish"
+		},"Finishing job",[],0,undef,1,0);
+		print Data::Dumper->Dump([$output]);
+		$output = $self->test_harness("ManageJobs",{
+			jobs => [$ids->[1]],
+			action => "start"
+		},"Starting job",[],0,undef,1,0);
+		print Data::Dumper->Dump([$output]);
+		$output = $self->test_harness("ManageJobs",{
+			jobs => [$ids->[2]],
+			action => "delete"
+		},"Deleting job",[],0,undef,1,0);
+		print Data::Dumper->Dump([$output]);
+		$output = $self->test_harness("CheckJobs",{},"Checking jobs",[],0,undef,1,0);
+		print Data::Dumper->Dump([$output]);
+		exit;
 		my $output = $self->test_harness("list_models",{path => "/".$self->{user}."/home/modeltesting"},,"initial list models test",[],0,undef,1);
 		for(my $i=0; $i < @{$output}; $i++) {
 			if ($output->[$i]->{ref} eq $model_dir."/TestModel") {

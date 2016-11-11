@@ -705,6 +705,7 @@ module ProbModelSEED {
 		JobID id;
 		string app;
 	
+		mapping<string,string> parameters;
 		string status;
 		string submit_time;
 		string start_time;
@@ -727,4 +728,29 @@ module ProbModelSEED {
     } CheckJobs_params;
     authentication required;
 	funcdef CheckJobs(CheckJobs_params input) returns (mapping<JobID,Task> output);
+	
+	/* 
+		FUNCTION: ManageJobs
+		DESCRIPTION: This function supports the deletion and rerunning of jobs
+		
+		action - character specifying what to do with the job (d - delete, r - run)
+	*/
+    typedef structure {
+		list<JobID> jobs;
+		string action;
+		mapping<string,string> errors;
+		mapping<string,string> reports;
+    } ManageJobs_params;
+    authentication required;
+	funcdef ManageJobs(ManageJobs_params input) returns (mapping<JobID,Task> output);
+	
+	/* 
+		FUNCTION: CreateJobs
+		DESCRIPTION: This function supports the creation of a new job
+	*/
+    typedef structure {
+		list<Task> jobs;
+    } CreateJobs_params;
+    authentication required;
+	funcdef CreateJobs(CreateJobs_params input) returns (mapping<JobID,Task> output);
 };

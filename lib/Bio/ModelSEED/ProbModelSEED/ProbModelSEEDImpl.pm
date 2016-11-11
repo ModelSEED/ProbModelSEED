@@ -3121,6 +3121,7 @@ bool is an int
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
 	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
 	status has a value which is a string
 	submit_time has a value which is a string
 	start_time has a value which is a string
@@ -3147,6 +3148,7 @@ bool is an int
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
 	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
 	status has a value which is a string
 	submit_time has a value which is a string
 	start_time has a value which is a string
@@ -3192,6 +3194,196 @@ sub CheckJobs
 	my $msg = "Invalid returns passed to CheckJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
 							       method_name => 'CheckJobs');
+    }
+    return($output);
+}
+
+
+
+
+=head2 ManageJobs
+
+  $output = $obj->ManageJobs($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a ManageJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+ManageJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a JobID
+	action has a value which is a string
+JobID is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a ManageJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+ManageJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a JobID
+	action has a value which is a string
+JobID is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub ManageJobs
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to ManageJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'ManageJobs');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN ManageJobs
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->manage_jobs($input);
+    #END ManageJobs
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to ManageJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'ManageJobs');
+    }
+    return($output);
+}
+
+
+
+
+=head2 CreateJobs
+
+  $output = $obj->CreateJobs($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a CreateJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+CreateJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a Task
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+JobID is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a CreateJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+CreateJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a Task
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+JobID is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub CreateJobs
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to CreateJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'CreateJobs');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN CreateJobs
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->create_jobs($input);
+    #END CreateJobs
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to CreateJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'CreateJobs');
     }
     return($output);
 }
@@ -6015,6 +6207,7 @@ output_path has a value which is a string
 a reference to a hash where the following keys are defined:
 id has a value which is a JobID
 app has a value which is a string
+parameters has a value which is a reference to a hash where the key is a string and the value is a string
 status has a value which is a string
 submit_time has a value which is a string
 start_time has a value which is a string
@@ -6031,6 +6224,7 @@ stderr_shock_node has a value which is a string
 a reference to a hash where the following keys are defined:
 id has a value which is a JobID
 app has a value which is a string
+parameters has a value which is a reference to a hash where the key is a string and the value is a string
 status has a value which is a string
 submit_time has a value which is a string
 start_time has a value which is a string
@@ -6081,6 +6275,82 @@ include_completed has a value which is a bool
 include_failed has a value which is a bool
 include_running has a value which is a bool
 include_errors has a value which is a bool
+
+
+=end text
+
+=back
+
+
+
+=head2 ManageJobs_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: ManageJobs
+DESCRIPTION: This function supports the deletion and rerunning of jobs
+
+action - character specifying what to do with the job (d - delete, r - run)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a JobID
+action has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a JobID
+action has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 CreateJobs_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: CreateJobs
+DESCRIPTION: This function supports the creation of a new job
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a Task
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a Task
 
 
 =end text

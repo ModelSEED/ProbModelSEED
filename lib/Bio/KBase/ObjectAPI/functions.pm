@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Bio::KBase::ObjectAPI::utilities;
+use Bio::KBase::constants;
 
 our $handler;#Needs: log(string),save_object,get_object
 
@@ -2132,6 +2133,7 @@ sub func_importmodel {
 		]);
     }
     #PARSING SBML IF PROVIDED
+    my $comptrans = Bio::KBase::constants::compartment_trans();
     if (defined($params->{sbml})) {
     	$params->{compounds} = [];
 		$params->{reactions} = [];
@@ -2182,6 +2184,14 @@ sub func_importmodel {
 	    		$cmproot = $1;
 	    		$cmpind = $2;
 	    	}
+	    	$cmpid =~ s/__/!/g;
+    		while ($cmpid =~ m/^([^\!]+)\!(\d+)\!(.*)/) {
+    			$cmpid = $1.chr($2).$3;
+    		}
+    		$cmpid =~ s/\!/__/g;
+	    	if (defined($comptrans->{$cmproot})) {
+	    		$cmproot = $comptrans->{$cmproot};
+	    	}
 	    	my $cmp = $templateobj->searchForCompartment($cmproot);
 	    	if (defined($cmp)) {
 	    		$cmp_SEED_id = $cmp->id();
@@ -2228,6 +2238,11 @@ sub func_importmodel {
 	    			if ($id =~ m/^M_(.+)/) {
 	    				$id = $1;
 	    			}
+	    			$id =~ s/__/!/g;
+	    			while ($id =~ m/^([^\!]+)\!(\d+)\!(.*)/) {
+	    				$id = $1.chr($2).$3;
+	    			}
+	    			$id =~ s/\!/__/g;
 	    		} elsif ($nm eq "name") {
 	    			$name = $value;
 	    			if ($name =~ m/^M_(.+)/) {
@@ -2239,6 +2254,11 @@ sub func_importmodel {
 	    			}
 	    		} elsif ($nm eq "compartment") {
 	    			$compartment = $value;
+	    			$compartment =~ s/__/!/g;
+	    			while ($compartment =~ m/^([^\!]+)\!(\d+)\!(.*)/) {
+	    				$compartment = $1.chr($2).$3;
+	    			}
+	    			$compartment =~ s/\!/__/g;
 	    			if (defined($cmptrans->{$compartment})) {
 	    				$compartment = $cmptrans->{$compartment};
 	    			}
@@ -2275,42 +2295,42 @@ sub func_importmodel {
 							}
 						} elsif ($text =~ m/BIOCYC:\s*([^<]+)/) {
 							if (length($1) > 0) {
-							    if (length($aliases) > 0) {
+							    if (defined($aliases) && length($aliases) > 0) {
 							    	$aliases .= "|";
 							    }
 							    $aliases .= "BIOCYC:".$1;
 							}
 						} elsif ($text =~ m/INCHI:\s*([^<]+)/) {
 							if (length($1) > 0) {
-							    if (length($aliases) > 0) {
+							    if (defined($aliases) && length($aliases) > 0) {
 							    	$aliases .= "|";
 							    }
 							    $aliases .= "INCHI:".$1;
 							}
 						} elsif ($text =~ m/CHEBI:\s*([^<]+)/) {
 							if (length($1) > 0) {
-							    if (length($aliases) > 0) {
+							    if (defined($aliases) && length($aliases) > 0) {
 							    	$aliases .= "|";
 							    }
 							    $aliases .= "CHEBI:".$1;
 							}
 						} elsif ($text =~ m/CHEMSPIDER:\s*([^<]+)/) {
 							if (length($1) > 0) {
-							    if (length($aliases) > 0) {
+							    if (defined($aliases) && length($aliases) > 0) {
 							    	$aliases .= "|";
 							    }
 							    $aliases .= "CHEMSPIDER:".$1;
 							}
 						} elsif ($text =~ m/PUBCHEM:\s*([^<]+)/) {
 							if (length($1) > 0) {
-							    if (length($aliases) > 0) {
+							    if (defined($aliases) && length($aliases) > 0) {
 							    	$aliases .= "|";
 							    }
 							    $aliases .= "PUBCHEM:".$1;
 							}
 						} elsif ($text =~ m/KEGG:\s*([^<]+)/) {
 							if (length($1) > 0) {
-							    if (length($aliases) > 0) {
+							    if (defined($aliases) && length($aliases) > 0) {
 							    	$aliases .= "|";
 							    }
 							    $aliases .= "KEGG:".$1;
@@ -2332,7 +2352,9 @@ sub func_importmodel {
 	    		name => $name,
 	    		formula => $formula,
 	    		charge => $charge,
-	    		aliases => $aliases
+	    		aliases => $aliases,
+	    		compartment => $compartment,
+	    		boundary => $boundary
 	    	};
 	    }
 	    #Parsing reactions
@@ -2343,8 +2365,8 @@ sub func_importmodel {
 	    	my $sbmlid = undef;
 	    	my $name = undef;
 	    	my $direction = "=";
-	    	my $reactants;
-	    	my $products;
+	    	my $reactants = "";
+	    	my $products = "";
 	    	my $compartment = "c";
 	    	my $gpr;
 	    	my $pathway;
@@ -2360,6 +2382,11 @@ sub func_importmodel {
 	    				$value = $1;
 	    			}
 	    			$id = $value;
+	    			$id =~ s/__/!/g;
+	    			while ($id =~ m/^([^\!]+)\!(\d+)\!(.*)/) {
+	    				$id = $1.chr($2).$3;
+	    			}
+	    			$id =~ s/\!/__/g;
 	    		} elsif ($nm eq "name") {
 	    			if ($value =~ m/^R_(.+)/) {
 	    				$value = $1;
@@ -2384,11 +2411,16 @@ sub func_importmodel {
 	    				foreach my $attr ($species->getAttributes()->getValues()) {
 	    					if ($attr->getName() eq "species") {
 	    						$spec = $attr->getValue();
+	    						#$spec =~ s/__/!/g;
+				    			#while ($spec =~ m/^([^\!]+)\!(\d+)\!(.*)/) {
+				    			#	$spec = $1.chr($2).$3;
+				    			#}
+				    			#$spec =~ s/\!/__/g;
 	    						if (defined($cpdhash->{$spec})) {
-	    							$boundary = $cpdhash->{$spec}->[2];
-								my $cpt = $cpdhash->{$spec}->[1];
-	    							$spec = $cpdhash->{$spec}->[0]."[".$cpt."]";
-								$cpd_compartments{$cpt} = 1;
+	    							$boundary = $cpdhash->{$spec}->{boundary};
+									my $cpt = $cpdhash->{$spec}->{compartment};
+	    							$spec = $cpdhash->{$spec}->{rootid}."[".$compdata->{$cpt}->{seed}."]";
+									$cpd_compartments{$cpt} = 1;
 	    						}
 	    					} elsif ($attr->getName() eq "stoichiometry") {
 	    						$stoich = $attr->getValue();
@@ -2433,7 +2465,7 @@ sub func_importmodel {
 								}
 							} elsif ($text =~ m/BIOCYC:\s*([^<]+)/) {
 								if (length($1) > 0) {
-									if (length($aliases) > 0) {
+									if (defined($aliases) && length($aliases) > 0) {
 								    	$aliases .= "|";
 								    }
 								    $aliases .= "BIOCYC".$1;
@@ -2488,7 +2520,7 @@ sub func_importmodel {
 		modelcompounds => [],
 		modelreactions => []
 	});
-	$model->parent($handler->util_data_store());
+	$model->parent($handler->util_store());
 	#REPROCESSING IDS
     my $translation = {};
     for (my $i=0; $i < @{$params->{compounds}}; $i++) {
