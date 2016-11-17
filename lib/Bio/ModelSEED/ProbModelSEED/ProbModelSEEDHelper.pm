@@ -1944,6 +1944,7 @@ sub manage_jobs {
 	my $cursor = $self->util_mongodb("modelseed")->get_collection('jobs')->find({id => {'$in' => $input->{jobs}}});
 	while (my $object = $cursor->next) {
 		$output->{$object->{id}} = $object;
+		delete $output->{$object->{id}}->{_id};
 	};
 	foreach my $key (keys(%{$output})) {
 		my $obj = $output->{$key};
@@ -2033,6 +2034,7 @@ sub check_jobs {
 	my $cursor = $self->util_mongodb("modelseed")->get_collection('jobs')->find($query);
 	while (my $object = $cursor->next) {
 		$output->{$object->{id}} = $object;
+		delete $output->{$object->{id}}->{_id};
 	};
 	return $output;
 }
