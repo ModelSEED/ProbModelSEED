@@ -32,7 +32,7 @@ my $job;
 close($fh);
 
 my $errors = {};
-#eval {
+eval {
 	my $obj = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 		token => $job->{token},
 		username => $job->{owner},
@@ -40,7 +40,7 @@ my $errors = {};
 		parameters => $job->{parameters},
 	});
 	$obj->app_harness($job->{app},$job->{parameters});
-#};
+};
 if ($@) {
     $errors->{$job->{id}} = $@;
 }
