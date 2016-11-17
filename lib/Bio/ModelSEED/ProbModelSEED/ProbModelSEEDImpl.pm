@@ -37,9 +37,10 @@ sub initialize_call {
 	$params = Bio::KBase::utilities::args($params,[],{
 		adminmode => 0
 	});
-	if (!defined($CallContext) && defined(Bio::KBase::utilities::context())) {
-		$CallContext = Bio::KBase::utilities::context();
-	}
+	#if (!defined($CallContext) && defined(Bio::KBase::utilities::context())) {
+	#	$CallContext = Bio::KBase::utilities::context();
+	#}
+	Bio::KBase::utilities::set_context($CallContext);
 	$self->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
     	adminmode => $params->{adminmode},
     	configfile => $ENV{KB_DEPLOYMENT_CONFIG},
