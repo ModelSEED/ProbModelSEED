@@ -16,7 +16,7 @@ our $report = {};
 our $source = undef;
 our $defbio = undef;
 our $globalparams = {"gapfill name" => "none"};
-our $startime = undef;
+
 our $classifierdata = undef;
 our $full_trace = 1;
 our $ssohash = undef;
@@ -1067,13 +1067,6 @@ sub rest_download {
 	Bio::KBase::ObjectAPI::utilities::error("REST download failed at URL:".$args->{url});
 }
 
-sub elaspedtime {
-	if (!defined($startime)) {
-		$startime = time();
-	}
-	return time()-$startime;
-}
-
 sub kblogin {
 	my $params = shift;
 	my $url = "https://kbase.us/services/authorization/Sessions/Login";
@@ -1095,14 +1088,14 @@ sub kblogin {
 sub classifier_data {
 	if (!defined($classifierdata)) {
 		my $data;
-		if (Bio::KBase::ObjectAPI::config::classifier() =~ m/^WS:(.+)/) {
+		if (Bio::KBase::utilities::conf("ModelSEED","classifier") =~ m/^WS:(.+)/) {
 			$data = Bio::KBase::ObjectAPI::functions::util_get_object($1);
 			$data = [split(/\n/,$data)];
 		} else {
-			if (!-e Bio::KBase::ObjectAPI::config::classifier()) {
-				system("curl https://raw.githubusercontent.com/kbase/KBaseFBAModeling/dev/classifier/classifier.txt > ".Bio::KBase::ObjectAPI::config::classifier());
+			if (!-e Bio::KBase::utilities::conf("ModelSEED","classifier")) {
+				system("curl https://raw.githubusercontent.com/kbase/KBaseFBAModeling/dev/classifier/classifier.txt > ".Bio::KBase::utilities::conf("ModelSEED","classifier"));
 			}
-			$data = Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::ObjectAPI::config::classifier());
+			$data = Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::utilities::conf("ModelSEED","classifier"));
 		}
 		my $headings = [split(/\t/,$data->[0])];
 		my $popprob = [split(/\t/,$data->[1])];

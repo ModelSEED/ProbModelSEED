@@ -1090,7 +1090,7 @@ Description:
 sub add_gapfilling {
     my $self = shift;
 	my $args = Bio::KBase::ObjectAPI::utilities::args(["object","id"], {solution_to_integrate => undef}, @_);
-	Bio::KBase::ObjectAPI::logging::log("Integrating gapfill solution into model","stdout");
+	Bio::KBase::utilities::log("Integrating gapfill solution into model","stdout");
 	#Adding gapfill object to model
 	my $gfobj = {
 		id => $args->{id},
@@ -1419,7 +1419,7 @@ sub merge_models {
 		num_contigs => 0,
 		contig_lengths => [],
 		contig_ids => [],
-		source => Bio::KBase::ObjectAPI::config::source(),
+		source => Bio::KBase::utilities::conf("ModelSEED","source"),
 		source_id => $parameters->{fbamodel_output_id}.".genome",
 		md5 => "",
 		taxonomy => "Community",
@@ -1650,7 +1650,7 @@ sub edit_metabolic_model {
 	my $det_biomass_changed = [];
 	my $det_biomass_removed = [];
 	#Removing reactions specified for removal
-	Bio::KBase::ObjectAPI::logging::log("Changing specified biomass compounds");
+	Bio::KBase::utilities::log("Changing specified biomass compounds");
 	if (defined($params->{biomass_changes})) {
 		for (my $i=0; $i < @{$params->{biomass_changes}}; $i++) {
 	    	my $biomass = $self->getObject("biomasses",$params->{biomass_changes}->[$i]->[0]);
@@ -1773,7 +1773,7 @@ sub edit_metabolic_model {
 	    }
 	}
 	#Removing reactions specified for removal
-	Bio::KBase::ObjectAPI::logging::log("Removing specified reactions");
+	Bio::KBase::utilities::log("Removing specified reactions");
 	if (defined($params->{reactions_to_remove})) {
 		for (my $i=0; $i < @{$params->{reactions_to_remove}}; $i++) {
 	    	my $rxnobj = $self->getObject("modelreactions",$params->{reactions_to_remove}->[$i]);
@@ -1799,7 +1799,7 @@ sub edit_metabolic_model {
 	    }
 	}
 	#Adding reactions specified for addition
-	Bio::KBase::ObjectAPI::logging::log("Adding specified reactions");
+	Bio::KBase::utilities::log("Adding specified reactions");
 	#($params->{reactions},my $compoundhash) = $self->util_process_reactions_list($params->{reactions},$params->{compounds});
 	if (defined($params->{reactions_to_add})) {
 		for (my $i=0; $i < @{$params->{reactions_to_add}}; $i++) {
@@ -1887,7 +1887,7 @@ sub edit_metabolic_model {
 	    }
 	}
 	#Modifying reactions specified for modification
-	Bio::KBase::ObjectAPI::logging::log("Modifying specified reactions");
+	Bio::KBase::utilities::log("Modifying specified reactions");
 	if (defined($params->{reactions_to_modify})) {
 		for (my $i=0; $i < @{$params->{reactions_to_modify}}; $i++) {
 	    	my $rxnobj = $self->getObject("modelreactions",$params->{reactions_to_modify}->[$i]->[0]);

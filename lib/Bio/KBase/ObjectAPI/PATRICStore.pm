@@ -109,7 +109,6 @@ has provenance => ( is => 'rw', isa => 'ArrayRef',default => sub { return []; })
 has user_override => ( is => 'rw', isa => 'Str',default => "");
 has file_cache => ( is => 'rw', isa => 'Str',default => "");
 has cache_targets => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
-has save_file_list => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 
 #***********************************************************************************************************
 # BUILDERS:
@@ -160,7 +159,7 @@ sub get_objects {
 	}
 	#Pulling objects from workspace
 	if (@{$newrefs} > 0) {
-		my $objdatas = $self->call_ws("get",{adminmode => $self->adminmode(),objects => $newrefs});
+		my $objdatas = Bio::ModelSEED::patricenv::call_ws("get",{adminmode => $self->adminmode(),objects => $newrefs});
 		for (my $i=0; $i < @{$objdatas}; $i++) {
 			$self->process_object($objdatas->[$i]->[0],$objdatas->[$i]->[1],$options);
 		}
@@ -331,7 +330,7 @@ sub save_objects {
     		push(@{$input->{objects}},[$ref,$obj->{type},$obj->{usermeta},undef]);
     	}
     }
-    my $listout = $self->call_ws("create",$input);
+    my $listout = Bio::ModelSEED::patricenv::call_ws("create",$input);
     my $output = {};
     for (my $i=0; $i < @{$reflist}; $i++) {
     	my $refinedref = $reflist->[$i];
@@ -357,14 +356,14 @@ sub save_objects {
 sub upload_to_shock {
 	my ($self,$content,$url) = @_;	
 	my $uuid = Data::UUID->new()->create_str();
-	File::Path::mkpath Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir();
-	my $filename = Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir().$uuid;
+	File::Path::mkpath Bio::KBase::utilities::conf("ModelSEED","fbajobdir");
+	my $filename = Bio::KBase::utilities::conf("ModelSEED","fbajobdir").$uuid;
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$content]);
 	my $ua = LWP::UserAgent->new();
-	my $req = HTTP::Request::Common::POST($url,Authorization => "OAuth ".Bio::KBase::ObjectAPI::config::token(),Content_Type => 'multipart/form-data',Content => [upload => [$filename]]);
+	my $req = HTTP::Request::Common::POST($url,Authorization => "OAuth ".Bio::KBase::utilities::token(),Content_Type => 'multipart/form-data',Content => [upload => [$filename]]);
 	$req->method('PUT');
 	my $res = $ua->request($req);
-	Bio::KBase::ObjectAPI::logging::log($res->content);
+	Bio::KBase::utilities::log($res->content);
 	unlink($filename);
 }
 
@@ -553,9 +552,10 @@ sub save_model {
 	my ($self,$object,$ref) = @_;
 	my $array = [split(/\/+/,$ref)];
 	$ref = join("/",@{$array});
+	$ref =~ s/\/\//\//g;
 	my $name = pop(@{$array});
 	#Listing contents of any existing model folder in this location
-	my $output = $self->call_ws("ls",{
+	my $output = Bio::ModelSEED::patricenv::call_ws("ls",{
 		paths => [$ref],
 		recursive => 1,
 	});
@@ -596,12 +596,12 @@ sub save_model {
 	#Adding folders and genome if not already present
 	my $listout = [];
 	if ($exists != 1) {
-		if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
-			$listout = $self->call_ws("create",{
+		if (Bio::KBase::utilities::conf("ProbModelSEED","old_models") == 1) {
+			$listout = Bio::ModelSEED::patricenv::call_ws("create",{
 				objects => [[$ref,"folder",{},undef]]
 			});
 		} else {
-			$listout = $self->call_ws("create",{
+			$listout = Bio::ModelSEED::patricenv::call_ws("create",{
 				objects => [[$ref,"modelfolder",{},undef]]
 			});
 		}
@@ -620,7 +620,7 @@ sub save_model {
 	push(@{$createinput->{objects}},[$ref."/model","model",{},undef]);
 	$objectdata->{$ref."/model"} = $object->toJSON();
 	#Saving model SBML format
-	if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
+	if (Bio::KBase::utilities::conf("ProbModelSEED","old_models") == 1) {
 		$name =~ s/^\.//;
 	}
 	push(@{$createinput->{objects}},[$ref."/".$name.".sbml","string",{
@@ -648,7 +648,7 @@ sub save_model {
 	}
 	$objectdata->{$ref."/".$name.".rxntbl"} = $rxntbl;
 	#Calling create functions
-	my $createoutput = $self->call_ws("create",$createinput);
+	my $createoutput = Bio::ModelSEED::patricenv::call_ws("create",$createinput);
 	for (my $i=0; $i < @{$createoutput}; $i++) {
 		push(@{$listout},$createoutput->[$i]);
 	}
@@ -656,7 +656,7 @@ sub save_model {
 	$output = {};
 	my $modelmeta;
 	for (my $i=0; $i < @{$listout}; $i++) {
-		Bio::KBase::ObjectAPI::logging::log("Save model:".$i."\t".join("\t",@{$listout->[$i]}));
+		Bio::KBase::utilities::log("Save model:".$i."\t".join("\t",@{$listout->[$i]}));
 		if (defined($listout->[$i]->[11]) && length($listout->[$i]->[11]) > 0 && defined($objectdata->{$listout->[$i]->[2].$listout->[$i]->[0]})) {
 			$self->upload_to_shock($objectdata->{$listout->[$i]->[2].$listout->[$i]->[0]},$listout->[$i]->[11]);
 		}
@@ -681,7 +681,7 @@ sub save_model {
 		}	
 	}
 	my $summary = $self->helper()->get_model_summary($object);
-	if (Bio::KBase::ObjectAPI::config::old_models() == 1) {
+	if (Bio::KBase::utilities::conf("ProbModelSEED","old_models") == 1) {
     	my $path = $ref;
     	if ($ref =~ m/(.+)\/\.([^\/]+)$/) {
     		$path = $1."/".$2;
@@ -691,7 +691,7 @@ sub save_model {
     			$data->{gapfilling}->[0]->{fba_ref} = ".".$2."/gapfilling/".$data->{gapfilling}->[0]->{id}."||";
     		}
     		$data = Bio::KBase::ObjectAPI::utilities::TOJSON($data);
-    		my $tempoutput = $self->call_ws("create",{
+    		my $tempoutput = Bio::ModelSEED::patricenv::call_ws("create",{
     			objects => [[$path,"model",$summary,$data]]
     		});
     	}
@@ -702,7 +702,7 @@ sub save_model {
 
 sub load_model {
 	my ($self,$meta) = @_;
-	my $objdatas = $self->call_ws("get",{objects => [$meta->[2].$meta->[0]."/model"]});
+	my $objdatas = Bio::ModelSEED::patricenv::call_ws("get",{objects => [$meta->[2].$meta->[0]."/model"]});
 	$objdatas->[0]->[0]->[0] = $meta->[0];
 	$objdatas->[0]->[0]->[2] = $meta->[2];
 	return $objdatas->[0];
@@ -714,7 +714,7 @@ sub save_fba {
 	$ref = join("/",@{$array});
 	my $name = pop(@{$array});
 	#Listing contents of any existing model folder in this location
-	my $output = $self->call_ws("ls",{
+	my $output = Bio::ModelSEED::patricenv::call_ws("ls",{
 		paths => [$ref],
 		recursive => 1,
 	});
@@ -846,24 +846,24 @@ sub save_fba {
 	    	},
 	    	name => $object->fbamodel()->wsmeta()->[0]."-".$object->media()->wsmeta()->[0]."-essentials"
 	    };
-	    push(@{$createinput->{objects}},["/".Bio::KBase::ObjectAPI::config::username()."/home/Feature Groups/".$object->fbamodel()->wsmeta()->[0]."-".$object->media()->wsmeta()->[0]."-essentials","string",{
+	    push(@{$createinput->{objects}},["/".Bio::KBase::utilities::user_id()."/home/Feature Groups/".$object->fbamodel()->wsmeta()->[0]."-".$object->media()->wsmeta()->[0]."-essentials","string",{
 		   description => "Group of essential genes predicted by metabolic models",
 		   fba => $ref,
 		   objective => $object->objectiveValue(),
 		   media => $mediaref,
 		   model => $modelref
 		},undef]);
-		$objectdata->{"/".Bio::KBase::ObjectAPI::config::username()."/home/Feature Groups/".$object->fbamodel()->wsmeta()->[0]."-".$object->media()->wsmeta()->[0]."-essentials"} = Bio::KBase::ObjectAPI::utilities::TOJSON($ftrgroup);
+		$objectdata->{"/".Bio::KBase::utilities::user_id()."/home/Feature Groups/".$object->fbamodel()->wsmeta()->[0]."-".$object->media()->wsmeta()->[0]."-essentials"} = Bio::KBase::ObjectAPI::utilities::TOJSON($ftrgroup);
     }
 	#Calling create functions
-	my $createoutput = $self->call_ws("create",$createinput);
+	my $createoutput = Bio::ModelSEED::patricenv::call_ws("create",$createinput);
 	for (my $i=0; $i < @{$createoutput}; $i++) {
 		push(@{$listout},$createoutput->[$i]);
 	}
 	#Uploading actual files to shock
 	$output = {};
 	for (my $i=0; $i < @{$listout}; $i++) {
-		Bio::KBase::ObjectAPI::logging::log("Save fba:".$i."\t".join("\t",@{$listout->[$i]}));
+		Bio::KBase::utilities::log("Save fba:".$i."\t".join("\t",@{$listout->[$i]}));
 		if (defined($listout->[$i]->[11]) && length($listout->[$i]->[11]) > 0 && defined($objectdata->{$listout->[$i]->[2].$listout->[$i]->[0]})) {
 			$self->upload_to_shock($objectdata->{$listout->[$i]->[2].$listout->[$i]->[0]},$listout->[$i]->[11]);
 		}
@@ -877,50 +877,6 @@ sub save_fba {
 			$self->cache()->{$fbameta->[2].$fbameta->[0]} = [$fbameta,$object];
 			$self->cache()->{$fbameta->[4]} = [$fbameta,$object];
 			$self->cache()->{$ref} = [$fbameta,$object];
-		}
-	}
-	return $output;
-}
-
-sub call_ws {
-	my ($self,$function,$args) = @_;
-	$args->{adminmode} =  $self->adminmode();
-	my $retryCount = 3;
-	my $error;
-	my $output;
-	while ($retryCount > 0) {
-		if ($function eq "create") {
-			if (length(Bio::KBase::ObjectAPI::config::setowner()) > 0) {
-				$args->{setowner} = Bio::KBase::ObjectAPI::config::setowner();
-			}
-			$args->{overwrite} = 1;
-		}	
-		eval {
-			$output = $self->workspace()->$function($args);
-		};
-		# If there is a network glitch, wait a second and try again. 
-		if ($@) {
-			$error = $@;
-			if (($error =~ m/HTTP status: 503 Service Unavailable/) ||
-			    ($error =~ m/HTTP status: 502 Bad Gateway/)) {
-				$retryCount -= 1;
-				Bio::KBase::ObjectAPI::logging::log("Error putting workspace object ".$error,"error");
-				sleep(1);				
-			} else {
-				$retryCount = 0; # Get out and report the error
-			}
-		} else {
-			last;
-		}
-	}
-	if ($retryCount == 0) {
-		Bio::KBase::ObjectAPI::utilities::error($error);
-	}
-	if ($function eq "create") {
-		if (defined($args->{objects})) {
-			for (my $i=0; $i < @{$args->{objects}}; $i++) {
-				$self->save_file_list()->{$args->{objects}->[$i]->[0]} = 1;
-			}
 		}
 	}
 	return $output;

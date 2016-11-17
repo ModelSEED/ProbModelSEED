@@ -22,7 +22,8 @@ use Data::Dumper;
 use Config::Simple;
 use Plack::Request;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
-use Bio::KBase::ObjectAPI::utilities;
+use Bio::KBase::utilities;
+use Bio::ModelSEED::patricenv;
 
 #
 # Alias our context variable.
@@ -30,67 +31,30 @@ use Bio::KBase::ObjectAPI::utilities;
 *Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl::CallContext = *Bio::ModelSEED::ProbModelSEED::Service::CallContext;
 our $CallContext;
 
-#Returns the authentication token supplied to the service in the context object
-sub token {
-	my($self) = @_;
-	return $CallContext->token;
-}
-
-#Returns the username supplied to the service in the context object
-sub user_id {
-	my ($self) = @_;
-	return $CallContext->user_id;
-}
-
-sub workspace_url {
-	my ($self) = @_;
-	if (!defined($CallContext->{"_workspace-url"})) {
-		$CallContext->{"_workspace-url"} = Bio::KBase::ObjectAPI::config::workspace_url();
-	}
-	return $CallContext->{"_workspace-url"};
-}
-
-sub adminmode {
-	my ($self) = @_;
-	if (!defined($CallContext->{_adminmode})) {
-		return 0;
-	}
-	return $CallContext->{_adminmode};
-}
-
 #Initialization function for call
 sub initialize_call {
 	my ($self,$params) = @_;
-	if (defined($params->{adminmode})) {
-		$CallContext->{_adminmode} = $params->{adminmode};
+	$params = Bio::KBase::utilities::args($params,[],{
+		adminmode => 0
+	});
+	if (!defined($CallContext) && defined(Bio::KBase::utilities::context())) {
+		$CallContext = Bio::KBase::utilities::context();
 	}
-	if (defined($params->{wsurl})) {
-		$CallContext->{"_workspace-url"} = $params->{wsurl};
-	}
-	Bio::KBase::ObjectAPI::utilities::elapsedtime();
-	Bio::KBase::ObjectAPI::config::username($self->user_id());
-	Bio::KBase::ObjectAPI::config::token($self->token());
-	Bio::KBase::ObjectAPI::config::adminmode($self->adminmode());
+	$self->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
+    	adminmode => $params->{adminmode},
+    	configfile => $ENV{KB_DEPLOYMENT_CONFIG},
+    	configservice => "ProbModelSEED",
+    	workspace_url => $params->{wsurl},
+    	parameters => $params,
+    	call_context => $CallContext,
+    	method => $CallContext->method()
+	});
 	return $params;
-}
-
-#Returns the method supplied to the service in the context object
-sub current_method {
-	my ($self) = @_;
-	return $CallContext->method;
 }
 
 sub helper {
 	my ($self) = @_;
-	if (!defined($CallContext->{_helper})) {
-		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
-			token => $self->token(),
-			username => $self->user_id(),
-			adminmode => $self->adminmode(),
-			workspace_url => $self->workspace_url()
-		});
-	}
-	return $CallContext->{_helper};
+	return $self->{_helper};
 }
 
 #END_HEADER
@@ -102,12 +66,11 @@ sub new
     };
     bless $self, $class;
     #BEGIN_CONSTRUCTOR
-    Bio::KBase::ObjectAPI::config::load_config({
-    	filename => $ENV{KB_DEPLOYMENT_CONFIG},
+    my $config = Bio::KBase::utilities::read_config({
+		filename => $ENV{KB_DEPLOYMENT_CONFIG},
 		service => "ProbModelSEED"
-    });
-	print "Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]);
-    #END_CONSTRUCTOR
+	});
+	#END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
     {
@@ -211,7 +174,7 @@ sub list_gapfill_solutions
     my($output);
     #BEGIN list_gapfill_solutions
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{include_metadata => 0});
+    $input = Bio::KBase::utilities::args($input,["model"],{include_metadata => 0});
 	$output = $self->helper()->list_model_gapfills($input->{model},$input->{include_metadata});
     #END list_gapfill_solutions
     my @_bad_returns;
@@ -324,7 +287,7 @@ sub manage_gapfill_solutions
     my($output);
     #BEGIN manage_gapfill_solutions
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model","commands"],{
+    $input = Bio::KBase::utilities::args($input,["model","commands"],{
     	selected_solutions => {},
     	include_meta => 1
     });
@@ -450,7 +413,7 @@ sub list_fba_studies
     my($output);
     #BEGIN list_fba_studies
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{});
+    $input = Bio::KBase::utilities::args($input,["model"],{});
     $output = $self->helper()->list_model_fba($input->{model});
     #END list_fba_studies
     my @_bad_returns;
@@ -549,7 +512,7 @@ sub delete_fba_studies
     my($output);
     #BEGIN delete_fba_studies
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model","fbas"],{});
+    $input = Bio::KBase::utilities::args($input,["model","fbas"],{});
     $output = $self->helper()->delete_model_objects($input->{model},$input->{fbas},"fba");
     #END delete_fba_studies
     my @_bad_returns;
@@ -630,7 +593,7 @@ sub export_model
     my($output);
     #BEGIN export_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{
+    $input = Bio::KBase::utilities::args($input,["model"],{
 		format => "sbml",
 		to_shock => 0
     });
@@ -716,7 +679,7 @@ sub export_media
     my($output);
     #BEGIN export_media
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["media"],{
+    $input = Bio::KBase::utilities::args($input,["media"],{
 		to_shock => 0
     });
     my $media = $self->helper()->get_object($input->{media},"media");
@@ -893,7 +856,7 @@ sub get_model
     my($output);
     #BEGIN get_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{to => 0});
+    $input = Bio::KBase::utilities::args($input,["model"],{to => 0});
     if ($input->{to} == 1) {
     	$output = $self->helper()->get_object($input->{model})->serializeToDB();
     } else {
@@ -1018,7 +981,7 @@ sub delete_model
     my($output);
     #BEGIN delete_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{});
+    $input = Bio::KBase::utilities::args($input,["model"],{});
     $output = $self->helper()->delete_model($input->{model});
     #END delete_model
     my @_bad_returns;
@@ -1138,7 +1101,7 @@ sub list_models
     #BEGIN list_models
     $input = $self->initialize_call($input);
     my $hash = $self->helper()->list_models($input);
-	my $output = [];
+	$output = [];
 	foreach my $key (keys(%{$hash})) {
 		push(@{$output},$hash->{$key});
 	}
@@ -1278,6 +1241,17 @@ sub copy_model
     my($output);
     #BEGIN copy_model
     $input = $self->initialize_call($input);
+    $input = Bio::KBase::utilities::args($input,["model"],{
+    	destination => undef,
+    	destname => undef,
+		plantseed => 0,
+		copy_genome => 1,
+		to_kbase => 0,
+		workspace_url => undef,
+		kbase_username => undef,
+		kbase_password => undef,
+		kbase_token => undef
+    });
     $output = $self->helper()->copy_model($input);
     #END copy_model
     my @_bad_returns;
@@ -1414,7 +1388,7 @@ sub copy_genome
     my($output);
     #BEGIN copy_genome
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["genome"],{
+    $input = Bio::KBase::utilities::args($input,["genome"],{
     	destination => undef,
 		destname => undef,
 		plantseed => 0,
@@ -1520,7 +1494,7 @@ sub list_model_edits
     my($output);
     #BEGIN list_model_edits
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{});
+    $input = Bio::KBase::utilities::args($input,["model"],{});
     my $model = $self->helper()->get_object($input->{model});
     $output = $model->model_edits();
     #END list_model_edits
@@ -1670,7 +1644,7 @@ sub edit_model
     my($output);
     #BEGIN edit_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{
+    $input = Bio::KBase::utilities::args($input,["model"],{
     	biomass_changes => [],
     	reactions_to_remove => [],
     	reactions_to_add => [],
@@ -1778,14 +1752,14 @@ sub get_feature
     my($output);
     #BEGIN get_feature
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["genome","feature"],{});
+    $input = Bio::KBase::utilities::args($input,["genome","feature"],{});
 
     my $genome = $self->helper()->get_object($input->{genome}."/genome","genome");
     if(!$genome){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
 
-    my $output=undef;
+    $output=undef;
     foreach my $ftr (@{$genome->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $output = $ftr->{data};
@@ -1981,12 +1955,12 @@ sub save_feature_function
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     #BEGIN save_feature_function
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["genome","feature","function"],{"user"=>undef});
 	if ($input->{genome} =~ m/\/plantseed\/[^\/]+$/) {
 		$input->{genome} .= "/genome";
 	}
     my $genome_obj = $self->helper()->get_object($input->{genome},undef,{data_only => 1});
     $genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($genome_obj);
+    $input = Bio::KBase::utilities::args($input,["genome","feature","function"],{"user"=>undef});
     if(!$genome_obj){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
@@ -2142,7 +2116,7 @@ sub compare_regions
     my($output);
     #BEGIN compare_regions
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["similarities"],{number_regions=>10,region_size=>15000});
+    $input = Bio::KBase::utilities::args($input,["similarities"],{number_regions=>10,region_size=>15000});
 
     use Bio::ModelSEED::Client::SAP;
     my $sapsvr = Bio::ModelSEED::Client::SAP->new();
@@ -2222,7 +2196,7 @@ sub compare_regions
     }
 
     @Regions = map { $Regions{$_} } @Regions;
-    my $output = {'size' => $input->{region_size}, 'number' => $input->{number_regions}, 'regions' => \@Regions};
+    $output = {'size' => $input->{region_size}, 'number' => $input->{number_regions}, 'regions' => \@Regions};
 
     #END compare_regions
     my @_bad_returns;
@@ -2316,7 +2290,8 @@ sub plant_annotation_overview
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN plant_annotation_overview
-    $input = $self->helper()->validate_args($input,["genome"],{});
+    $input = $self->initialize_call($input);
+    $input = Bio::KBase::utilities::args($input,["genome"],{});
 
     my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
     if(!$genome_obj){
@@ -2741,12 +2716,8 @@ sub ModelReconstruction
     my($output);
     #BEGIN ModelReconstruction
     $input = $self->initialize_call($input);
-    if ($input->{genome} =~ m/\/plantseed\//) {
-    	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
-    }
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
+    $output = $output->{fbamodel_ref};
     #END ModelReconstruction
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2822,12 +2793,8 @@ sub FluxBalanceAnalysis
     my($output);
     #BEGIN FluxBalanceAnalysis
     $input = $self->initialize_call($input);
-    if ($input->{model} =~ m/\/plantseed\//) {
-    	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
-    }
     $output = $self->helper()->app_harness("FluxBalanceAnalysis",$input);
+    $output = $output->{fba_ref};
     #END FluxBalanceAnalysis
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2903,12 +2870,8 @@ sub GapfillModel
     my($output);
     #BEGIN GapfillModel
     $input = $self->initialize_call($input);
-    if ($input->{model} =~ m/\/plantseed\//) {
-    	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
-    }
     $output = $self->helper()->app_harness("GapfillModel",$input);
+    $output = $output->{fbamodel_ref};
     #END GapfillModel
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2995,6 +2958,7 @@ sub MergeModels
     #BEGIN MergeModels
     $input = $self->initialize_call($input);
     $output = $self->helper()->app_harness("MergeModels",$input);
+    $output = $output->{fbamodel_ref};
     #END MergeModels
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
