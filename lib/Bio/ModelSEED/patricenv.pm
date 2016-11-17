@@ -11,7 +11,6 @@ our $method = undef;
 sub initialize_call {
 	my ($ctx,$method,$arguments,$pid) = @_;
 	Bio::KBase::utilities::processid($pid);
-	Bio::KBase::utilities::method($method);
 	Bio::KBase::utilities::arguments($arguments);
 	Bio::KBase::utilities::start_time(1);
 	Bio::ModelSEED::patricenv::reset_objects_created();
