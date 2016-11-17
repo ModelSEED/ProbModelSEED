@@ -10,7 +10,7 @@
 use strict;
 use JSON::XS;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
-use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl;
+#use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl;
 use Bio::KBase::utilities;
 use Bio::ModelSEED::patricenv;
 
@@ -69,8 +69,8 @@ sub client {
     my ($self) = @_;
     if (!defined($self->{_client})) {
     	
-    	$self->{_client} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl->new();
-    	#$self->{_client} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient->new($self->msurl());
+    	#$self->{_client} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl->new();
+    	$self->{_client} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient->new($self->msurl(),token => Bio::KBase::utilities::token());
     }
 	return $self->{_client};
 }
@@ -78,7 +78,6 @@ sub client {
 sub runningJobs {
 	my ($self,$type) = @_;
 	my $runningJobs;
-	#system("ps -A | grep RunProbModelSEED > ".$self->jobdirectory()."/jobs/ps");
 	system("ps -A > ".$self->jobdirectory()."/jobs/ps");
 	my $output;
 	open (PSINPUT, "<", $self->jobdirectory()."/jobs/ps");

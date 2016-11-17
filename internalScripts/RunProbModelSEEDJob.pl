@@ -3,7 +3,7 @@ use strict;
 use JSON::XS;
 use Bio::KBase::utilities;
 use Bio::ModelSEED::patricenv;
-use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl;
+#use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 
@@ -31,6 +31,8 @@ my $job;
 }
 close($fh);
 
+Bio::KBase::utilities::setconf("ProbModelSEED","run_as_app",0);
+
 my $errors = {};
 eval {
 	my $obj = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
@@ -46,8 +48,8 @@ if ($@) {
 }
 
 eval {
-	#my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient->new(Bio::KBase::utilities::conf("Scheduler","msurl"),token => $job->{token});
-	my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl->new();
+	my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient->new(Bio::KBase::utilities::conf("Scheduler","msurl"),token => $job->{token});
+	#my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl->new();
 	my $jobs = $client->ManageJobs({
 		jobs => [$ARGV[0]],
 		action => "finish",
