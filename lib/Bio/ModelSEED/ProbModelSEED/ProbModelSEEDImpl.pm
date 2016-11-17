@@ -2717,7 +2717,9 @@ sub ModelReconstruction
     #BEGIN ModelReconstruction
     $input = $self->initialize_call($input);
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
-    $output = $output->{fbamodel_ref};
+    if (ref($output) eq 'HASH') {
+    	$output = $output->{fbamodel_ref};
+    }
     #END ModelReconstruction
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2794,7 +2796,9 @@ sub FluxBalanceAnalysis
     #BEGIN FluxBalanceAnalysis
     $input = $self->initialize_call($input);
     $output = $self->helper()->app_harness("FluxBalanceAnalysis",$input);
-    $output = $output->{fba_ref};
+    if (ref($output) eq 'HASH') {
+    	$output = $output->{fba_ref};
+    }
     #END FluxBalanceAnalysis
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2871,7 +2875,9 @@ sub GapfillModel
     #BEGIN GapfillModel
     $input = $self->initialize_call($input);
     $output = $self->helper()->app_harness("GapfillModel",$input);
-    $output = $output->{fbamodel_ref};
+    if (ref($output) eq 'HASH') {
+    	$output = $output->{fbamodel_ref};
+    }
     #END GapfillModel
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2958,7 +2964,9 @@ sub MergeModels
     #BEGIN MergeModels
     $input = $self->initialize_call($input);
     $output = $self->helper()->app_harness("MergeModels",$input);
-    $output = $output->{fbamodel_ref};
+    if (ref($output) eq 'HASH') {
+    	$output = $output->{fbamodel_ref};
+    }
     #END MergeModels
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
