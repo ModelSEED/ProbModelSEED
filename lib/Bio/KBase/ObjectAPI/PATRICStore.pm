@@ -555,6 +555,15 @@ sub save_model {
 	print "ModelRef:".$ref."\n";
 	my $name = pop(@{$array});
 	#Listing contents of any existing model folder in this location
+	if (Bio::KBase::utilities::conf("ProbModelSEED","old_models") == 1) {
+		my $listout = Bio::ModelSEED::patricenv::call_ws("create",{
+			objects => [[$ref,"folder",{},undef]]
+		});
+	} else {
+		my $listout = Bio::ModelSEED::patricenv::call_ws("create",{
+			objects => [[$ref,"modelfolder",{},undef]]
+		});
+	}
 	my $output = Bio::ModelSEED::patricenv::call_ws("ls",{
 		paths => [$ref],
 		recursive => 1,
@@ -572,20 +581,12 @@ sub save_model {
 	my $subobjects = {};
 	if (defined($output->{$ref})) {
 		for (my $i=0; $i < @{$output->{$ref}}; $i++) {
-			if ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref && $output->{$ref}->[$i]->[1] eq "modelfolder") {
-				$exists = 1;
-				last;
-			}
-		}
-		if ($exists == 1) {
-			for (my $i=0; $i < @{$output->{$ref}}; $i++) {
-				if ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/fba" && $output->{$ref}->[$i]->[1] eq "folder") {
-					$subobjects->{fba} = 1;	
-				} elsif ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/gapfilling" && $output->{$ref}->[$i]->[1] eq "folder") {
-					$subobjects->{gapfill} = 1;
-				} elsif ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/genome" && $output->{$ref}->[$i]->[1] eq "genome") {
-					$subobjects->{genome} = 1;
-				}
+			if ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/fba" && $output->{$ref}->[$i]->[1] eq "folder") {
+				$subobjects->{fba} = 1;	
+			} elsif ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/gapfilling" && $output->{$ref}->[$i]->[1] eq "folder") {
+				$subobjects->{gapfill} = 1;
+			} elsif ($output->{$ref}->[$i]->[2].$output->{$ref}->[$i]->[0] eq $ref."/genome" && $output->{$ref}->[$i]->[1] eq "genome") {
+				$subobjects->{genome} = 1;
 			}
 		}
 	}
@@ -595,17 +596,6 @@ sub save_model {
 	my $objectdata = {};
 	#Adding folders and genome if not already present
 	my $listout = [];
-	if ($exists != 1) {
-		if (Bio::KBase::utilities::conf("ProbModelSEED","old_models") == 1) {
-			$listout = Bio::ModelSEED::patricenv::call_ws("create",{
-				objects => [[$ref,"folder",{},undef]]
-			});
-		} else {
-			$listout = Bio::ModelSEED::patricenv::call_ws("create",{
-				objects => [[$ref,"modelfolder",{},undef]]
-			});
-		}
-	}
 	if (!defined($subobjects->{fba})) {
 		push(@{$createinput->{objects}},[$ref."/fba","folder",{},undef]);
 	}
