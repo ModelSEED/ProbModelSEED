@@ -1910,7 +1910,10 @@ sub create_jobs {
 	$input = Bio::KBase::utilities::args($input,["jobs"],{});
 	my $output = {};
 	for (my $i=0; $i < @{$input->{jobs}}; $i++) {
-		my $idobj = $self->util_mongodb("modelseed")->get_collection('counters')->find_one_and_update({ _id => "job_ids" },{ '$inc' => { seq => 1 } },{'new' => 'true'});
+		my $idobj = $self->util_mongodb("modelseed")->get_collection('counters')->find_and_modify({
+			query => { _id => "job_ids" },
+			update => { '$inc' => { seq => 1 } }
+		});
 		my $id = $idobj->{seq};
 		my $job = {
 			id => $id,
@@ -1965,7 +1968,10 @@ sub manage_jobs {
 				$update->{status} = "failed";
 				$obj->{error} = $input->{errors}->{$obj->{id}};
 			}
-			$self->util_mongodb("modelseed")->get_collection('jobs')->find_one_and_update({ id => $obj->{id} },{ '$set' => $update});
+			$self->util_mongodb("modelseed")->get_collection('jobs')->find_and_modify({
+				query => { id => $obj->{id} },
+				update => { '$set' => $update}
+			});
 		} elsif ($input->{action} eq "start") {
 			my $update = {
 				status => "running",
@@ -1979,7 +1985,10 @@ sub manage_jobs {
 			$obj->{error} = $update->{error};
 			$obj->{report} = $update->{report};
 			$obj->{pid} = $update->{pid};
-			$self->util_mongodb("modelseed")->get_collection('jobs')->find_one_and_update({ id => $obj->{id} },{ '$set' => $update});
+			$self->util_mongodb("modelseed")->get_collection('jobs')->find_and_modify({
+				query => { id => $obj->{id} },
+				update => { '$set' => $update}
+			});
 		}
 	}
 	return $output;
