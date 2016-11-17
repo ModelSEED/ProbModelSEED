@@ -552,7 +552,7 @@ sub save_model {
 	my ($self,$object,$ref) = @_;
 	my $array = [split(/\/+/,$ref)];
 	$ref = join("/",@{$array});
-	$ref =~ s/\/\//\//g;
+	print "ModelRef:".$ref."\n";
 	my $name = pop(@{$array});
 	#Listing contents of any existing model folder in this location
 	my $output = Bio::ModelSEED::patricenv::call_ws("ls",{
