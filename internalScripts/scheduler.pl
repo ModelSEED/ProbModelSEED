@@ -37,18 +37,6 @@ open(PID, "> ".$sched->jobdirectory()."/schedulerPID") || die "could not open PI
 print PID "$$\n"; 
 close(PID);
 
-$sched->client()->CreateJobs({
-	jobs => [{
-				app => "ModelReconstruction",
-				parameters => {
-					genome => "RAST:315750.3",
-					fulldb => "0",
-					output_path => "/chenry/home/modeltesting",
-					output_file => "TestModel"
-				}
-	}]
-});
-
 $sched->monitor();
 
 #Declaring scheduler package
@@ -104,7 +92,7 @@ sub monitor {
 	while ($continue == 1) {
 		my $count = $self->{_threads};
 		my $jobs;
-		my $runningJobs = $self->runningJobs();
+		#my $runningJobs = $self->runningJobs();
 		eval {
 			my $output = $self->client()->CheckJobs({
 				admin => 1,
@@ -120,34 +108,34 @@ sub monitor {
 		my $runningCount;
 		if (defined($jobs)) {
 			$runningCount = @{$jobs};
-			for (my $i=0; $i < @{$jobs}; $i++) {
-				my $job = $jobs->[$i];
-				if (!defined($runningJobs->{$job->{pid}})) {
-					my $filename = $self->jobdirectory()."/jobs/".$job->{id}."/stderr.log";
-					my $error = "";
-					if (-e $filename) {
-						open (INPUT, "<", $filename);
-					    while (my $Line = <INPUT>) {
-					        chomp($Line);
-					        $Line =~ s/\r//;
-							$error .= $Line."\n";
-					    }
-					    close(INPUT);
-					} else {
-						$error .= "Job no longer running for unknown reason!";
-					}
-					eval {
-						my $status = $self->client()->ManageJobs({
-							jobs => [$job->{id}],
-							action => "finish",
-							errors => {
-								$job->{id} => $error
-							}
-						});
-					};
-					$runningCount--;
-				}
-			}
+#			for (my $i=0; $i < @{$jobs}; $i++) {
+#				my $job = $jobs->[$i];
+#				if (!defined($runningJobs->{$job->{pid}})) {
+#					my $filename = $self->jobdirectory()."/jobs/".$job->{id}."/stderr.log";
+#					my $error = "";
+#					if (-e $filename) {
+#						open (INPUT, "<", $filename);
+#					    while (my $Line = <INPUT>) {
+#					        chomp($Line);
+#					        $Line =~ s/\r//;
+#							$error .= $Line."\n";
+#					    }
+#					    close(INPUT);
+#					} else {
+#						$error .= "Job no longer running for unknown reason!";
+#					}
+#					eval {
+#						my $status = $self->client()->ManageJobs({
+#							jobs => [$job->{id}],
+#							action => "finish",
+#							errors => {
+#								$job->{id} => $error
+#							}
+#						});
+#					};
+#					$runningCount--;
+#				}
+#			}
 			print $runningCount." jobs now running!\n";
 		}
 		#Queuing new jobs
