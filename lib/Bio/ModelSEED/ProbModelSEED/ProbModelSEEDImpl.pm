@@ -1799,7 +1799,6 @@ sub get_feature
 
     #Retrieve subsystems
     my $Annotation = $self->helper()->get_object("/plantseed/Data/annotation_overview","unspecified");
-    $Annotation = Bio::KBase::ObjectAPI::utilities::FROMJSON($Annotation);
     my %Roles_Subsystems=();
     foreach my $role (@{$Annotation}){
 	foreach my $ss (keys %{$role->{subsystems}}){
@@ -1821,7 +1820,6 @@ sub get_feature
     #Retrieve Minimal Genome object (unspecified type)
     my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";    
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
-    $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
 
     #Retrieve sims object containing hits for feature
     my $sim_index = $min_genome->{similarities_index}{$input->{feature}};
@@ -1834,7 +1832,6 @@ sub get_feature
 
     my $sim_file = $input->{genome}."/.plantseed_data/Sims_".$sim_index;
     $sim_file = $self->helper()->get_object($sim_file,"unspecified");
-    $sim_file = Bio::KBase::ObjectAPI::utilities::FROMJSON($sim_file);
     
     #Iterate through hits and separate them out into plant and prokaryote hits
     #By rule, prokaryote hits still have their peg identifiers and plants dont
@@ -1855,7 +1852,6 @@ sub get_feature
 
     #Retrieve details for plants
     my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
-    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
 
     my @Plants = @{$output->{plant_similarities}};
     undef(@{$output->{plant_similarities}});
@@ -1986,7 +1982,6 @@ sub save_feature_function
 		$input->{genome} .= "/genome";
 	}
     my $genome_obj = $self->helper()->get_object($input->{genome},undef,{data_only => 1});
-    $genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($genome_obj);
     if(!$genome_obj){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
@@ -2017,7 +2012,6 @@ sub save_feature_function
     my $min_genome = $root."/.plantseed_data/minimal_genome";
 
     my $min_genome_obj = $self->helper()->get_object($min_genome,undef,{data_only => 1});
-    $min_genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome_obj);
 
     $found_ftr = undef;
     foreach my $ftr (@{$min_genome_obj->{features}}){
