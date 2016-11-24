@@ -725,6 +725,7 @@ module ProbModelSEED {
 		bool include_failed;
 		bool include_running;
 		bool include_errors;
+		bool include_queued;
     } CheckJobs_params;
     authentication required;
 	funcdef CheckJobs(CheckJobs_params input) returns (mapping<JobID,Task> output);
