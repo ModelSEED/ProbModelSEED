@@ -15,7 +15,9 @@ sub initialize_call {
 	Bio::KBase::utilities::start_time(1);
 	Bio::ModelSEED::patricenv::reset_objects_created();
 	Bio::KBase::utilities::timestamp(1);
-	Bio::KBase::utilities::set_context($ctx);
+	if (defined($ctx)) {
+		Bio::KBase::utilities::set_context($ctx);
+	}
 	Bio::ModelSEED::patricenv::ws_client({refresh => 1});
 	print("Starting ".$method." method.\n");
 }

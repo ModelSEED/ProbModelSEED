@@ -1938,7 +1938,7 @@ sub manage_jobs {
 		reports => {}
 	});
 	for (my $i=0; $i < @{$input->{jobs}}; $i++) {
-		$input->{jobs}->[$i] += "";
+		$input->{jobs}->[$i] .= "";
 	}
 	my $output = {};
 	my $cursor = $self->util_mongodb("modelseed")->get_collection('jobs')->find({id => {'$in' => $input->{jobs}}});
