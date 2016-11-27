@@ -179,7 +179,7 @@ sub queueJob {
 	my $executable = $self->{_executable}." ".$job->{id};
 	my $cmd = "nohup ".$executable." > ".$jobdir."stdout.log 2> ".$jobdir."stderr.log &";
   	system($cmd);
-  	for ($i=0; $i < 6; $i++) {
+  	for (my $i=0; $i < 6; $i++) {
   		sleep(5);
   		if (-e $jobdir."pid") {
   			last;	
