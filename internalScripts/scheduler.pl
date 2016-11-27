@@ -176,9 +176,9 @@ sub queueJob {
 	my $executable = $self->{_executable}." ".$job->{id};
 	my $cmd = "nohup ".$executable." > ".$jobdir."stdout.log 2> ".$jobdir."stderr.log &";
   	system($cmd);
-  	sleep(5);
+  	sleep(10);
   	if (!-e $jobdir."pid") {
-  		die "Cannot find PID for job!";
+  		die "Cannot find PID for job - ".$jobdir."pid";
   	}
   	open( my $fh, "<", $jobdir."pid");
 	$pid = <$fh>;
