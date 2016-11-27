@@ -1974,7 +1974,7 @@ sub manage_jobs {
 		scheduler => 0
 	});
 	for (my $i=0; $i < @{$input->{jobs}}; $i++) {
-		$input->{jobs}->[$i] .= "";
+		$input->{jobs}->[$i] += 0;
 	}
 	my $output = {};
 	my $query = {id => {'$in' => $input->{jobs}}};
