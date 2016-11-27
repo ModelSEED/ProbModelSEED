@@ -79,9 +79,12 @@ sub monitor {
 				exclude_queued => 1,
 			});
 			foreach my $key (keys(%{$output})) {
+				print $key."\n";
 				push(@{$jobs},$output->{$key});
 			}
 		};
+		print "test";
+		exit;
 		my $runningCount;
 		if (defined($jobs)) {
 			$runningCount = @{$jobs};
@@ -176,24 +179,38 @@ sub queueJob {
 	my $executable = $self->{_executable}." ".$job->{id};
 	my $cmd = "nohup ".$executable." > ".$jobdir."stdout.log 2> ".$jobdir."stderr.log &";
   	system($cmd);
-  	sleep(10);
-  	if (!-e $jobdir."pid") {
-  		die "Cannot find PID for job - ".$jobdir."pid";
+  	for ($i=0; $i < 6; $i++) {
+  		sleep(5);
+  		if (-e $jobdir."pid") {
+  			last;	
+  		}
   	}
-  	open( my $fh, "<", $jobdir."pid");
-	$pid = <$fh>;
-	close($fh);
-	chomp($pid);
-	eval {
-		my $status = $self->client()->ManageJobs({
-			jobs => [$job->{id}],
-			action => "start",
-			scheduler => 1,
-			reports => {
-				$job->{id} => $pid
-			}
-		});
-	};
+  	if (-e $jobdir."pid") {
+	  	open( my $fh, "<", $jobdir."pid");
+		$pid = <$fh>;
+		close($fh);
+		chomp($pid);
+		eval {
+			my $status = $self->client()->ManageJobs({
+				jobs => [$job->{id}],
+				action => "start",
+				scheduler => 1,
+				reports => {
+					$job->{id} => $pid
+				}
+			});
+		};
+  	} else {
+  		eval {
+			my $status = $self->client()->ManageJobs({
+				jobs => [$job->{id}],
+				action => "finish",
+				errors => {
+					$job->{id} => "Could not assign PID to job!"
+				}
+			});
+		};
+  	}
 }
 
 sub haltalljobs {
@@ -219,9 +236,7 @@ sub readconfig {
 
 sub check_job_is_running {
 	my($self,$jobid) = @_;
-	print "ps -p ".$jobid->{pid}." > ".$self->jobdirectory()."/jobs/".$jobid->{id}."/ps.out";
 	system("ps -p ".$jobid->{pid}." > ".$self->jobdirectory()."/jobs/".$jobid->{id}."/ps.out");
-	exit;
 	open( my $fh, "<", $self->jobdirectory()."/jobs/".$jobid->{id}."/ps.out");
 	my $id = $jobid->{pid};
 	while (my $line = <$fh>) {
