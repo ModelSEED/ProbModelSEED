@@ -143,7 +143,7 @@ sub monitor {
 		print "Deleting old files...\n";
 		$self->clearAllOldFiles();
 		print "Sleeping...\n";
-		sleep(10);
+		sleep(60);
 	}
 }
 	
