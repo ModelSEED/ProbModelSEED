@@ -2013,6 +2013,19 @@ sub manage_jobs {
 				query => { id => $obj->{id} },
 				update => { '$set' => $update}
 			});
+		} elsif ($input->{action} eq "reset") {	
+			my $update = {
+				status => "queued",
+				error => "",
+				report => "",
+			};
+			$obj->{status} = $update->{status};
+			$obj->{error} = $update->{error};
+			$obj->{report} = $update->{report};
+			$self->util_mongodb("modelseed")->get_collection('jobs')->find_and_modify({
+				query => { id => $obj->{id} },
+				update => { '$set' => $update}
+			});
 		} elsif ($input->{action} eq "start") {
 			my $update = {
 				status => "running",
