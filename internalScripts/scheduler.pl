@@ -79,12 +79,9 @@ sub monitor {
 				exclude_queued => 1,
 			});
 			foreach my $key (keys(%{$output})) {
-				print $key."\n";
 				push(@{$jobs},$output->{$key});
 			}
 		};
-		print "test";
-		exit;
 		my $runningCount;
 		if (defined($jobs)) {
 			$runningCount = @{$jobs};
