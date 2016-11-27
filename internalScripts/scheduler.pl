@@ -219,10 +219,11 @@ sub readconfig {
 
 sub check_job_is_running {
 	my($self,$jobid) = @_;
-	system("ps -p ".$jobid." > ".$self->jobdirectory()."/jobs/".$jobid."/ps.out");
-	open( my $fh, "<", $self->jobdirectory()."/jobs/".$jobid."/ps.out");
+	system("ps -p ".$jobid->{pid}." > ".$self->jobdirectory()."/jobs/".$jobid->{id}."/ps.out");
+	open( my $fh, "<", $self->jobdirectory()."/jobs/".$jobid->{id}."/ps.out");
+	my $id = $jobid->{pid};
 	while (my $line = <$fh>) {
-		if ($line =~ m/$jobid/) {
+		if ($line =~ m/$id/) {
 			close($fh);
 			return 1;
 		}
