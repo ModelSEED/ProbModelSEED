@@ -63,39 +63,16 @@ sub client {
 	return $self->{_client};
 }
 
-sub runningJobs {
-	my ($self,$type) = @_;
-	my $runningJobs;
-	system("ps -A > ".$self->jobdirectory()."/jobs/ps");
-	my $output;
-	open (PSINPUT, "<", $self->jobdirectory()."/jobs/ps");
-	while (my $Line = <PSINPUT>) {
-		chomp($Line);
-		$Line =~ s/\r//;
-		push(@{$output},$Line);
-	}
-	close(PSINPUT);
-	if (defined($output->[1])) {
-		foreach my $line (@{$output}) {
-			if ($line =~ m/^\s*(\d+).+RunProbModelSEEDJob/) {
-				my $pid = $1;
-				$runningJobs->{$pid} = 1;
-			}
-		}
-	}
-	return $runningJobs;
-}
-
 sub monitor {
     my($self) = @_;
     my $continue = 1;
 	while ($continue == 1) {
 		my $count = $self->{_threads};
 		my $jobs;
-		#my $runningJobs = $self->runningJobs();
 		eval {
 			my $output = $self->client()->CheckJobs({
 				admin => 1,
+				scheduler => 1,
 				exclude_failed => 1,
 				exclude_running => 0,
 				exclude_complete => 1,
@@ -108,34 +85,35 @@ sub monitor {
 		my $runningCount;
 		if (defined($jobs)) {
 			$runningCount = @{$jobs};
-#			for (my $i=0; $i < @{$jobs}; $i++) {
-#				my $job = $jobs->[$i];
-#				if (!defined($runningJobs->{$job->{pid}})) {
-#					my $filename = $self->jobdirectory()."/jobs/".$job->{id}."/stderr.log";
-#					my $error = "";
-#					if (-e $filename) {
-#						open (INPUT, "<", $filename);
-#					    while (my $Line = <INPUT>) {
-#					        chomp($Line);
-#					        $Line =~ s/\r//;
-#							$error .= $Line."\n";
-#					    }
-#					    close(INPUT);
-#					} else {
-#						$error .= "Job no longer running for unknown reason!";
-#					}
-#					eval {
-#						my $status = $self->client()->ManageJobs({
-#							jobs => [$job->{id}],
-#							action => "finish",
-#							errors => {
-#								$job->{id} => $error
-#							}
-#						});
-#					};
-#					$runningCount--;
-#				}
-#			}
+			for (my $i=0; $i < @{$jobs}; $i++) {
+				my $job = $jobs->[$i];
+				if ($self->check_job_is_running($job) == 0) {
+					my $filename = $self->jobdirectory()."/jobs/".$job->{id}."/stderr.log";
+					my $error = "";
+					if (-e $filename) {
+						open (INPUT, "<", $filename);
+					    while (my $Line = <INPUT>) {
+					        chomp($Line);
+					        $Line =~ s/\r//;
+							$error .= $Line."\n";
+					    }
+					    close(INPUT);
+					} else {
+						$error .= "Job no longer running for unknown reason!";
+					}
+					eval {
+						my $status = $self->client()->ManageJobs({
+							jobs => [$job->{id}],
+							action => "finish",
+							status => "running",
+							errors => {
+								$job->{id} => $error
+							}
+						});
+					};
+					$runningCount--;
+				}
+			}
 			print $runningCount." jobs now running!\n";
 		}
 		#Queuing new jobs
@@ -168,7 +146,7 @@ sub monitor {
 		sleep(10);
 	}
 }
-
+	
 sub printJobFile {
 	my ($self,$job) = @_;
 	$job->{msurl} = $self->msurl();
@@ -210,6 +188,7 @@ sub queueJob {
 		my $status = $self->client()->ManageJobs({
 			jobs => [$job->{id}],
 			action => "start",
+			scheduler => 1,
 			reports => {
 				$job->{id} => $pid
 			}
@@ -238,26 +217,18 @@ sub readconfig {
 	$self->{_executable} = Bio::KBase::utilities::conf("Scheduler","executable");
 }
 
-sub write_running_jobs {
-    my($self) = @_; 
-	my $filename = $self->jobdirectory()."jobs.lst";
-	my $runningjobs = $self->runningjobs();
-	open( my $fh, ">", $filename);
-	for (my $i=0; $i < @{$runningjobs}; $i++) {
-		print $fh $runningjobs->[$i]."\n";
+sub check_job_is_running {
+	my($self,$jobid) = @_;
+	system("ps -p ".$jobid." > ".$self->jobdirectory()."/jobs/".$jobid."/ps.out");
+	open( my $fh, "<", $self->jobdirectory()."/jobs/".$jobid."/ps.out");
+	while (my $line = <$fh>) {
+		if ($line =~ m/$jobid/) {
+			close($fh);
+			return 1;
+		}
 	}
 	close($fh);
-}
-
-sub read_running_jobs {
-    my($self) = @_; 
-	my $filename = $self->jobdirectory()."jobs.lst";
-	my $runningjobs = $self->runningjobs();
-	open( my $fh, ">", $filename);
-	for (my $i=0; $i < @{$runningjobs}; $i++) {
-		print $fh $runningjobs->[$i]."\n";
-	}
-	close($fh);
+	return 0;
 }
 
 sub msurl {

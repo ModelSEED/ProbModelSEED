@@ -1905,6 +1905,40 @@ sub util_mongodb {
 	return $self->{_mongodb}->{$dbname};	
 }
 
+sub run_server_checks {
+	my($self) = @_;
+	if (Bio::KBase::utilities::conf("ProbModelSEED","server_checks") > 0) {
+		my $random_number = int(rand(100));
+		if ($random_number < 100*Bio::KBase::utilities::conf("ProbModelSEED","server_checks")) {
+			my $cursor = $self->util_mongodb("modelseed")->get_collection('events')->find({
+				id => "error_notification"
+			});
+			my $object = $cursor->next;
+			if (time()-$object->{"time"} > 86400) {
+				$self->util_mongodb("modelseed")->get_collection('events')->find_and_modify({
+					query => { id => "error_notification" },
+					update => { "time" => time() }
+				});
+				$cursor = $self->util_mongodb("modelseed")->get_collection('events')->find({
+					id => "scheduler_runs_job"
+				});
+				$object = $cursor->next;
+				if (time()-$object->{"time"} < 43200) {
+					print "No jobs run in 6 hours!";
+				}
+				$cursor = $self->util_mongodb("modelseed")->get_collection('events')->find({
+					id => "scheduler_checks_job"
+				});
+				$object = $cursor->next;
+				if (time()-$object->{"time"} < 3600) {
+					print "No checks of the queue in 1 hour!";
+				}
+			}
+			#"ukdordyefxrj26p8cd4qp1xneyyzeu"
+		}
+	}
+}
+
 sub create_jobs {
 	my($self,$input) = @_;
 	$input = Bio::KBase::utilities::args($input,["jobs"],{});
@@ -1935,13 +1969,19 @@ sub manage_jobs {
 	my($self,$input) = @_;
 	$input = Bio::KBase::utilities::args($input,["jobs","action"],{
 		errors => {},
-		reports => {}
+		reports => {},
+		status => undef,
+		scheduler => 0
 	});
 	for (my $i=0; $i < @{$input->{jobs}}; $i++) {
 		$input->{jobs}->[$i] .= "";
 	}
 	my $output = {};
-	my $cursor = $self->util_mongodb("modelseed")->get_collection('jobs')->find({id => {'$in' => $input->{jobs}}});
+	my $query = {id => {'$in' => $input->{jobs}}};
+	if (defined($input->{status})) {
+		$query->{status} = $input->{status};
+	}
+	my $cursor = $self->util_mongodb("modelseed")->get_collection('jobs')->find($query);
 	while (my $object = $cursor->next) {
 		$output->{$object->{id}} = $object;
 		delete $output->{$object->{id}}->{_id};
@@ -1981,6 +2021,12 @@ sub manage_jobs {
 				report => "",
 				pid => $input->{reports}->{$obj->{id}}
 			};
+			if ($input->{scheduler} == 1) {
+				$self->util_mongodb("modelseed")->get_collection('events')->find_and_modify({
+					query => { id => "scheduler_runs_job" },
+					update => { '$set' => {"time" => time()}}
+				});
+			}
 			$obj->{status} = $update->{status};
 			$obj->{start_time} = $update->{start_time};
 			$obj->{error} = $update->{error};
@@ -2003,9 +2049,16 @@ sub check_jobs {
 		exclude_running => 0,
 		exclude_complete => 0,
 		exclude_queued => 0,
-		admin => 0
+		admin => 0,
+		scheduler => 0
 	});
 	my $output = {};
+	if ($input->{scheduler} == 1) {
+		$self->util_mongodb("modelseed")->get_collection('events')->find_and_modify({
+			query => { id => "scheduler_checks_job" },
+			update => { '$set' => {"time" => time()}}
+		});
+	}
 	my $query = {
 		owner => Bio::KBase::utilities::user_id()
 	};
@@ -2868,6 +2921,7 @@ sub new {
 	} else {
 		Bio::KBase::utilities::setconf("ProbModelSEED","setowner","");
 	}
+	$self->run_server_checks();
 	Bio::KBase::utilities::set_handler($self);
 	Bio::KBase::ObjectAPI::functions::set_handler($self);
     return $self;
