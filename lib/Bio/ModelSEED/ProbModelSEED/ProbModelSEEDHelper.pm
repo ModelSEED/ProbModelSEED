@@ -2338,6 +2338,9 @@ sub ModelReconstruction {
 		minimum_target_flux => 0.1,
 		number_of_solutions => 1
     });
+    if (defined($parameters->{use_cplex})) {
+    	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
+    }
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $parameters->{genome};
     	$parameters->{output_file} =~ s/.+://;
@@ -2440,6 +2443,9 @@ sub FluxBalanceAnalysis {
 		notes => undef,
 		massbalance => undef
 	});
+	if (defined($parameters->{use_cplex})) {
+    	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
+    }
 	if (ref($parameters->{reaction_ko_list}) ne 'ARRAY') {
 		$parameters->{reaction_ko_list} = [split(/;/,$parameters->{reaction_ko_list})];
 	}
@@ -2516,6 +2522,9 @@ sub GapfillModel {
 		gauranteed_rxn_list => [],
 		integrate_solution => 0
 	});
+	if (defined($parameters->{use_cplex})) {
+    	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
+    }
 	$parameters->{output_path} = $parameters->{model}."/gapfilling";
 	if (!defined($parameters->{output_file})) {
 	    my $gflist = Bio::ModelSEED::patricenv::call_ws("ls",{
