@@ -18,6 +18,15 @@ our $loghandler;
 our $starttime = undef;
 our $arguments = undef;
 
+sub to_json {
+    my ($ref,$prettyprint) = @_;
+    my $JSON = JSON->new->utf8(1);
+    if (defined($prettyprint) && $prettyprint == 1) {
+		$JSON->pretty(1);
+    }
+    return $JSON->encode($ref);
+}
+
 sub arguments {
 	my ($input) = @_;
 	if (defined($input)) {

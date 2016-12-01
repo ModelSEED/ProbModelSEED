@@ -1,23 +1,20 @@
 use strict;
-use Data::Dumper;
-use Bio::P3::Workspace::ScriptHelpers;
-use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
-my $configfile = "/disks/p3dev2/deployment/deployment.cfg";
-#$configfile = "/Users/chenry/code/PATRICClient/config.ini";
-	
-Bio::KBase::ObjectAPI::config::load_config({
-	filename => $configfile,
+use Bio::KBase::utilities;
+use Bio::ModelSEED::patricenv;
+
+Bio::KBase::utilities::read_config({
 	service => "ProbModelSEED"
 });
-print "App starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]);
+Bio::ModelSEED::patricenv::create_context_from_client_config({});
 
 my $procs = $ARGV[0];
 my $index = $ARGV[1];
 
-#my $modellist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/Users/chenry/workspace/PATRIC_genomes/GenomeList.txt");
+my $modellist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/Users/chenry/workspace/PATRIC_genomes/GenomeList.txt");
 #my $modellist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/homes/chenry/PATRICGenomeList.txt");
-my $modellist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/homes/chenry/ShortGenomeList.txt");
-my $donelist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/disks/p3dev2/fba/genomesuccess.out");
+#my $modellist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/homes/chenry/ShortGenomeList.txt");
+#my $donelist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/disks/p3dev2/fba/genomesuccess.out");
+my $donelist = [];
 my $donehash = {};
 for (my $i=0; $i < @{$donelist}; $i++) {
 	$donelist->[$i] =~ s/:success//;
@@ -25,13 +22,8 @@ for (my $i=0; $i < @{$donelist}; $i++) {
 }
 
 my $helper;
-Bio::KBase::ObjectAPI::config::adminmode(1);
-
 $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
-	token => Bio::P3::Workspace::ScriptHelpers::token(),
-	username => "chenry",
-	method => "ModelReconstruction",
-	configfile => $configfile
+	method => "GapfillModel"
 });
 
 my $count = 0;
@@ -41,10 +33,7 @@ for (my $i=0; $i < @{$modellist}; $i++) {
 			if ($count % 100 == 0) {
 				$helper = undef;
 				$helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
-					token => Bio::P3::Workspace::ScriptHelpers::token(),
-					username => "chenry",
-					method => "ModelReconstruction",
-					configfile => $configfile
+					method => "GapfillModel"
 				});
 				Bio::KBase::ObjectAPI::config::adminmode(1);
 			}

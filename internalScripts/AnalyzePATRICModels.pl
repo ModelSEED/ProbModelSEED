@@ -8,7 +8,6 @@ Bio::KBase::utilities::read_config({
 	service => "ProbModelSEED"
 });
 Bio::ModelSEED::patricenv::create_context_from_client_config({});
-print Bio::KBase::utilities::token();
 Bio::KBase::utilities::setconf("ProbModelSEED","run_as_app",0);
 Bio::KBase::utilities::setconf("ModelSEED","use_cplex",1);
 my $procs = $ARGV[0];
