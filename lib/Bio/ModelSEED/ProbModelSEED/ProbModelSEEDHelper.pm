@@ -393,7 +393,7 @@ Description:
 		
 =cut
 sub retrieve_PATRIC_genome {
-	my ($self,$genomeid,$refseq) = @_;
+	my ($self,$genomeid,$refseq,$hashonly) = @_;
 	#Retrieving genome information
 	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => Bio::KBase::utilities::conf("ProbModelSEED","data_api_url")."genome/?genome_id=".$genomeid."&http_accept=application/json",token => Bio::KBase::utilities::token()});
 	if (!defined($refseq)) {
@@ -634,6 +634,9 @@ sub retrieve_PATRIC_genome {
 			}
 			push(@{$genome->{features}},$ftrobj);
 		}
+	}
+	if ($hashonly == 1) {
+		return $genome;
 	}
 	$genome = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genome);
 	$genome->wsmeta($meta);

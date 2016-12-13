@@ -80,12 +80,12 @@ sub print_report_message {
 	});
 	if ($args->{html} == 1) {
 		if ($args->{append} == 1) {
-			if (!defined($reporthtmlfiles)) {
-				$reporthtmlfiles = "";
+			if (!defined($reporthtml)) {
+				$reporthtml = "";
 			}
-			$reporthtmlfiles .= $args->{message};
+			$reporthtml .= $args->{message};
 		} else {
-			$reporthtmlfiles = $args->{message};
+			$reporthtml = $args->{message};
 		}
 	} else {
 		if ($args->{append} == 1) {
@@ -109,18 +109,18 @@ sub report_html {
 
 sub add_report_file {
 	my ($args) = @_;
-	$args = Bio::KBase::utilities::args($args,["file","name","description"],{
+	$args = Bio::KBase::utilities::args($args,["path","name","description"],{
 		html => 0
 	});
 	if ($args->{html} == 1) {
 		push(@{$reporthtmlfiles},{
-			file => $args->{file},
+			path => $args->{path},
 			name => $args->{name},
 			description => $args->{description},
 		});
 	} else {
 		push(@{$reportfiles},{
-			file => $args->{file},
+			path => $args->{path},
 			name => $args->{name},
 			description => $args->{description},
 		});
