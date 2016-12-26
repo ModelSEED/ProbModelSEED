@@ -6,7 +6,21 @@ use Bio::KBase::utilities;
 our $ws_client = undef;
 our $ga_client = undef;
 our $ac_client = undef;
+our $data_file_client = undef;
 our $objects_created = [];
+
+
+sub data_file_client {
+	my($parameters) = @_;
+	$parameters = Bio::KBase::utilities::args($parameters,[],{
+		refresh => 0
+	});
+	if ($parameters->{refresh} == 1 || !defined($ga_client)) {
+		require "DataFileUtil/DataFileUtilClient.pm";
+		$data_file_client = new DataFileUtil::DataFileUtilClient->new(Bio::KBase::utilities::utilconf("call_back_url"));
+	}
+	return $data_file_client;
+}
 
 #create_report: creates a report object using the KBaseReport service
 sub create_report {
