@@ -17,6 +17,7 @@ use Bio::KBase::AppService::Client;
 use Bio::KBase::ObjectAPI::KBaseStore;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
 use Bio::KBase::ObjectAPI::functions;
+use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 use MongoDB::Connection;
 use MongoDB::Collection;
 
@@ -2284,7 +2285,7 @@ sub util_report {
 sub ComputeReactionProbabilities {
 	my($self,$parameters) = @_;
     $parameters = Bio::KBase::utilities::args($parameters,["genome", "template", "rxnprobs"], {});
-    my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","bin_directory")."/bin/ms-probanno ".$parameters->{genome}." ".$parameters->{template}." ".$parameters->{rxnprobs}." --token '".Bio::KBase::utilities::token()."'";
+    my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","probannobin")." ".$parameters->{genome}." ".$parameters->{template}." ".$parameters->{rxnprobs}." --token '".Bio::KBase::utilities::token()."'";
     system($cmd);
     if ($? != 0) {
     	$self->error("Calculating reaction likelihoods failed!");
