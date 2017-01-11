@@ -428,12 +428,12 @@ sub func_gapfill_metabolic_model {
     }
     if (!defined($params->{media_id})) {
     	if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
-			$params->{media_id} = Bio::KBase::utilities::conf("ModelSEED","default_plant_media");
+			$params->{media_id} = Bio::KBase::utilities::conf("ProbModelSEED","default_plant_media");
     	} else {
 			$params->{default_max_uptake} = 100;
-			$params->{media_id} = Bio::KBase::utilities::conf("ModelSEED","default_microbial_media");
+			$params->{media_id} = Bio::KBase::utilities::conf("ProbModelSEED","default_microbial_media");
 		}
-    	$params->{media_workspace} = Bio::KBase::utilities::conf("ModelSEED","default_media_workspace");
+    	$params->{media_workspace} = Bio::KBase::utilities::conf("ProbModelSEED","default_media_workspace");
     }
     Bio::KBase::utilities::print_report_message({message => " in ".$params->{media_id}." media to force a minimum flux of ".$params->{minimum_target_flux}." through the ".$params->{target_reaction}." reaction.",append => 1,html => 0});
     $handler->util_log("Retrieving ".$params->{media_id}." media.");
@@ -520,12 +520,12 @@ sub func_run_flux_balance_analysis {
     }
     if (!defined($params->{media_id})) {
     	if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
-			$params->{media_id} = Bio::KBase::utilities::conf("ModelSEED","default_plant_media");
+			$params->{media_id} = Bio::KBase::utilities::conf("ProbModelSEED","default_plant_media");
     	} else {
 			$params->{default_max_uptake} = 100;
-			$params->{media_id} = Bio::KBase::utilities::conf("ModelSEED","default_microbial_media");
+			$params->{media_id} = Bio::KBase::utilities::conf("ProbModelSEED","default_microbial_media");
 		}
-    	$params->{media_workspace} = Bio::KBase::utilities::conf("ModelSEED","default_media_workspace");
+    	$params->{media_workspace} = Bio::KBase::utilities::conf("ProbModelSEED","default_media_workspace");
     }
     Bio::KBase::utilities::print_report_message({message => $params->{media_id}." media.",append => 1,html => 0});
     $handler->util_log("Retrieving ".$params->{media_id}." media.");

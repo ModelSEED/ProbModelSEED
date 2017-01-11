@@ -356,8 +356,8 @@ sub save_objects {
 sub upload_to_shock {
 	my ($self,$content,$url) = @_;	
 	my $uuid = Data::UUID->new()->create_str();
-	File::Path::mkpath Bio::KBase::utilities::conf("ModelSEED","fbajobdir");
-	my $filename = Bio::KBase::utilities::conf("ModelSEED","fbajobdir").$uuid;
+	File::Path::mkpath Bio::KBase::utilities::conf("ProbModelSEED","fbajobdir");
+	my $filename = Bio::KBase::utilities::conf("ProbModelSEED","fbajobdir").$uuid;
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$content]);
 	my $ua = LWP::UserAgent->new();
 	my $req = HTTP::Request::Common::POST($url,Authorization => "OAuth ".Bio::KBase::utilities::token(),Content_Type => 'multipart/form-data',Content => [upload => [$filename]]);

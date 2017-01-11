@@ -1425,7 +1425,7 @@ sub merge_models {
 		num_contigs => 0,
 		contig_lengths => [],
 		contig_ids => [],
-		source => Bio::KBase::utilities::conf("ModelSEED","source"),
+		source => Bio::KBase::utilities::conf("ProbModelSEED","source"),
 		source_id => $parameters->{fbamodel_output_id}.".genome",
 		md5 => "",
 		taxonomy => "Community",

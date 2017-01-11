@@ -2342,7 +2342,7 @@ sub ModelReconstruction {
 		number_of_solutions => 1
     });
     if (defined($parameters->{use_cplex})) {
-    	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
+    	Bio::KBase::utilities::setconf("ProbModelSEED","use_cplex",$parameters->{use_cplex});
     }
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $parameters->{genome};
@@ -2447,7 +2447,7 @@ sub FluxBalanceAnalysis {
 		massbalance => undef
 	});
 	if (defined($parameters->{use_cplex})) {
-    	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
+    	Bio::KBase::utilities::setconf("ProbModelSEED","use_cplex",$parameters->{use_cplex});
     }
 	if (ref($parameters->{reaction_ko_list}) ne 'ARRAY') {
 		$parameters->{reaction_ko_list} = [split(/;/,$parameters->{reaction_ko_list})];
@@ -2526,7 +2526,7 @@ sub GapfillModel {
 		integrate_solution => 0
 	});
 	if (defined($parameters->{use_cplex})) {
-    	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
+    	Bio::KBase::utilities::setconf("ProbModelSEED","use_cplex",$parameters->{use_cplex});
     }
 	$parameters->{output_path} = $parameters->{model}."/gapfilling";
 	if (!defined($parameters->{output_file})) {
@@ -2893,8 +2893,8 @@ sub TranslateOlderModels {
 sub load_to_shock {
 	my($self,$data) = @_;
 	my $uuid = Data::UUID->new()->create_str();
-	File::Path::mkpath Bio::KBase::utilities::conf("ModelSEED","fbajobdir");
-	my $filename = Bio::KBase::utilities::conf("ModelSEED","fbajobdir").$uuid;
+	File::Path::mkpath Bio::KBase::utilities::conf("ProbModelSEED","fbajobdir");
+	my $filename = Bio::KBase::utilities::conf("ProbModelSEED","fbajobdir").$uuid;
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($filename,[$data]);
 	my $output = Bio::KBase::ObjectAPI::utilities::runexecutable("curl -H \"Authorization: OAuth ".Bio::KBase::utilities::token()."\" -X POST -F 'upload=\@".$filename."' ".Bio::KBase::utilities::conf("ProbModelSEED","shock-url")."/node");
 	$output = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$output}));

@@ -1088,14 +1088,14 @@ sub kblogin {
 sub classifier_data {
 	if (!defined($classifierdata)) {
 		my $data;
-		if (Bio::KBase::utilities::conf("ModelSEED","classifier") =~ m/^WS:(.+)/) {
+		if (Bio::KBase::utilities::conf("ProbModelSEED","classifier") =~ m/^WS:(.+)/) {
 			$data = Bio::KBase::ObjectAPI::functions::util_get_object($1);
 			$data = [split(/\n/,$data)];
 		} else {
-			if (!-e Bio::KBase::utilities::conf("ModelSEED","classifier")) {
-				system("curl https://raw.githubusercontent.com/kbase/KBaseFBAModeling/dev/classifier/classifier.txt > ".Bio::KBase::utilities::conf("ModelSEED","classifier"));
+			if (!-e Bio::KBase::utilities::conf("ProbModelSEED","classifier")) {
+				system("curl https://raw.githubusercontent.com/kbase/KBaseFBAModeling/dev/classifier/classifier.txt > ".Bio::KBase::utilities::conf("ProbModelSEED","classifier"));
 			}
-			$data = Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::utilities::conf("ModelSEED","classifier"));
+			$data = Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::utilities::conf("ProbModelSEED","classifier"));
 		}
 		my $headings = [split(/\t/,$data->[0])];
 		my $popprob = [split(/\t/,$data->[1])];

@@ -324,7 +324,7 @@ sub save_objects {
 		}
 		if ($objdata->{type} eq "KBaseGenomes.Genome" && Bio::KBase::utilities::conf("fba_tools","use_data_api") == 1) {
 			require "GenomeAnnotationAPI/GenomeAnnotationAPIClient.pm";
-			my $ga = new GenomeAnnotationAPI::GenomeAnnotationAPIClient(Bio::KBase::utilities::conf("ModelSEED","call_back_url"));
+			my $ga = new GenomeAnnotationAPI::GenomeAnnotationAPIClient(Bio::KBase::utilities::conf("ProbModelSEED","call_back_url"));
 			my $gaout = $ga->save_one_genome_v1({
 				workspace => $array->[0],
 		        name => $array->[1],
