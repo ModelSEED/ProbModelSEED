@@ -2285,6 +2285,7 @@ sub util_report {
 sub ComputeReactionProbabilities {
 	my($self,$parameters) = @_;
     $parameters = Bio::KBase::utilities::args($parameters,["genome", "template", "rxnprobs"], {});
+    Bio::KBase::utilities::log("Calculating reaction likelihoods for ".$parameters->{genome}." with template ".$parameters->{template});
     my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","probannobin")." ".$parameters->{genome}." ".$parameters->{template}." ".$parameters->{rxnprobs}." --token '".Bio::KBase::utilities::token()."'";
     system($cmd);
     if ($? != 0) {
@@ -2380,7 +2381,6 @@ sub ModelReconstruction {
     		template => $templateref,
     		rxnprobs => $rxnprobsref
     	});
-    	$datachannel->{fbamodel}->rxnprobs_ref($rxnprobsref);
 	}
    	if ($parameters->{gapfill} == 1) {
     	$self->GapfillModel({
@@ -2556,10 +2556,13 @@ sub GapfillModel {
 		($parameters->{media_workspace},$parameters->{media_id}) = $self->util_parserefs($parameters->{media});
 		delete $parameters->{media};
 	}
+	if (defined($parameters->{probanno}) && $parameters->{probanno} == 1) {
+		$parameters->{probanno_id} = "rxnprobs";
+		$parameters->{probanno_workspace} = $parameters->{model};
+	}
 	($parameters->{fbamodel_workspace},$parameters->{fbamodel_id}) = $self->util_parserefs($parameters->{model});	
 	($parameters->{source_fbamodel_workspace},$parameters->{source_fbamodel_id}) = $self->util_parserefs($parameters->{source_model});	
 	($parameters->{expseries_workspace},$parameters->{expseries_id}) = $self->util_parserefs($parameters->{exp_series});
-	($parameters->{probanno_workspace},$parameters->{probanno_id}) = $self->util_parserefs($parameters->{probanno});
 	$parameters->{fbamodel_output_id} = $parameters->{fbamodel_id};
 	$parameters->{gapfill_output_id} = $parameters->{output_file};
 	$parameters->{workspace} = $parameters->{fbamodel_workspace};

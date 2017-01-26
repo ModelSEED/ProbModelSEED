@@ -41,16 +41,18 @@ class RoleNotFoundEror(Exception):
 
 class ProbAnnotationWorker:
 
-    def __init__(self, genomeId, context=None):
+    def __init__(self, genomeId, context=None, communityIndex='0'):
         ''' Initialize object.
 
             @param genomeId: Genome ID string for genome being annotated
             @param context: User context when used in a server
+            @param communityIndex: Index number of model in a community model
             @return Nothing
         '''
 
         # Save the genome ID (used for messages and temporary file names).
         self.genomeId = genomeId
+        self.communityIndex = communityIndex
 
         # Get the configuration variables.
         serviceName = os.environ.get('KB_SERVICE_NAME', 'ProbModelSEED')
@@ -261,9 +263,9 @@ class ProbAnnotationWorker:
         if self.logger.get_log_level() >= log.DEBUG2:
             rolesetProbabilityFile = os.path.join(self.workFolder, '%s.rolesetprobs' %(self.genomeId))
             with open(rolesetProbabilityFile, 'w') as handle:
-                for query in rolestringTuples:
+                for query in sorted(rolestringTuples):
                     for tup in rolestringTuples[query]:
-                        handle.write('%s\t%s\t%1.4f\n' %(query, tup[0], tup[1]))
+                        handle.write('%s\t%1.6f\t%s\n' %(query, tup[1], tup[0]))
             
         self._log(log.DEBUG, 'Finished marble-picking on %d rolesets for genome %s' %(len(rolestringTuples), self.genomeId))
         return rolestringTuples
@@ -313,8 +315,8 @@ class ProbAnnotationWorker:
         if self.logger.get_log_level() >= log.DEBUG2:
             role_probability_file = os.path.join(self.workFolder, '%s.roleprobs' %(self.genomeId))
             with open(role_probability_file, "w") as handle:
-                for tuple in roleProbs:
-                    handle.write('%s\t%s\t%s\n' %(tuple[0], tuple[1], tuple[2]))
+                for tuple in sorted(roleProbs):
+                    handle.write('%s\t%1.6f\t%s\n' %(tuple[0], tuple[2], tuple[1]))
 
         self._log(log.DEBUG, 'Finished computing %d role probabilities for genome %s' %(len(roleProbs), self.genomeId))
 
@@ -379,10 +381,10 @@ class ProbAnnotationWorker:
 
         # Save the generated data when debug is turned on.
         if self.logger.get_log_level() >= log.DEBUG2:
-            total_role_probability_file = os.path.join(self.workFolder, '%s.cellroleprob' %(self.genomeId))
+            total_role_probability_file = os.path.join(self.workFolder, '%s.cellroleprobs' %(self.genomeId))
             with open(total_role_probability_file, "w") as handle:
-                for tuple in totalRoleProbs:
-                    handle.write('%s\t%s\t%s\n' %(tuple[0], tuple[1], tuple[2]))
+                for tuple in sorted(totalRoleProbs):
+                    handle.write('%s\t%1.6f\t%s\n' %(tuple[0], tuple[1], tuple[2]))
 
         self._log(log.DEBUG, 'Finished generating %d whole-cell role probabilities for genome %s' %(len(totalRoleProbs), self.genomeId))
 
@@ -501,10 +503,10 @@ class ProbAnnotationWorker:
 
         # Save the generated data when debug is turned on.
         if self.logger.get_log_level() >= log.DEBUG2:
-            complex_probability_file = os.path.join(self.workFolder, "%s.complexprob" %(self.genomeId))
+            complex_probability_file = os.path.join(self.workFolder, "%s.complexprobs" %(self.genomeId))
             with open(complex_probability_file, "w") as handle:
-                for tuple in complexProbs:
-                    handle.write("%s\t%1.4f\t%s\t%s\t%s\t%s\n" %(tuple[0], tuple[1], tuple[2], tuple[3], tuple[4], tuple[5]))
+                for tuple in sorted(complexProbs):
+                    handle.write("%s\t%1.6f\t%s\t%s\t%s\t%s\n" %(tuple[0], tuple[1], tuple[2], tuple[5], tuple[3], tuple[4]))
 
         self._log(log.DEBUG, 'Finished computing complex probabilities for '+self.genomeId)
         return complexProbs
@@ -581,13 +583,13 @@ class ProbAnnotationWorker:
                 GPR = " or ".join( list(set(cplxGprs)) )
 
             # Add everything to the final list.
-            reactionProbs.append( [rxn, maxProb, TYPE, complexString, GPR] )
+            reactionProbs.append( [rxn+self.communityIndex, maxProb, TYPE, complexString, GPR] )
 
         # Save the generated data when debug is turned on.
         if self.logger.get_log_level() >= log.DEBUG2:
             reaction_probability_file = os.path.join(self.workFolder, "%s.rxnprobs" %(self.genomeId))
             with open(reaction_probability_file, "w") as handle:
-                for tuple in reactionProbs:
+                for tuple in sorted(reactionProbs):
                     handle.write("%s\t%1.6f\t%s\t%s\t%s\n" %(tuple[0], tuple[1], tuple[2], tuple[3], tuple[4]))
 
         self._log(log.DEBUG, 'Finished computing reaction probabilities for '+self.genomeId)
@@ -599,7 +601,8 @@ class ProbAnnotationWorker:
             @return Nothing
         '''
 
-        shutil.rmtree(self.workFolder)
+        if self.logger.get_log_level() < log.DEBUG2:
+            shutil.rmtree(self.workFolder)
         return
 
     def _log(self, level, message):
