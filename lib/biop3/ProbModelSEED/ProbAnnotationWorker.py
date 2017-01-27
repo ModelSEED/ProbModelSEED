@@ -373,7 +373,7 @@ class ProbAnnotationWorker:
         # Build the array of total role probabilities.
         totalRoleProbs = list()
         for role in roleToTotalProb:
-            gpr = ' or '.join(list(set(roleToGeneList[role])))
+            gpr = ' or '.join(sorted(list(set(roleToGeneList[role]))))
             # We only need to group these if there is more than one of them (avoids extra parenthesis when computing complexes)
             if len(list(set(roleToGeneList[role]))) > 1:
                 gpr = '(' + gpr + ')'

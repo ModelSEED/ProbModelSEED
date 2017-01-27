@@ -13,6 +13,9 @@ from biokbase import log
 # E values of less than 1E-200 are treated as 1E-200 to avoid log of 0 issues.
 MIN_EVALUE = 1E-200
 
+# Prefix for lookup name attribute of files stored in Shock.
+LOOKUP_NAME_PREFIX = 'ProbAnnoDataV2'
+
 # Exception thrown when there is an invalid sources configuration variable
 class BadSourceError(Exception):
     pass
@@ -605,7 +608,7 @@ class ProbAnnotationParser:
             # Get info about the file stored in Shock.
             localPath = shockFiles[key]
             name = os.path.basename(localPath)
-            nodelist = shockClient.query_node( { 'lookupname': 'ProbAnnoData/'+name } )
+            nodelist = shockClient.query_node( { 'lookupname': LOOKUP_NAME_PREFIX+'/'+name } )
             if len(nodelist) == 0:
                 message = 'Database file %s is not available from %s\n' %(name, self.shockURL)
                 mylog.log_message(log.ERR, message) # MBM
@@ -650,7 +653,7 @@ class ProbAnnotationParser:
                 sys.stderr.write('Saving "%s"...' %(localPath))
                 
                 # See if the file already exists in Shock.
-                query = { 'lookupname': 'ProbAnnoData/'+name }
+                query = { 'lookupname': LOOKUP_NAME_PREFIX+'/'+name }
                 nodelist = shockClient.query_node(query)
                 
                 # Remove all instances of the file in Shock.
@@ -660,7 +663,7 @@ class ProbAnnotationParser:
      
                 # Build the attributes for this file and store as json in a separate file.
                 moddate = time.ctime(os.path.getmtime(localPath))           
-                attr = { 'lookupname': 'ProbAnnoData/'+name, 'moddate': moddate }
+                attr = { 'lookupname': LOOKUP_NAME_PREFIX+'/'+name, 'moddate': moddate }
                 attrFilename = os.path.join(self.dataFolderPath, name+'.attr')
                 attrFid = open(attrFilename, 'w')
                 json.dump(attr, attrFid, indent=4)
@@ -681,7 +684,7 @@ class ProbAnnotationParser:
                 sys.stderr.write('Could not find "%s" so it was not saved\n' %(localPath))
                 
         # Save the metadata on all of the database files.
-        cacheFilename = os.path.join(self.dataFolderPath, StatusFiles['cache_file'])
+        cacheFilename = os.path.join(self.dataFolderPath, self.StatusFiles['cache_file'])
         json.dump(fileCache, open(cacheFilename, 'w'), indent=4)
 
         return
