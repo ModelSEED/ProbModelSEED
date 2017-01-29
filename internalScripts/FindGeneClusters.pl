@@ -11,87 +11,188 @@ Bio::KBase::utilities::read_config({
 });
 Bio::ModelSEED::patricenv::create_context_from_client_config({});
 
-my $modellist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/Users/chenry/workspace/Patric/Genomes/GenomeList.txt");
-$modellist = Bio::KBase::ObjectAPI::utilities::LOADFILE("/homes/chenry/PATRICGenomeList.txt");
+my $directory = $ARGV[0];
 
-my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
-	method => "FindGeneCluster"
-});
-
-my $blacklist = {
-	hypotheticalprotein => 1,
-	repeatregion => 1
-};
-
-my $funclochash;
-my $funccochash;
-my $funchash;
-my $funcnamehash;
-
-for (my $i=0; $i < @{$modellist}; $i++) {
-#for (my $i=0; $i < 20; $i++) {
-	print "Processing genome ".$i."\n";
-	my $genome = $helper->retrieve_PATRIC_genome($modellist->[$i],0,1);
-	my $ftrs = [sort { $b->{start} cmp $a->{start} } @{$genome->{features}}];
-	my $rolehash = {};
-	for (my $j=0; $j < @{$ftrs}; $j++) {
-		my $ftr = $ftrs->[$j];
-		my $function = $ftr->{function};
-		$ftr->{roles} = {};
-	  	my $array = [split(/\#/,$function)];
-	  	$function = shift(@{$array});
-		$function =~ s/\s+$//;
-		$array = [split(/\s*;\s+|\s+[\@\/]\s+/,$function)];
-		for (my $k=0; $k < @{$array}; $k++) {
-			my $original_name = $array->[$k];
-			my $rolename = lc($array->[$k]);
-			$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
-			$rolename =~ s/\s//g;
-			$rolename =~ s/\#.*$//g;
-			if (!defined($blacklist->{$rolename})) {
-				$funcnamehash->{$rolename} = $original_name;
-				$ftr->{roles}->{$rolename} = 1;
-				$rolehash->{$rolename} = 1;
-			}
-		}
+my $sr_translation;
+my $r_translation;
+my $genomelist = Bio::KBase::ObjectAPI::utilities::LOADFILE($directory."/PATRICGenomeList.txt");
+open(my $fh, "<", $directory."BVitaminRoles.txt");
+my $rolehash = {};
+while (my $line = <$fh>) {
+	chomp($line);
+	my $rolearray = [split(/\t/,$line)];
+	if (defined($rolearray->[3])) {
+		my $itemarray = [split(/;/,$rolearray->[3])];
+		$rolehash->{$rolearray->[1]}->{$itemarray->[2]} = $itemarray->[1];
 	}
-	my $roles = [sort { $b cmp $a } keys(%{$rolehash})];
-	for (my $j=0; $j < @{$roles}; $j++) {
-		if (!defined($funchash->{$roles->[$j]})) {
-			$funchash->{$roles->[$j]} = 0;
-		}
-		$funchash->{$roles->[$j]}++;
-		for (my $k=($j+1); $k < @{$roles}; $k++) {
-			if (!defined($funccochash->{$roles->[$j]}->{$roles->[$k]})) {
-				$funccochash->{$roles->[$j]}->{$roles->[$k]} = 0;
+}
+close($fh);
+
+my $clusters = {};
+my $mingenes = 2;
+my $minroles = 3;
+#for (my $i=0; $i < @{$genomelist}; $i++) {
+for (my $i=0; $i < 100; $i++) {
+	print $genomelist->[$i]."\n";
+	my $genomedata = Bio::KBase::ObjectAPI::utilities::LOADFILE("/disks/p3dev2/genomes/".$genomelist->[$i]);
+	my $header = [split(/\t/,$genomedata->[$i])];
+	my $genes;
+	for (my $j=1; $j < @{$genomedata}; $j++) {
+		my $array = [split(/\t/,$genomedata->[$j])];
+		my $gene;
+		for (my $k=0; $k < @{$header}; $k++) {
+			$gene->{$header->[$k]} = $array->[$k];	
+			if ($header->[$k] eq "function") {
+				my $array = [split(/\#/,$gene->{$header->[$k]})];
+		  		my $function = shift(@{$array});
+				$function =~ s/\s+$//;
+				$array = [split(/\s*;\s+|\s+[\@\/]\s+/,$function)];
+				$gene->{$header->[$k]} = $array;
+				for (my $m=0; $m < @{$array}; $m++) {
+					my $rolename = lc($array->[$m]);
+					$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
+					$rolename =~ s/\s//g;
+					$rolename =~ s/\#.*$//g;
+					$sr_translation->{$rolename} = $array->[$m];
+					$r_translation->{$array->[$m]} = $rolename;
+				}
 			}
-			$funccochash->{$roles->[$j]}->{$roles->[$k]}++;
+			$gene->{location} = $gene->{contig}."_";
+			if ($gene->{start} < 1000000) {
+				$gene->{location} .= "0";
+			}
+			if ($gene->{start} < 100000) {
+				$gene->{location} .= "0";
+			}
+			if ($gene->{start} < 10000) {
+				$gene->{location} .= "0";
+			}
+			if ($gene->{start} < 1000) {
+				$gene->{location} .= "0";
+			}
+			if ($gene->{start} < 100) {
+				$gene->{location} .= "0";
+			}
+			if ($gene->{start} < 10) {
+				$gene->{location} .= "0";
+			}
+			$gene->{location} .= $gene->{start};
 		}
+		push(@{$genes},$gene);
 	}
-	for (my $j=0; $j < @{$ftrs}; $j++) {
-		for (my $k=-5; $k <= 5; $k++) {
-			if ($k != 0) {
-				if (!defined($ftrs->[$j]->{location}) || !defined($ftrs->[$j+$k]->{location}) ||  $ftrs->[$j+$k]->{location}->[0]->[0] eq $ftrs->[$j]->{location}->[0]->[0]) {
-					foreach my $role (keys(%{$ftrs->[$j]->{roles}})) {
-						foreach my $roletwo (keys(%{$ftrs->[$j+$k]->{roles}})) {
-							my $rolelist = [sort { $b cmp $a } ($role,$roletwo)];
-							$funclochash->{$rolelist->[0]}->{$rolelist->[1]}->{$modellist->[$i]} = 1;
+	my $sortedgenes = [sort { $b->{location} cmp $a->{location} } @{$genes}];
+	my $laststart;
+	my $laststop;
+	my $lastroles;
+	my $lastgenes;
+	for (my $j=0; $j < @{$sortedgenes}; $j++) {
+		my $newcontig = 0;
+		foreach my $bvit (keys(%{$rolehash})) {
+			if (!defined($lastroles->{$bvit})) {
+				$lastroles->{$bvit} = [];
+				$laststart->{$bvit} = undef;
+				$laststop->{$bvit} = undef;
+				$lastgenes->{$bvit} = [];
+			}
+			my $foundhash = {}; 
+			my $genehash = {};
+			my $start = undef;
+			my $stop = undef;
+			for (my $k=0; $k < 10; $k++) {
+				if ($sortedgenes->[$j+$k]->{contig} ne $sortedgenes->[$j]->{contig}) {
+					$newcontig = $j+$k;
+					last;	
+				} else {
+					foreach my $sr (keys(%{$sortedgenes->[$j+$k]->{searchroles}})) {
+						if (defined($rolehash->{$bvit}->{$sr})) {
+							$genehash->{$sortedgenes->[$j+$k]->{id}} = 1;
+							$foundhash->{$sr} = 1;
+							if (!defined($start)) {
+								$start = $j+$k;
+							} else {
+								$stop = $j+$k;
+							}
 						}
 					}
 				}
 			}
-		}	
+			my $rolelist = [sort(keys(%{$foundhash}))];
+			#Checking that the last cluster is a subset of the current cluster
+			foreach my $lastrole (@{$lastroles->{$bvit}}) {
+				if (!defined($foundhash->{$lastrole})) {
+					#If the last cluster is NOT a subset of the current cluster, then it should be saved
+					if (@{$lastroles->{$bvit}} >= $minroles && @{$lastgenes->{$bvit}} >= $mingenes) {
+						my $begin = $laststart->{$bvit}-5;
+						my $end = $laststop->{$bvit}+5;
+						if ($begin < 0) {
+							$begin = 0;
+						}
+						if ($end >= @{$sortedgenes}) {
+							$end = @{$sortedgenes}-1;
+						}
+						my $finalgenelist = [];
+						my $tempgenehash;
+						for (my $k=0; $k <= @{$lastgenes->{$bvit}}; $k++) {
+							$tempgenehash->{$lastgenes->{$bvit}->[$k]} = 1;
+						}
+						for (my $k=$begin; $k <= $end; $k++) {
+							if ($sortedgenes->[$k]->{contig} eq $sortedgenes->[$laststart->{$bvit}]->{contig} && !defined($tempgenehash->{$sortedgenes->[$k]->{id}})) {
+								push(@{$finalgenelist},$sortedgenes->[$k]->{id});
+							}	
+						}
+						$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist];
+						$lastroles->{$bvit} = [];
+						$laststart->{$bvit} = undef;
+						$laststop->{$bvit} = undef;
+						$lastgenes->{$bvit} = [];
+						last;
+					}
+				}
+			}
+			#Replacing current best cluster if the new cluster is the same or better
+			if (@{$rolelist} >= @{$lastroles->{$bvit}}) {
+				$lastroles->{$bvit} = $rolelist;
+				$laststart->{$bvit} = $start;
+				$laststop->{$bvit} = $stop;
+				$lastgenes->{$bvit} = [sort(keys(%{$genehash}))];
+			}
+		}
+		if ($newcontig > 0) {
+			$j = $newcontig-1;
+		}
+	}
+	foreach my $bvit (keys(%{$rolehash})) {
+		if (@{$lastroles->{$bvit}} >= $minroles && @{$lastgenes->{$bvit}} >= $mingenes) {
+			my $begin = $laststart->{$bvit}-5;
+			my $end = $laststop->{$bvit}+5;
+			if ($begin < 0) {
+				$begin = 0;
+			}
+			if ($end >= @{$sortedgenes}) {
+				$end = @{$sortedgenes}-1;
+			}
+			my $finalgenelist = [];
+			my $tempgenehash;
+			for (my $k=0; $k <= @{$lastgenes->{$bvit}}; $k++) {
+				$tempgenehash->{$lastgenes->{$bvit}->[$k]} = 1;
+			}
+			for (my $k=$begin; $k <= $end; $k++) {
+				if ($sortedgenes->[$k]->{contig} eq $sortedgenes->[$laststart->{$bvit}]->{contig} && !defined($tempgenehash->{$sortedgenes->[$k]->{id}})) {
+					push(@{$finalgenelist},$sortedgenes->[$k]->{id});
+				}	
+			}
+			$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist];
+		}
 	}
 }
 
-print "Function1	Function2	Genomes	OccurColocalized	OccurTogether	AGenomes	BGenomes\n";
-foreach my $role (keys(%{$funclochash})) {
-	if ($funchash->{$role} >= 5) {
-		foreach my $roletwo (keys(%{$funclochash->{$role}})) {
-			if ($funchash->{$roletwo} >= 5) {
-				my $count = keys(%{$funclochash->{$role}->{$roletwo}});
-				my $genomes = join(";",keys(%{$funclochash->{$role}->{$roletwo}}));
-				print $funcnamehash->{$role}."\t".$funcnamehash->{$roletwo}."\t".$genomes."\t".$count."\t".$funccochash->{$role}->{$roletwo}."\t".$funchash->{$role}."\t".$funchash->{$roletwo}."\n";
+print "B vitamins\tRoles\tGenome\tFunction genes\tStart gene\tStop gene\tFinal gene list\n";
+foreach my $bvit (keys(%{$clusters})) {
+	foreach my $roles (keys(%{$clusters->{$bvit}})) {
+		foreach my $genome (keys(%{$clusters->{$bvit}->{$roles}})) {
+			foreach my $genes (keys(%{$clusters->{$bvit}->{$roles}->{$genome}})) {
+				my $data = $clusters->{$bvit}->{$roles}->{$genome}->{$genes};
+				print $bvit."\t".$roles."\t".$genome."\t".$genes."\t".$data->[0]."\t".$data->[1]."\t".$data->[2]."\n";
 			}
 		}
 	}
