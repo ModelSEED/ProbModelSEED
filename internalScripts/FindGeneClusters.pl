@@ -108,13 +108,13 @@ for (my $i=0; $i < 100; $i++) {
 			for (my $k=0; $k < 10; $k++) {
 				if ($j+$k < @{$sortedgenes}) {
 					if ($sortedgenes->[$j+$k]->{contig} ne $sortedgenes->[$j]->{contig}) {
-						print "New contig ".$j+$k."\n";
 						$newcontig = $j+$k;
 						last;	
 					} else {
 						foreach my $sr (keys(%{$sortedgenes->[$j+$k]->{searchroles}})) {
+							print "Role ".$sr."\n";
 							if (defined($rolehash->{$bvit}->{$sr})) {
-								print "Found ".$sr."\n";
+								print "Found\n";
 								$genehash->{$sortedgenes->[$j+$k]->{id}} = 1;
 								$foundhash->{$sr} = 1;
 								if (!defined($start)) {
@@ -130,7 +130,6 @@ for (my $i=0; $i < 100; $i++) {
 				}
 			}
 			my $rolelist = [sort(keys(%{$foundhash}))];
-			print "Role count:".@{$rolelist}."\n";
 			#Checking that the last cluster is a subset of the current cluster
 			foreach my $lastrole (@{$lastroles->{$bvit}}) {
 				if (!defined($foundhash->{$lastrole})) {
@@ -166,7 +165,6 @@ for (my $i=0; $i < 100; $i++) {
 			}
 			#Replacing current best cluster if the new cluster is the same or better
 			if (@{$rolelist} >= @{$lastroles->{$bvit}}) {
-				print "New last roles\n";
 				$lastroles->{$bvit} = $rolelist;
 				$laststart->{$bvit} = $start;
 				$laststop->{$bvit} = $stop;
