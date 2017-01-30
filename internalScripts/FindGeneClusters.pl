@@ -208,8 +208,9 @@ foreach my $bvit (keys(%{$clusters})) {
 		foreach my $genome (keys(%{$clusters->{$bvit}->{$roles}})) {
 			foreach my $genes (keys(%{$clusters->{$bvit}->{$roles}->{$genome}})) {
 				my $data = $clusters->{$bvit}->{$roles}->{$genome}->{$genes};
-				print Data::Dumper->Dump([$data]);
-				print $bvit."\t".$data->[3]."\t".$data->[4]."\t".@{$data->[2]}."\t".$roles."\t".$genome."\t".$genes."\t".$data->[0]."\t".$data->[1]."\t".join(";",@{$data->[2]})."\n";
+				my $genecount = pop(@{$data});
+				my $rolecount = pop(@{$data});
+				print $bvit."\t".$rolecount."\t".$genecount."\t".@{$data->[2]}."\t".$roles."\t".$genome."\t".$genes."\t".$data->[0]."\t".$data->[1]."\t".join(";",@{$data->[2]})."\n";
 				exit;
 			}
 		}
