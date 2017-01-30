@@ -24,7 +24,7 @@ while ($line = <$fh>) {
 	my $rolearray = [split(/\t/,$line)];
 	if (defined($rolearray->[3])) {
 		my $itemarray = [split(/;/,$rolearray->[3])];
-		my $rolename = lc($itemarray->[2]);
+		my $rolename = lc($itemarray->[1]);
 		$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
 		$rolename =~ s/\s//g;
 		$rolename =~ s/\#.*$//g;
@@ -112,7 +112,6 @@ for (my $i=0; $i < 100; $i++) {
 						last;	
 					} else {
 						foreach my $sr (keys(%{$sortedgenes->[$j+$k]->{searchroles}})) {
-							print "Role ".$sr."\n";
 							if (defined($rolehash->{$bvit}->{$sr})) {
 								print "Found\n";
 								$genehash->{$sortedgenes->[$j+$k]->{id}} = 1;
