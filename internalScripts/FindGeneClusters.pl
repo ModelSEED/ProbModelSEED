@@ -28,7 +28,6 @@ while ($line = <$fh>) {
 		$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
 		$rolename =~ s/\s//g;
 		$rolename =~ s/\#.*$//g;
-		print $rolearray->[1]."\t".$rolename."\t".$itemarray->[1]."\n";
 		$rolehash->{$rolearray->[1]}->{$rolename} = $itemarray->[1];
 	}
 }
@@ -151,7 +150,7 @@ for (my $i=0; $i < 100; $i++) {
 								push(@{$finalgenelist},$sortedgenes->[$k]->{id});
 							}	
 						}
-						$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist];
+						$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist,@{$lastroles->{$bvit}},@{$lastgenes->{$bvit}}];
 						$lastroles->{$bvit} = [];
 						$laststart->{$bvit} = undef;
 						$laststop->{$bvit} = undef;
@@ -193,19 +192,19 @@ for (my $i=0; $i < 100; $i++) {
 						push(@{$finalgenelist},$sortedgenes->[$k]->{id});
 					}	
 				}
-				$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist];
+				$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist,@{$lastroles->{$bvit}},@{$lastgenes->{$bvit}}];
 			}
 		}
 	}
 }
 
-print "B vitamins\tRoles\tGenome\tFunction genes\tStart gene\tStop gene\tFinal gene list\n";
+print "B vitamins\tRole count\tGene count\tCandidate count\tRoles\tGenome\tFunction genes\tStart gene\tStop gene\tFinal gene list\n";
 foreach my $bvit (keys(%{$clusters})) {
 	foreach my $roles (keys(%{$clusters->{$bvit}})) {
 		foreach my $genome (keys(%{$clusters->{$bvit}->{$roles}})) {
 			foreach my $genes (keys(%{$clusters->{$bvit}->{$roles}->{$genome}})) {
 				my $data = $clusters->{$bvit}->{$roles}->{$genome}->{$genes};
-				print $bvit."\t".$roles."\t".$genome."\t".$genes."\t".$data->[0]."\t".$data->[1]."\t".join(";",@{$data->[2]})."\n";
+				print $bvit."\t".$data->[3]."\t".$data->[4]."\t".@{$data->[2]}."\t".$roles."\t".$genome."\t".$genes."\t".$data->[0]."\t".$data->[1]."\t".join(";",@{$data->[2]})."\n";
 			}
 		}
 	}
