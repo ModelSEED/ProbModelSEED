@@ -113,7 +113,7 @@ for (my $i=0; $i < 100; $i++) {
 					} else {
 						foreach my $sr (keys(%{$sortedgenes->[$j+$k]->{searchroles}})) {
 							if (defined($rolehash->{$bvit}->{$sr})) {
-								print "Found\n";
+								print "Found:".keys(%{$foundhash})."\n";
 								$genehash->{$sortedgenes->[$j+$k]->{id}} = 1;
 								$foundhash->{$sr} = 1;
 								if (!defined($start)) {
@@ -133,8 +133,8 @@ for (my $i=0; $i < 100; $i++) {
 			foreach my $lastrole (@{$lastroles->{$bvit}}) {
 				if (!defined($foundhash->{$lastrole})) {
 					#If the last cluster is NOT a subset of the current cluster, then it should be saved
-					print "Roles:".@{$lastroles->{$bvit}}."\tGenes:".@{$lastgenes->{$bvit}}."\n";
 					if (@{$lastroles->{$bvit}} >= $minroles && @{$lastgenes->{$bvit}} >= $mingenes) {
+						print "Cluster\n";
 						my $begin = $laststart->{$bvit}-5;
 						my $end = $laststop->{$bvit}+5;
 						if ($begin < 0) {
