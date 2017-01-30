@@ -80,14 +80,17 @@ for (my $i=0; $i < 100; $i++) {
 		}
 		push(@{$genes},$gene);
 	}
+	print "Genome loaded!\n";
 	my $sortedgenes = [sort { $b->{location} cmp $a->{location} } @{$genes}];
 	my $laststart;
 	my $laststop;
 	my $lastroles;
 	my $lastgenes;
 	for (my $j=0; $j < @{$sortedgenes}; $j++) {
+		print "Gene ".$j."\n";
 		my $newcontig = 0;
 		foreach my $bvit (keys(%{$rolehash})) {
+			print $bvit."\n";
 			if (!defined($lastroles->{$bvit})) {
 				$lastroles->{$bvit} = [];
 				$laststart->{$bvit} = undef;
@@ -159,8 +162,10 @@ for (my $i=0; $i < 100; $i++) {
 		}
 		if ($newcontig > 0) {
 			$j = $newcontig-1;
+			print "New contig:".$j."\n";
 		}
 	}
+	print "Analysis done\n";
 	foreach my $bvit (keys(%{$rolehash})) {
 		if (@{$lastroles->{$bvit}} >= $minroles && @{$lastgenes->{$bvit}} >= $mingenes) {
 			my $begin = $laststart->{$bvit}-5;
