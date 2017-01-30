@@ -36,8 +36,8 @@ close($fh);
 my $clusters = {};
 my $mingenes = 2;
 my $minroles = 3;
-#for (my $i=0; $i < @{$genomelist}; $i++) {
-for (my $i=0; $i < 1; $i++) {
+for (my $i=0; $i < @{$genomelist}; $i++) {
+#for (my $i=0; $i < 1; $i++) {
 	print $genomelist->[$i]."\n";
 	my $genomedata = Bio::KBase::ObjectAPI::utilities::LOADFILE("/disks/p3dev2/genomes/".$genomelist->[$i].".tsv");
 	my $header = [split(/\t/,$genomedata->[0])];
@@ -211,7 +211,6 @@ foreach my $bvit (keys(%{$clusters})) {
 				my $genecount = pop(@{$data});
 				my $rolecount = pop(@{$data});
 				print $bvit."\t".$rolecount."\t".$genecount."\t".@{$data->[2]}."\t".$roles."\t".$genome."\t".$genes."\t".$data->[0]."\t".$data->[1]."\t".join(";",@{$data->[2]})."\n";
-				exit;
 			}
 		}
 	}
