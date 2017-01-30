@@ -34,7 +34,7 @@ my $minroles = 3;
 #for (my $i=0; $i < @{$genomelist}; $i++) {
 for (my $i=0; $i < 100; $i++) {
 	print $genomelist->[$i]."\n";
-	my $genomedata = Bio::KBase::ObjectAPI::utilities::LOADFILE("/disks/p3dev2/genomes/".$genomelist->[$i]);
+	my $genomedata = Bio::KBase::ObjectAPI::utilities::LOADFILE("/disks/p3dev2/genomes/".$genomelist->[$i].".tsv");
 	my $header = [split(/\t/,$genomedata->[$i])];
 	my $genes;
 	for (my $j=1; $j < @{$genomedata}; $j++) {
