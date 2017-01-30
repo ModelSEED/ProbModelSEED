@@ -41,7 +41,7 @@ my $minroles = 3;
 for (my $i=0; $i < 100; $i++) {
 	print $genomelist->[$i]."\n";
 	my $genomedata = Bio::KBase::ObjectAPI::utilities::LOADFILE("/disks/p3dev2/genomes/".$genomelist->[$i].".tsv");
-	my $header = [split(/\t/,$genomedata->[$i])];
+	my $header = [split(/\t/,$genomedata->[0])];
 	my $genes;
 	for (my $j=1; $j < @{$genomedata}; $j++) {
 		my $array = [split(/\t/,$genomedata->[$j])];
@@ -113,7 +113,6 @@ for (my $i=0; $i < 100; $i++) {
 					} else {
 						foreach my $sr (keys(%{$sortedgenes->[$j+$k]->{searchroles}})) {
 							if (defined($rolehash->{$bvit}->{$sr})) {
-								print "Found:".keys(%{$foundhash})."\n";
 								$genehash->{$sortedgenes->[$j+$k]->{id}} = 1;
 								$foundhash->{$sr} = 1;
 								if (!defined($start)) {
@@ -134,7 +133,6 @@ for (my $i=0; $i < 100; $i++) {
 				if (!defined($foundhash->{$lastrole})) {
 					#If the last cluster is NOT a subset of the current cluster, then it should be saved
 					if (@{$lastroles->{$bvit}} >= $minroles && @{$lastgenes->{$bvit}} >= $mingenes) {
-						print "Cluster\n";
 						my $begin = $laststart->{$bvit}-5;
 						my $end = $laststop->{$bvit}+5;
 						if ($begin < 0) {
@@ -207,7 +205,7 @@ foreach my $bvit (keys(%{$clusters})) {
 		foreach my $genome (keys(%{$clusters->{$bvit}->{$roles}})) {
 			foreach my $genes (keys(%{$clusters->{$bvit}->{$roles}->{$genome}})) {
 				my $data = $clusters->{$bvit}->{$roles}->{$genome}->{$genes};
-				print $bvit."\t".$roles."\t".$genome."\t".$genes."\t".$data->[0]."\t".$data->[1]."\t".$data->[2]."\n";
+				print $bvit."\t".$roles."\t".$genome."\t".$genes."\t".$data->[0]."\t".$data->[1]."\t".join(";",@{$data->[2]})."\n";
 			}
 		}
 	}
