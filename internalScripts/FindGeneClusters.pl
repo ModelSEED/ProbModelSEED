@@ -18,13 +18,18 @@ my $r_translation;
 my $genomelist = Bio::KBase::ObjectAPI::utilities::LOADFILE($directory."/PATRICGenomeList.txt");
 open(my $fh, "<", $directory."BVitaminRoles.txt");
 my $rolehash = {};
-while (my $line = <$fh>) {
+my $line = <$fh>;
+while ($line = <$fh>) {
 	chomp($line);
 	my $rolearray = [split(/\t/,$line)];
 	if (defined($rolearray->[3])) {
 		my $itemarray = [split(/;/,$rolearray->[3])];
-		print $rolearray->[1]."\t".$itemarray->[2]."\t".$itemarray->[1]."\n";
-		$rolehash->{$rolearray->[1]}->{$itemarray->[2]} = $itemarray->[1];
+		my $rolename = lc($itemarray->[2]);
+		$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
+		$rolename =~ s/\s//g;
+		$rolename =~ s/\#.*$//g;
+		print $rolearray->[1]."\t".$rolename."\t".$itemarray->[1]."\n";
+		$rolehash->{$rolearray->[1]}->{$rolename} = $itemarray->[1];
 	}
 }
 close($fh);
@@ -54,6 +59,7 @@ for (my $i=0; $i < 100; $i++) {
 					$rolename =~ s/[\d\-]+\.[\d\-]+\.[\d\-]+\.[\d\-]+//g;
 					$rolename =~ s/\s//g;
 					$rolename =~ s/\#.*$//g;
+					$gene->{searchroles}->{$rolename} = 1;
 					$sr_translation->{$rolename} = $array->[$m];
 					$r_translation->{$array->[$m]} = $rolename;
 				}
@@ -102,7 +108,7 @@ for (my $i=0; $i < 100; $i++) {
 			for (my $k=0; $k < 10; $k++) {
 				if ($j+$k < @{$sortedgenes}) {
 					if ($sortedgenes->[$j+$k]->{contig} ne $sortedgenes->[$j]->{contig}) {
-						print "New contig".$j+$k."\n";
+						print "New contig ".$j+$k."\n";
 						$newcontig = $j+$k;
 						last;	
 					} else {
