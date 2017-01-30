@@ -166,26 +166,28 @@ for (my $i=0; $i < 100; $i++) {
 		}
 	}
 	foreach my $bvit (keys(%{$rolehash})) {
-		if (@{$lastroles->{$bvit}} >= $minroles && @{$lastgenes->{$bvit}} >= $mingenes) {
-			my $begin = $laststart->{$bvit}-5;
-			my $end = $laststop->{$bvit}+5;
-			if ($begin < 0) {
-				$begin = 0;
+		if (defined($lastroles->{$bvit})) {
+			if (@{$lastroles->{$bvit}} >= $minroles && @{$lastgenes->{$bvit}} >= $mingenes) {
+				my $begin = $laststart->{$bvit}-5;
+				my $end = $laststop->{$bvit}+5;
+				if ($begin < 0) {
+					$begin = 0;
+				}
+				if ($end >= @{$sortedgenes}) {
+					$end = @{$sortedgenes}-1;
+				}
+				my $finalgenelist = [];
+				my $tempgenehash;
+				for (my $k=0; $k <= @{$lastgenes->{$bvit}}; $k++) {
+					$tempgenehash->{$lastgenes->{$bvit}->[$k]} = 1;
+				}
+				for (my $k=$begin; $k <= $end; $k++) {
+					if ($sortedgenes->[$k]->{contig} eq $sortedgenes->[$laststart->{$bvit}]->{contig} && !defined($tempgenehash->{$sortedgenes->[$k]->{id}})) {
+						push(@{$finalgenelist},$sortedgenes->[$k]->{id});
+					}	
+				}
+				$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist];
 			}
-			if ($end >= @{$sortedgenes}) {
-				$end = @{$sortedgenes}-1;
-			}
-			my $finalgenelist = [];
-			my $tempgenehash;
-			for (my $k=0; $k <= @{$lastgenes->{$bvit}}; $k++) {
-				$tempgenehash->{$lastgenes->{$bvit}->[$k]} = 1;
-			}
-			for (my $k=$begin; $k <= $end; $k++) {
-				if ($sortedgenes->[$k]->{contig} eq $sortedgenes->[$laststart->{$bvit}]->{contig} && !defined($tempgenehash->{$sortedgenes->[$k]->{id}})) {
-					push(@{$finalgenelist},$sortedgenes->[$k]->{id});
-				}	
-			}
-			$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist];
 		}
 	}
 }
