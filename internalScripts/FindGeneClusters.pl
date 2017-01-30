@@ -90,7 +90,6 @@ for (my $i=0; $i < 100; $i++) {
 		print "Gene ".$j."\n";
 		my $newcontig = 0;
 		foreach my $bvit (keys(%{$rolehash})) {
-			print $bvit."\n";
 			if (!defined($lastroles->{$bvit})) {
 				$lastroles->{$bvit} = [];
 				$laststart->{$bvit} = undef;
