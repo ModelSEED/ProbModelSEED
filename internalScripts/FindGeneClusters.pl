@@ -101,21 +101,25 @@ for (my $i=0; $i < 100; $i++) {
 			my $start = undef;
 			my $stop = undef;
 			for (my $k=0; $k < 10; $k++) {
-				if ($sortedgenes->[$j+$k]->{contig} ne $sortedgenes->[$j]->{contig}) {
-					$newcontig = $j+$k;
-					last;	
-				} else {
-					foreach my $sr (keys(%{$sortedgenes->[$j+$k]->{searchroles}})) {
-						if (defined($rolehash->{$bvit}->{$sr})) {
-							$genehash->{$sortedgenes->[$j+$k]->{id}} = 1;
-							$foundhash->{$sr} = 1;
-							if (!defined($start)) {
-								$start = $j+$k;
-							} else {
-								$stop = $j+$k;
+				if ($j+$k < @{$sortedgenes}) {
+					if ($sortedgenes->[$j+$k]->{contig} ne $sortedgenes->[$j]->{contig}) {
+						$newcontig = $j+$k;
+						last;	
+					} else {
+						foreach my $sr (keys(%{$sortedgenes->[$j+$k]->{searchroles}})) {
+							if (defined($rolehash->{$bvit}->{$sr})) {
+								$genehash->{$sortedgenes->[$j+$k]->{id}} = 1;
+								$foundhash->{$sr} = 1;
+								if (!defined($start)) {
+									$start = $j+$k;
+								} else {
+									$stop = $j+$k;
+								}
 							}
 						}
 					}
+				} else {
+					last;
 				}
 			}
 			my $rolelist = [sort(keys(%{$foundhash}))];
