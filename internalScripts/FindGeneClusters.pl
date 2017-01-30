@@ -150,7 +150,9 @@ for (my $i=0; $i < 100; $i++) {
 								push(@{$finalgenelist},$sortedgenes->[$k]->{id});
 							}	
 						}
-						$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist,@{$lastroles->{$bvit}},@{$lastgenes->{$bvit}}];
+						my $genecount = @{$lastgenes->{$bvit}};
+						my $rolecount = @{$lastroles->{$bvit}};
+						$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist,@{$lastroles->{$bvit}},@{$lastgenes->{$bvit}},$rolecount,$genecount];
 						$lastroles->{$bvit} = [];
 						$laststart->{$bvit} = undef;
 						$laststop->{$bvit} = undef;
@@ -192,7 +194,9 @@ for (my $i=0; $i < 100; $i++) {
 						push(@{$finalgenelist},$sortedgenes->[$k]->{id});
 					}	
 				}
-				$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist,@{$lastroles->{$bvit}},@{$lastgenes->{$bvit}}];
+				my $genecount = @{$lastgenes->{$bvit}};
+				my $rolecount = @{$lastroles->{$bvit}};
+				$clusters->{$bvit}->{join(";",@{$lastroles->{$bvit}})}->{$genomelist->[$i]}->{join(";",@{$lastgenes->{$bvit}})} = [$sortedgenes->[$laststart->{$bvit}]->{id},$sortedgenes->[$laststop->{$bvit}]->{id},$finalgenelist,$rolecount,$genecount];
 			}
 		}
 	}
