@@ -148,21 +148,23 @@ if __name__ == '__main__':
     complexesToRoles = dict()
     for index in range(len(template['complexes'])):
         complexId = template['complexes'][index]['id']
-        complexesToRoles[complexId] = list()
-        for crindex in range(len(template['complexes'][index]['complexroles'])):
-            # A complex has a list of complexroles and each complexrole has a reference
-            # to a role and each role has a name. Role ID is last element in reference.
-            roleId = template['complexes'][index]['complexroles'][crindex]['templaterole_ref'].split('/')[-1]
-            complexesToRoles[complexId].append(template['roles'][roles[roleId]]['name'])        
+        if len(template['complexes'][index]['complexroles']) > 0:
+            complexesToRoles[complexId] = list()
+            for crindex in range(len(template['complexes'][index]['complexroles'])):
+                # A complex has a list of complexroles and each complexrole has a reference
+                # to a role and each role has a name. Role ID is last element in reference.
+                roleId = template['complexes'][index]['complexroles'][crindex]['templaterole_ref'].split('/')[-1]
+                complexesToRoles[complexId].append(roleId)
 
     # Create a dictionary to map a reaction to a list of complexes as defined in the template.
     reactionsToComplexes = dict()
     for index in range(len(template['reactions'])):
         reactionId = template['reactions'][index]['id']
-        reactionsToComplexes[reactionId] = list()
-        for complexRef in template['reactions'][index]['templatecomplex_refs']:
-            # Complex ID is last element in reference.
-            reactionsToComplexes[reactionId].append(complexRef.split('/')[-1])
+        if len(template['reactions'][index]['templatecomplex_refs']) > 0:
+            reactionsToComplexes[reactionId] = list()
+            for complexRef in template['reactions'][index]['templatecomplex_refs']:
+                # Complex ID is last element in reference.
+                reactionsToComplexes[reactionId].append(complexRef.split('/')[-1])
 
     # Create a worker for running the algorithm.
     worker = ProbAnnotationWorker(genome['id'])

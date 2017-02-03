@@ -5,7 +5,7 @@ import os
 import sys
 import traceback
 from ConfigParser import ConfigParser
-from biop3.ProbModelSEED.ProbAnnotationParser import ProbAnnotationParser
+from biop3.ProbModelSEED.ProbAnnotationParser import ProbAnnotationParser, MakeblastdbError
 from biokbase import log
 
 desc1 = '''
@@ -73,6 +73,7 @@ if __name__ == '__main__':
         try:
             dataParser.loadDatabaseFiles(logger)
             dataParser.writeStatusFile('ready')
+            print 'Finished loading data files'
         except:
             dataParser.writeStatusFile('failed')
             print 'Failed to load static data files from Shock'
@@ -84,6 +85,7 @@ if __name__ == '__main__':
         print 'Started storing data files to Shock ...'
         try:
             dataParser.storeDatabaseFiles(args.token)
+            print 'Finished storing data files'
         except:
             print 'Failed to store static data files to Shock'
             traceback.print_exc(file=sys.stderr)
@@ -94,6 +96,7 @@ if __name__ == '__main__':
         print 'Started building search database ...'
         try:
             dataParser.buildSearchDatabase()
+            print 'Finished building search database'
         except MakeblastdbError as e:
             print 'Failed to build a search database: '+e.message
         
