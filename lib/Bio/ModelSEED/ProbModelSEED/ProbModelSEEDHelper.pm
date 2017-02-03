@@ -2225,6 +2225,7 @@ sub ComputeReactionProbabilities {
 	my($self,$parameters,$jobresult) = @_;
     $parameters = $self->validate_args($parameters,["genome", "template", "rxnprobs"], {});
     my $cmd = Bio::KBase::ObjectAPI::config::bin_directory()."/bin/ms-probanno ".$parameters->{genome}." ".$parameters->{template}." ".$parameters->{rxnprobs}." --token '".Bio::KBase::ObjectAPI::config::token()."'";
+	Bio::KBase::ObjectAPI::logging::log("Started calculating reaction likelihoods");
     system($cmd);
     if ($? != 0) {
     	$self->error("Calculating reaction likelihoods failed!");

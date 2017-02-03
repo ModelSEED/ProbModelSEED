@@ -41,16 +41,18 @@ class RoleNotFoundEror(Exception):
 
 class ProbAnnotationWorker:
 
-    def __init__(self, genomeId, context=None):
+    def __init__(self, genomeId, context=None, communityIndex='0'):
         ''' Initialize object.
 
             @param genomeId: Genome ID string for genome being annotated
             @param context: User context when used in a server
+            @param communityIndex: Index number of model in a community model
             @return Nothing
         '''
 
         # Save the genome ID (used for messages and temporary file names).
         self.genomeId = genomeId
+        self.communityIndex = communityIndex
 
         # Get the configuration variables.
         serviceName = os.environ.get('KB_SERVICE_NAME', 'ProbModelSEED')
@@ -581,7 +583,7 @@ class ProbAnnotationWorker:
                 GPR = " or ".join( list(set(cplxGprs)) )
 
             # Add everything to the final list.
-            reactionProbs.append( [rxn, maxProb, TYPE, complexString, GPR] )
+            reactionProbs.append( [rxn+self.communityIndex, maxProb, TYPE, complexString, GPR] )
 
         # Save the generated data when debug is turned on.
         if self.logger.get_log_level() >= log.DEBUG2:

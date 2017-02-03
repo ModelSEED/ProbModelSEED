@@ -2737,8 +2737,6 @@ sub ModelReconstruction
     $input = $self->initialize_call($input);
     if ($input->{genome} =~ m/\/plantseed\//) {
     	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
     }
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
     #END ModelReconstruction
@@ -2818,8 +2816,6 @@ sub FluxBalanceAnalysis
     $input = $self->initialize_call($input);
     if ($input->{model} =~ m/\/plantseed\//) {
     	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
     }
     $output = $self->helper()->app_harness("FluxBalanceAnalysis",$input);
     #END FluxBalanceAnalysis
@@ -2899,8 +2895,6 @@ sub GapfillModel
     $input = $self->initialize_call($input);
     if ($input->{model} =~ m/\/plantseed\//) {
     	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
     }
     $output = $self->helper()->app_harness("GapfillModel",$input);
     #END GapfillModel
