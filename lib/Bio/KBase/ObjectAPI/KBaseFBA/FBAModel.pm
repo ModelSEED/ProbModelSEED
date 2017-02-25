@@ -635,7 +635,18 @@ sub LoadExternalReactionEquation {
 	    			my $newcpd = 1;
 	    			my $newcpdid = $cpdobj->id();
 	    			my $formula = $cpdobj->formula();
-	    			my $charge = $cpdobj->defaultCharge();
+	    			my $formula;
+	    			if (defined($args->{compounds}->{$origid}->[2])) {
+	    				$formula = $args->{compounds}->{$origid}->[2];
+	    			} else {
+	    				$formula = $cpdobj->formula();
+	    			}
+	    			my $charge;
+	    			if (defined($args->{compounds}->{$origid}->[1])) {
+	    				$charge = $args->{compounds}->{$origid}->[1];
+	    			} else {
+	    				$charge = $cpdobj->defaultCharge();
+	    			}
 	    			my $name = $cpdobj->name();
 	    			my $reference = $cpdobj->_reference();
 	    			if (defined($mdlcpd)) {
@@ -647,8 +658,6 @@ sub LoadExternalReactionEquation {
 	    							$newcpd = 1;
 	    							$newcpdid = $cpd;
 	    							$name = $newcpdid;
-	    							$formula = "";
-	    							$charge = 0;
 	    							$reference = $self->template()->_reference()."/compounds/id/cpd00000";
 	    						}
 	    					}
@@ -687,13 +696,21 @@ sub LoadExternalReactionEquation {
 		    					}
 		    				}
 		    			}
+		    			my $formula = "";
+		    			if (defined($args->{compounds}->{$origid}->[2])) {
+		    				$formula = $args->{compounds}->{$origid}->[2];
+		    			}
+		    			my $charge = 0;
+		    			if (defined($args->{compounds}->{$origid}->[1])) {
+		    				$charge = $args->{compounds}->{$origid}->[1];
+		    			}
 		    			if ($newcpd == 1) {
 	    					$mdlcpd = $self->add("modelcompounds",{
 		    					id => $cpd."_".$compartment.$index,
 								compound_ref => $self->template()->_reference()."/compounds/id/cpd00000",
 								name => $cpd."_".$compartment.$index,
-								charge => 0,
-								formula => "",
+								charge => $charge,
+								formula => $formula,
 								modelcompartment_ref => "~/modelcompartments/id/".$mdlcmp->id(),
 		    					aliases => ["mdlid:".$cpd]
 		    				});
@@ -840,18 +857,20 @@ sub printSBML {
 		}
 		for (my $j=0; $j < @{$rgts}; $j++) {
 			my $rgt = $rgts->[$j];
+			my $rgtid = $rgt->modelcompound_ref();
+			$rgtid =~ s/.+\///;
 			if ($sign*$rgt->coefficient() < 0) {
 				if ($firstreact == 1) {
 					$firstreact = 0;
 					push(@{$output},"<listOfReactants>");
 				}
-				push(@{$output},'<speciesReference '.$self->CleanNames("species",$rgt->modelcompound()->id()).' stoichiometry="'.-1*$sign*$rgt->coefficient().'"/>');	
+				push(@{$output},'<speciesReference '.$self->CleanNames("species",$rgtid).' stoichiometry="'.-1*$sign*$rgt->coefficient().'"/>');	
 			} else {
 				if ($firstprod == 1) {
 					$firstprod = 0;
 					push(@{$prodoutput},"<listOfProducts>");
 				}
-				push(@{$prodoutput},'<speciesReference '.$self->CleanNames("species",$rgt->modelcompound()->id()).' stoichiometry="'.$sign*$rgt->coefficient().'"/>');
+				push(@{$prodoutput},'<speciesReference '.$self->CleanNames("species",$rgtid).' stoichiometry="'.$sign*$rgt->coefficient().'"/>');
 			}
 		}
 		if ($firstreact != 1) {
@@ -895,18 +914,20 @@ sub printSBML {
 		my $biocpds = $rxn->biomasscompounds();
 		for (my $j=0; $j < @{$biocpds}; $j++) {
 			my $rgt = $biocpds->[$j];
+			my $rgtid = $rgt->modelcompound_ref();
+			$rgtid =~ s/.+\///;
 			if ($rgt->coefficient() < 0) {
 				if ($firstreact == 1) {
 					$firstreact = 0;
 					push(@{$output},"<listOfReactants>");
 				}
-				push(@{$output},'<speciesReference '.$self->CleanNames("species",$rgt->modelcompound()->id()).' stoichiometry="'.-1*$rgt->coefficient().'"/>');	
+				push(@{$output},'<speciesReference '.$self->CleanNames("species",$rgtid).' stoichiometry="'.-1*$rgt->coefficient().'"/>');	
 			} else {
 				if ($firstprod == 1) {
 					$firstprod = 0;
 					push(@{$prodoutput},"<listOfProducts>");
 				}
-				push(@{$prodoutput},'<speciesReference '.$self->CleanNames("species",$rgt->modelcompound()->id()).' stoichiometry="'.$rgt->coefficient().'"/>');
+				push(@{$prodoutput},'<speciesReference '.$self->CleanNames("species",$rgtid).' stoichiometry="'.$rgt->coefficient().'"/>');
 			}
 		}
 		if ($firstreact != 1) {
@@ -1228,6 +1249,7 @@ sub add_gapfilling {
 	my $solutions = $args->{object}->gapfillingSolutions();
 	my $added = 0;
 	my $reversed = 0;
+	my $gfarray = [];
 	for (my $i=0; $i < @{$solutions}; $i++) {
 		my $solution = $solutions->[$i];
 		my $integrated = 0;
@@ -1254,6 +1276,7 @@ sub add_gapfilling {
 				$mdlrxn->gapfill_data()->{$args->{id}}->{$i} = [$rxn->direction(),$integrated,[]];
 				if ($rxn->direction() ne $mdlrxn->direction() && $integrated == 1) {
 					$reversed++;
+					push(@{$gfarray},{obj => $mdlrxn, dir => $rxn->direction(),action => "reversed"});
 					$mdlrxn->direction("=");
 				}
 			} else {
@@ -1267,6 +1290,7 @@ sub add_gapfilling {
 					$mdlrxn->gapfill_data()->{$args->{id}}->{$i} = [$rxn->direction(),$integrated,[]];
 					if ($integrated == 1) {
 						$added++;
+						push(@{$gfarray},{obj => $mdlrxn, dir => $rxn->direction(),action => "added"});
 						$self->add("modelreactions",$mdlrxn);
 						$mdlrxn->direction() = $rxn->direction();
 						$self->removed("gapfilledcandidates",$mdlrxn);
@@ -1342,6 +1366,7 @@ sub add_gapfilling {
 					$mdlrxn->gapfill_data()->{$args->{id}}->{$i} = [$rxn->direction(),$integrated,[]];
 					if ($integrated == 1) {
 						$added++;
+						push(@{$gfarray},{obj => $mdlrxn, dir => $rxn->direction(),action => "added"});
 						$mdlrxn = $self->add("modelreactions",$mdlrxn);
 					} else {
 						$mdlrxn = $self->add("gapfilledcandidates",$mdlrxn);
@@ -1358,13 +1383,26 @@ sub add_gapfilling {
 						$self->add("gapfilledcandidates",$mdlrxn);
 						$self->remove("modelreactions",$mdlrxn);
 					} else {
+						push(@{$gfarray},{obj => $mdlrxn, dir => $rxn->direction(),action => "added"});
 						$added++;
 					}
 				}
 			}
 		}	
 	}
-	Bio::KBase::utilities::print_report_message({message => " During gapfilling, ".$added." new reactions were added to the model, while ".$reversed." existing reactions were made reversible.",append => 1,html => 0});
+	
+	my $tbl = "<p>During gapfilling, ".$added." new reactions were added to the model, while ".$reversed." existing reactions were made reversible.";
+	if (@{$gfarray} > 0) {
+		$tbl .= " The reactions added and modified during gapfilling are listed below:</p><br>";
+		$tbl .= "<table class=\"reporttbl\"><tr><th>Reaction</th><th>Direction</th><th>Equation</th><th>Action</th></tr>";
+		foreach my $gfrxn (@{$gfarray}) {
+			$tbl .= "<tr><td>".$gfrxn->{obj}->id()."</td><td>".$gfrxn->{dir}."</td><td>".$gfrxn->{obj}->definition()."</td><td>".$gfrxn->{action}."</td></tr>";
+		}
+		$tbl .= "</table>";
+	} else {
+		$tbl .= "</p>";
+	}
+	Bio::KBase::utilities::gapfilling_html_table({message => $tbl,append => 0});
 }
 
 =head3 searchForCompound

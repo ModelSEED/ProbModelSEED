@@ -13,7 +13,6 @@ from biop3.Workspace.WorkspaceClient import Workspace, ServerError as WorkspaceS
 desc1 = '''
 NAME
       ms-probanno -- run probabilistic annotation algorithm for a genome
-
 SYNOPSIS
 '''
 
@@ -36,7 +35,6 @@ EXAMPLES
       > ms-probanno /mmundy/home/models/.224308.49_model/224308.49.genome
           /chenry/public/modelsupport/templates/GramPositive.modeltemplate
           /mmundy/home/models/.224308.49_model/224308.49.rxnprobs
-
 AUTHORS
       Mike Mundy 
 '''

@@ -13,6 +13,9 @@ from biokbase import log
 # E values of less than 1E-200 are treated as 1E-200 to avoid log of 0 issues.
 MIN_EVALUE = 1E-200
 
+# Prefix for lookup name attribute of files stored in Shock.
+LOOKUP_NAME_PREFIX = 'ProbAnnoDataV2'
+
 # Exception thrown when there is an invalid sources configuration variable
 class BadSourceError(Exception):
     pass
@@ -113,7 +116,6 @@ class ProbAnnotationParser:
     
     def readOtuData(self, filename):
         ''' Read data from the representative OTU genome ID file.
-
             @param filename: Path to OTU genome ID file
             @return List of all OTU genome IDs, list of prokaryote OTU genome IDs
         '''
@@ -130,7 +132,6 @@ class ProbAnnotationParser:
     
     def writeOtuData(self, filename, otus, prokotus):
         ''' Write data to the representative OTU genome ID file.
-
             @param filename: Path to OTU genome ID file
             @param otus: List of all OTU genome IDs
             @param prokotus: List of prokaryote OTU genome IDs
@@ -247,7 +248,6 @@ class ProbAnnotationParser:
     
     def buildSearchDatabase(self):
         ''' Build a search database for the configured search program.
-
             @note Make sure the subsystem FASTA file is available.
             @return Nothing
         '''
@@ -278,7 +278,6 @@ class ProbAnnotationParser:
     
     def parseBlastOutput(self, blastResultsPath):
         ''' Read BLAST results file and store in a convenient structure.
-
             The results file is in BLAST output format 6 where each line describes an alignment
             found by the search program.  A line has 12 tab delimited fields: (1) query label,
             (2) target label, (3) percent identity, (4) alignment length, (5) number of
@@ -316,7 +315,6 @@ class ProbAnnotationParser:
 
     def readComplexRoleFile(self, filename):
         ''' Read data from a complex to role file.
-
             @param filename: Path to complex to roles file
             @return Dictionary mapping a complex ID to list of names of functional roles,
                 dictionary mapping a role to a list of complex IDs
@@ -341,7 +339,6 @@ class ProbAnnotationParser:
 
     def writeComplexRoleFile(self, filename, complexToRoles):
         ''' Write data to a complex to role file.
-
             @param filename: Path to complex to role file
             @param complexToRoles: Dictionary mapping a complex ID to list of names of functional roles
             @return Nothing
@@ -361,7 +358,6 @@ class ProbAnnotationParser:
     
     def readReactionComplexFile(self, filename):
         ''' Read data from a reaction to complexes file.
-
             @param filename: Path to reaction to complexes file
             @return Dictionary mapping a reaction ID to list of complex IDs
         '''
@@ -380,7 +376,6 @@ class ProbAnnotationParser:
 
     def writeReactionComplexFile(self, filename, rxnToComplexes):
         ''' Write data to a reaction to complexes file.
-
             @param filename: Path to reaction to complexes file
             @param rxnToComplexes: Dictionary mapping a reaction ID to list of complex IDs
             @return Nothing
@@ -399,11 +394,9 @@ class ProbAnnotationParser:
 
     def readKeggReactionFile(self, filename):
         ''' Read data from a KEGG to KBase reaction mapping file.
-
             The reaction mapping is a tuple where the first element is the KEGG
             reaction ID, the second element is the KBase reaction ID, and the
             third element is the KBase reaction name.
-
             @param filename: Path to reaction mapping file
             @return List of tuples as described above
         '''
@@ -421,11 +414,9 @@ class ProbAnnotationParser:
 
     def writeKeggReactionFile(self, filename, keggRxnIdList):
         ''' Write data to KEGG to KBase reactions file.
-
             The input list is a list of tuples where the first element is the
             KEGG reaction ID, the second element is the KBase reaction ID, and
             the third element is the KBase reaction name.
-
             @param filename: Path to reaction mapping file
             @param keggRxnIdList: List of tuples as described above
             @return Nothing
@@ -438,7 +429,6 @@ class ProbAnnotationParser:
 
     def mergeFiles(self, sourceFiles, targetFile):
         ''' Merge a list of source files into a target file.
-
             @param sourceFiles: List of paths to source files
             @param targetFile: Path to target file
             @return Nothing
@@ -455,11 +445,9 @@ class ProbAnnotationParser:
 
     def mergeFilesById(self, sourceFiles, targetFile):
         ''' Merge a list of source files into a target file with no duplicate IDs.
-
             Each source file must have two tab delimited fields where the first
             field is an ID and the second field is a list of values delimited by
             the separator configuration variable.
-
             @param sourceFiles: List of paths to source files
             @param targetFile: Path to target file
             @return Nothing
@@ -491,7 +479,6 @@ class ProbAnnotationParser:
 
     def mergeDataFiles(self):
         ''' Merge the data files from the configured sources.
-
             @note There must be a matching key in the dictionary of files for a
                 source as there is in the DataFiles dictionary.
             @return Nothing
@@ -578,12 +565,10 @@ class ProbAnnotationParser:
 
     def loadDatabaseFiles(self, mylog):
         ''' Load the static database files from Shock.
-
             The static database files are stored in the directory specified by the
             data_dir configuration variable.  A file is only downloaded if
             the file is not available on this system or the file has been updated
             in Shock.
-
             @param mylog Log object for messages
             @return Nothing
             @raise MissingFileError when database file is not found in Shock
@@ -605,7 +590,7 @@ class ProbAnnotationParser:
             # Get info about the file stored in Shock.
             localPath = shockFiles[key]
             name = os.path.basename(localPath)
-            nodelist = shockClient.query_node( { 'lookupname': 'ProbAnnoData/'+name } )
+            nodelist = shockClient.query_node( { 'lookupname': LOOKUP_NAME_PREFIX+'/'+name } )
             if len(nodelist) == 0:
                 message = 'Database file %s is not available from %s\n' %(name, self.shockURL)
                 mylog.log_message(log.ERR, message) # MBM
@@ -632,7 +617,6 @@ class ProbAnnotationParser:
      
     def storeDatabaseFiles(self, token):
         ''' Store the static database files to Shock.
-
             @param token: Authorization token for authenticating to shock
             @return Nothing
         '''
@@ -650,7 +634,7 @@ class ProbAnnotationParser:
                 sys.stderr.write('Saving "%s"...' %(localPath))
                 
                 # See if the file already exists in Shock.
-                query = { 'lookupname': 'ProbAnnoData/'+name }
+                query = { 'lookupname': LOOKUP_NAME_PREFIX+'/'+name }
                 nodelist = shockClient.query_node(query)
                 
                 # Remove all instances of the file in Shock.
@@ -660,7 +644,7 @@ class ProbAnnotationParser:
      
                 # Build the attributes for this file and store as json in a separate file.
                 moddate = time.ctime(os.path.getmtime(localPath))           
-                attr = { 'lookupname': 'ProbAnnoData/'+name, 'moddate': moddate }
+                attr = { 'lookupname': LOOKUP_NAME_PREFIX+'/'+name, 'moddate': moddate }
                 attrFilename = os.path.join(self.dataFolderPath, name+'.attr')
                 attrFid = open(attrFilename, 'w')
                 json.dump(attr, attrFid, indent=4)
@@ -681,20 +665,18 @@ class ProbAnnotationParser:
                 sys.stderr.write('Could not find "%s" so it was not saved\n' %(localPath))
                 
         # Save the metadata on all of the database files.
-        cacheFilename = os.path.join(self.dataFolderPath, StatusFiles['cache_file'])
+        cacheFilename = os.path.join(self.dataFolderPath, self.StatusFiles['cache_file'])
         json.dump(fileCache, open(cacheFilename, 'w'), indent=4)
 
         return
 
     def getDatabaseFiles(self, mylog, testDataPath):
         ''' Get the static database files.
-
             The static database files come from one of three places: (1) Shock,
             (2) a local data directory, (3) a test data directory.  If the files
             are not found in Shock, the local data directory is searched.  If the
             file are not found in the local data directory, the test data directory
             is used.
-
             @param mylog: Log object for messages
             @param testDataPath: Path to directory with test database files
             @return Current value of load data option which indicates which of the

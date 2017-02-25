@@ -214,7 +214,7 @@ sub util_build_fba {
 			make_model_rxns_reversible => $make_model_reactions_reversible,
 			activate_all_model_reactions => $params->{comprehensive_gapfill},
 		};
-		print "activate_all_model_reactions:".$params->{comprehensive_gapfill}."\n";
+		#print "activate_all_model_reactions:".$params->{comprehensive_gapfill}."\n";
 		if (defined($exp_matrix)) {
 			$input->{expsample} = $exphash;
 			$input->{expression_threshold_percentile} = $params->{exp_threshold_percentile};
@@ -358,7 +358,7 @@ sub func_build_metabolic_model {
 	$datachannel->{fbamodel} = $model;
 	#Gapfilling model if requested
 	my $output;
-	Bio::KBase::utilities::print_report_message({message => "A new draft genome-scale metabolic model was constructed based on the annotations in the genome ".$params->{genome_id}.".",append => 0,html => 0});
+	my $htmlreport = Bio::KBase::utilities::style()."<div style=\"height: 200px; overflow-y: scroll;\"><p>A new draft genome-scale metabolic model was constructed based on the annotations in the genome ".$params->{genome_id}.".";
 	if ($params->{gapfill_model} == 1) {
 		$output = Bio::KBase::ObjectAPI::functions::func_gapfill_metabolic_model({
 			thermodynamic_constraints => $params->{thermodynamic_constraints},
@@ -381,15 +381,16 @@ sub func_build_metabolic_model {
 			media_workspace => $params->{media_workspace},
 			media_id => $params->{media_id}
 		},$model);
+		$htmlreport .= $output->{html_report}." Model was saved with the name ".$params->{fbamodel_output_id}.". The final model includes ".@{$model->modelreactions()}." reactions, ".@{$model->modelcompounds()}." compounds, and ".$model->gene_count()." genes.</p>".Bio::KBase::utilities::gapfilling_html_table()."</div>";
 	} else {
 		#If not gapfilling, then we just save the model directly
 		$output->{number_gapfilled_reactions} = 0;
 		$output->{number_removed_biomass_compounds} = 0;
 		my $wsmeta = $handler->util_save_object($model,$params->{workspace}."/".$params->{fbamodel_output_id},{type => "KBaseFBA.FBAModel"});
 		$output->{new_fbamodel_ref} = $params->{workspace}."/".$params->{fbamodel_output_id};
-		Bio::KBase::utilities::print_report_message({message => " No gapfilling was performed on the model. It is expected that the model will not be capable of producing biomass on any growth condition until gapfilling is run.",append => 1,html => 0});
+		$htmlreport .= " No gapfilling was performed on the model. It is expected that the model will not be capable of producing biomass on any growth condition until gapfilling is run. Model was saved with the name ".$params->{fbamodel_output_id}.". The final model includes ".@{$model->modelreactions()}." reactions, ".@{$model->modelcompounds()}." compounds, and ".$model->gene_count()." genes.</p></div>"
 	}
-	Bio::KBase::utilities::print_report_message({message => " Model was saved with the name ".$params->{fbamodel_output_id}.". The final model includes ".@{$model->modelreactions()}." reactions, ".@{$model->modelcompounds()}." compounds, and ".$model->gene_count()." genes.",append => 1,html => 0});
+	Bio::KBase::utilities::print_report_message({message => $htmlreport,append => 0,html => 1});
 	return $output;
 }
 
@@ -421,12 +422,22 @@ sub func_gapfill_metabolic_model {
 		number_of_solutions => 1,
 		gapfill_output_id => undef
     });
+    my $printreport = 1;
+    my $htmlreport = "";
+    if (defined($params->{reaction_ko_list}) && ref($params->{reaction_ko_list}) ne "ARRAY") {
+		if (length($params->{reaction_ko_list}) > 0) {
+			$params->{reaction_ko_list} = [split(/,/,$params->{reaction_ko_list})];
+		} else {
+			 $params->{reaction_ko_list} = [];
+		}
+	}
     if (!defined($model)) {
     	$handler->util_log("Retrieving model.");
 		$model = $handler->util_get_object($params->{fbamodel_workspace}."/".$params->{fbamodel_id});
-    	Bio::KBase::utilities::print_report_message({message => "The genome-scale metabolic model ".$params->{fbamodel_id}." was gapfilled",append => 0,html => 0});
+    	$htmlreport .= Bio::KBase::utilities::style()."<div style=\"height: 200px; overflow-y: scroll;\"><p>The genome-scale metabolic model ".$params->{fbamodel_id}." was gapfilled";
     } else {
-    	Bio::KBase::utilities::print_report_message({message => " The model ".$params->{fbamodel_id}." was gapfilled",append => 1,html => 0});
+    	$printreport = 0;
+    	$htmlreport .= "<p>The model ".$params->{fbamodel_id}." was gapfilled";
     }
     if (!defined($params->{media_id})) {
     	if ($model->genome()->domain() eq "Plant" || $model->genome()->taxonomy() =~ /viridiplantae/i) {
@@ -437,12 +448,12 @@ sub func_gapfill_metabolic_model {
 		}
     	$params->{media_workspace} = Bio::KBase::utilities::conf("ModelSEED","default_media_workspace");
     }
-    Bio::KBase::utilities::print_report_message({message => " in ".$params->{media_id}." media to force a minimum flux of ".$params->{minimum_target_flux}." through the ".$params->{target_reaction}." reaction.",append => 1,html => 0});
+    $htmlreport .= " in ".$params->{media_id}." media to force a minimum flux of ".$params->{minimum_target_flux}." through the ".$params->{target_reaction}." reaction.";
     $handler->util_log("Retrieving ".$params->{media_id}." media.");
     my $media = $handler->util_get_object($params->{media_workspace}."/".$params->{media_id});
     $handler->util_log("Preparing flux balance analysis problem.");
     if (defined($params->{source_fbamodel_id}) && !defined($source_model)) {
-		Bio::KBase::utilities::print_report_message({message => " During the gapfilling, the source biochemistry database was augmented with all the reactions contained in the existing ".$params->{source_fbamodel_id}." model.",append => 1,html => 0});
+		$htmlreport .= " During the gapfilling, the source biochemistry database was augmented with all the reactions contained in the existing ".$params->{source_fbamodel_id}." model.";
 		$source_model = $handler->util_get_object($params->{source_fbamodel_workspace}."/".$params->{source_fbamodel_id});
 	}
 	my $gfs = $model->gapfillings();
@@ -454,7 +465,6 @@ sub func_gapfill_metabolic_model {
 			}
 		}
 	}
-	Bio::KBase::utilities::print_report_message({message => " This model has been previously gapfilled ".@{$gfs}." times, and the ID of the current gapfilling solution is gf.".$currentid.".",append => 1,html => 0});
 	my $gfid = "gf.".$currentid;
     my $fba = Bio::KBase::ObjectAPI::functions::util_build_fba($params,$model,$media,$params->{fbamodel_output_id}.".".$gfid,1,1,$source_model,1);
     $handler->util_log("Running flux balance analysis problem.");
@@ -472,7 +482,13 @@ sub func_gapfill_metabolic_model {
     }
     $fba->id($params->{gapfill_output_id});
     $wsmeta = $handler->util_save_object($fba,$params->{workspace}."/".$params->{gapfill_output_id},{type => "KBaseFBA.FBA"});
+	$htmlreport .= "</p>";
+	if ($printreport == 1) {
+		$htmlreport .= Bio::KBase::utilities::gapfilling_html_table()."</div>";
+		Bio::KBase::utilities::print_report_message({message => $htmlreport,append => 0,html => 1});
+	}
 	return {
+		html_report => $htmlreport,
 		new_fba_ref => $params->{workspace}."/".$params->{fbamodel_output_id}.".".$gfid,
 		new_fbamodel_ref => $params->{workspace}."/".$params->{fbamodel_output_id},
 		number_gapfilled_reactions => 0,
@@ -515,6 +531,13 @@ sub func_run_flux_balance_analysis {
 		massbalance => undef,
 		sensitivity_analysis => 0
     });
+    if (defined($params->{reaction_ko_list}) && ref($params->{reaction_ko_list}) ne "ARRAY") {
+		if (length($params->{reaction_ko_list}) > 0) {
+			$params->{reaction_ko_list} = [split(/,/,$params->{reaction_ko_list})];
+		} else {
+			 $params->{reaction_ko_list} = [];
+		}
+	}
     if (!defined($model)) {
     	$handler->util_log("Retrieving model.");
 		$model = $handler->util_get_object($params->{fbamodel_workspace}."/".$params->{fbamodel_id});
@@ -914,21 +937,39 @@ sub func_simulate_growth_on_phenotype_data {
     	Bio::KBase::utilities::error("Simulation of phenotypes failed to return results from FBA! The model probably failed to grow on Complete media. Try running gapfiling first on Complete media.");
 	}
 	my $phenoset = $fba->phenotypesimulationset();
+	my $phenos = $phenoset->phenotypeSimulations();
+	my $total = @{$phenos};
+	my $htmlreport =Bio::KBase::utilities::style()."<div style=\"height: 400px; overflow-y: scroll;\"><p>Correct positives: ".$phenoset->cp()." (".POSIX::floor(100*$phenoset->cp()/$total)."%)<br>".
+					"Correct negatives: ".$phenoset->cn()." (".POSIX::floor(100*$phenoset->cn()/$total)."%)<br>".
+					"False positives : ".$phenoset->fp()." (".POSIX::floor(100*$phenoset->fp()/$total)."%)<br>".
+					"False negatives : ".$phenoset->fn()." (".POSIX::floor(100*$phenoset->fn()/$total)."%)<br>".
+					"Overall accuracy : ".POSIX::floor(100*($phenoset->cp()+$phenoset->cn())/$total)."%<p>";
 	if ($params->{gapfill_phenotypes} == 1 || $params->{fit_phenotype_data} == 1) {
-		$handler->util_log("Phenotype gapfilling results:");
-		$handler->util_log("Media\tKO\tSupplements\tGrowth\tSim growth\tGapfilling count\tGapfilled reactions");
-		my $phenos = $phenoset->phenotypeSimulations();
-		for (my $i=0; $i < @{$phenos}; $i++) {
+    	my $htmltable = "<br><table class=\"reporttbl\">".
+    		"<row><th>Media</th><th>KO</th><th>Supplements</th><th>Growth</th><th>Gapfilled reactions</th></row>";
+    	my $found = 0;
+    	for (my $i=0; $i < @{$phenos}; $i++) {
 			if ($phenos->[$i]->numGapfilledReactions() > 0) {
-				$handler->util_log($phenos->[$i]->phenotype()->media()->_wsname()."\t".$phenos->[$i]->phenotype()->geneKOString()."\t".$phenos->[$i]->phenotype()->additionalCpdString()."\t".$phenos->[$i]->phenotype()->normalizedGrowth()."\t".$phenos->[$i]->simulatedGrowth()."\t".$phenos->[$i]->numGapfilledReactions()."\t".join(";",@{$phenos->[$i]->gapfilledReactions()})."");
+				$found = 1;
+				$htmltable .= "<tr><td>".$phenos->[$i]->phenotype()->media()->_wsname()."</td><td>".
+					$phenos->[$i]->phenotype()->geneKOString()."</td><td>".
+					$phenos->[$i]->phenotype()->additionalCpdString()."</td><td>".
+					$phenos->[$i]->phenotype()->normalizedGrowth()."</td><td>".
+					$phenos->[$i]->gapfilledReactionString()."</td></tr>";
 			}
-		}
+		}	
+    	$htmltable .= "</table>";
+    	if ($found == 1) {
+    		$htmlreport .= $htmltable;
+    	}
 		if ($params->{fit_phenotype_data} == 1) {
 			$handler->util_log("Saving gapfilled model.");
 			my $wsmeta = $handler->util_save_object($model,$params->{workspace}."/".$params->{fbamodel_output_id},{type => "KBaseFBA.FBAModel"});
     		$fba->fbamodel_ref($model->_reference());
 		}
 	}
+	$htmlreport .= "</div>";
+	Bio::KBase::utilities::print_report_message({message => $htmlreport,append => 0,html => 1});
     $handler->util_log("Saving FBA object with phenotype simulation results.");
     my $wsmeta = $handler->util_save_object($phenoset,$params->{workspace}."/".$params->{phenotypesim_output_id},{type => "KBasePhenotypes.PhenotypeSimulationSet"});
     $fba->phenotypesimulationset_ref($phenoset->_reference());
@@ -946,7 +987,7 @@ sub func_merge_metabolic_models_into_community_model {
     });
     #Getting genome
 	$handler->util_log("Retrieving first model.");
-	my $model = $handler->util_get_object($params->{fbamodel_workspace}."/".$params->{fbamodel_id_list}->[0]);
+	my $model = $handler->util_get_object($params->{fbamodel_id_list}->[0]);
 	#Creating new community model
 	my $commdl = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new({
 		source_id => $params->{fbamodel_output_id},
@@ -965,9 +1006,6 @@ sub func_merge_metabolic_models_into_community_model {
 		gapfillings => [],
 	});
 	$commdl->parent($handler->util_store());
-	for (my $i=0; $i < @{$params->{fbamodel_id_list}}; $i++) {
-		$params->{fbamodel_id_list}->[$i] = $params->{fbamodel_workspace}."/".$params->{fbamodel_id_list}->[$i];
-	}
 	$handler->util_log("Merging models.");
 	my $genomeObj = $commdl->merge_models({
 		models => $params->{fbamodel_id_list},
@@ -1354,8 +1392,7 @@ sub func_check_model_mass_balance {
 	my $message = "No mass imbalance found";
     if (length($fba->MFALog) > 0) {
     	$message = $fba->MFALog();
-    	Bio::KBase::utilities::print_report_message({message => $message,append => 0,html => 0});
-    	$htmlreport = "<table><row><td>Reaction</td><td>Reactants</td><td>Products</td><td>Extra atoms in reactants</td><td>Extra atoms in products</td></row>";
+    	$htmlreport = Bio::KBase::utilities::style()."<div style=\"height: 400px; overflow-y: scroll;\"><table class=\"reporttbl\"><row><td>Reaction</td><td>Reactants</td><td>Products</td><td>Extra atoms in reactants</td><td>Extra atoms in products</td></row>";
     	my $array = [split(/\n/,$message)];
     	my ($id,$reactants,$products,$rimbal,$pimbal);
     	for (my $i=0; $i < @{$array}; $i++) {
@@ -1372,12 +1409,12 @@ sub func_check_model_mass_balance {
     			if (length($rimbal) > 0) {
     				$rimbal .= "<br>";
     			}
-    			$rimbal = $1." ".$2;
+    			$rimbal .= $1." ".$2;
     		} elsif ($array->[$i] =~ m/Extra\s(.+)\s(.+)\sin\sreactants/) {
     			if (length($pimbal) > 0) {
     				$pimbal .= "<br>";
     			}
-    			$pimbal = $1." ".$2;
+    			$pimbal .= $1." ".$2;
     		} elsif ($array->[$i] =~ m/Reactants:/) {
     			$i++;
     			while ($array->[$i] ne "Products:") {
@@ -1398,9 +1435,9 @@ sub func_check_model_mass_balance {
     		}
     	}
     	if (defined($id)) {
-			$htmlreport .= "<row><td>".$id."</td><td>".$reactants."<td>".$products."</td><td>".$rimbal."</td><td>".$pimbal."</td></row>";
+			$htmlreport .= "<tr><td>".$id."</td><td>".$reactants."<td>".$products."</td><td>".$rimbal."</td><td>".$pimbal."</td></tr>";
 		}
-    	$htmlreport .= "</table>";
+    	$htmlreport .= "</table></div>";
     }
     Bio::KBase::utilities::print_report_message({message => $htmlreport,append => 0,html => 1});
 }
@@ -1471,8 +1508,7 @@ sub func_create_or_edit_media {
 		Bio::KBase::utilities::print_report_message({message => "No compounds removed from the media.",append => 0,html => 0});
 	} else {
 		my $count = @{$removed_list};
-		Bio::KBase::utilities::print_report_message({message => $count." compounds removed from the media: ".join("; ",@{$removed_list}).".",append => 0,html => 0});
-		
+		Bio::KBase::utilities::print_report_message({message => $count." compounds removed from the media: ".join("; ",@{$removed_list}).".",append => 0,html => 0});	
 	}
 	my $change_list = [];
 	for (my $i=0; $i < @{$params->{compounds_to_change}}; $i++) {
@@ -1498,7 +1534,6 @@ sub func_create_or_edit_media {
 	} else {
 		my $count = @{$change_list};
 		Bio::KBase::utilities::print_report_message({message => " ".$count." compounds changed in the media: ".join("; ",@{$change_list}).".",append => 1,html => 0});
-		
 	}
 	my $add_list = [];
 	my $bio = $handler->util_get_object("kbase/default",{});
@@ -1672,9 +1707,6 @@ sub func_compare_models {
 	if (@{$params->{model_refs}} < 2) {
 		Bio::KBase::utilities::error("Must select at least two models to compare");
     }
-	if (!defined($params->{protcomp_ref}) && !defined($params->{pangenome_ref})) {
-    	Bio::KBase::utilities::error("Must provide either a pangenome or proteome comparison");
-    }
 
     my $provenance = [{}];
     my $models;
@@ -1819,64 +1851,74 @@ sub func_compare_models {
     my $core_families = 0;
 
     if (defined $protcomp) {
-	my $i = 0;
-	foreach my $ftr (@{$protcomp->{proteome1names}}) {
-	    foreach my $hit (@{$protcomp->{data1}->[$i]}) {
-		$gene_translation->{$ftr}->{$protcomp->{proteome2names}->[$hit->[0]]} = 1;
-	    }
-	    $i++;
-	}
-        $i = 0;
-	foreach my $ftr (@{$protcomp->{proteome2names}}) {
-	    foreach my $hit (@{$protcomp->{data2}->[$i]}) {
-		$gene_translation->{$ftr}->{$protcomp->{proteome1names}->[$hit->[0]]} = 1;
-	    }
-	    $i++;
-	}
+		my $i = 0;
+		foreach my $ftr (@{$protcomp->{proteome1names}}) {
+		    foreach my $hit (@{$protcomp->{data1}->[$i]}) {
+			$gene_translation->{$ftr}->{$protcomp->{proteome2names}->[$hit->[0]]} = 1;
+		    }
+		    $i++;
+		}
+	        $i = 0;
+		foreach my $ftr (@{$protcomp->{proteome2names}}) {
+		    foreach my $hit (@{$protcomp->{data2}->[$i]}) {
+			$gene_translation->{$ftr}->{$protcomp->{proteome1names}->[$hit->[0]]} = 1;
+		    }
+		    $i++;
+		}
     }
+    
     if (defined $pangenome) {
-	foreach my $family (@{$pangenome->{orthologs}}) {
-	    my $in_models = {};
-	    my $family_model_data = {};
-	    foreach my $ortholog (@{$family->{orthologs}}) {
-		$ftr2family{$ortholog->[0]} = $family;
-		map { $gene_translation->{$ortholog->[0]}->{$_->[0]} = 1 } @{$family->{orthologs}};
-		foreach my $model (@{$models}) {
-		    if (exists $ftr2model{$ortholog->[0]}->{$model->{id}}) {
-			map { $in_models->{$model->{id}}->{$_} = 1 } keys $ftr2reactions{$ortholog->[0]};
-			push @{$model2family{$model->{id}}->{$family->{id}}}, $ortholog->[0];
+		foreach my $family (@{$pangenome->{orthologs}}) {
+		    my $in_models = {};
+		    my $family_model_data = {};
+		    foreach my $ortholog (@{$family->{orthologs}}) {
+				$ftr2family{$ortholog->[0]} = $family;
+				map { $gene_translation->{$ortholog->[0]}->{$_->[0]} = 1 } @{$family->{orthologs}};
+				foreach my $model (@{$models}) {
+				    if (exists $ftr2model{$ortholog->[0]}->{$model->{id}}) {
+						map { $in_models->{$model->{id}}->{$_} = 1 } keys $ftr2reactions{$ortholog->[0]};
+						push @{$model2family{$model->{id}}->{$family->{id}}}, $ortholog->[0];
+				    }
+				}
+		    }
+		    my $num_models = scalar keys %$in_models;
+		    if ($num_models > 0) {
+				foreach my $model (@{$models}) {
+				    if (exists $in_models->{$model->{id}}) {
+						my @reactions = sort keys %{$in_models->{$model->{id}}};
+						$family_model_data->{$model->{id}} =  [1, \@reactions];
+				    } else {
+						$family_model_data->{$model->{id}} = [0, []];
+				    }
+				}
+				my $mc_family = {
+				    id => $family->{id},
+				    family_id => $family->{id},
+				    function => $family->{function},
+				    number_models => $num_models,
+				    fraction_models => $num_models*1.0/@{$models},
+				    core => ($num_models == @{$models} ? 1 : 0),
+				    family_model_data => $family_model_data
+				};
+				$mc_families->{$family->{id}} = $mc_family;
+				$core_families++ if ($num_models == @{$models});
 		    }
 		}
-	    }
-	    my $num_models = scalar keys %$in_models;
-	    if ($num_models > 0) {
-		foreach my $model (@{$models}) {
-		    if (exists $in_models->{$model->{id}}) {
-			my @reactions = sort keys %{$in_models->{$model->{id}}};
-			$family_model_data->{$model->{id}} =  [1, \@reactions];
-		    }
-		    else {
-			$family_model_data->{$model->{id}} = [0, []];
-		    }
-		}
-		my $mc_family = {
-		    id => $family->{id},
-		    family_id => $family->{id},
-		    function => $family->{function},
-		    number_models => $num_models,
-		    fraction_models => $num_models*1.0/@{$models},
-		    core => ($num_models == @{$models} ? 1 : 0),
-		    family_model_data => $family_model_data
-		};
-		$mc_families->{$family->{id}} = $mc_family;
-		$core_families++ if ($num_models == @{$models});
-	    }
-	}
     }
+	
+	my $genomehash;
+	if (!defined($gene_translation)) {
+		foreach my $model1 (@{$models}) {
+			$genomehash->{$model1->{genome_ref}} = $handler->util_get_object($model1->{genome_ref},{raw => 1});
+			my $ftrs = $genomehash->{$model1->{genome_ref}}->{features};
+			for (my $i=0; $i < @{$ftrs}; $i++) {
+				$gene_translation->{$ftrs->[$i]->{id}}->{$ftrs->[$i]->{id}} = 1;
+			}
+		}
+	}
 
     # ACCUMULATE REACTIONS AND FAMILIES
     my %rxn2families;
-
     foreach my $model (@{$models}) {
 		foreach my $rxnid (keys %{$model->{rxnhash}}) {
 		    foreach my $ftr (keys %{$model->{$rxnid}->{ftrhash}}) {
@@ -1893,7 +1935,7 @@ sub func_compare_models {
     my $mc_bcpds;
 
     foreach my $model1 (@{$models}) {
-		my $mc_model = {};
+		my $mc_model = {model_similarity => {}};
 		push @{$mc_models}, $mc_model;
 		$mc_model->{id} = $model1->{id};
 		$mc_model->{model_ref} = $model1->{model_ref};
@@ -1901,9 +1943,8 @@ sub func_compare_models {
 		$mc_model->{families} = exists $model2family{$model1->{id}} ? scalar keys %{$model2family{$model1->{id}}} : 0;
 	
 		eval {
-			my $genome=$handler->util_get_object($model1->{genome_ref},{raw => 1});
-		    $mc_model->{name} = $genome->{scientific_name};
-		    $mc_model->{taxonomy} = $genome->{taxonomy};
+		    $mc_model->{name} = $genomehash->{$model1->{genome_ref}}->{scientific_name};
+		    $mc_model->{taxonomy} = $genomehash->{$model1->{genome_ref}}->{taxonomy};
 		};
 		if ($@) {
 		    warn "Error loading genome from workspace:\n".$@;
@@ -2003,24 +2044,23 @@ sub func_compare_models {
 		# fill in info for reactions not in model
 		foreach my $rxnid (keys %rxn2families) {
 		    if (! exists $model1->{rxnhash}->{$rxnid}) {
-			my $ftrs = [];
-			if (defined $pangenome) {
-			    foreach my $familyid (keys %{$rxn2families{$rxnid}}) {
-				my $conservation = 0;
-				foreach my $m (keys %model2family) {
-				    $conservation++ if exists $model2family{$m}->{$familyid};
-				}
-				if (exists $model2family{$model1->{id}}->{$familyid}) {
-				    foreach my $ftr (@{$model2family{$model1->{id}}->{$familyid}}) {
-					push @$ftrs, [$ftr, $familyid, $conservation*1.0/@{$models}, 0];
+				my $ftrs = [];
+				if (defined $pangenome) {
+				    foreach my $familyid (keys %{$rxn2families{$rxnid}}) {
+						my $conservation = 0;
+						foreach my $m (keys %model2family) {
+						    $conservation++ if exists $model2family{$m}->{$familyid};
+						}
+						if (exists $model2family{$model1->{id}}->{$familyid}) {
+						    foreach my $ftr (@{$model2family{$model1->{id}}->{$familyid}}) {
+								push @$ftrs, [$ftr, $familyid, $conservation*1.0/@{$models}, 0];
+						    }
+						} else {
+						    push @$ftrs, ["", $familyid, $conservation*1.0/@{$models}, 1];
+						}
 				    }
 				}
-				else {
-				    push @$ftrs, ["", $familyid, $conservation*1.0/@{$models}, 1];
-				}
-			    }
-			}
-			$mc_reactions->{$rxnid}->{reaction_model_data}->{$model1->{id}} = [1,"",$ftrs,""];
+				$mc_reactions->{$rxnid}->{reaction_model_data}->{$model1->{id}} = [1,"",$ftrs,""];
 		    }
 		}
 		# process compounds
@@ -2467,7 +2507,6 @@ sub func_importmodel {
 	    				my $nodes = $html->getChildNodes();
 	    				foreach my $node (@{$nodes}) {
 		    				my $text = $node->toString();
-							print $text."\n";
 							if ($text =~ m/FORMULA:\s*([^<]+)/) {
 								if (length($1) > 0) {
 								    $formula = $1;
@@ -2702,7 +2741,6 @@ sub func_importmodel {
 	    	push(@{$params->{reactions}},[$id,$direction,$compartment,$gpr,$name,$enzyme,$pathway,undef,$reactants." => ".$products,$aliases]);
 	    }
     }
-    print Bio::KBase::ObjectAPI::utilities::TOJSON($params->{compounds},1)."\n";
     #ENSURING THAT THERE ARE REACTIONS AND COMPOUNDS FOR THE MODEL AT THIS STAGE
     if (!defined($params->{compounds}) || @{$params->{compounds}} == 0) {
     	Bio::KBase::utilities::error("Must have compounds for model!");
@@ -3033,10 +3071,11 @@ sub func_bulk_export {
 	    	$input->{type} = $typehash->{$field};
 	    	my $objects = $handler->util_list_objects($input);
 	    	for (my $i=0; $i < @{$objects}; $i++) {
-	    		$hash->{$objects->[$i]->[1]} = 1;
+	    		$hash->{$objects->[$i]->[6]."/".$objects->[$i]->[0]."/".$objects->[$i]->[4]} = 1;
 	    	}
 	    }
     }
+    
     my $export_dir = Bio::KBase::utilities::conf("fba_tools","scratch")."/model_objects";
     if (-d $export_dir) {
     	File::Path::rmtree ($export_dir);
@@ -3044,14 +3083,14 @@ sub func_bulk_export {
     File::Path::mkpath ($export_dir);
     my $count = keys(%{$hash});
     foreach my $item (keys(%{$hash})) {
-    	my $object = $handler->util_get_object($params->{workspace}."/".$item,{});
+    	my $object = $handler->util_get_object($item,{});
     	my $input = {workspace_name => $params->{workspace}};
     	if ($translation->{$object->_type()} eq "phenosim") {
-    		$input->{phenotype_simulation_set_name} = $item;
+    		$input->{phenotype_simulation_set_name} = $object->_wsname();
     	} elsif ($translation->{$object->_type()} eq "phenotype") {
-    		$input->{phenotype_set_name} = $item;
+    		$input->{phenotype_set_name} = $object->_wsname();
     	} else {
-    		$input->{$translation->{$object->_type()}."_name"} = $item;
+    		$input->{$translation->{$object->_type()}."_name"} = $object->_wsname();
     	}
     	func_export($input,{
     		file_util => 1,
