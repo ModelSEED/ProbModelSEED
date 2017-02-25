@@ -267,12 +267,12 @@
 			to_shock => 1,
 		},"media export test",[],0,undef,1,0);
 		$output = $self->test_harness("MergeModels",{
-			models => [[$model,1],[$model,1]],
+			models => [$model,$model],
 			output_path => $model_dir,
 			output_file => "TestCommunityModel"
 		},"Merging model test",[],0,undef,1,0);
 		$output = $self->test_harness("ModelReconstruction",{
-			genome => "PATRICSOLR:83333.84",
+			genome => "PATRIC:83333.84",
 			fulldb => "0",
 			output_path => $model_dir,
 			output_file => "PubGenomeModel"

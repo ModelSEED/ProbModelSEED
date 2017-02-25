@@ -635,7 +635,6 @@ sub LoadExternalReactionEquation {
 	    			my $newcpd = 1;
 	    			my $newcpdid = $cpdobj->id();
 	    			my $formula = $cpdobj->formula();
-	    			my $formula;
 	    			if (defined($args->{compounds}->{$origid}->[2])) {
 	    				$formula = $args->{compounds}->{$origid}->[2];
 	    			} else {
