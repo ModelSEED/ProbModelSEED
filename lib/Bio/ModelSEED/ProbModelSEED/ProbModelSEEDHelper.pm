@@ -643,8 +643,10 @@ sub retrieve_PATRIC_genome {
 	$genome->wsmeta($meta);
 	if ($refseq == 1) {
 		$genome->_reference("REFSEQ:".$genomeid);
+		$self->PATRICStore()->cache()->{"REFSEQ:".$genomeid} = [$meta,$genome];
 	} else {
 		$genome->_reference("PATRIC:".$genomeid);
+		$self->PATRICStore()->cache()->{"PATRIC:".$genomeid} = [$meta,$genome];
 	}
 	$genome->parent($self->PATRICStore());
 	return $genome;
@@ -772,9 +774,26 @@ sub retrieve_SEED_genome {
 		}
   		push(@{$genomeObj->{features}},$feature);	
 	}
+	my $meta = [
+    	$id,
+		"genome",
+		"PUBSEED:".$id,
+		"",
+		$id,
+		"PubSEED",
+		0,
+		{},
+		{},
+		"",
+		""
+    ];
 	my $ContigObj = Bio::KBase::ObjectAPI::KBaseGenomes::ContigSet->new($contigset);
 	$genomeObj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genomeObj);
 	$genomeObj->contigs($ContigObj);
+	$genomeObj->wsmeta($meta);
+	$genomeObj->_reference("PUBSEED:".$id);
+	$self->PATRICStore()->cache()->{"PUBSEED:".$id} = [$meta,$genomeObj];
+	$genomeObj->parent($self->PATRICStore());
 	return $genomeObj;
 }
 =head3 retrieve_RAST_genome
@@ -923,6 +942,23 @@ sub retrieve_RAST_genome {
 	}
 	$genomeObj = Bio::KBase::ObjectAPI::KBaseGenomes::Genome->new($genomeObj);
 	$genomeObj->contigs($ContigObj);
+	my $meta = [
+    	$id,
+		"genome",
+		"RAST:".$id,
+		"",
+		$id,
+		$username,
+		0,
+		{},
+		{},
+		"",
+		""
+    ];
+	$genomeObj->wsmeta($meta);
+	$genomeObj->_reference("RAST:".$id);
+	$genomeObj->parent($self->PATRICStore());
+	$self->PATRICStore()->cache()->{"RAST:".$id} = [$meta,$genomeObj];
 	return $genomeObj;
 }
 =head3 build_fba_object
@@ -2383,7 +2419,7 @@ sub ModelReconstruction {
     	});
     	$datachannel->{fbamodel}->rxnprobs_ref($rxnprobsref);
 	}
-   	if ($parameters->{gapfill} == 1) {
+	if ($parameters->{gapfill} == 1) {
     	$self->GapfillModel({
     		model => $folder,
     		media => $parameters->{media},

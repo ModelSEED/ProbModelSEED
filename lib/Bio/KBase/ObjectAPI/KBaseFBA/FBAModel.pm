@@ -444,7 +444,10 @@ sub addModelReaction {
     }
     my $cmp = $self->template()->searchForCompartment($args->{compartment});
     if (!defined($cmp)) {
-    	Bio::KBase::ObjectAPI::utilities::error("Unrecognized compartment ".$args->{compartment}." in reaction: ".$args->{reaction});
+    	$cmp = $self->template()->biochemistry()->searchForCompartment($args->{compartment});
+    	if (!defined($cmp)) {
+    		Bio::KBase::ObjectAPI::utilities::error("Unrecognized compartment ".$args->{compartment}." in reaction: ".$args->{reaction});
+    	}
     }
     $args->{compartment} = $cmp->id();
     my $eq;
