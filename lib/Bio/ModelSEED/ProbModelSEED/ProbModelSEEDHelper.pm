@@ -1196,14 +1196,20 @@ sub copy_model {
 
 sub plant_pipeline {
     my($self,$input)=@_;
-    $self->create_genome_from_shock($input);
 
-    #Add parameters for annotation
-    my $AP_input = {};
-    $AP_input->{destmodel} = $input->{destname};
-    $AP_input->{kmers}=1;
-    $AP_input->{blast}=0;
-    $self->annotate_plant_genome($AP_input);
+    if(exists($input->{shock_id})){
+	$self->create_genome_from_shock($input);
+    }
+
+    #Run annotation
+    if(exists($input->{annotate}) && $input->{annotate}==1){
+	#Add parameters for annotation
+	my $AP_input = {};
+	$AP_input->{destmodel} = $input->{destname};
+	$AP_input->{kmers}=1;
+	$AP_input->{blast}=0;
+	$self->annotate_plant_genome($AP_input);
+    }
 
     #Reform parameters for reconstruction
     my $MR_input = {};
