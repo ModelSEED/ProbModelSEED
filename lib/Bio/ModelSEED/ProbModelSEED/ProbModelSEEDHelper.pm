@@ -2379,6 +2379,9 @@ sub ModelReconstruction {
 		minimum_target_flux => 0.1,
 		number_of_solutions => 1
     });
+    Bio::ModelSEED::patricenv::call_ws("create",{
+		objects => [[$ref,"modelfolder",{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+	});
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
     }
