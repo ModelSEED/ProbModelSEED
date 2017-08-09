@@ -45,6 +45,28 @@ eval {
 };
 if ($@) {
     $errors->{$job->{id}} = $@;
+    if ($job->{app} eq "ModelReconstruction") {
+    	my $input = $job->{parameters};
+    	if (!defined($input->{output_file})) {
+	    	$input->{output_file} = $input->{genome};
+	    	$input->{output_file} =~ s/.+://;
+	    	$input->{output_file} =~ s/.+\///;
+    	}
+	    if (!defined($input->{output_path})) {
+	    	if ($input->{plant} != 0) {
+	    		$input->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
+	    	} else {
+	    		$input->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
+	    	}
+	    }
+	    if (substr($input->{output_path},-1,1) ne "/") {
+	    	$input->{output_path} .= "/";
+	    }
+	    my $folder = $input->{output_path}."/".$input->{output_file};
+    	Bio::ModelSEED::patricenv::call_ws("create",{
+			objects => [[$folder,"modelfolder",{status_error => $errors->{$job->{id}},status => "failed",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+		});
+    }
 }
 
 eval {

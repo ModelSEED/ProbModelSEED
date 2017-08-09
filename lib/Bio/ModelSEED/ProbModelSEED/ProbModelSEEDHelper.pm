@@ -1818,28 +1818,33 @@ sub list_models {
 	if (defined($list->{$input->{path}})) {
 		$list = $list->{$input->{path}};
 	    for (my $j=0; $j < @{$list}; $j++) {
-		#Skip empty models
-		next if !$list->[$j]->[7]->{num_reactions};
+			#Skip empty models
+			next if !$list->[$j]->[7]->{num_reactions};
 	    	my $key = $list->[$j]->[2].$list->[$j]->[0];
-		$output->{$key}->{rundate} = $list->[$j]->[3];
-		$output->{$key}->{id} = $list->[$j]->[0];
-		$output->{$key}->{source} = $list->[$j]->[7]->{source};
-		$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
-		$output->{$key}->{name} = $list->[$j]->[7]->{name};
-		$output->{$key}->{type} = $list->[$j]->[7]->{type};
-		$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
-		$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
-		$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
-		$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
-		$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
-		$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
-		$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
-		$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
-		$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
-		$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
-		$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
-		$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
-		$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};
+			$output->{$key}->{rundate} = $list->[$j]->[3];
+			$output->{$key}->{id} = $list->[$j]->[0];
+			$output->{$key}->{source} = $list->[$j]->[7]->{source};
+			$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
+			$output->{$key}->{name} = $list->[$j]->[7]->{name};
+			$output->{$key}->{type} = $list->[$j]->[7]->{type};
+			$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
+			$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
+			$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
+			$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
+			$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
+			$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
+			$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
+			$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
+			$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
+			$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
+			$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
+			$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
+			$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};
+			$output->{$key}->{status} = $list->[$j]->[7]->{status};
+			$output->{$key}->{status_timestamp} = $list->[$j]->[7]->{status_timestamp};
+			if (defined($list->[$j]->[7]->{status_error})) {
+				$output->{$key}->{status_error} = $list->[$j]->[7]->{status_error};
+			}
 	    }
 	}
 	return $output;
@@ -2385,12 +2390,6 @@ sub ModelReconstruction {
 		minimum_target_flux => 0.1,
 		number_of_solutions => 1
     });
-    Bio::ModelSEED::patricenv::call_ws("create",{
-		objects => [[$ref,"modelfolder",{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
-	});
-    if (defined($parameters->{use_cplex})) {
-    	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
-    }
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $parameters->{genome};
     	$parameters->{output_file} =~ s/.+://;
@@ -2406,13 +2405,19 @@ sub ModelReconstruction {
     if (substr($parameters->{output_path},-1,1) ne "/") {
     	$parameters->{output_path} .= "/";
     }
+    my $folder = $parameters->{output_path}."/".$parameters->{output_file};
+    Bio::ModelSEED::patricenv::call_ws("create",{
+		objects => [[$folder,"modelfolder",{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+	});
+    if (defined($parameters->{use_cplex})) {
+    	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
+    }
 	($parameters->{template_workspace},$parameters->{template_id}) = $self->util_parserefs($parameters->{template_model});
 	($parameters->{genome_workspace},$parameters->{genome_id}) = $self->util_parserefs($parameters->{genome});	
 	$parameters->{workspace} = $parameters->{output_path};
 	$parameters->{fbamodel_output_id} = $parameters->{output_file};
 	delete $parameters->{genome};
 	delete $parameters->{template_model};
-	my $folder = $parameters->{output_path}."/".$parameters->{output_file};
 	my $datachannel = {};
 	Bio::KBase::ObjectAPI::functions::func_build_metabolic_model($parameters,$datachannel);
 	#Now compute reaction probabilities if they are needed for gapfilling or probanno model building

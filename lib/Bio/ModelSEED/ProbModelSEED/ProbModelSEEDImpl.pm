@@ -2712,8 +2712,24 @@ sub ModelReconstruction
     my($output);
     #BEGIN ModelReconstruction
     $input = $self->initialize_call($input);
+    if (!defined($input->{output_file})) {
+    	$input->{output_file} = $input->{genome};
+    	$input->{output_file} =~ s/.+://;
+    	$input->{output_file} =~ s/.+\///;
+    }
+    if (!defined($input->{output_path})) {
+    	if ($input->{plant} != 0) {
+    		$input->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
+    	} else {
+    		$input->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
+    	}
+    }
+    if (substr($input->{output_path},-1,1) ne "/") {
+    	$input->{output_path} .= "/";
+    }
+    my $folder = $input->{output_path}."/".$input->{output_file};
     Bio::ModelSEED::patricenv::call_ws("create",{
-		objects => [[$ref,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
 	});
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
     if (ref($output) eq 'HASH') {
