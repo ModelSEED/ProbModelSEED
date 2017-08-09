@@ -2712,6 +2712,9 @@ sub ModelReconstruction
     my($output);
     #BEGIN ModelReconstruction
     $input = $self->initialize_call($input);
+    Bio::ModelSEED::patricenv::call_ws("create",{
+		objects => [[$ref,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+	});
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
     if (ref($output) eq 'HASH') {
     	$output = $output->{fbamodel_ref};

@@ -368,6 +368,50 @@ sub runFBA {
 	if (!-e $self->jobDirectory()."/runMFAToolkit.sh") {
 		$self->createJobDirectory();
 	}
+	if (length($self->mediaset_ref()) > 0) {
+		my $mediaset = $self->mediaset();
+		for (my $i=0; $i < @{$mediaset->{elements}}; $i++) {
+			push(@{$self->media_list_refs()},$mediaset->{elements}->[$i]->{"ref"});
+		}
+	}
+	my $medialist = $self->media_list();
+	for (my $i=0; $i < @{$medialist}; $i++) {
+		my $file = Bio::KBase::ObjectAPI::utilities::LOADFILE($self->jobDirectory()."/SpecializedParameters.txt");
+		for(my $j=0; $j < @{$file}; $j++) {
+			if ($file->[$j] =~ m/^(user bounds filename\|).+(\|.+)$/) {
+				$file->[$j] = $1.$medialist->[$i]->name().$2;
+			}
+		}
+		Bio::KBase::ObjectAPI::utilities::PRINTFILE($self->jobDirectory()."/SpecializedParameters.txt",$file);
+		system($self->command());
+		$self->loadMFAToolkitResults();
+		push(@{$self->other_objectives()},$self->objectiveValue()+0);
+		my $vars = $self->FBACompoundVariables();
+		for (my $j=0; $j < @{$vars}; $j++) {
+			push(@{$vars->[$j]->other_values()},$vars->[$j]->value()+0);
+			push(@{$vars->[$j]->other_max()},$vars->[$j]->max()+0);
+			push(@{$vars->[$j]->other_min()},$vars->[$j]->min()+0);
+		}
+		$vars = $self->FBAReactionVariables();
+		for (my $j=0; $j < @{$vars}; $j++) {
+			push(@{$vars->[$j]->other_values()},$vars->[$j]->value()+0);
+			push(@{$vars->[$j]->other_max()},$vars->[$j]->max()+0);
+			push(@{$vars->[$j]->other_min()},$vars->[$j]->min()+0);
+		}
+		$vars = $self->FBABiomassVariables();
+		for (my $j=0; $j < @{$vars}; $j++) {
+			push(@{$vars->[$j]->other_values()},$vars->[$j]->value()+0);
+			push(@{$vars->[$j]->other_max()},$vars->[$j]->max()+0);
+			push(@{$vars->[$j]->other_min()},$vars->[$j]->min()+0);
+		}
+	}
+	my $file = Bio::KBase::ObjectAPI::utilities::LOADFILE($self->jobDirectory()."/SpecializedParameters.txt");
+	for(my $j=0; $j < @{$file}; $j++) {
+		if ($file->[$j] =~ m/^(user bounds filename\|).+(\|.+)$/) {
+			$file->[$j] = $1.$self->media()->name().$2;
+		}
+	}
+	Bio::KBase::ObjectAPI::utilities::PRINTFILE($self->jobDirectory()."/SpecializedParameters.txt",$file);
 	system($self->command());
 	$self->loadMFAToolkitResults();
 	if (defined(Bio::KBase::utilities::conf("ModelSEED","fbajobcache"))) {
@@ -827,10 +871,33 @@ sub createJobDirectory {
 		}
 	}
 	#Building the model data file for MFAToolkit
+	my $modelbounds = [];
 	for (my $i=0; $i < @{$mdlrxn}; $i++) {
 		my $rxn = $mdlrxn->[$i];
 		my $direction = $rxn->direction();
 		my $rxndir = "<=>";
+		if ($rxn->maxforflux() != 1000000 || $rxn->maxrevflux() != 1000000) {
+			my $newbound = {
+				id => $rxn->id(),
+				vartype => "FLUX",
+				upperbound => $rxn->maxforflux(),
+				lowerbound => $rxn->maxrevflux(),
+				conc => 0.001
+			};
+			if ($rxn->maxforflux() == 1000000) {
+				$newbound->{upperbound} = $self->defaultMaxFlux();
+				if ($direction eq "<") {
+					$newbound->{upperbound} = 0;
+				}
+			}
+			if ($rxn->maxrevflux() == 1000000) {
+				if ($direction eq ">") {
+					$newbound->{lowerbound} = 0;
+				}
+				$newbound->{lowerbound} = -1*$self->defaultMaxFlux();
+			}
+			push(@{$modelbounds},$newbound);
+		}
 		if (defined($self->parameters()->{activate_all_model_reactions}) && $self->parameters()->{activate_all_model_reactions} == 1) {
 			$actcoef->{$rxn->id()} = 1;
 		}
@@ -1553,6 +1620,13 @@ sub createJobDirectory {
 				$exchangehash->{$cpdbnds->[$i]->modelcompound()->id()}->{c} = [$cpdbnds->[$i]->lowerBound(),$cpdbnds->[$i]->upperBound()];
 			}
 		}
+		for (my $i=0; $i < @{$modelbounds}; $i++) {
+			$userBounds->{$modelbounds->[$i]->{id}}->{c}->{$modelbounds->[$i]->{vartype}} = {
+				max => $modelbounds->[$i]->{upperbound},
+				min => $modelbounds->[$i]->{lowerbound},
+				conc => 0.001
+			};
+		}
 		for (my $i=0; $i < @{$rxnbnds}; $i++) {
 			$userBounds->{$rxnbnds->[$i]->modelreaction()->id()}->{c}->{$translation->{$rxnbnds->[$i]->variableType()}} = {
 				max => $rxnbnds->[$i]->upperBound(),
@@ -1717,7 +1791,7 @@ sub createJobDirectory {
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."genes.tbl",$genedata);
 	#Printing parameter file
 	if (defined(Bio::KBase::utilities::conf("ModelSEED","use_cplex")) && Bio::KBase::utilities::conf("ModelSEED","use_cplex") == 1) {
-		$parameters->{MFASolver} = "CPLEX";#TODO - need to remove
+		$parameters->{MFASolver} = "CPLEX";
 	}
 	my $exchange = "";
 	foreach my $key (keys(%{$exchangehash})) {
@@ -2334,12 +2408,12 @@ sub parseFluxFiles {
 			my $biomass_array = [];
 			if (defined($row->[1]) && length($row->[1]) > 0) {
 				$biomass_array = [split(/;/,$row->[1])];
-				pop(@{$biomass_array});
+				#pop(@{$biomass_array});
 			}
 			my $rxn_array = [];
 			if (defined($row->[2]) && length($row->[2]) > 0) {
 				$rxn_array = [split(/;/,$row->[2])];
-				pop(@{$rxn_array});
+				#pop(@{$rxn_array});
 			}
 			$sensitivity_hash->{$rxn} = {
 				biomass => $biomass_array,
