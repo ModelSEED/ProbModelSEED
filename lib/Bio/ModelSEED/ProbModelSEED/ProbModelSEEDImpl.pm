@@ -1806,18 +1806,19 @@ sub get_feature
 
     my $sim_file = $input->{genome}."/.plantseed_data/Sims_".$sim_index;
     $sim_file = $self->helper()->get_object($sim_file,"unspecified");
-    
+
     #Iterate through hits and separate them out into plant and prokaryote hits
     #By rule, prokaryote hits still have their peg identifiers and plants dont
     #percent_id|hit_id|bit_score|e_value
     my ($plant_count,$prokaryotic_count)=(0,0);
-    foreach my $hit (@{$sim_file->{$input->{feature}}}){
+    foreach my $hit ( sort { $b->{percent_id} <=> $a->{percent_id} } @{$sim_file->{$input->{feature}}}){
 	last if $plant_count>=10; # && $prokaryotic_count>=10;
 
 #	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/ && $prokaryotic_count<10){
 #	    push(@{$output->{prokaryotic_similarities}},$hit);
 #	    $prokaryotic_count++;
 #	}elsif($plant_count<10){
+
 	if($plant_count<10){
 	    push(@{$output->{plant_similarities}},$hit);
 	    $plant_count++;
@@ -1830,7 +1831,6 @@ sub get_feature
     my @Plants = @{$output->{plant_similarities}};
     undef(@{$output->{plant_similarities}});
     foreach my $plant ( @Plants ){
-	print $plant->{hit_id},"\n";
 	my $Obj = { hit_id => $plant->{hit_id}, percent_id => $plant->{percent_id},
 		    genome => $ftr_lu->{$plant->{hit_id}}{genome}, aliases => { 'SEED' => $ftr_lu->{$plant->{hit_id}}{'seed'} },
 		    function => $ftr_lu->{$plant->{hit_id}}{function} };
@@ -1951,41 +1951,44 @@ sub save_feature_function
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     #BEGIN save_feature_function
     $input = $self->initialize_call($input);
-	if ($input->{genome} =~ m/\/plantseed\/[^\/]+$/) {
-		$input->{genome} .= "/genome";
-	}
-    my $genome_obj = $self->helper()->get_object($input->{genome},undef,{data_only => 1});
+    if ($input->{genome} =~ m/\/plantseed\/[^\/]+$/) {
+	$input->{genome} .= "/genome";
+    }
+    print "Retrieving ".$input->{genome}."\n";
+    my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
     if(!$genome_obj){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
-
+    
     my $found_ftr=undef;
+    print "Looking for ".$input->{feature}."\n";
     foreach my $ftr (@{$genome_obj->{features}}){
-	if($ftr->{id} eq $input->{feature}){
-	    $ftr->{function} = $input->{function};
+	if($ftr->{data}{id} eq $input->{feature}){
+	    $ftr->{data}{function} = $input->{function};
 	    $found_ftr = 1;
-
+	    
 	    if(defined($input->{user})){
-		my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
-		push(@{$ftr->{annotations}},\@Annotation);
+	    	my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
+	    	push(@{$ftr->{data}{annotations}},\@Annotation);
 	    }
-
 	    last;
 	}
     }
-
+    
     if(!$found_ftr){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
-
+    
     #Retrieve Minimal Genome object (unspecified type)
     my @path = split(/\//, $input->{genome});
     my $genome = pop @path;
     my $root = join("/",@path);
     my $min_genome = $root."/.plantseed_data/minimal_genome";
-
-    my $min_genome_obj = $self->helper()->get_object($min_genome,undef,{data_only => 1});
-
+    
+    #Retrieving minimal genome
+    print "Retrieving $min_genome\n";
+    my $min_genome_obj = $self->helper()->get_object($min_genome,"unspecified");
+    
     $found_ftr = undef;
     foreach my $ftr (@{$min_genome_obj->{features}}){
 	if($ftr->{id} eq $input->{feature}){
@@ -1994,11 +1997,11 @@ sub save_feature_function
 	    last;
 	}
     }
-
+    
     if(!$found_ftr){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in minimal genome!");
     }
-
+    
     #Save objects
     $self->helper->save_object($input->{genome},$genome_obj,"genome",{});
     $self->helper->save_object($min_genome, $min_genome_obj,"unspecified",{});
