@@ -6,6 +6,7 @@ use Bio::ModelSEED::patricenv;
 #use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
+use Bio::P3::Workspace::ScriptHelpers;
 
 $|=1;
 
@@ -21,7 +22,7 @@ my $filename = $directory."jobfile.json";
 File::Path::mkpath ($directory);
 
 if (!-e $directory."jobfile.json") {
-	my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient->new(Bio::KBase::utilities::conf("Scheduler","msurl"),token => Bio::KBase::utilities::token());
+	my $client = Bio::P3::Workspace::ScriptHelpers::msClient();
 	my $JSON = JSON::XS->new();
 	my $output = $client->CheckJobs({
 		admin => 1,
