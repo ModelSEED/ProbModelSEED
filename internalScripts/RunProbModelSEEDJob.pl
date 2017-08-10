@@ -28,6 +28,10 @@ if (!-e $directory."jobfile.json") {
 	print $jobid."\n";
 	my $output = $client->CheckJobs({
 		admin => 0,
+		exclude_failed => 0,
+		exclude_running => 0,
+		exclude_complete => 0,
+		exclude_queued => 0,
 		jobs => [$jobid]
 	});
 	print Data::Dumper->Dump([$output]);
