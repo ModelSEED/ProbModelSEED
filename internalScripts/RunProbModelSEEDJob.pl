@@ -7,6 +7,7 @@ use Bio::ModelSEED::patricenv;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 use Bio::P3::Workspace::ScriptHelpers;
+use Data::Dumper;
 
 $|=1;
 
@@ -24,10 +25,12 @@ File::Path::mkpath ($directory);
 if (!-e $directory."jobfile.json") {
 	my $client = Bio::P3::Workspace::ScriptHelpers::msClient();
 	my $JSON = JSON::XS->new();
+	print $jobid."\n";
 	my $output = $client->CheckJobs({
-		admin => 1,
+		admin => 0,
 		jobs => [$jobid]
 	});
+	print Data::Dumper->Dump([$output]);
 	my $data = $JSON->encode($output->{$jobid});
 	open(my $fh, ">", $filename) || return;
 	print $fh $data;
