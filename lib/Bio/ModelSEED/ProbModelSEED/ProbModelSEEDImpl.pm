@@ -2485,7 +2485,7 @@ sub plant_pipeline
     #BEGIN plant_pipeline
 
     $input = $self->initialize_call($input);
-    $output = $self->helper()->plant_pipeline($input);
+    $output = $self->helper()->app_harness("plant_pipeline",$input);
 
     #END plant_pipeline
     my @_bad_returns;
@@ -2561,7 +2561,7 @@ sub annotate_plant_genome
     #BEGIN annotate_plant_genome
     
     $input = $self->initialize_call($input);
-    $output = $self->helper()->annotate_plant_genome($input);
+    $output = $self->helper()->app_harness("annotate_plant_genome",$input);
 
     #END annotate_plant_genome
     my @_bad_returns;
