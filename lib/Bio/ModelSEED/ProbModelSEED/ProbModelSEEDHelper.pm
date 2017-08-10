@@ -126,7 +126,7 @@ sub get_model_meta {
 sub update_model_meta {
 	my($self,$ref,$meta,$create_time) = @_;
 	$self->workspace_service()->update_metadata({
-		objects => [ [$ref,$meta] ],
+		objects => [ [$ref,$meta,"modelfolder",Bio::KBase::utilities::timestamp()] ],
 		adminmode => Bio::KBase::utilities::conf("ProbModelSEED","adminmode")
 	});
 	return;
@@ -2414,7 +2414,7 @@ sub ModelReconstruction {
 		objects => [[$folder,"modelfolder",{},undef]]
 	});
 	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
-		objects => [[$folder,{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()}]]
+		objects => [[$folder,{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()},"modelfolder",Bio::KBase::utilities::timestamp()]]
 	});
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
