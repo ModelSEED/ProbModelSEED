@@ -2729,7 +2729,10 @@ sub ModelReconstruction
     }
     my $folder = $input->{output_path}."/".$input->{output_file};
     Bio::ModelSEED::patricenv::call_ws("create",{
-		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+		objects => [[$folder,"modelfolder",{},undef]]
+	});
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
+		objects => [[$folder,{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()}]]
 	});
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
     if (ref($output) eq 'HASH') {

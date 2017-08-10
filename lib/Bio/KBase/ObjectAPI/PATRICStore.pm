@@ -561,7 +561,10 @@ sub save_model {
 		});
 	} else {
 		my $listout = Bio::ModelSEED::patricenv::call_ws("create",{
-			objects => [[$ref,"modelfolder",{status => "complete",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+			objects => [[$ref,"modelfolder",{},undef]]
+		});
+		my $listout = Bio::ModelSEED::patricenv::call_ws("update_metadata",{
+			objects => [[$ref,{status => "complete",status_timestamp => Bio::KBase::utilities::timestamp()}]]
 		});
 	}
 	my $output = Bio::ModelSEED::patricenv::call_ws("ls",{

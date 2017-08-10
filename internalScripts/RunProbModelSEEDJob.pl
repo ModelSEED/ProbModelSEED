@@ -92,8 +92,8 @@ if ($@) {
 	    	$input->{output_path} .= "/";
 	    }
 	    my $folder = $input->{output_path}."/".$input->{output_file};
-    	Bio::ModelSEED::patricenv::call_ws("create",{
-			objects => [[$folder,"modelfolder",{status_error => $errors->{$job->{id}},status => "failed",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+    	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
+			objects => [[$folder,{status_error => $errors->{$job->{id}},status => "failed",status_timestamp => Bio::KBase::utilities::timestamp()}]]
 		});
     }
 }

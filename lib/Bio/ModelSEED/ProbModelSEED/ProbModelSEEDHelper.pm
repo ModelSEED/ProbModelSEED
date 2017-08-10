@@ -2232,7 +2232,7 @@ sub util_log {
     } elsif ($type eq "stderr") {
     	print STDERR $message."\n";
     } else {
-    	$self->logger()->$type('<msg type="'.$type.'" time="'.DateTime->now()->datetime().'" pid="'.$self->{_processid}.'" user="'.Bio::KBase::utilities::user_id().'">'."\n".$message."\n</msg>\n");
+    	$self->logger()->$type('<msg type="'.$type.'" time="'.DateTime->now()->datetime().'" pid="'.Bio::KBase::utilities::processid().'" user="'.Bio::KBase::utilities::user_id().'">'."\n".$message."\n</msg>\n");
     }
 }
 
