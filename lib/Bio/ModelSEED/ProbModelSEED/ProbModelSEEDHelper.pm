@@ -2370,7 +2370,7 @@ sub ModelReconstruction {
 	my($self,$parameters) = @_;
 	$parameters = Bio::KBase::utilities::args($parameters,[],{
     	media => undef,
-    	template_model => undef,
+    	template_model => "auto",
     	fulldb => 0,
     	output_path => undef,
     	genome => undef,
@@ -2416,7 +2416,11 @@ sub ModelReconstruction {
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
     }
-	($parameters->{template_workspace},$parameters->{template_id}) = $self->util_parserefs($parameters->{template_model});
+	if ($parameters->{template_model} m/\//) {
+		($parameters->{template_workspace},$parameters->{template_id}) = $self->util_parserefs($parameters->{template_model});
+	} else {
+		$parameters->{template_id} = $parameters->{template_model};
+	}
 	($parameters->{genome_workspace},$parameters->{genome_id}) = $self->util_parserefs($parameters->{genome});	
 	$parameters->{workspace} = $parameters->{output_path};
 	$parameters->{fbamodel_output_id} = $parameters->{output_file};
