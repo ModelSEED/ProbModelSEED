@@ -12,6 +12,7 @@ use Data::Dumper;
 $|=1;
 
 my $jobid = $ARGV[0];
+$jobid = $jobid+0;
 
 Bio::KBase::utilities::read_config({
 	service => "ProbModelSEED"
