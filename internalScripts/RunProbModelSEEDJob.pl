@@ -14,12 +14,31 @@ my $jobid = $ARGV[0];
 Bio::KBase::utilities::read_config({
 	service => "ProbModelSEED"
 });
+Bio::ModelSEED::patricenv::create_context_from_client_config();
 
-File::Path::mkpath (Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".$ARGV[0]."/");
-open(PID, "> ".Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".$ARGV[0]."/pid") || die "could not open PID file!"; 
+my $directory = Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".$ARGV[0]."/";
+my $filename = $directory."jobfile.json";
+File::Path::mkpath ($directory);
+
+if (!-e $directory."jobfile.json") {
+	my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient->new(Bio::KBase::utilities::conf("Scheduler","msurl"),token => Bio::KBase::utilities::token());
+	my $JSON = JSON::XS->new();
+	my $output = $client->CheckJobs({
+		admin => 1,
+		jobs => [$jobid]
+	});
+	my $data = $JSON->encode($output->{$jobid});
+	open(my $fh, ">", $filename) || return;
+	print $fh $data;
+	close($fh);
+}
+if (-e $directory."pid") {
+	unlink $directory."pid";
+}
+
+open(PID, "> ".$directory."pid") || die "could not open PID file!"; 
 print PID "$$\n"; 
 close(PID);
-my $filename = Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".$ARGV[0]."/jobfile.json";
 if (!-e $filename) {
 	die "Cannot open ".$filename;
 }
@@ -71,8 +90,8 @@ if ($@) {
 }
 
 eval {
-	my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient->new(Bio::KBase::utilities::conf("Scheduler","msurl"),token => $job->{token});
 	#my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl->new();
+	my $client = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient->new(Bio::KBase::utilities::conf("Scheduler","msurl"),token => $job->{token});
 	my $jobs = $client->ManageJobs({
 		jobs => [$ARGV[0]],
 		action => "finish",
