@@ -2411,7 +2411,10 @@ sub ModelReconstruction {
     }
     my $folder = $parameters->{output_path}."/".$parameters->{output_file};
     Bio::ModelSEED::patricenv::call_ws("create",{
-		objects => [[$folder,"modelfolder",{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+		objects => [[$folder,"modelfolder",{},undef]]
+	});
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
+		objects => [[$folder,{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()}]]
 	});
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
