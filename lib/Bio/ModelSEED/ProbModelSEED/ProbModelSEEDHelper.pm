@@ -126,7 +126,7 @@ sub get_model_meta {
 sub update_model_meta {
 	my($self,$ref,$meta,$create_time) = @_;
 	$self->workspace_service()->update_metadata({
-		objects => [ [$ref,$meta]]#,"modelfolder",Bio::KBase::utilities::timestamp()] ],
+		objects => [ [$ref,$meta]],#,"modelfolder",Bio::KBase::utilities::timestamp()] ],
 		adminmode => Bio::KBase::utilities::conf("ProbModelSEED","adminmode")
 	});
 	return;
