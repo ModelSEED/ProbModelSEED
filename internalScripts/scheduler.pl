@@ -82,7 +82,7 @@ sub monitor {
 				push(@{$jobs},$output->{$key});
 			}
 		};
-		my $runningCount;
+		my $runningCount=0;
 		if (defined($jobs)) {
 			$runningCount = @{$jobs};
 			for (my $i=0; $i < @{$jobs}; $i++) {
