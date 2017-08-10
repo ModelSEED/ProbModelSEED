@@ -1252,6 +1252,8 @@ sub copy_model
 		kbase_password => undef,
 		kbase_token => undef
     });
+    #synchronizing with parameter in Helper
+    $input->{source_model_path}=$input->{model};
     $output = $self->helper()->copy_model($input);
     #END copy_model
     my @_bad_returns;
