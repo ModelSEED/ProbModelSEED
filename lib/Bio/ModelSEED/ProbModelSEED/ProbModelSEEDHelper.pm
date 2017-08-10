@@ -2416,7 +2416,7 @@ sub ModelReconstruction {
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
     }
-	if ($parameters->{template_model} m/\//) {
+	if ($parameters->{template_model} =~ m/\//) {
 		($parameters->{template_workspace},$parameters->{template_id}) = $self->util_parserefs($parameters->{template_model});
 	} else {
 		$parameters->{template_id} = $parameters->{template_model};
