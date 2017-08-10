@@ -1252,6 +1252,8 @@ sub copy_model
 		kbase_password => undef,
 		kbase_token => undef
     });
+    #synchronizing with parameter in Helper
+    $input->{source_model_path}=$input->{model};
     $output = $self->helper()->copy_model($input);
     #END copy_model
     my @_bad_returns;
@@ -2485,7 +2487,7 @@ sub plant_pipeline
     #BEGIN plant_pipeline
 
     $input = $self->initialize_call($input);
-    $output = $self->helper()->plant_pipeline($input);
+    $output = $self->helper()->app_harness("plant_pipeline",$input);
 
     #END plant_pipeline
     my @_bad_returns;
@@ -2561,7 +2563,7 @@ sub annotate_plant_genome
     #BEGIN annotate_plant_genome
     
     $input = $self->initialize_call($input);
-    $output = $self->helper()->annotate_plant_genome($input);
+    $output = $self->helper()->app_harness("annotate_plant_genome",$input);
 
     #END annotate_plant_genome
     my @_bad_returns;
