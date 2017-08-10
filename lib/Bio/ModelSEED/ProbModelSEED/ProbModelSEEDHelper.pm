@@ -1819,8 +1819,17 @@ sub list_models {
 		$list = $list->{$input->{path}};
 	    for (my $j=0; $j < @{$list}; $j++) {
 			#Skip empty models
+			my $key = $list->[$j]->[2].$list->[$j]->[0];
+			if (defined($list->[$j]->[7]->{status})) {
+				$output->{$key}->{status} = $list->[$j]->[7]->{status};
+				$output->{$key}->{status_timestamp} = $list->[$j]->[7]->{status_timestamp};
+				if (defined($list->[$j]->[7]->{status_error})) {
+					$output->{$key}->{status_error} = $list->[$j]->[7]->{status_error};
+				}
+			} else {
+				$output->{$key}->{status} = "complete";
+			}
 			next if !$list->[$j]->[7]->{num_reactions};
-	    	my $key = $list->[$j]->[2].$list->[$j]->[0];
 			$output->{$key}->{rundate} = $list->[$j]->[3];
 			$output->{$key}->{id} = $list->[$j]->[0];
 			$output->{$key}->{source} = $list->[$j]->[7]->{source};
@@ -1839,12 +1848,7 @@ sub list_models {
 			$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
 			$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
 			$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
-			$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};
-			$output->{$key}->{status} = $list->[$j]->[7]->{status};
-			$output->{$key}->{status_timestamp} = $list->[$j]->[7]->{status_timestamp};
-			if (defined($list->[$j]->[7]->{status_error})) {
-				$output->{$key}->{status_error} = $list->[$j]->[7]->{status_error};
-			}
+			$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};	
 	    }
 	}
 	return $output;
