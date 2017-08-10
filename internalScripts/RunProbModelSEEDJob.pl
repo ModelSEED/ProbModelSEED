@@ -15,6 +15,7 @@ Bio::KBase::utilities::read_config({
 	service => "ProbModelSEED"
 });
 
+File::Path::mkpath (Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".$ARGV[0]."/");
 open(PID, "> ".Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".$ARGV[0]."/pid") || die "could not open PID file!"; 
 print PID "$$\n"; 
 close(PID);
