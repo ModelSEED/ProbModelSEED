@@ -2730,11 +2730,20 @@ sub ModelReconstruction
     	$input->{output_path} .= "/";
     }
     my $folder = $input->{output_path}."/".$input->{output_file};
-    Bio::ModelSEED::patricenv::call_ws("create",{
-		objects => [[$folder,"modelfolder",{},undef]]
+    if ($folder =~ m/modelseed\/(.+)/ || $folder =~ m/plantseed\/(.+)/) {
+    	if (length($1) == 0) {
+    		Bio::KBase::utilities::error("No model name provided!");
+    	}
+    } else {
+    	Bio::KBase::utilities::error("Model path not suitable!");
+    }
+    Bio::ModelSEED::patricenv::call_ws("delete",{
+		objects => [$folder],
+		deleteDirectories => 1,
+		force => 1
 	});
-	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
-		objects => [[$folder,{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()}]]#,"modelfolder",Bio::KBase::utilities::timestamp()]]
+    Bio::ModelSEED::patricenv::call_ws("create",{
+		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
 	});
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
     if (ref($output) eq 'HASH') {

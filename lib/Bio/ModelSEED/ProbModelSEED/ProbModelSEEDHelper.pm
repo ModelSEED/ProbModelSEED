@@ -1833,7 +1833,9 @@ sub list_models {
 				$output->{$key}->{status} = "complete";
 			}
 			if (!defined($list->[$j]->[7]->{num_reactions})) {
-				$output->{$key}->{status} = "failed";
+				if ($output->{$key}->{status} eq "complete") {
+					$output->{$key}->{status} = "failed";
+				}
 			} else {
 				$output->{$key}->{source} = $list->[$j]->[7]->{source};
 				$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
