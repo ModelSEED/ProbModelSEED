@@ -4,6 +4,8 @@ use strict;
 # http://semver.org 
 our $VERSION = "0.1.0";
 
+use Carp; $SIG{ __DIE__ } = sub { Carp::confess( @_ ) };
+
 use Bio::P3::Workspace::WorkspaceClientExt;
 use JSON::XS;
 use Data::Dumper;
@@ -1306,7 +1308,10 @@ sub is_dna{
     foreach my $letter ( map { lc($_) } split(//,$seq) ){
 	$Letters{$letter}++;
     }
-    my $Sum = $Letters{'a'}+$Letters{'g'}+$Letters{'c'}+$Letters{'t'}+$Letters{'u'};
+    my $Sum=0;
+    foreach my $letter ('a','g','c','t','u'){
+	$Sum+=$Letters{$letter} if exists($Letters{$letter})
+    }
 
     if ( $Sum / length($seq) > 0.75 ){
 	return 1;
@@ -1376,41 +1381,25 @@ sub create_featurevalues_from_shock {
 
 sub annotate_plant_genome {
     my ($self,$input)=@_;
-
+    my ($output,$JSON)=(undef,undef);
     my $modelfolder = "/".Bio::KBase::utilities::user_id()."/plantseed/".$input->{destmodel};
 
     #Need to check genome sequences for amino acids and if not, translate
-    my $Genome = $self->get_object($modelfolder."/genome","genome");
-    my $Usermeta = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$modelfolder."/genome"], metadata_only => 1 })->[0][0][8];
+    $output = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$modelfolder."/genome"] })->[0];
+    my $Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
+    my $Usermeta = $output->[0][8];
 
-    my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Usermeta,1);
-
-    #Test first protein sequences for NAs
-    #Might have been incorrectly assigned
-    my $First_Ftr = $Genome->features()->[0];
-    if( $First_Ftr->protein_translation() && $self->is_dna($First_Ftr->protein_translation()) ){
-	#Need to re-assign these
-	foreach my $ftr (@{$Genome->features()}){
-	    $ftr->dna_sequence($ftr->protein_translation());
-	    $ftr->dna_sequence_length(length($ftr->dna_sequence_length()));
-
-	    $ftr->protein_translation("");
-	    $ftr->protein_translation_length(0);
-	    $ftr->md5("");
-	}
-    }
-
-    #Translate nucleotides
-    foreach my $ftr (@{$Genome->features()}){
-	if($ftr->dna_sequence()){
-	    $ftr->protein_translation($self->translate_nucleotides($ftr->dna_sequence()));
-	    $ftr->protein_translation_length(length($ftr->protein_translation()));
-	    $ftr->md5(Digest::MD5::md5_hex($ftr->protein_translation()));
+    #Translate nucleotides if protein not present
+    foreach my $ftr (@{$Genome->{features}}){
+	if($ftr->{dna_sequence} && length($ftr->{dna_sequence})>0 && (!exists($ftr->{protein_translation}) || length($ftr->{protein_translation})==0)){
+	    $ftr->{protein_translation}=$self->translate_nucleotides($ftr->{dna_sequence});
+	    $ftr->{protein_translation_length}=length($ftr->{protein_translation});
+	    $ftr->{md5}=Digest::MD5::md5_hex($ftr->{protein_translation});
 	}
     }
 
     #Retrieve subsystems
-    my $output = Bio::ModelSEED::patricenv::call_ws("get", { objects => ["/plantseed/Data/annotation_overview"] })->[0];
+    $output = Bio::ModelSEED::patricenv::call_ws("get", { objects => ["/plantseed/Data/annotation_overview"] })->[0];
     my $Annotation = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
     my %Roles_Subsystems=();
     foreach my $role (@{$Annotation}){
@@ -1425,11 +1414,12 @@ sub annotate_plant_genome {
 
     my $return_object = {destmodel=>$input->{destmodel},kmers=>"Not attempted",blast=>"Not attempted"};
     if(exists($input->{kmers}) && $input->{kmers}==1){
+	print STDERR "Attempting Kmers\n";
 	$return_object->{kmers}="Attempted";
 	my $hits = $self->annotate_plant_genome_kmers($Genome);
-	foreach my $ftr (@{$Genome->features()}){
-	    if(exists($hits->{$ftr->id()})){
-		$ftr->function(join(" / ",sort keys %{$hits->{$ftr->id()}}));
+	foreach my $ftr (@{$Genome->{features}}){
+	    if(exists($hits->{$ftr->{id}})){
+		$ftr->{function}=join(" / ",sort keys %{$hits->{$ftr->{id}}});
 	    }
 	}
 
@@ -1451,6 +1441,7 @@ sub annotate_plant_genome {
     }
 
     if(exists($input->{blast}) && $input->{blast}==1){
+	print STDERR "Attempting BLAST\n";
 	$return_object->{blast}="Attempted";
 	my $blast_results = $self->annotate_plant_genome_blast($Genome);
 
@@ -1465,8 +1456,9 @@ sub annotate_plant_genome {
 	$return_object->{blast}=$blast_results->{hits};
     }
 
-    $self->save_object($modelfolder."/genome",$Genome,"genome");
-    Bio::ModelSEED::patricenv::call_ws("update_metadata",{ objects => [[$modelfolder."/genome",$Usermeta]] });
+    print STDERR "Saving ${modelfolder}/genome\n";
+    $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Genome,1);
+    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/genome","genome",$Usermeta,$JSON]], overwrite=>1 });
 
     $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
     Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
@@ -1516,8 +1508,8 @@ sub annotate_plant_genome_kmers {
 
     my $Kmer_Length=8;
     my %Hit_Proteins=();
-    foreach my $ftr (@{$Genome->features()}){
-	my $Seq = $ftr->protein_translation();
+    foreach my $ftr (@{$Genome->{features}}){
+	my $Seq = $ftr->{protein_translation};
 	my $SeqLen = length($Seq);
 	next if $SeqLen < 10;
 	
@@ -1527,7 +1519,7 @@ sub annotate_plant_genome_kmers {
 	    # take the relevant substring
 	    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
 		if(exists($Kmers_Functions{$1})){
-		    $Hit_Proteins{$ftr->id()}{$Kmers_Functions{$1}}{$1}=1;
+		    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
 		}
 	    }
 	}
@@ -1597,13 +1589,13 @@ sub annotate_plant_genome_blast {
 
     my $jobDir = "/tmp/blastjobs/".$job."/";
     system("mkdir -p ".$jobDir);
-    my $jobFiles = $jobDir.$Genome->id();
+    my $jobFiles = $jobDir.$Genome->{id};
 
     #Print out protein sequences
     open(OUT, "> ".$jobFiles.".fasta");
-    foreach my $ftr (@{$Genome->features()}){
-	print OUT ">".$ftr->id()."\n";
-	print OUT join("\n", $ftr->protein_translation() =~ m/.{1,60}/g)."\n";
+    foreach my $ftr (@{$Genome->{features}}){
+	print OUT ">".$ftr->{id}."\n";
+	print OUT join("\n", $ftr->{protein_translation} =~ m/.{1,60}/g)."\n";
     }
     close(OUT);
 	    
