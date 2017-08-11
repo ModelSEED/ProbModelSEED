@@ -1213,7 +1213,7 @@ sub plant_pipeline {
 
     #Reform parameters for reconstruction
     my $MR_input = {};
-    $MR_input->{plant}=1;
+    $MR_input->{template_model}="/chenry/public/modelsupport/templates/PlantModelTemplate";
     $MR_input->{gapfill}=0;
     $MR_input->{output_file}=$input->{destname};
     $MR_input->{genome}="/".Bio::KBase::utilities::user_id()."/plantseed/".$input->{destname}."/genome";
@@ -2400,7 +2400,7 @@ sub ModelReconstruction {
     	$parameters->{output_file} =~ s/.+\///;
     }
     if (!defined($parameters->{output_path})) {
-    	if ($parameters->{plant} != 0) {
+    	if ($parameters->{template_model} =~ /plant/i) {
     		$parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
     	} else {
     		$parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
