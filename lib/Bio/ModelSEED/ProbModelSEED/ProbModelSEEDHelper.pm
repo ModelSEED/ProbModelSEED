@@ -1820,6 +1820,9 @@ sub list_models {
 	    for (my $j=0; $j < @{$list}; $j++) {
 			#Skip empty models
 			my $key = $list->[$j]->[2].$list->[$j]->[0];
+			$output->{$key}->{id} = $list->[$j]->[0];
+			$output->{$key}->{rundate} = $list->[$j]->[3];
+			$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
 			if (defined($list->[$j]->[7]->{status})) {
 				$output->{$key}->{status} = $list->[$j]->[7]->{status};
 				$output->{$key}->{status_timestamp} = $list->[$j]->[7]->{status_timestamp};
@@ -1829,26 +1832,26 @@ sub list_models {
 			} else {
 				$output->{$key}->{status} = "complete";
 			}
-			next if !$list->[$j]->[7]->{num_reactions};
-			$output->{$key}->{rundate} = $list->[$j]->[3];
-			$output->{$key}->{id} = $list->[$j]->[0];
-			$output->{$key}->{source} = $list->[$j]->[7]->{source};
-			$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
-			$output->{$key}->{name} = $list->[$j]->[7]->{name};
-			$output->{$key}->{type} = $list->[$j]->[7]->{type};
-			$output->{$key}->{"ref"} = $list->[$j]->[2].$list->[$j]->[0];
-			$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
-			$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
-			$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
-			$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
-			$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
-			$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
-			$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
-			$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
-			$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
-			$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
-			$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
-			$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};	
+			if (!defined($list->[$j]->[7]->{num_reactions})) {
+				$output->{$key}->{status} = "failed";
+			} else {
+				$output->{$key}->{source} = $list->[$j]->[7]->{source};
+				$output->{$key}->{source_id} = $list->[$j]->[7]->{source_id};
+				$output->{$key}->{name} = $list->[$j]->[7]->{name};
+				$output->{$key}->{type} = $list->[$j]->[7]->{type};
+				$output->{$key}->{template_ref} = $list->[$j]->[7]->{template_ref};
+				$output->{$key}->{num_genes} = $list->[$j]->[7]->{num_genes};
+				$output->{$key}->{num_compounds} = $list->[$j]->[7]->{num_compounds};
+				$output->{$key}->{num_reactions} = $list->[$j]->[7]->{num_reactions};
+				$output->{$key}->{num_biomasses} = $list->[$j]->[7]->{num_biomasses};
+				$output->{$key}->{num_biomass_compounds} = $list->[$j]->[7]->{num_biomass_compounds};
+				$output->{$key}->{num_compartments} = $list->[$j]->[7]->{num_compartments};				
+				$output->{$key}->{gene_associated_reactions} = $list->[$j]->[7]->{gene_associated_reactions};
+				$output->{$key}->{gapfilled_reactions} = $list->[$j]->[7]->{gapfilled_reactions};
+				$output->{$key}->{fba_count} = $list->[$j]->[7]->{fba_count};
+				$output->{$key}->{integrated_gapfills} = $list->[$j]->[7]->{integrated_gapfills};
+				$output->{$key}->{unintegrated_gapfills} = $list->[$j]->[7]->{unintegrated_gapfills};	
+			}
 	    }
 	}
 	return $output;
@@ -2369,6 +2372,8 @@ sub EditModel {
 sub ModelReconstruction {
 	my($self,$parameters) = @_;
 	$parameters = Bio::KBase::utilities::args($parameters,[],{
+    	genome_type => "plant",
+    	shock_id => undef,
     	media => undef,
     	template_model => "auto",
     	fulldb => 0,
@@ -2394,6 +2399,7 @@ sub ModelReconstruction {
 		minimum_target_flux => 0.1,
 		number_of_solutions => 1
     });
+    #Determining output location
     if (!defined($parameters->{output_file})) {
     	$parameters->{output_file} = $parameters->{genome};
     	$parameters->{output_file} =~ s/.+://;
@@ -2410,12 +2416,22 @@ sub ModelReconstruction {
     	$parameters->{output_path} .= "/";
     }
     my $folder = $parameters->{output_path}."/".$parameters->{output_file};
+    #Creating model folder and adding meta data
     Bio::ModelSEED::patricenv::call_ws("create",{
 		objects => [[$folder,"modelfolder",{},undef]]
 	});
 	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
 		objects => [[$folder,{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()}]]#,"modelfolder",Bio::KBase::utilities::timestamp()]]
 	});
+    #Annotating genome if a shock ID is provided with a genome ID
+    if(defined($parameters->{shock_id})) {
+		$self->create_genome_from_shock({
+			shock_id => $parameters->{shock_id},
+			annotate => 1,
+			output_path => $folder,
+			genome_type => $parameters->{genome_type}
+		});
+    }
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
     }
