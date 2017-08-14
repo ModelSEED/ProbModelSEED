@@ -21,6 +21,8 @@ use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 use MongoDB::Connection;
 use MongoDB::Collection;
 
+use Carp; $SIG{__DIE__} = sub { Carp::confess @_ };
+
 my $typetrans = {
 	"KBaseFBA.FBA" => "fba",
 	"KBaseFBA.FBAComparison" => "fbacomparison",
@@ -1213,7 +1215,7 @@ sub plant_pipeline {
 
     #Reform parameters for reconstruction
     my $MR_input = {};
-    $MR_input->{template_model}="/chenry/public/modelsupport/templates/PlantModelTemplate";
+    $MR_input->{genome_type}="plant";
     $MR_input->{gapfill}=0;
     $MR_input->{output_file}=$input->{destname};
     $MR_input->{genome}="/".Bio::KBase::utilities::user_id()."/plantseed/".$input->{destname}."/genome";
@@ -1225,6 +1227,14 @@ sub plant_pipeline {
 sub create_genome_from_shock {
 	my($self,$input)=@_;
 	
+	if(!exists($input->{destname}) && exists($input->{modelfolder})){
+	    ($input->{destfolder},$input->{destname}) = $self->util_parserefs($input->{modelfolder});
+	}
+
+	if(!exists($input->{shock_id})){
+	    $self->error("No shock_id was provided!");
+	}
+
 	my $ua = LWP::UserAgent->new();
 	my $shock_url = Bio::KBase::utilities::conf("ProbModelSEED","shock_url")."/node/".$input->{shock_id}."?download";
 	my $token = Bio::KBase::utilities::token();
@@ -1239,7 +1249,7 @@ sub create_genome_from_shock {
 	my $Ftrs = read_fasta($data);
 	my %GenomeObj = (id=>$input->{destname},
 			 source=>"User",
-			 scientific_name=>"undefined",
+			 scientific_name=>$input->{destname},
 			 taxonomy=>'',
 			 genetic_code=>11,
 			 domain=>'Plant',
@@ -1249,7 +1259,7 @@ sub create_genome_from_shock {
 			 contig_ids => []);
 
 	my %MinGenomeObj = (source => "User",
-			    scientific_name => "undefined",
+			    scientific_name=>$input->{destname},
 			    similarities_index => {},
 			    features => [],
 			    exemplars => {},
@@ -1451,6 +1461,12 @@ sub annotate_plant_genome {
     }
 
     if(exists($input->{blast}) && $input->{blast}==1){
+
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
+		objects => [[$modelfolder,{status => "blasting",status_timestamp => Bio::KBase::utilities::timestamp()}]]
+	});
+
+
 	$return_object->{blast}="Attempted";
 	my $blast_results = $self->annotate_plant_genome_blast($Genome);
 
@@ -1463,6 +1479,11 @@ sub annotate_plant_genome {
 
 	$Usermeta->{hit_sims}=$blast_results->{hits};
 	$return_object->{blast}=$blast_results->{hits};
+
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
+		objects => [[$modelfolder,{status => "complete",status_timestamp => Bio::KBase::utilities::timestamp()}]]
+	});
+
     }
 
     $self->save_object($modelfolder."/genome",$Genome,"genome");
@@ -1808,6 +1829,33 @@ sub list_models {
 	$input = Bio::KBase::utilities::args($input,[],{
 		path => "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/"
 	});
+
+
+	#Functionality to ensure that the modelseed and plantseed folders are present for each users, even if empty
+	my $root = "/".(split(/\//,$input->{path}))[1];
+	my $rootlist = Bio::ModelSEED::patricenv::call_ws("ls",{
+		paths => [$root],
+		recursive => 0,
+		excludeDirectories => 0
+	});
+	my ($modelseed,$plantseed)=(0,0);
+	foreach my $listing (@{$rootlist->{$root}}){
+	    if($listing->[0] eq "modelseed"){
+		$modelseed=1;
+	    }
+	    if($listing->[0] eq "plantseed"){
+		$plantseed=1;
+	    }
+	}
+
+	if(!$modelseed){
+	    Bio::ModelSEED::patricenv::call_ws("create", {objects => [[$root."/modelseed","folder",{},undef]]});
+	}
+
+	if(!$plantseed){
+	    Bio::ModelSEED::patricenv::call_ws("create", {objects => [[$root."/plantseed","folder",{},undef]]});
+	}
+
     my $list = Bio::ModelSEED::patricenv::call_ws("ls",{
 		paths => [$input->{path}],
 		recursive => 0,
@@ -2390,16 +2438,17 @@ sub ModelReconstruction {
     	thermodynamic_constraints => 0,
     	comprehensive_gapfill => 0,
     	custom_bound_list => [],
-		media_supplement_list => [],
-		expseries => undef,
-		expression_condition => undef,
-		exp_threshold_percentile => 0.5,
-		exp_threshold_margin => 0.1,
-		activation_coefficient => 0.5,
-		omega => 0,
-		objective_fraction => 0.1,
-		minimum_target_flux => 0.1,
-		number_of_solutions => 1
+	media_supplement_list => [],
+	expseries => undef,
+	expression_condition => undef,
+	exp_threshold_percentile => 0.5,
+	exp_threshold_margin => 0.1,
+	activation_coefficient => 0.5,
+	omega => 0,
+	objective_fraction => 0.1,
+	minimum_target_flux => 0.1,
+	number_of_solutions => 1,
+	annotation_process => "none"
     });
     #Determining output location
     if (!defined($parameters->{output_file})) {
@@ -2408,7 +2457,7 @@ sub ModelReconstruction {
     	$parameters->{output_file} =~ s/.+\///;
     }
     if (!defined($parameters->{output_path})) {
-    	if ($parameters->{template_model} =~ /plant/i) {
+    	if ($parameters->{genome_type} eq  "plant") {
     		$parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
     	} else {
     		$parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
@@ -2418,6 +2467,24 @@ sub ModelReconstruction {
     	$parameters->{output_path} .= "/";
     }
     my $folder = $parameters->{output_path}."/".$parameters->{output_file};
+
+	print "Removing $folder\n";
+
+#    Bio::ModelSEED::patricenv::call_ws("delete",{
+#		objects => [$folder],
+#		deleteDirectories => 1,
+#		force => 1
+#	});
+
+    Bio::ModelSEED::patricenv::call_ws("create",{
+		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+	});
+
+	exit();
+
+
+
+	print "Creating $folder\n";
     #Creating model folder and adding meta data
     Bio::ModelSEED::patricenv::call_ws("create",{
 		objects => [[$folder,"modelfolder",{},undef]]
@@ -2425,18 +2492,42 @@ sub ModelReconstruction {
 	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
 		objects => [[$folder,{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()}]]#,"modelfolder",Bio::KBase::utilities::timestamp()]]
 	});
-    #Annotating genome if a shock ID is provided with a genome ID
+    #############################################################
+    #Loading genome if a shock ID is provided with a genome ID
     if(defined($parameters->{shock_id})) {
-		$self->create_genome_from_shock({
-			shock_id => $parameters->{shock_id},
-			annotate => 1,
-			output_path => $folder,
-			genome_type => $parameters->{genome_type}
-		});
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
+		objects => [[$folder,{status => "loading",status_timestamp => Bio::KBase::utilities::timestamp()}]]
+	});
+	$self->create_genome_from_shock({shock_id => $parameters->{shock_id}, modelfolder => $folder});
+	#Force kmer annotation to occur on a new genome
+	$parameters->{annotation_process}="kmer";
     }
+
+    #############################################################	
+    #Annotating genome if an annotation process is defined with a genome ID
+    if(defined($parameters->{annotation_process})){
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
+		objects => [[$folder,{status => "annotating",status_timestamp => Bio::KBase::utilities::timestamp()}]]
+	});
+	my $kmers = $parameters->{annotation_process} eq "kmer" ? 1 : 0;
+	my $blast = $parameters->{annotation_process} eq "blast" ? 1 : 0;
+	$self->annotate_plant_genome({destmodel => $parameters->{output_file}, kmers => $kmers, blast => $blast});
+       }
+	
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
     }
+
+    #############################################################	
+    #Set options based on genome_type being of plant
+    if($parameters->{genome_type} eq "plant"){
+	$parameters->{template_model} = "/chenry/public/modelsupport/templates/PlantModelTemplate";
+	$parameters->{gapfill}=0;
+	if($parameters->{genome} !~ m/\//){
+	    $parameters->{genome} = $parameters->{output_path}.$parameters->{genome};
+	}
+    }
+
 	if ($parameters->{template_model} =~ m/\//) {
 		($parameters->{template_workspace},$parameters->{template_id}) = $self->util_parserefs($parameters->{template_model});
 	} else {

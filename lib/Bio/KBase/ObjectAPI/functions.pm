@@ -339,7 +339,8 @@ sub func_build_metabolic_model {
 	});
 	#Getting genome
 	$handler->util_log("Retrieving genome.");
-	my $genome = $handler->util_get_object($params->{genome_workspace}."/".$params->{genome_id});
+	my $genome = $handler->util_get_object($params->{genome_workspace}."/".$params->{genome_id}."/genome");
+
 	#Classifying genome
 	if ($params->{template_id} eq "auto") {
 		if (!defined($params->{template_workspace})) {
