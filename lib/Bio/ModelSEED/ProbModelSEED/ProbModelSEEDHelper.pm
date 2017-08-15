@@ -1655,7 +1655,7 @@ sub annotate_plant_genome_blast {
     my @Command_Array = ("nice -n 10 ".$Command);
     push(@Command_Array,"-evalue");push(@Command_Array,"1.0e-7");
     push(@Command_Array,"-outfmt");push(@Command_Array,"6");
-    push(@Command_Array,"-db");push(@Command_Array,$jobDir."PlantSEED_Plants_NR");
+    push(@Command_Array,"-db");push(@Command_Array,$jobDir."PlantSEED_Exemplars_NR");
     push(@Command_Array,"-query");push(@Command_Array,$jobFiles.".fasta");
     push(@Command_Array,"-out");push(@Command_Array,$jobFiles.".sims");
     my $cmd=join(" ",@Command_Array);

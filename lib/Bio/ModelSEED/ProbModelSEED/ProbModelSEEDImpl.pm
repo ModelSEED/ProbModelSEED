@@ -2323,11 +2323,16 @@ sub plant_annotation_overview
     my $root = join("/",@path);
     my $min_genome = $root."/.plantseed_data/minimal_genome";
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
-    
-    foreach my $role (keys %$output){
-	foreach my $exemplar ( grep { exists($min_genome->{exemplars}{$_}) } keys %{$Exemplar_Roles{$role}}){
-	    foreach my $query (keys %{$min_genome->{exemplars}{$exemplar}}){
-		$output->{$role}{'blast-features'}{$query}=1;
+ 
+     foreach my $role (keys %$output){
+	foreach my $exemplar (keys %{$Exemplar_Roles{$role}}){
+	    foreach my $hit (keys %{$min_genome->{exemplars}}){
+		#Necessary to compare between Arabidopsis gene and transcript ids
+		if($hit =~ /${exemplar}/){
+		    foreach my $query (keys %{$min_genome->{exemplars}{$hit}}){
+			$output->{$role}{'blast-features'}{$query}=1;
+		    }
+		}
 	    }
 	}
     }
