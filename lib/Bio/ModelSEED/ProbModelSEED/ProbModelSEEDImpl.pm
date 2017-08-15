@@ -1105,7 +1105,11 @@ sub list_models
 	foreach my $key (keys(%{$hash})) {
 		push(@{$output},$hash->{$key});
 	}
-    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+    if(exists($input->{path}) && $input->{path} =~ /^\/plantseed\/plantseed/){
+	$output = [sort { $a->{id} cmp $b->{id} } @{$output}];
+    }else{
+	$output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+    }
     #END list_models
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -1766,6 +1770,7 @@ sub get_feature
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $output = $ftr->{data};
 	    delete($output->{parent});
+	    last;
 	}
     }
 
@@ -1963,7 +1968,6 @@ sub save_feature_function
     }
     
     my $found_ftr=undef;
-    print "Looking for ".$input->{feature}."\n";
     foreach my $ftr (@{$genome_obj->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $ftr->{data}{function} = $input->{function};
@@ -1988,7 +1992,6 @@ sub save_feature_function
     my $min_genome = $root."/.plantseed_data/minimal_genome";
     
     #Retrieving minimal genome
-    print "Retrieving $min_genome\n";
     my $min_genome_obj = $self->helper()->get_object($min_genome,"unspecified");
     
     $found_ftr = undef;
