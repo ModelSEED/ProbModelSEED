@@ -359,7 +359,7 @@ sub call_method {
 	    my ($t, $us) = &$get_time();
 	    $us = sprintf("%06d", $us);
 	    my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
-	    $tag = "S:$self->{hostname}:$$:$ts";
+	    $tag = "S:".$ctx->hostname().":$$:$ts";
 	}
 	local $ENV{KBRPC_TAG} = $tag;
 	my $kb_metadata = $self->_plack_req->header("Kbrpc-Metadata");
