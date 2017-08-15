@@ -1389,11 +1389,13 @@ sub annotate_plant_genome {
 
     my $modelfolder = "/".Bio::KBase::utilities::user_id()."/plantseed/".$input->{destmodel};
 
+    #############################################################
+    #Retrieve metadata once to update throughout process
+    my $user_metadata = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$modelfolder], metadata_only => 1 })->[0][0][7];
+
     #Need to check genome sequences for amino acids and if not, translate
     my $Genome = $self->get_object($modelfolder."/genome","genome");
-    my $Usermeta = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$modelfolder."/genome"], metadata_only => 1 })->[0][0][8];
-
-    my $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Usermeta,1);
+    my $genome_user_metadata = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$modelfolder."/genome"], metadata_only => 1 })->[0][0][7];
 
     #Test first protein sequences for NAs
     #Might have been incorrectly assigned
@@ -1456,16 +1458,14 @@ sub annotate_plant_genome {
 	    $ftr->{subsystems}=[sort keys %SSs];
 	}
 
-	$Usermeta->{hit_proteins}=scalar(keys %$hits);
+	$genome_user_metadata->{hit_proteins}=scalar(keys %$hits);
 	$return_object->{kmers}=scalar(keys %$hits)." kmer hits";
     }
 
     if(exists($input->{blast}) && $input->{blast}==1){
-
-	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
-		objects => [[$modelfolder,{status => "blasting",status_timestamp => Bio::KBase::utilities::timestamp()}]]
-	});
-
+	$user_metadata->{status}="blasting";
+	$user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$modelfolder,$user_metadata]]});
 
 	$return_object->{blast}="Attempted";
 	my $blast_results = $self->annotate_plant_genome_blast($Genome);
@@ -1474,23 +1474,23 @@ sub annotate_plant_genome {
 	$Min_Genome->{exemplars}=$blast_results->{exems};
 
 	for(my $i=0;$i<scalar(@{$blast_results->{sims}});$i++){
-	    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/Sims_".$i,"unspecified",{},$blast_results->{sims}->[$i]]], overwrite=>1 });
+	    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/Sims_".$i,"unspecified",{},
+								       $blast_results->{sims}->[$i]]], overwrite=>1 });
 	}
 
-	$Usermeta->{hit_sims}=$blast_results->{hits};
+	$genome_user_metadata->{hit_sims}=$blast_results->{hits};
 	$return_object->{blast}=$blast_results->{hits};
 
-	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
-		objects => [[$modelfolder,{status => "complete",status_timestamp => Bio::KBase::utilities::timestamp()}]]
-	});
-
+	$user_metadata->{status}="complete";
+	$user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$modelfolder,$user_metadata]]});
     }
 
     $self->save_object($modelfolder."/genome",$Genome,"genome");
-    Bio::ModelSEED::patricenv::call_ws("update_metadata",{ objects => [[$modelfolder."/genome",$Usermeta]] });
+    Bio::ModelSEED::patricenv::call_ws("update_metadata",{ objects => [[$modelfolder."/genome",$genome_user_metadata]] });
 
-    $JSON = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
-    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$JSON]], overwrite=>1 });
+    my $minimal_genome = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
+    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$minimal_genome]], overwrite=>1 });
 
     my $return_string = join("\n", map { $_.":".$return_object->{$_} } sort keys %$return_object)."\n";
     return $return_string;
@@ -1710,7 +1710,8 @@ sub annotate_plant_genome_blast {
     my $Ftr_Index = {};
     my $Exems = {};
     foreach my $ftr (sort keys %Ftrs_Sims){
-	foreach my $sim ( sort { $Ftrs_Sims{$ftr}{$a}{bitscore} <=> $Ftrs_Sims{$ftr}{$b}{bitscore} || $Ftrs_Sims{$ftr}{$a}{identity} <=> $Ftrs_Sims{$ftr}{$b}{identity} } keys %{$Ftrs_Sims{$ftr}} ){
+	foreach my $sim ( sort { $Ftrs_Sims{$ftr}{$a}{bitscore} <=> $Ftrs_Sims{$ftr}{$b}{bitscore} || 
+				     $Ftrs_Sims{$ftr}{$a}{identity} <=> $Ftrs_Sims{$ftr}{$b}{identity} } keys %{$Ftrs_Sims{$ftr}} ){
 	    
 	    my $line = $Ftrs_Sims{$ftr}{$sim}{line};
 	    my @temp=split(/\t/,$line,-1);
@@ -2458,9 +2459,9 @@ sub ModelReconstruction {
     }
     if (!defined($parameters->{output_path})) {
     	if ($parameters->{genome_type} eq  "plant") {
-    		$parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
+	    $parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
     	} else {
-    		$parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
+	    $parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
     	}
     }
     if (substr($parameters->{output_path},-1,1) ne "/") {
@@ -2468,19 +2469,17 @@ sub ModelReconstruction {
     }
     my $folder = $parameters->{output_path}."/".$parameters->{output_file};
 
-    #Creating model folder and adding meta data
-    Bio::ModelSEED::patricenv::call_ws("create",{
-		objects => [[$folder,"modelfolder",{},undef]]
-	});
-	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
-		objects => [[$folder,{status => "constructing",status_timestamp => Bio::KBase::utilities::timestamp()}]]#,"modelfolder",Bio::KBase::utilities::timestamp()]]
-	});
+    #############################################################
+    #Retrieve metadata once to update throughout process
+    my $user_metadata = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$folder], metadata_only => 1 })->[0][0][7];
+
     #############################################################
     #Loading genome if a shock ID is provided with a genome ID
     if(defined($parameters->{shock_id})) {
-	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
-		objects => [[$folder,{status => "loading",status_timestamp => Bio::KBase::utilities::timestamp()}]]
-	});
+	$user_metadata->{status}="loading";
+	$user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$folder,$user_metadata]]});
+
 	$self->create_genome_from_shock({shock_id => $parameters->{shock_id}, modelfolder => $folder});
 	#Force kmer annotation to occur on a new genome
 	$parameters->{annotation_process}="kmer";
@@ -2489,9 +2488,10 @@ sub ModelReconstruction {
     #############################################################	
     #Annotating genome if an annotation process is defined with a genome ID
     if(defined($parameters->{annotation_process})){
-	Bio::ModelSEED::patricenv::call_ws("update_metadata",{
-		objects => [[$folder,{status => "annotating",status_timestamp => Bio::KBase::utilities::timestamp()}]]
-	});
+	$user_metadata->{status}="annotating";
+	$user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$folder,$user_metadata]]});
+
 	my $kmers = $parameters->{annotation_process} eq "kmer" ? 1 : 0;
 	my $blast = $parameters->{annotation_process} eq "blast" ? 1 : 0;
 	$self->annotate_plant_genome({destmodel => $parameters->{output_file}, kmers => $kmers, blast => $blast});
@@ -2500,6 +2500,10 @@ sub ModelReconstruction {
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
     }
+
+	$user_metadata->{status}="constructing";
+	$user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$folder,$user_metadata]]});
 
     #############################################################	
     #Set options based on genome_type being of plant
