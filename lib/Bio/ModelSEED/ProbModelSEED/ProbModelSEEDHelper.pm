@@ -2468,23 +2468,6 @@ sub ModelReconstruction {
     }
     my $folder = $parameters->{output_path}."/".$parameters->{output_file};
 
-	print "Removing $folder\n";
-
-#    Bio::ModelSEED::patricenv::call_ws("delete",{
-#		objects => [$folder],
-#		deleteDirectories => 1,
-#		force => 1
-#	});
-
-    Bio::ModelSEED::patricenv::call_ws("create",{
-		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
-	});
-
-	exit();
-
-
-
-	print "Creating $folder\n";
     #Creating model folder and adding meta data
     Bio::ModelSEED::patricenv::call_ws("create",{
 		objects => [[$folder,"modelfolder",{},undef]]
