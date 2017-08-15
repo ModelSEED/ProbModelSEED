@@ -2469,9 +2469,15 @@ sub ModelReconstruction {
     }
     my $folder = $parameters->{output_path}."/".$parameters->{output_file};
 
+    #Creating model folder and adding meta data
+    Bio::ModelSEED::patricenv::call_ws("create",{objects => [[$folder,"modelfolder",{},undef]]});
+
     #############################################################
     #Retrieve metadata once to update throughout process
     my $user_metadata = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$folder], metadata_only => 1 })->[0][0][7];
+    $user_metadata->{status}="constructing";
+    $user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
+    Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$folder,$user_metadata]]});
 
     #############################################################
     #Loading genome if a shock ID is provided with a genome ID
