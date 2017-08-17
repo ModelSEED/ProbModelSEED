@@ -2745,11 +2745,11 @@ sub ModelReconstruction
     } else {
     	Bio::KBase::utilities::error("Model path not suitable!");
     }
-    Bio::ModelSEED::patricenv::call_ws("delete",{
-		objects => [$folder],
-		deleteDirectories => 1,
-		force => 1
-	});
+#    Bio::ModelSEED::patricenv::call_ws("delete",{
+#		objects => [$folder],
+#		deleteDirectories => 1,
+#		force => 1
+#	});
     Bio::ModelSEED::patricenv::call_ws("create",{
 		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
 	});
