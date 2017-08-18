@@ -2011,7 +2011,11 @@ sub save_feature_function
     
     #Save objects
     $self->helper->save_object($input->{genome},$genome_obj,"genome",{});
-    $self->helper->save_object($min_genome, $min_genome_obj,"unspecified",{});
+
+    $min_genome_obj = Bio::KBase::ObjectAPI::utilities::TOJSON($min_genome_obj,1);
+    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$min_genome,"unspecified",{},$min_genome_obj]], overwrite=>1 });
+
+#    $self->helper->save_object($min_genome, $min_genome_obj,"unspecified",{});
 
     #END save_feature_function
     return();
