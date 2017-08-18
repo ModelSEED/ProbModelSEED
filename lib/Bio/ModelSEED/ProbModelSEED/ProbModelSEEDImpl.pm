@@ -1814,11 +1814,15 @@ sub get_feature
     my $sim_file = $input->{genome}."/.plantseed_data/Sims_".$sim_index;
     $sim_file = $self->helper()->get_object($sim_file,"unspecified");
 
+    #Retrieve details for plants
+    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
+
     #Iterate through hits and separate them out into plant and prokaryote hits
     #By rule, prokaryote hits still have their peg identifiers and plants dont
     #percent_id|hit_id|bit_score|e_value
     my ($plant_count,$prokaryotic_count)=(0,0);
     foreach my $hit ( sort { $b->{percent_id} <=> $a->{percent_id} } @{$sim_file->{$input->{feature}}}){
+	next if !exists($ftr_lu->{$hit->{hit_id}});
 	last if $plant_count>=10; # && $prokaryotic_count>=10;
 
 #	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/ && $prokaryotic_count<10){
@@ -1832,8 +1836,6 @@ sub get_feature
 	}
     }
 
-    #Retrieve details for plants
-    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
 
     my @Plants = @{$output->{plant_similarities}};
     undef(@{$output->{plant_similarities}});
