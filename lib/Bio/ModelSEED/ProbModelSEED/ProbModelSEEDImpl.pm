@@ -2728,7 +2728,7 @@ sub ModelReconstruction
     	$input->{output_file} =~ s/.+\///;
     }
     if (!defined($input->{output_path})) {
-    	if ($parameters->{genome_type} eq  "plant") {
+    	if ($input->{genome_type} eq  "plant") {
     		$input->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
     	} else {
     		$input->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
