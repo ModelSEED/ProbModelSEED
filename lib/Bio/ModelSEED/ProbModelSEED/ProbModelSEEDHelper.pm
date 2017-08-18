@@ -1342,9 +1342,7 @@ sub create_featurevalues_from_shock {
 	my %FloatMatrix2D = ( "row_ids" => [], "col_ids" => [], "values" => [] );
 	my @Experiments = ();
 	my @temp=();
-	foreach my $line (split(/^/,$data)){
-	    #chomping possibly needs to match CR
-	    $line =~ s/\r?\n$//;
+	foreach my $line (split(/\r\n?|\n/,$data)){
 	    @temp=split(/\t/,$line);
 	    
 	    #Header line should contain experiment names
