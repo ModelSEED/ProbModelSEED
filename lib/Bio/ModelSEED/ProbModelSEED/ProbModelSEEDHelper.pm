@@ -1207,7 +1207,7 @@ sub plant_pipeline {
     if(exists($input->{annotate}) && $input->{annotate}==1){
 	#Add parameters for annotation
 	my $AP_input = {};
-	$AP_input->{destmodel} = $input->{destname};
+	$AP_input->{model_folder} = $input->{model_folder};
 	$AP_input->{kmers}=1;
 	$AP_input->{blast}=0;
 	$self->annotate_plant_genome($AP_input);
@@ -1227,9 +1227,8 @@ sub plant_pipeline {
 sub create_genome_from_shock {
 	my($self,$args)=@_;
 	#Validating arguments
-	$args = Bio::KBase::utilities::args($args,["output_path","shock_id","genome_id"],{
+	$args = Bio::KBase::utilities::args($args,["output_path","shock_id","genome_id","genome_type"],{
     	annotate => 1,
-		genome_type => "plant",
 		scientific_name => "undefined sample",
 		taxonomy => "unknown",
 		genetic_code => 11,
@@ -1320,7 +1319,8 @@ sub create_genome_from_shock {
 				$GenomeObj = $self->annotate_plant_genome({
 					genome => $GenomeObj,
 					kmers => $kmers,
-					blast => $blast
+					blast => $blast,
+					model_folder => $args->{output_path}
 				});
 			} else {
 				$GenomeObj = $self->annotate_microbial_genome({
@@ -1426,8 +1426,8 @@ sub create_featurevalues_from_shock {
 }
 
 sub annotate_plant_genome {
-    my ($self,$input)=@_;
-	$args = Bio::KBase::utilities::args($args,["genome"],{
+    my ($self,$args) = @_;
+	$args = Bio::KBase::utilities::args($args,["genome","model_folder"],{
     	kmers => 1,
     	blast => 0,
     	metadata => {
@@ -1435,9 +1435,10 @@ sub annotate_plant_genome {
     		status => "annotating"
     	}
 	});
+	my $modelfolder = $args->{model_folder};
 	my $Genome = $args->{genome};
 	my $user_metadata = $args->{metadata};
-	
+	my $genome_user_metadata = {};
     #Test first protein sequences for NAs
     #Might have been incorrectly assigned
     my $First_Ftr = $Genome->features()->[0];
@@ -1475,8 +1476,8 @@ sub annotate_plant_genome {
     $output = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$modelfolder."/.plantseed_data/minimal_genome"] })->[0];
     my $Min_Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
 
-    my $return_object = {destmodel=>$input->{destmodel},kmers=>"Not attempted",blast=>"Not attempted"};
-    if(exists($input->{kmers}) && $input->{kmers}==1){
+    my $return_object = {destmodel=>$args->{destmodel},kmers=>"Not attempted",blast=>"Not attempted"};
+    if(exists($args->{kmers}) && $args->{kmers}==1){
 	    $return_object->{kmers}="Attempted";
 		my $hits = $self->annotate_plant_genome_kmers($Genome);
 		foreach my $ftr (@{$Genome->features()}){
@@ -1502,7 +1503,7 @@ sub annotate_plant_genome {
 		$return_object->{kmers}=scalar(keys %$hits)." kmer hits";	
     }
 
-    if(exists($input->{blast}) && $input->{blast}==1){
+    if(exists($args->{blast}) && $args->{blast}==1){
 		$user_metadata->{status}="blasting";
 		$user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
 		Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$modelfolder,$user_metadata]]});
@@ -1551,9 +1552,9 @@ sub annotate_microbial_genome {
 	File::Path::mkpath ($path."/".$uuid);
 	my $json = Bio::KBase::ObjectAPI::utilities::TOJSON($genome,1);
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($path."/".$uuid."/genome.json",[$json]);
-	system(Bio::KBase::utilities::conf("ModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v2 -i "'.$path."/".$uuid.'/genome.json" -o "'.$path."/".$uuid.'/rast-kv2.json"');
-	system(Bio::KBase::utilities::conf("ModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v1 -i "'.$path."/".$uuid.'/rast-kv2.json" -o "'.$path."/".$uuid.'/rast-kv1.json" -H');
-	system(Bio::KBase::utilities::conf("ModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-similarity -i "'.$path."/".$uuid.'/rast-kv1.json" -o "'.$path."/".$uuid.'/rast-sim.json" -H');
+	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v2 -i "'.$path."/".$uuid.'/genome.json" -o "'.$path."/".$uuid.'/rast-kv2.json"');
+	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v1 -i "'.$path."/".$uuid.'/rast-kv2.json" -o "'.$path."/".$uuid.'/rast-kv1.json" -H');
+	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-similarity -i "'.$path."/".$uuid.'/rast-kv1.json" -o "'.$path."/".$uuid.'/rast-sim.json" -H');
 	my $data = Bio::KBase::ObjectAPI::utilities::LOADFILE($path."/".$uuid."/rast-sim.json");
     my $anno_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$data}));
 	for (my $i=0; $i < @{$anno_genome->{features}}; $i++) {
@@ -2548,7 +2549,7 @@ sub EditModel {
 sub ModelReconstruction {
 	my($self,$parameters) = @_;
 	$parameters = Bio::KBase::utilities::args($parameters,[],{
-    	genome_type => "plant",
+    	genome_type => undef,
     	shock_id => undef,
     	media => undef,
     	template_model => "auto",
@@ -2620,7 +2621,12 @@ sub ModelReconstruction {
 			annotation_process => $parameters->{annotation_process}
 		});
 		$parameters->{genome} = $folder."/genome";
-    }
+    } elsif ($parameters->{genome} =~ m/RAST:/ || $parameters->{genome} =~ m/PATRIC:/) {
+    	my $GenomeObj = $self->get_genome($parameters->{genome});
+    	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/genome", "genome", {}, $GenomeObj->serializeToDB()] ] });
+   		$parameters->{genome} = $folder."/genome";
+	}
+	$parameters->{genome} =~ s/\/\//\//g;
     
     #############################################################	
     #Set options based on genome_type being of plant
@@ -2643,6 +2649,7 @@ sub ModelReconstruction {
 	delete $parameters->{genome};
 	delete $parameters->{template_model};
 	my $datachannel = {};
+	print Data::Dumper->Dump([$parameters]);
 	Bio::KBase::ObjectAPI::functions::func_build_metabolic_model($parameters,$datachannel);
 	#Now compute reaction probabilities if they are needed for gapfilling or probanno model building
 	if ($parameters->{probanno} == 1 || ($parameters->{gapfill} == 1 && $parameters->{probannogapfill} == 1)) {
