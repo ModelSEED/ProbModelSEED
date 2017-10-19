@@ -1188,7 +1188,6 @@ sub copy_model {
 	#Save object as modelfolder
 	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$input->{dest_model_path},"modelfolder",{},{}] ], overwrite=>1});
 	Bio::ModelSEED::patricenv::call_ws("copy", { objects => [ [$input->{source_model_path},$input->{dest_model_path}] ], overwrite=>1, recursive=>1 });							 
-
 	#Copy user meta
 	my $UserMeta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$input->{source_model_path}], metadata_only=>1 })->[0][0][7];
 	Bio::ModelSEED::patricenv::call_ws("update_metadata",{ objects => [[$input->{dest_model_path},$UserMeta]] });
@@ -1309,18 +1308,19 @@ sub create_genome_from_shock {
 			$user_meta->{dna_size}+=$featureObj->{dna_sequence_length};
 			$user_meta->{num_features}++;
 			push(@{$GenomeObj->{features}},$featureObj);
-	    	push(@{$MinGenomeObj->{features}},$minftrObj);
+			push(@{$MinGenomeObj->{features}},$minftrObj);
 		}
 		#Annotating
 		if ($args->{annotate} == 1) {
 			if ($args->{genome_type} eq "plant") {
 				my $kmers = $args->{annotation_process} eq "kmer" ? 1 : 0;
 				my $blast = $args->{annotation_process} eq "blast" ? 1 : 0;
-				$GenomeObj = $self->annotate_plant_genome({
-					genome => $GenomeObj,
-					kmers => $kmers,
-					blast => $blast,
-					model_folder => $args->{output_path}
+				my $annotation_summary = $self->annotate_plant_genome({
+				    genome => $GenomeObj,
+				    min_genome => $MinGenomeObj,
+				    kmers => $kmers,
+				    blast => $blast,
+				    model_folder => $args->{output_path}
 				});
 			} else {
 				$GenomeObj = $self->annotate_microbial_genome({
@@ -1427,112 +1427,76 @@ sub create_featurevalues_from_shock {
 
 sub annotate_plant_genome {
     my ($self,$args) = @_;
-	$args = Bio::KBase::utilities::args($args,["genome","model_folder"],{
-    	kmers => 1,
-    	blast => 0,
-    	metadata => {
-    		timestampe => Bio::KBase::utilities::timestamp(),
-    		status => "annotating"
-    	}
-	});
-	my $modelfolder = $args->{model_folder};
-	my $Genome = $args->{genome};
-	my $user_metadata = $args->{metadata};
-	my $genome_user_metadata = {};
-    #Test first protein sequences for NAs
-    #Might have been incorrectly assigned
-    my $First_Ftr = $Genome->features()->[0];
-    if( $First_Ftr->protein_translation() && $self->is_dna($First_Ftr->protein_translation()) ){
-		#Need to re-assign these
-		foreach my $ftr (@{$Genome->features()}){
-		    $ftr->dna_sequence($ftr->protein_translation());
-		    $ftr->dna_sequence_length(length($ftr->dna_sequence_length()));	
-		    $ftr->protein_translation("");
-		    $ftr->protein_translation_length(0);
-		    $ftr->md5("");
-		}
-    }
+    $args = Bio::KBase::utilities::args($args,["genome","min_genome","model_folder"],{kmers => 1,blast => 0});
+    
+    my $modelfolder = $args->{model_folder};
+    my $Genome = $args->{genome};
+    my $Min_Genome = $args->{min_genome};
+    my $user_metadata = $args->{metadata};
+    my $genome_user_metadata = {};
 
     #Translate nucleotides
-    foreach my $ftr (@{$Genome->features()}){
-		if($ftr->dna_sequence()){
-		    $ftr->protein_translation($self->translate_nucleotides($ftr->dna_sequence()));
-		    $ftr->protein_translation_length(length($ftr->protein_translation()));
-		    $ftr->md5(Digest::MD5::md5_hex($ftr->protein_translation()));
-		}
+    foreach my $ftr (@{$Genome->{features}}){
+	if($ftr->{dna_sequence}){
+	    $ftr->{protein_translation} = $self->translate_nucleotides($ftr->{dna_sequence});
+	    $ftr->{protein_translation_length} = length($ftr->{protein_translation});
+	    $ftr->{md5} = Digest::MD5::md5_hex($ftr->{protein_translation});
+	}
     }
-
+		     
     #Retrieve subsystems
     my $output = Bio::ModelSEED::patricenv::call_ws("get", { objects => ["/plantseed/Data/annotation_overview"] })->[0];
     my $Annotation = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
     my %Roles_Subsystems=();
     foreach my $role (@{$Annotation}){
-		foreach my $ss (keys %{$role->{subsystems}}){
-		    $Roles_Subsystems{$role->{role}}{$ss}=1;
-		}
+	foreach my $ss (keys %{$role->{subsystems}}){
+	    $Roles_Subsystems{$role->{role}}{$ss}=1;
+	}
     }
-
-    #Retrieve minimal genome
-    $output = Bio::ModelSEED::patricenv::call_ws("get", { objects => [$modelfolder."/.plantseed_data/minimal_genome"] })->[0];
-    my $Min_Genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($output->[1]);
-
-    my $return_object = {destmodel=>$args->{destmodel},kmers=>"Not attempted",blast=>"Not attempted"};
+    
+    my $return_object = {destmodel=>$modelfolder,kmers=>"Not attempted",blast=>"Not attempted"};
     if(exists($args->{kmers}) && $args->{kmers}==1){
-	    $return_object->{kmers}="Attempted";
-		my $hits = $self->annotate_plant_genome_kmers($Genome);
-		foreach my $ftr (@{$Genome->features()}){
-		    if(exists($hits->{$ftr->id()})){
-				$ftr->function(join(" / ",sort keys %{$hits->{$ftr->id()}}));
+	$return_object->{kmers}="Attempted";
+	my $hits = $self->annotate_plant_genome_kmers($Genome);
+	foreach my $ftr (@{$Genome->{features}}){
+	    if(exists($hits->{$ftr->{id}})){
+		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+	    }
+	}
+	
+	foreach my $ftr (@{$Min_Genome->{features}}){
+	    my %SSs = ();
+	    if(exists($hits->{$ftr->{id}})){
+		$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
+		foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{function})){
+		    foreach my $ss (keys %{$Roles_Subsystems{$role}}){
+			$SSs{$ss}=1;
 		    }
 		}
+	    }
+	    $ftr->{subsystems}=[sort keys %SSs];
+	}
 	
-		foreach my $ftr (@{$Min_Genome->{features}}){
-		    my %SSs = ();
-		    if(exists($hits->{$ftr->{id}})){
-				$ftr->{function} = join(" / ",sort keys %{$hits->{$ftr->{id}}});
-				foreach my $role (split(/\s*;\s+|\s+[\@\/]\s+/,$ftr->{function})){
-				    foreach my $ss (keys %{$Roles_Subsystems{$role}}){
-						$SSs{$ss}=1;
-				    }
-				}
-		    }
-		    $ftr->{subsystems}=[sort keys %SSs];
-		}
-	
-		$genome_user_metadata->{hit_proteins}=scalar(keys %$hits);
-		$return_object->{kmers}=scalar(keys %$hits)." kmer hits";	
+	$genome_user_metadata->{hit_proteins}=scalar(keys %$hits);
+	$return_object->{kmers}=scalar(keys %$hits)." kmer hits";	
     }
-
+    
     if(exists($args->{blast}) && $args->{blast}==1){
-		$user_metadata->{status}="blasting";
-		$user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
-		Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$modelfolder,$user_metadata]]});
+	$return_object->{blast}="Attempted";
+	my $blast_results = $self->annotate_plant_genome_blast($Genome);
 	
-		$return_object->{blast}="Attempted";
-		my $blast_results = $self->annotate_plant_genome_blast($Genome);
+	$Min_Genome->{similarities_index}=$blast_results->{index};
+	$Min_Genome->{exemplars}=$blast_results->{exems};
 	
-		$Min_Genome->{similarities_index}=$blast_results->{index};
-		$Min_Genome->{exemplars}=$blast_results->{exems};
+	for(my $i=0;$i<scalar(@{$blast_results->{sims}});$i++){
+	    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/Sims_".$i,"unspecified",{},
+								       $blast_results->{sims}->[$i]]], overwrite=>1 });
+	}
 	
-		for(my $i=0;$i<scalar(@{$blast_results->{sims}});$i++){
-		    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/Sims_".$i,"unspecified",{},
-									       $blast_results->{sims}->[$i]]], overwrite=>1 });
-		}
-	
-		$genome_user_metadata->{hit_sims}=$blast_results->{hits};
-		$return_object->{blast}=$blast_results->{hits};
-	
-		$user_metadata->{status}="complete";
-		$user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
-		Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$modelfolder,$user_metadata]]});
+	$genome_user_metadata->{hit_sims}=$blast_results->{hits};
+	$return_object->{blast}=$blast_results->{hits};
     }
-
-    $self->save_object($modelfolder."/genome",$Genome,"genome");
-    Bio::ModelSEED::patricenv::call_ws("update_metadata",{ objects => [[$modelfolder."/genome",$genome_user_metadata]] });
-
-    my $minimal_genome = Bio::KBase::ObjectAPI::utilities::TOJSON($Min_Genome,1);
-    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$modelfolder."/.plantseed_data/minimal_genome","unspecified",{},$minimal_genome]], overwrite=>1 });
-
+    
     my $return_string = join("\n", map { $_.":".$return_object->{$_} } sort keys %$return_object)."\n";
     return $return_string;
 }
@@ -1663,8 +1627,8 @@ sub annotate_plant_genome_kmers {
 
     my $Kmer_Length=8;
     my %Hit_Proteins=();
-    foreach my $ftr (@{$Genome->features()}){
-	my $Seq = $ftr->protein_translation();
+    foreach my $ftr (@{$Genome->{features}}){
+	my $Seq = $ftr->{protein_translation};
 	my $SeqLen = length($Seq);
 	next if $SeqLen < 10;
 	
@@ -1674,7 +1638,7 @@ sub annotate_plant_genome_kmers {
 	    # take the relevant substring
 	    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
 		if(exists($Kmers_Functions{$1})){
-		    $Hit_Proteins{$ftr->id()}{$Kmers_Functions{$1}}{$1}=1;
+		    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
 		}
 	    }
 	}
@@ -1744,13 +1708,13 @@ sub annotate_plant_genome_blast {
 
     my $jobDir = "/tmp/blastjobs/".$job."/";
     system("mkdir -p ".$jobDir);
-    my $jobFiles = $jobDir.$Genome->id();
+    my $jobFiles = $jobDir.$Genome->{id};
 
     #Print out protein sequences
     open(OUT, "> ".$jobFiles.".fasta");
-    foreach my $ftr (@{$Genome->features()}){
-	print OUT ">".$ftr->id()."\n";
-	print OUT join("\n", $ftr->protein_translation() =~ m/.{1,60}/g)."\n";
+    foreach my $ftr (@{$Genome->{features}}){
+	print OUT ">".$ftr->{id}."\n";
+	print OUT join("\n", $ftr->{protein_translation} =~ m/.{1,60}/g)."\n";
     }
     close(OUT);
 	    
@@ -2624,9 +2588,34 @@ sub ModelReconstruction {
     } elsif ($parameters->{genome} =~ m/RAST:/ || $parameters->{genome} =~ m/PATRIC:/) {
     	my $GenomeObj = $self->get_genome($parameters->{genome});
     	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/genome", "genome", {}, $GenomeObj->serializeToDB()] ] });
-   		$parameters->{genome} = $folder."/genome";
-	}
-	$parameters->{genome} =~ s/\/\//\//g;
+	$parameters->{genome} = $folder."/genome";
+    }elsif ( $parameters->{genome_type} eq "plant" && $parameters->{annotation_process} eq "blast" ){
+
+	my $kmers = $parameters->{annotation_process} eq "kmer" ? 1 : 0;
+	my $blast = $parameters->{annotation_process} eq "blast" ? 1 : 0;
+
+	my $GenomeObj = $self->get_object($folder."/genome")->serializeToDB();
+	my $MinGenomeObj = $self->get_object($folder."/.plantseed_data/minimal_genome");
+	my $annotation_summary = $self->annotate_plant_genome({genome => $GenomeObj,
+							       min_genome => $MinGenomeObj,
+							       kmers => $kmers,
+							       blast => $blast,
+							       model_folder => $folder});
+
+	#Saving genome
+	my $genome_meta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$folder."/genome"], metadata_only=>1 })->[0][0][7];
+	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/genome", "genome", $genome_meta, $GenomeObj] ] });
+	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/.plantseed_data/minimal_genome", "unspecified", {}, $MinGenomeObj] ]});
+
+	#Updating status
+	my $modelfolder_meta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$folder], metadata_only=>1 })->[0][0][7];
+	$modelfolder_meta->{status}="complete";
+	$modelfolder_meta->{status_timestamp} = Bio::KBase::utilities::timestamp();
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$folder,$modelfolder_meta]]});
+
+	return {fbamodel_ref => $folder};
+    }
+    $parameters->{genome} =~ s/\/\//\//g;
     
     #############################################################	
     #Set options based on genome_type being of plant
