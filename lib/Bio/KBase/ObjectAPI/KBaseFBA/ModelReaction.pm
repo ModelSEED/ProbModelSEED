@@ -38,8 +38,8 @@ has genEquationCode => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass =
 has revGenEquationCode => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildgenrevequationcode' );
 has equationFormula => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildequationformula' );
 has complexString => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildcomplexString' );
+has gapfillString => ( is => 'rw', isa => 'Str', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildgapfillString' );
 has stoichiometry => ( is => 'rw', isa => 'ArrayRef', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_buildstoichiometry' );
-
 has reaction => (is => 'rw', type => 'msdata', metaclass => 'Typed', lazy => 1, builder => '_build_reaction', clearer => 'clear_reaction', isa => 'Ref', weak_ref => 1);
 
 #***********************************************************************************************************
@@ -101,30 +101,30 @@ sub _buildequation {
 
 sub _buildequationcode {
 	my ($self) = @_;
-	return $self->createEquation({indecies => 0,format=>"id",hashed=>1,protons=>0,direction=>0});
+	return $self->createEquation({indecies => 0,format=>"codeid",hashed=>1,protons=>0,direction=>0});
 }
 
 sub _buildrevequationcode {
 	my ($self) = @_;
-	return $self->createEquation({indecies => 0,format=>"id",hashed=>1,protons=>0,reverse=>1,direction=>0});
+	return $self->createEquation({indecies => 0,format=>"codeid",hashed=>1,protons=>0,reverse=>1,direction=>0});
 }
 sub _buildgenequationcode {
 	my ($self) = @_;
-	return $self->createEquation({format=>"id",hashed=>1,protons=>0,direction=>0,generalized=>1});
+	return $self->createEquation({format=>"codeid",hashed=>1,protons=>0,direction=>0,generalized=>1});
 }
 sub _buildgenrevequationcode {
 	my ($self) = @_;
-	return $self->createEquation({format=>"id",hashed=>1,protons=>0,reverse=>1,direction=>0,generalized=>1});
+	return $self->createEquation({format=>"codeid",hashed=>1,protons=>0,reverse=>1,direction=>0,generalized=>1});
 }
 
 sub _buildcompfreeequationcode {
 	my ($self) = @_;
-	return $self->createEquation({indecies => 0,format=>"id",hashed=>1,compts=>0});
+	return $self->createEquation({indecies => 0,format=>"codeid",hashed=>1,compts=>0});
 }
 
 sub _buildrevcompfreeequationcode {
 	my ($self) = @_;
-	return $self->createEquation({indecies => 0,format=>"id",hashed=>1,compts=>0,reverse=>1});
+	return $self->createEquation({indecies => 0,format=>"codeid",hashed=>1,compts=>0,reverse=>1});
 }
 
 sub _buildequationformula {
@@ -168,6 +168,19 @@ sub _buildgprString {
 		$gpr = "Unknown";
 	}
 	return $gpr;
+}
+sub _buildgapfillString {
+	my ($self) = @_;
+	my $output = "";
+	foreach my $key (keys(%{$self->gapfill_data()})) {
+		if ($self->gapfill_data()->{$key}->{0}->[1] == 1) {
+			if (length($output) > 0) {
+				$output .= "|";	
+			}
+			$output .= $self->gapfill_data()->{$key}->{0}->[0]."(".$key.")";
+		}
+	}
+	return $output;
 }
 sub _buildexchangeGPRString {
 	my ($self) = @_;
@@ -423,19 +436,22 @@ Description:
 
 sub createEquation {
     my ($self,$args) = @_;
-    $args = Bio::KBase::ObjectAPI::utilities::args([], { indecies => 1,
-							 format => 'id',
-                                                         hashed => 0,
-                                                         water => 1,
-							 compts=>1,
-							 reverse=>0,
-							 direction=>1,
-							 protons => 1,
-							 generalized => 0,
-							 stoichiometry => 0}, $args);
+    $args = Bio::KBase::ObjectAPI::utilities::args([], {
+		indecies => 1,
+		format => 'id',
+		hashed => 0,
+		water => 1,
+		compts=>1,
+		"reverse"=>0,
+		direction=>1,
+		protons => 1,
+		generalized => 0,
+		stoichiometry => 0
+    }, $args);
 	
 	my $rgts = $self->modelReactionReagents();
 	my $rgtHash;
+	my $objhash;
     my $rxnCompID = $self->modelcompartment()->compartment()->id();
     my $hcpd = $self->parent()->template()->checkForProton();
  	if (!defined($hcpd) && $args->{hashed}==1) {
@@ -460,6 +476,7 @@ sub createEquation {
 			$rgtHash->{$id}->{$rgt->modelcompound()->modelcompartment()->id()} = 0;
 		}
 		$rgtHash->{$id}->{$rgt->modelcompound()->modelcompartment()->id()} += $rgt->coefficient();
+		$objhash->{$id}->{$rgt->modelcompound()->modelcompartment()->id()} = $rgts->[$i];
 		$rgtHash->{$id}->{"name"} = $rgt->modelcompound()->name();
 	}
 
@@ -468,8 +485,8 @@ sub createEquation {
     my $sign = " <=> ";
 
     if($args->{direction}==1){
-	$sign = " => " if $self->direction() eq ">";
-	$sign = " <= " if $self->direction() eq "<";
+		$sign = " => " if $self->direction() eq ">";
+		$sign = " <= " if $self->direction() eq "<";
     }
 	
     my %FoundComps=();
@@ -477,83 +494,69 @@ sub createEquation {
 
     my $sortedCpd = [sort(keys(%{$rgtHash}))];
     for (my $i=0; $i < @{$sortedCpd}; $i++) {
-
-	#Cpds sorted on original modelseed identifiers
-	#But representative strings collected here (if not 'id')
-	my $printId=$sortedCpd->[$i];
-
-	if($args->{format} ne "id"){
-	    my $cpd;
-	    my $rgts = $self->modelReactionReagents();
-	    for (my $j=0; $j < @{$rgts}; $j++) {
-	    	if ($printId eq $rgts->[$j]->modelcompound()->compound()->id()) {
-	    		$cpd = $rgts->[$j]->modelcompound()->compound();
-	    	}
-	    }
-	    if (!defined($cpd)) {
-	    	for (my $j=0; $j < @{$rgts}; $j++) {
-		    	if ($printId eq $rgts->[$j]->modelcompound()->id()) {
-		    		$cpd = $rgts->[$j]->modelcompound();
-		    	}
-		    }
-	    }
-
-	    if($args->{format} eq "name"){
-		$printId = $cpd->name();
-	    } elsif($args->{format} ne "uuid" && $args->{format} ne "formula") {
-		$printId = $cpd->getAlias($args->{format});
-	    }elsif($args->{format} eq "formula"){
-		$printId = $cpd->formula();
-	    }
-	}
-
-	my $comps = [sort(keys(%{$rgtHash->{$sortedCpd->[$i]}}))];
-	for (my $j=0; $j < @{$comps}; $j++) {
-	    if ($comps->[$j] =~ m/([a-z])(\d+)/) {
-		my $comp = $1;
-		my $index = $2;
-		my $compartment = $comp;
-
-		if($args->{generalized} && !exists($FoundComps{$comp})){
-		    $compartment = $CompCount;
-		    $FoundComps{$comp}=$CompCount;
-		    $CompCount++;
-		}elsif($args->{generalized} && exists($FoundComps{$comp})){
-		    $compartment = $FoundComps{$comp};
-		}
-		
-		if ($args->{indecies} == 0) {
-		    $compartment = "[".$compartment."]" if !$args->{stoichiometry};
-		}else{
-		    $compartment = "[".$compartment.$index."]" if !$args->{stoichiometry};
-		}
-
-		$compartment= "" if !$args->{compts};
-
-		if ($rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]} < 0) {
-		    my $coef = -1*$rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
-		    my $reactcode = "(".$coef.") ".$printId.$compartment;
-			if($args->{stoichiometry}==1){
-		    	my $name = $rgtHash->{$sortedCpd->[$i]}->{name};
-			    $coef = $rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
-			    $reactcode = join(":",($coef,$printId,$compartment,'0',"\"".$name."\""));
-			}
-		    push(@reactcode,$reactcode);
-
-		} elsif ($rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]} > 0) {
-		    my $coef = $rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
+		#No matter what "print ID" is selected, the reagents will be sorted by cpd ID first
+		my $comps = [sort(keys(%{$rgtHash->{$sortedCpd->[$i]}}))];
+		for (my $j=0; $j < @{$comps}; $j++) {
+			if ($comps->[$j] =~ m/([a-z])(\d+)/) {
+			   	my $printId = $sortedCpd->[$i];
+			    my $cpd = $objhash->{$sortedCpd->[$i]}->{$comps->[$j]}->modelcompound();
+			    if($args->{format} ne "id"){
+				    if($args->{format} eq "name"){
+						$printId = $cpd->name();
+				    } elsif ($args->{format} eq "msid"){
+				    	$printId = $cpd->msid();
+				     } elsif ($args->{format} eq "codeid"){
+				    	$printId = $cpd->codeid();
+				    }elsif($args->{format} ne "uuid" && $args->{format} ne "formula") {
+						$printId = $cpd->getAlias($args->{format});
+				    }elsif($args->{format} eq "formula"){
+						$printId = $cpd->formula();
+				    }
+				}
 		    
-		    my $productcode .= "(".$coef.") ".$printId.$compartment;
-			if($args->{stoichiometry}==1){
-			    my $name = $rgtHash->{$sortedCpd->[$i]}->{name};
-			    $productcode = join(":",($coef,$printId,$compartment,'0',"\"".$name."\""));
-			}
-		    push(@productcode, $productcode);
+				my $comp = $1;
+				my $index = $2;
+				my $compartment = $comp;
+		
+				if($args->{generalized} && !exists($FoundComps{$comp})){
+				    $compartment = $CompCount;
+				    $FoundComps{$comp}=$CompCount;
+				    $CompCount++;
+				}elsif($args->{generalized} && exists($FoundComps{$comp})){
+				    $compartment = $FoundComps{$comp};
+				}
+				#print "COMP1:".$compartment."\n";
+				if ($args->{indecies} == 0) {
+				    $compartment = "[".$compartment."]" if !$args->{stoichiometry};
+				}else{
+				    $compartment = "[".$compartment.$index."]" if !$args->{stoichiometry};
+				}
+				#print "COMP2:".$compartment."\n";
+				$compartment= "" if !$args->{compts};
+		
+				if ($rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]} < 0) {
+				    my $coef = -1*$rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
+				    my $reactcode = "(".$coef.") ".$printId.$compartment;
+					if($args->{stoichiometry}==1){
+				    	my $name = $rgtHash->{$sortedCpd->[$i]}->{name};
+					    $coef = $rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
+					    $reactcode = join(":",($coef,$printId,$compartment,'0',"\"".$name."\""));
+					}
+				    push(@reactcode,$reactcode);
+		
+				} elsif ($rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]} > 0) {
+				    my $coef = $rgtHash->{$sortedCpd->[$i]}->{$comps->[$j]};
+				    
+				    my $productcode .= "(".$coef.") ".$printId.$compartment;
+					if($args->{stoichiometry}==1){
+					    my $name = $rgtHash->{$sortedCpd->[$i]}->{name};
+					    $productcode = join(":",($coef,$printId,$compartment,'0',"\"".$name."\""));
+					}
+				    push(@productcode, $productcode);
+				}
+		    }
 		}
-	    }
-	}
     }
-    
 
     my $reaction_string = join(" + ",@reactcode).$sign.join(" + ",@productcode);
 
@@ -566,7 +569,7 @@ sub createEquation {
     }
 
     if ($args->{hashed} == 1) {
-	return Digest::MD5::md5_hex($reaction_string);
+	#return Digest::MD5::md5_hex($reaction_string);
     }
     return $reaction_string;
 }
@@ -745,12 +748,12 @@ sub ImportExternalEquation {
     		}
     	}	
     } else {
-    	print "Not found:".$self->id()."\n";
+    	Bio::KBase::utilities::log("Not found:".$self->id(),"debugging");
     	my $array = [split(/_/,$self->id())];
     	my $rxn = $self->parent()->template()->searchForReaction($array->[0]);
     	if (defined($rxn)) {
-    		print $rxn->createEquation({format=>"msid",protons=>0,direction=>0})."\n";
-    		print $self->createEquation({indecies => 0,format=>"msid",hashed=>0,protons=>0,direction=>0})."\n";
+    		Bio::KBase::utilities::log($rxn->createEquation({format=>"codeid",hashed=>0,protons=>0,direction=>0}),"debugging");
+    		Bio::KBase::utilities::log($self->createEquation({indecies => 0,format=>"codeid",hashed=>0,protons=>0,direction=>0}),"debugging");
     	}
     	$self->reaction_ref($self->parent()->template()->_reference()."/reactions/id/rxn00000_c");
     }
@@ -763,10 +766,6 @@ sub loadGPRFromString {
 	my $geneAliases = $self->parent()->genome()->geneAliasHash();
 	my $gpr = Bio::KBase::ObjectAPI::utilities::translateGPRHash(Bio::KBase::ObjectAPI::utilities::parseGPR($gprstring));
 	my $missingGenes;
-	my $prots = $self->modelReactionProteins();
-	for (my $m=0; $m < @{$prots}; $m++) {
-		$self->remove("modelReactionProteins",$prots->[$m]);
-	}
 	for (my $m=0; $m < @{$gpr}; $m++) {
 		my $protObj = $self->add("modelReactionProteins",{
 			complex_ref => "",
@@ -785,18 +784,41 @@ sub loadGPRFromString {
 				my $ftrID = $gpr->[$m]->[$j]->[$k];
 				if (defined($genetranslation) && defined($genetranslation->{$ftrID})) {
 					for (my $n=0; $n < @{$genetranslation->{$ftrID}}; $n++) {
-						$ftrID = $genetranslation->{$ftrID}->[$n];
-						if (!defined($geneAliases->{$ftrID})) {
-							$missingGenes->{$ftrID} = 1;
+						my $newftrID = $genetranslation->{$ftrID}->[$n];
+						if (!defined($geneAliases->{$newftrID}) && $newftrID =~ m/(.+\d)\.\d+$/) {
+							 if (defined($geneAliases->{$1})) {
+							 	$newftrID = $1;
+							 }
+						}
+						if (!defined($geneAliases->{$newftrID}) && defined($geneAliases->{"kb|".$newftrID})) {
+							 $newftrID = "kb|".$newftrID;
+						}
+						if (!defined($geneAliases->{$newftrID}) && defined($geneAliases->{"fig|".$newftrID})) {
+							 $newftrID = "fig|".$newftrID;
+						}
+						if (!defined($geneAliases->{$newftrID})) {
+							$missingGenes->{$newftrID} = 1;
 						} else {
-							$subObj->addLinkArrayItem("features",$geneAliases->{$ftrID});
+							$subObj->addLinkArrayItem("features",$geneAliases->{$newftrID});
 						}
 					}
-				}
-				if (!defined($geneAliases->{$ftrID})) {
-					$missingGenes->{$ftrID} = 1;
 				} else {
-					$subObj->addLinkArrayItem("features",$geneAliases->{$ftrID});
+					if (!defined($geneAliases->{$ftrID}) && $ftrID =~ m/(.+\d)\.\d+$/) {
+						 if (defined($geneAliases->{$1})) {
+						 	$ftrID = $1;
+						 }
+					}
+					if (!defined($geneAliases->{$ftrID}) && defined($geneAliases->{"kb|".$ftrID})) {
+						 $ftrID = "kb|".$ftrID;
+					}
+					if (!defined($geneAliases->{$ftrID}) && defined($geneAliases->{"fig|".$ftrID})) {
+						 $ftrID = "fig|".$ftrID;
+					}
+					if (!defined($geneAliases->{$ftrID})) {
+						$missingGenes->{$ftrID} = 1;
+					} else {
+						$subObj->addLinkArrayItem("features",$geneAliases->{$ftrID});
+					}
 				}
 			}
 		}

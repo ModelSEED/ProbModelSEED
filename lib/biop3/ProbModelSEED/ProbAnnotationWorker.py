@@ -41,16 +41,17 @@ class RoleNotFoundEror(Exception):
 
 class ProbAnnotationWorker:
 
-    def __init__(self, genomeId, context=None):
+    def __init__(self, genomeId, context=None, communityIndex='0'):
         ''' Initialize object.
-
             @param genomeId: Genome ID string for genome being annotated
             @param context: User context when used in a server
+            @param communityIndex: Index number of model in a community model
             @return Nothing
         '''
 
         # Save the genome ID (used for messages and temporary file names).
         self.genomeId = genomeId
+        self.communityIndex = communityIndex
 
         # Get the configuration variables.
         serviceName = os.environ.get('KB_SERVICE_NAME', 'ProbModelSEED')
@@ -93,7 +94,6 @@ class ProbAnnotationWorker:
     def genomeToFasta(self, features):
 
         ''' Convert the features from a genome into an amino-acid FASTA file (for BLAST purposes).
-
             @param features: List of features with protein sequences
             @return Path to fasta file with query proteins
             @raise NoFeaturesError when list of features is empty
@@ -121,7 +121,6 @@ class ProbAnnotationWorker:
     def runBlast(self, queryFile):
 
         ''' A simplistic wrapper to search for the query proteins against the subsystem proteins.
-
             @param queryFile: Path to fasta file with query proteins
             @return Path to output file from search program
             @raise BlastError when there is a problem running the search program
@@ -169,7 +168,6 @@ class ProbAnnotationWorker:
     def rolesetProbabilitiesMarble(self, blastResultFile):
 
         ''' Calculate the probabilities of rolesets from the BLAST results.
-
             A roleset is each possible combination of roles implied by the functions
             of the proteins in subsystems.  The output is a dictionary keyed by
             query gene of lists of tuples where each tuple contains (1) roleset
@@ -261,26 +259,23 @@ class ProbAnnotationWorker:
         if self.logger.get_log_level() >= log.DEBUG2:
             rolesetProbabilityFile = os.path.join(self.workFolder, '%s.rolesetprobs' %(self.genomeId))
             with open(rolesetProbabilityFile, 'w') as handle:
-                for query in rolestringTuples:
+                for query in sorted(rolestringTuples):
                     for tup in rolestringTuples[query]:
-                        handle.write('%s\t%s\t%1.4f\n' %(query, tup[0], tup[1]))
+                        handle.write('%s\t%1.6f\t%s\n' %(query, tup[1], tup[0]))
             
         self._log(log.DEBUG, 'Finished marble-picking on %d rolesets for genome %s' %(len(rolestringTuples), self.genomeId))
         return rolestringTuples
             
     def rolesetProbabilitiesToRoleProbabilities(self, queryToTuplist):
         ''' Compute probability of each role from the rolesets for each query protein.
-
             At the moment the strategy is to take any set of rolestrings containing
             the same roles and add their probabilities.  So if we have hits to both
             a bifunctional enzyme with R1 and R2, and hits to a monofunctional enzyme
             with only R1, R1 ends up with a greater probability than R2.
-
             I had tried to normalize to the previous sum but I need to be more careful
             than that (I'll put it on my TODO list) because if you have e.g. one hit
             to R1R2 and one hit to R3 then the probability of R1 and R2 will be unfairly
             brought down due to the normalization scheme.
-
             @param queryToTuplist: Dictionary keyed by query gene of list of tuples with roleset and likelihood
             @return List of tuples with query gene, role, and likelihood
         '''
@@ -313,8 +308,8 @@ class ProbAnnotationWorker:
         if self.logger.get_log_level() >= log.DEBUG2:
             role_probability_file = os.path.join(self.workFolder, '%s.roleprobs' %(self.genomeId))
             with open(role_probability_file, "w") as handle:
-                for tuple in roleProbs:
-                    handle.write('%s\t%s\t%s\n' %(tuple[0], tuple[1], tuple[2]))
+                for tuple in sorted(roleProbs):
+                    handle.write('%s\t%1.6f\t%s\n' %(tuple[0], tuple[2], tuple[1]))
 
         self._log(log.DEBUG, 'Finished computing %d role probabilities for genome %s' %(len(roleProbs), self.genomeId))
 
@@ -323,17 +318,14 @@ class ProbAnnotationWorker:
     def totalRoleProbabilities(self, roleProbs):
         ''' Given the likelihood that each gene has each role, estimate the likelihood
             that the entire ORGANISM has that role.
-
             To avoid exploding the likelihoods with noise, I just take the maximum
             likelihood of any query gene having a function and use that as the
             likelihood that the function exists in the cell.
-
             A gene is assigned to a role if it is within DILUTION_PERCENT of the maximum
             probability. DILUTION_PERCENT can be adjusted in the config file. For each
             role the maximum likelihood and the estimated set of genes that perform that
             role are linked with an OR relationship to form a Boolean Gene-Function
             relationship.
-
             @param roleProbs List of tuples with query gene, role, and likelihood
             @return List of tuples with role, likelihood, and estimated set of genes that perform the role
             @raise RoleNotFoundError when role is not placed properly in roleToTotalProb dictionary
@@ -371,7 +363,7 @@ class ProbAnnotationWorker:
         # Build the array of total role probabilities.
         totalRoleProbs = list()
         for role in roleToTotalProb:
-            gpr = ' or '.join(list(set(roleToGeneList[role])))
+            gpr = ' or '.join(sorted(list(set(roleToGeneList[role]))))
             # We only need to group these if there is more than one of them (avoids extra parenthesis when computing complexes)
             if len(list(set(roleToGeneList[role]))) > 1:
                 gpr = '(' + gpr + ')'
@@ -379,10 +371,10 @@ class ProbAnnotationWorker:
 
         # Save the generated data when debug is turned on.
         if self.logger.get_log_level() >= log.DEBUG2:
-            total_role_probability_file = os.path.join(self.workFolder, '%s.cellroleprob' %(self.genomeId))
+            total_role_probability_file = os.path.join(self.workFolder, '%s.cellroleprobs' %(self.genomeId))
             with open(total_role_probability_file, "w") as handle:
-                for tuple in totalRoleProbs:
-                    handle.write('%s\t%s\t%s\n' %(tuple[0], tuple[1], tuple[2]))
+                for tuple in sorted(totalRoleProbs):
+                    handle.write('%s\t%1.6f\t%s\n' %(tuple[0], tuple[1], tuple[2]))
 
         self._log(log.DEBUG, 'Finished generating %d whole-cell role probabilities for genome %s' %(len(totalRoleProbs), self.genomeId))
 
@@ -390,16 +382,13 @@ class ProbAnnotationWorker:
 
     def complexProbabilities(self, totalRoleProbs, complexesToRequiredRoles = None):
         ''' Compute the likelihood of each protein complex from the likelihood of each role.
-
             A protein complex represents a set functional roles that must all be present
             for a complex to exist.  The likelihood of the existence of a complex is
             computed as the minimum likelihood of the roles within that complex (ignoring
             roles not represented in the subsystems).
-
             For each protein complex, the likelihood, type, list of roles not in the
             organism, and list of roles not in subsystems is returned.  The type is a
             string with one of the following values:
-
             CPLX_FULL - All roles found in organism and utilized in the complex
             CPLX_PARTIAL - Only some roles found in organism and only those roles that
                 were found were utilized. Note this does not distinguish between not
@@ -410,7 +399,6 @@ class ProbAnnotationWorker:
                 the subsystems for any of the subunits
             CPLX_NOREPS_AND_NOTTHERE - Likelihood is 0 because some genes aren't there
                 for any of the subunits and some genes have no representatives
-
             @param totalRoleProbs: List of tuples with role, likelihood, and estimated set
                 of genes that perform the role
             @param complexesToRequiredRoles: Dictionary keyed by complex ID to the roles
@@ -501,25 +489,22 @@ class ProbAnnotationWorker:
 
         # Save the generated data when debug is turned on.
         if self.logger.get_log_level() >= log.DEBUG2:
-            complex_probability_file = os.path.join(self.workFolder, "%s.complexprob" %(self.genomeId))
+            complex_probability_file = os.path.join(self.workFolder, "%s.complexprobs" %(self.genomeId))
             with open(complex_probability_file, "w") as handle:
-                for tuple in complexProbs:
-                    handle.write("%s\t%1.4f\t%s\t%s\t%s\t%s\n" %(tuple[0], tuple[1], tuple[2], tuple[3], tuple[4], tuple[5]))
+                for tuple in sorted(complexProbs):
+                    handle.write("%s\t%1.6f\t%s\t%s\t%s\t%s\n" %(tuple[0], tuple[1], tuple[2], tuple[5], tuple[3], tuple[4]))
 
         self._log(log.DEBUG, 'Finished computing complex probabilities for '+self.genomeId)
         return complexProbs
 
     def reactionProbabilities(self, complexProbs, rxnsToComplexes = None):
         ''' Estimate the likelihood of reactions from the likelihood of complexes.
-
             The reaction likelihood is computed as the maximum likelihood of complexes
             that perform that reaction.
-
             If the reaction has no complexes it won't even be in this file because of the way
             I set up the call... I could probably change this so that I get a list of ALL reactions
             and make it easier to catch issues with reaction --> complex links in the database.
             Some of the infrastructure is already there (with the TYPE).
-
             @param complexProbs: List of tuples with complex ID, likelihood, type, list of
                 roles not in organism, list of roles not in subsystems, and boolean
                 Gene-Protein relationship
@@ -581,13 +566,13 @@ class ProbAnnotationWorker:
                 GPR = " or ".join( list(set(cplxGprs)) )
 
             # Add everything to the final list.
-            reactionProbs.append( [rxn, maxProb, TYPE, complexString, GPR] )
+            reactionProbs.append( [rxn+self.communityIndex, maxProb, TYPE, complexString, GPR] )
 
         # Save the generated data when debug is turned on.
         if self.logger.get_log_level() >= log.DEBUG2:
             reaction_probability_file = os.path.join(self.workFolder, "%s.rxnprobs" %(self.genomeId))
             with open(reaction_probability_file, "w") as handle:
-                for tuple in reactionProbs:
+                for tuple in sorted(reactionProbs):
                     handle.write("%s\t%1.6f\t%s\t%s\t%s\n" %(tuple[0], tuple[1], tuple[2], tuple[3], tuple[4]))
 
         self._log(log.DEBUG, 'Finished computing reaction probabilities for '+self.genomeId)
@@ -595,16 +580,15 @@ class ProbAnnotationWorker:
 
     def cleanup(self):
         ''' Cleanup the work folder.
-
             @return Nothing
         '''
 
-        shutil.rmtree(self.workFolder)
+        if self.logger.get_log_level() < log.DEBUG2:
+            shutil.rmtree(self.workFolder)
         return
 
     def _log(self, level, message):
         ''' Log a message to the system log.
-
             @param level: Message level (INFO, WARNING, etc.)
             @param message: Message text
             @return Nothing

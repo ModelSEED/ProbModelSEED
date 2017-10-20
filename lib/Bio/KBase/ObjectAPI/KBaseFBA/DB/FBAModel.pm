@@ -219,6 +219,7 @@ my $attributes = [
             'type' => 'HashRef',
             'perm' => 'rw'
           }
+          
         ];
 
 my $attribute_map = {source => 0, template_refs => 1, ATPMaintenance => 2, ATPSynthaseStoichiometry => 3, id => 4, metagenome_ref => 5, genome_ref => 6, template_ref => 7, source_id => 8, name => 9, metagenome_otu_ref => 10, type => 11, rxnprobs_ref => 12,deleted_reactions => 13,model_edits => 14,delete_biomasses => 15};

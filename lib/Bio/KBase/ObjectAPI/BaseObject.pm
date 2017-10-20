@@ -213,8 +213,21 @@ sub BUILD {
     }
 }
 
+sub ref_chain {
+	my ($self,$ref) = @_;
+	if (defined($ref)) {
+		$self->{_ref_chain} = $ref;
+	}
+	if (!defined($self->{_ref_chain})) {
+		$self->{_ref_chain} = "";
+	}
+	return $self->{_ref_chain};
+}
+
 sub fix_reference {
 	my ($self,$ref) = @_;
+	# can't use "self" in refpaths
+	$ref =~ s/^~;//;
 	if ($ref =~ m/^~/) {
 		return $ref;
 	} elsif ($ref =~ m/^([A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12})/) {
@@ -267,6 +280,10 @@ sub serializeToDB {
     my ($self) = @_;
     my $data = {};
 	$self->fix_references();
+	if ($self->can('translate_to_localrefs')) {
+		print("Converting to local references\n");
+		$self->translate_to_localrefs();
+	}
 	$data = { __VERSION__ => $self->__version__() } if defined $self->__version__();
     my $attributes = $self->_attributes();
     foreach my $item (@{$attributes}) {
@@ -664,9 +681,18 @@ sub remove {
 
 sub getLinkedObject {
     my ($self, $ref) = @_;
+	my $debug = 0;
+	my $refchain = $self->ref_chain();
+	print("ref: $ref\n") if $debug;
+	print("refchain: $refchain\n") if $debug;
+	if (length($refchain) > 0) {
+		$refchain .= ";";
+	}
 	if ($ref =~ m/^~$/) {
+		print("Branch 1\n") if $debug;
 		return $self->topparent();
 	} elsif ($ref =~ m/(.+)\|\|(.*)/) {
+		print("Branch 2\n") if $debug;
     	my $objpath = $1;
     	my $internalref = $2;
     	if ($objpath !~ m/^\//) {
@@ -675,34 +701,56 @@ sub getLinkedObject {
 				$objpath =~ s/[^\/]+\/\.\.\/*//g;
 			}
     	}
-    	my $obj = $self->store()->get_object($objpath);
+    	my $obj = $self->store()->get_object($refchain.$objpath);
     	if (length($internalref) == 0) {
     		return $obj;
     	} elsif ($internalref =~ m/^\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
     		return $obj->queryObject($1,{$2 => $3});
     	}
 	} elsif ($ref =~ m/^~\/(\w+)\/(\w+)\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
+		print("Branch 3\n") if $debug;
 		my $linkedobject = $1;
 		my $otherlinkedobject = $2;
-		return $self->topparent()->$linkedobject()->$otherlinkedobject()->queryObject($3,{$4 => $5});
+		my $field = $3;
+    	my $query = {$4 => $5};
+		return $self->topparent()->$linkedobject()->$otherlinkedobject()->queryObject($field,$query);
 	} elsif ($ref =~ m/^~\/(\w+)\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
+		print("Branch 4\n") if $debug;
 		my $linkedobject = $1;
-		return $self->topparent()->$linkedobject()->queryObject($2,{$3 => $4});
+		my $field = $2;
+    	my $query = {$3 => $4};
+		return $self->topparent()->$linkedobject()->queryObject($field,$query);
 	} elsif ($ref =~ m/^~\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
+		print("Branch 5\n") if $debug;
 		return $self->topparent()->queryObject($1,{$2 => $3});
 	} elsif ($ref =~ m/^[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}$/) {
+		print("Branch 6\n") if $debug;
 		return $self->store()->getObjectByUUID($ref);
 	} elsif ($ref =~ m/^([A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12})\/(\w+)\/(\w+)\/([\w\.\|\-]+)$/) {
+		print("Branch 7\n") if $debug;
 		Bio::KBase::ObjectAPI::utilities::error("FAILED!");
-		return $self->store()->getObjectByUUID($1)->queryObject($2,{$3 => $4});
 	} elsif ($ref =~ m/^[:\w]+\/[\w\.\|\-]+\/[\w\.\|\-]+$/) {
-    	return $self->store()->get_object($ref);
+		print("Branch 8\n") if $debug;
+    	return $self->store()->get_object($refchain.$ref);
     } elsif ($ref =~ m/^([:\w]+\/\w+\/\w+)\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
-    	return $self->store()->get_object($1)->queryObject($2,{$3 => $4});
+		print("Branch 9\n") if $debug;
+    	my $field = $2;
+    	my $query = {$3 => $4};
+    	my $object = $self->store()->get_object($refchain.$1);
+    	return $object->queryObject($field,$query);
     } elsif ($ref =~ m/^[:\w]+\/[\w\.\|\-]+$/) {
-    	return $self->store()->get_object($ref);
+		print("Branch 0\n") if $debug;
+    	return $self->store()->get_object($refchain.$ref);
     } elsif ($ref =~ m/^([:\w]+\/\w+)\/(\w+)\/(\w+)\/([\w\.\|\-:]+)$/) {
-    	return $self->store()->get_object($1)->queryObject($2,{$3 => $4});
+		print("Branch 1\n") if $debug;
+    	my $field = $2;
+    	my $query = {$3 => $4};
+    	my $object = $self->store()->get_object($refchain.$1);
+    	return $object->queryObject($field,$query);
+	# if refereance is already a ref_chain, stand out of the way
+    } elsif ($ref =~ m/^(\d+\/\d+\/\d+;)+\d+\/\d+\/\d+$/) {
+		print("Branch 12: Already a ref_chain\n") if $debug;
+    	return $self->store()->get_object($ref);
     }
     Bio::KBase::ObjectAPI::utilities::error("Unrecognized reference format:".$ref);
 }
@@ -776,7 +824,7 @@ sub clearLinkArray {
 sub store {
     my ($self) = @_;
     my $parent = $self->parent();
-    if (defined($parent) && ref($parent) ne "Bio::KBase::ObjectAPI::KBaseStore" && ref($parent) ne "Bio::KBase::ObjectAPI::PATRICStore") {
+    if (defined($parent) && ref($parent) ne "Bio::KBase::ObjectAPI::KBaseStore" && ref($parent) ne "Bio::KBase::ObjectAPI::PATRICStore" && ref($parent) ne "Bio::KBase::ObjectAPI::FileStore") {
         return $parent->store();
     }
     if (!defined($parent)) {

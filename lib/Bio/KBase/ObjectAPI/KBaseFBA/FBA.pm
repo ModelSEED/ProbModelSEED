@@ -118,7 +118,7 @@ sub _buildjobid {
 
 sub _buildjobpath {
 	my ($self) = @_;
-	my $path = Bio::KBase::ObjectAPI::config::mfatoolkit_job_dir();
+	my $path = Bio::KBase::utilities::conf("ModelSEED","fbajobdir");
 	if (!defined($path) || length($path) == 0) {
 		$path = "/tmp/fbajobs/";
 	}
@@ -138,14 +138,14 @@ sub _buildjobdirectory {
 sub _buildmfatoolkitBinary {
 	my ($self) = @_;
 	my $bin;
-	if (defined(Bio::KBase::ObjectAPI::config::mfatoolkit_binary()) && length(Bio::KBase::ObjectAPI::config::mfatoolkit_binary()) > 0 && -e Bio::KBase::ObjectAPI::config::mfatoolkit_binary()) {
-		$bin = Bio::KBase::ObjectAPI::config::mfatoolkit_binary();
+	if (defined(Bio::KBase::utilities::conf("ModelSEED","mfatoolkitbin")) && length(Bio::KBase::utilities::conf("ModelSEED","mfatoolkitbin")) > 0 && -e Bio::KBase::utilities::conf("ModelSEED","mfatoolkitbin")) {
+		$bin = Bio::KBase::utilities::conf("ModelSEED","mfatoolkitbin");
 	} else {
 		$bin = `which mfatoolkit 2>/dev/null`;
 		chomp $bin;
 	}
 	if ((! defined $bin) || (!-e $bin)) {
-		Bio::KBase::ObjectAPI::utilities::error("MFAToolkit binary could not be found at ".Bio::KBase::ObjectAPI::config::mfatoolkit_binary()."!");
+		Bio::KBase::ObjectAPI::utilities::error("MFAToolkit binary could not be found at ".Bio::KBase::utilities::conf("ModelSEED","mfatoolkitbin")."!");
 	}
 	return $bin;
 }
@@ -370,17 +370,17 @@ sub runFBA {
 	}
 	system($self->command());
 	$self->loadMFAToolkitResults();
-	if (defined(Bio::KBase::ObjectAPI::config::FinalJobCache())) {
-		if (Bio::KBase::ObjectAPI::config::FinalJobCache() eq "SHOCK") {
+	if (defined(Bio::KBase::utilities::conf("ModelSEED","fbajobcache"))) {
+		if (Bio::KBase::utilities::conf("ModelSEED","fbajobcache") eq "SHOCK") {
 			system("cd ".$self->jobPath().";tar -czf ".$self->jobPath().$self->jobID().".tgz ".$self->jobID());
 			my $node = Bio::KBase::ObjectAPI::utilities::LoadToShock($self->jobPath().$self->jobID().".tgz");
 			unlink($self->jobPath().$self->jobID().".tgz");
 			$self->jobnode($node);
-		} elsif (Bio::KBase::ObjectAPI::config::FinalJobCache() ne "none") {
-			if (!-d Bio::KBase::ObjectAPI::config::FinalJobCache()) {
-				File::Path::mkpath (Bio::KBase::ObjectAPI::config::FinalJobCache());
+		} elsif (Bio::KBase::utilities::conf("ModelSEED","fbajobcache") ne "none") {
+			if (!-d Bio::KBase::utilities::conf("ModelSEED","fbajobcache")) {
+				File::Path::mkpath (Bio::KBase::utilities::conf("ModelSEED","fbajobcache"));
 			}
-			system("cd ".$self->jobPath().";tar -czf ".Bio::KBase::ObjectAPI::config::FinalJobCache()."/".$self->jobID().".tgz ".$self->jobID());
+			system("cd ".$self->jobPath().";tar -czf ".Bio::KBase::utilities::conf("ModelSEED","fbajobcache")."/".$self->jobID().".tgz ".$self->jobID());
 		}
 	}
 	if ($self->jobDirectory() =~ m/\/fbajobs\/.+/) {
@@ -491,6 +491,7 @@ sub PrepareForGapfilling {
 		use_discrete_variables => 0,
 		integrate_gapfilling_solution => 0
 	}, $args);
+	$self->parameters()->{activate_all_model_reactions} = $args->{activate_all_model_reactions};
 	$self->parameters()->{integrate_gapfilling_solution} = $args->{integrate_gapfilling_solution};
 	push(@{$self->gauranteedrxns()},@{$args->{gauranteedrxns}});
 	push(@{$self->blacklistedrxns()},@{$args->{blacklistedrxns}});
@@ -826,10 +827,33 @@ sub createJobDirectory {
 		}
 	}
 	#Building the model data file for MFAToolkit
+	my $modelbounds = [];
 	for (my $i=0; $i < @{$mdlrxn}; $i++) {
 		my $rxn = $mdlrxn->[$i];
 		my $direction = $rxn->direction();
 		my $rxndir = "<=>";
+		if ($rxn->maxforflux() != 1000000 || $rxn->maxrevflux() != 1000000) {
+			my $newbound = {
+				id => $rxn->id(),
+				vartype => "FLUX",
+				upperbound => $rxn->maxforflux(),
+				lowerbound => -1*$rxn->maxrevflux(),
+				conc => 0.001
+			};
+			if ($rxn->maxforflux() == 1000000) {
+				$newbound->{upperbound} = $self->defaultMaxFlux();
+				if ($direction eq "<") {
+					$newbound->{upperbound} = 0;
+				}
+			}
+			if ($rxn->maxrevflux() == 1000000) {
+				if ($direction eq ">") {
+					$newbound->{lowerbound} = 0;
+				}
+				$newbound->{lowerbound} = -1*$self->defaultMaxFlux();
+			}
+			push(@{$modelbounds},$newbound);
+		}
 		if (defined($self->parameters()->{activate_all_model_reactions}) && $self->parameters()->{activate_all_model_reactions} == 1) {
 			$actcoef->{$rxn->id()} = 1;
 		}
@@ -1552,6 +1576,13 @@ sub createJobDirectory {
 				$exchangehash->{$cpdbnds->[$i]->modelcompound()->id()}->{c} = [$cpdbnds->[$i]->lowerBound(),$cpdbnds->[$i]->upperBound()];
 			}
 		}
+		for (my $i=0; $i < @{$modelbounds}; $i++) {
+			$userBounds->{$modelbounds->[$i]->{id}}->{c}->{$modelbounds->[$i]->{vartype}} = {
+				max => $modelbounds->[$i]->{upperbound},
+				min => $modelbounds->[$i]->{lowerbound},
+				conc => 0.001
+			};
+		}
 		for (my $i=0; $i < @{$rxnbnds}; $i++) {
 			$userBounds->{$rxnbnds->[$i]->modelreaction()->id()}->{c}->{$translation->{$rxnbnds->[$i]->variableType()}} = {
 				max => $rxnbnds->[$i]->upperBound(),
@@ -1715,7 +1746,9 @@ sub createJobDirectory {
 	}
 	Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."genes.tbl",$genedata);
 	#Printing parameter file
-	#$parameters->{MFASolver} = "CPLEX";#TODO - need to remove
+	if (defined(Bio::KBase::utilities::conf("ModelSEED","use_cplex")) && Bio::KBase::utilities::conf("ModelSEED","use_cplex") == 1) {
+		$parameters->{MFASolver} = "CPLEX";
+	}
 	my $exchange = "";
 	foreach my $key (keys(%{$exchangehash})) {
 		if (length($exchange) > 0) {
@@ -1882,11 +1915,12 @@ Description:
 sub setupFBAExperiments {
 	my ($self,$medialist) = @_;
 	my $fbaExpFile = "none";
+	$self->parameters()->{"save phenotype fluxes"} = 0;
+	my $phenoData = ["Label\tKO\tMedia\tGrowth"];
 	if (defined($self->phenotypeset_ref()) && defined($self->phenotypeset())) {
 		$self->parameters()->{"phenotype analysis"} = 1;
 		my $phenoset = $self->phenotypeset();
 		$fbaExpFile = "FBAExperiment.txt";
-		my $phenoData = ["Label\tKO\tMedia\tGrowth"];
 		my $mediaHash = {};
 		my $tempMediaIndex = 1;
 		my $phenos = $phenoset->phenotypes();
@@ -1900,7 +1934,8 @@ sub setupFBAExperiments {
 					$mediaHash->{$media.":".join("|",sort(@{$addnlCpds}))} = $self->createTemporaryMedia({
 						name => "Temp".$tempMediaIndex,
 						media => $pheno->media(),
-						additionalCpd => $pheno->additionalcompounds()
+						additionalCpd => $pheno->additionalcompounds(),
+						additionalBounds => $pheno->additionalcompound_bounds()
 					});
 					$tempMediaIndex++;
 				}
@@ -1917,6 +1952,26 @@ sub setupFBAExperiments {
 			}
 			$phenoko =~ s/\|/___/g;
 			push(@{$phenoData},$pheno->id()."\t".$phenoko."\t".$media."\t".$pheno->normalizedGrowth());
+		}
+		foreach my $key (keys(%{$mediaHash})) {
+			push(@{$medialist},$mediaHash->{$key});
+		}
+		Bio::KBase::ObjectAPI::utilities::PRINTFILE($self->jobDirectory()."/".$fbaExpFile,$phenoData);
+	} elsif (length($self->mediaset_ref()) > 0 || @{$self->media_list()} > 0) {
+		$self->parameters()->{"phenotype analysis"} = 1;
+		$self->parameters()->{"save phenotype simulation fluxes"} = 1;
+		$fbaExpFile = "FBAExperiment.txt";
+		my $mediaHash = {};
+		if (length($self->mediaset_ref()) > 0) {
+			my $mediaset = $self->mediaset();
+			for (my $i=0; $i < @{$mediaset->{elements}}; $i++) {
+				push(@{$self->media_list_refs()},$mediaset->{elements}->[$i]->{"ref"});
+			}
+		}
+		my $inmedialist = $self->media_list();
+		for (my $i=0; $i < @{$inmedialist}; $i++) {
+			$mediaHash->{$inmedialist->[$i]->name()} = $inmedialist->[$i];
+			push(@{$phenoData},$inmedialist->[$i]->name()."\tnone\t".$inmedialist->[$i]->name()."\t1");
 		}
 		foreach my $key (keys(%{$mediaHash})) {
 			push(@{$medialist},$mediaHash->{$key});
@@ -1941,7 +1996,9 @@ Description:
 
 sub createTemporaryMedia {
 	my $self = shift;
-	my $args = Bio::KBase::ObjectAPI::utilities::args(["name","media","additionalCpd"],{}, @_);
+	my $args = Bio::KBase::ObjectAPI::utilities::args(["name","media","additionalCpd"],{
+		additionalBounds => []
+	}, @_);
 	my $newMedia = Bio::KBase::ObjectAPI::KBaseBiochem::Media->new({
 		source_id => $args->{name},
 		isDefined => 1,
@@ -1961,13 +2018,23 @@ sub createTemporaryMedia {
 			minFlux => $cpd->minFlux(),
 		};
 	}
-	foreach my $cpd (@{$args->{additionalCpd}}) {
-		$cpdHash->{$cpd->_reference()} = {
-			compound_ref => $cpd->_reference(),
-			concentration => 0.001,
-			maxFlux => 100,
-			minFlux => -100,
-		};
+	for (my $i=0; $i < @{$args->{additionalCpd}}; $i++) {
+		my $cpd = $args->{additionalCpd}->[$i];
+		if (defined($args->{additionalBounds}->[$i])) {
+			$cpdHash->{$cpd->_reference()} = {
+				compound_ref => $cpd->_reference(),
+				concentration => 0.001,
+				maxFlux => $args->{additionalBounds}->[$i]->[1],
+				minFlux => $args->{additionalBounds}->[$i]->[0],
+			};
+		} else {
+			$cpdHash->{$cpd->_reference()} = {
+				compound_ref => $cpd->_reference(),
+				concentration => 0.001,
+				maxFlux => 100,
+				minFlux => -100,
+			};
+		}
 	}
 	foreach my $cpd (keys(%{$cpdHash})) {
 		$newMedia->add("mediacompounds",$cpdHash->{$cpd});	
@@ -1993,8 +2060,72 @@ sub export {
 		return $self->toReadableString();
 	} elsif (lc($args->{format}) eq "json") {
 		return $self->toJSON({pp => 1});
+	} elsif (lc($args->{format}) eq "excel") {
+		return $self->printExcel($args);
+	} elsif (lc($args->{format}) eq "tsv") {
+		return $self->printTSV($args);
 	}
 	Bio::KBase::ObjectAPI::utilities::error("Unrecognized type for export: ".$args->{format});
+}
+
+sub printTSV {
+	my $self = shift;
+	my $args = Bio::KBase::ObjectAPI::utilities::args([], {file => 0,path => undef}, @_);
+	my $output = {
+		compounds_table => ["id\tname\tformula\tcharge\tcompartment\tuptake\tmin_uptake\tlowerbound\tmax_uptake\tupperbound"],
+		reactions_table => ["id\tdirection\tcompartment\tgpr\tname\tpathway\tequation\tdefinition\tflux\tmin_flux\tlowerbound\tmax_flux\tupperbound"]
+	};
+	my $compounds = $self->FBACompoundVariables();
+	for (my $i=0; $i < @{$compounds}; $i++) {
+		push(@{$output->{compounds_table}},$compounds->[$i]->modelcompound()->id()."\t".$compounds->[$i]->modelcompound()->name()."\t".$compounds->[$i]->modelcompound()->formula()."\t".$compounds->[$i]->modelcompound()->charge()."\t"."\t".$compounds->[$i]->value()."\t".$compounds->[$i]->min()."\t".$compounds->[$i]->lowerBound()."\t".$compounds->[$i]->max()."\t".$compounds->[$i]->upperBound());
+	}
+	my $reactions = $self->FBAReactionVariables();
+	for (my $i=0; $i < @{$reactions}; $i++) {
+		push(@{$output->{reactions_table}},$reactions->[$i]->modelreaction()->id()."\t".$reactions->[$i]->modelreaction()->direction()."\t".$reactions->[$i]->modelreaction()->modelcompartment()->label()."\t".$reactions->[$i]->modelreaction()->gprString()."\t".$reactions->[$i]->modelreaction()->name()."\t".""."\t".$reactions->[$i]->modelreaction()->equation()."\t".$reactions->[$i]->modelreaction()->definition()."\t".$reactions->[$i]->value()."\t".$reactions->[$i]->min()."\t".$reactions->[$i]->lowerBound()."\t".$reactions->[$i]->max()."\t".$reactions->[$i]->upperBound());
+	}
+	$reactions = $self->FBABiomassVariables();
+	for (my $i=0; $i < @{$reactions}; $i++) {
+		push(@{$output->{reactions_table}},$reactions->[$i]->biomass()->id()."\t=>\tc0\t\t".$reactions->[$i]->biomass()->name()."\t\t".$reactions->[$i]->biomass()->equation()."\t".$reactions->[$i]->biomass()->definition()."\t".$reactions->[$i]->value()."\t".$reactions->[$i]->min()."\t".$reactions->[$i]->lowerBound()."\t".$reactions->[$i]->max()."\t".$reactions->[$i]->upperBound());
+	}
+	if ($args->{file} == 1) {
+		Bio::KBase::ObjectAPI::utilities::PRINTFILE($args->{path}."/".$self->id()."-compounds.tsv",$output->{compounds_table});
+		Bio::KBase::ObjectAPI::utilities::PRINTFILE($args->{path}."/".$self->id()."-reactions.tsv",$output->{reactions_table});
+		return [$args->{path}."/".$self->id()."-compounds.tsv",$args->{path}."/".$self->id()."-reactions.tsv"];
+	}
+	return $output;
+}
+
+sub printExcel {
+	my $self = shift;
+	my $args = Bio::KBase::ObjectAPI::utilities::args([], {file => 0,path => undef}, @_);
+	my $output = $self->printTSV();	
+	require "Spreadsheet/WriteExcel.pm";
+	my $wkbk = Spreadsheet::WriteExcel->new($args->{path}."/".$self->id().".xls") or die "can not create workbook: $!";
+	my $sheet = $wkbk->add_worksheet("ModelCompounds");
+	for (my $i=0; $i < @{$output->{compounds_table}}; $i++) {
+		my $row = [split(/\t/,$output->{compounds_table}->[$i])];
+		for (my $j=0; $j < @{$row}; $j++) {
+			if (defined($row->[$j])) {
+				$row->[$j] =~ s/=/-/g;
+			}
+		}
+		$sheet->write_row($i,0,$row);
+	}
+	$sheet = $wkbk->add_worksheet("ModelReactions");
+	for (my $i=0; $i < @{$output->{reactions_table}}; $i++) {
+		my $row = [split(/\t/,$output->{reactions_table}->[$i])];
+		for (my $j=0; $j < @{$row}; $j++) {
+			if (defined($row->[$j])) {
+				$row->[$j] =~ s/=/-/g;
+			}
+		}
+		$sheet->write_row($i,0,$row);
+	}
+	$wkbk->close();
+	if ($args->{file} == 0) {
+		Bio::KBase::error("Export to excel is only supported as a file output!");
+	}
+	return [$args->{path}."/".$self->id().".xls"];
 }
 
 =head3 buildFromOptSolution
@@ -2259,6 +2390,27 @@ sub parseFluxFiles {
 	my ($self) = @_;
 	$self->objectiveValue(0);
 	my $directory = $self->jobDirectory();
+	my $sensitivity_hash = {};
+	if (-e $directory."/ReactionSensitivity.txt") {
+	    my $tbl = Bio::KBase::ObjectAPI::utilities::LOADTABLE($directory."/ReactionSensitivity.txt", "\t");
+		foreach my $row (@{$tbl->{data}}) {
+			my $rxn = $row->[0];
+			my $biomass_array = [];
+			if (defined($row->[1]) && length($row->[1]) > 0) {
+				$biomass_array = [split(/;/,$row->[1])];
+				#pop(@{$biomass_array});
+			}
+			my $rxn_array = [];
+			if (defined($row->[2]) && length($row->[2]) > 0) {
+				$rxn_array = [split(/;/,$row->[2])];
+				#pop(@{$rxn_array});
+			}
+			$sensitivity_hash->{$rxn} = {
+				biomass => $biomass_array,
+				reactions => $rxn_array
+			};
+		}
+	}
 	if (-e $directory."/MFAOutput/SolutionCompoundData.txt") {
 		my $tbl = Bio::KBase::ObjectAPI::utilities::LOADTABLE($directory."/MFAOutput/SolutionCompoundData.txt",";");
 		my $drainCompartmentColumns = {};
@@ -2333,7 +2485,7 @@ sub parseFluxFiles {
 			# Create a map from rxn id to bounds.
 			my $rxnid2bound = {};
 			foreach my $bound (@{$self->FBAReactionBounds()}) {
-				$rxnid2bound->{$bound->modelreaction()->msid()} = {
+				$rxnid2bound->{$bound->modelreaction()->id()} = {
 					lower => $bound->lowerBound(),
 					upper => $bound->upperBound()
 				}
@@ -2362,7 +2514,7 @@ sub parseFluxFiles {
 									$lower = $rxnid2bound->{$mdlrxn->id()}->{lower};
 									$upper = $rxnid2bound->{$mdlrxn->id()}->{upper};
 								}
-								my $rxnvar = $self->add("FBAReactionVariables",{
+								my $rxnvarinput = {
 									modelreaction_ref => "~/fbamodel/modelreactions/id/".$mdlrxn->id(),
 									variableType => "flux",
 									value => $value,
@@ -2371,7 +2523,16 @@ sub parseFluxFiles {
 									min => $lower,
 									max => $upper,
 									class => "unknown"
-								});
+								};
+								if (defined($sensitivity_hash->{$mdlrxn->id()})) {
+									$rxnvarinput->{coupled_reactions} = $sensitivity_hash->{$mdlrxn->id()}->{reactions};
+									for (my $p=0; $p < @{$sensitivity_hash->{$mdlrxn->id()}->{biomass}}; $p++) {
+										my $array = [split(/_/,$sensitivity_hash->{$mdlrxn->id()}->{biomass}->[$p])];
+										my $biomass = shift(@{$array});
+										push(@{$rxnvarinput->{biomass_dependencies}},[$biomass,join("_",@{$array})]);
+									}
+								}
+								my $rxnvar = $self->add("FBAReactionVariables",$rxnvarinput);
 								if (defined($mdlrxn->{raw_exp_score})) {
 									$rxnvar->exp_state("unknown");
 									$rxnvar->expression($mdlrxn->{raw_exp_score});
@@ -2481,97 +2642,139 @@ sub parseFBAPhenotypeOutput {
 	my ($self) = @_;
 	my $directory = $self->jobDirectory();
 
-	# Other types of analyses that do not involve phenotype data (e.g. reaction sensitivity) use the same
-	# output file. So we need to check that the data we need exists.
-	if ( !defined($self->phenotypeset_ref()) || !defined($self->phenotypeset())) {
-		return;
-	}
-
 	if (-e $directory."/FBAExperimentOutput.txt") {
 		#Loading file results into a hash
 		my $tbl = Bio::KBase::ObjectAPI::utilities::LOADTABLE($directory."/FBAExperimentOutput.txt","\t");
 		if (!defined($tbl->{data}->[0]->[5])) {
 			return Bio::KBase::ObjectAPI::utilities::ERROR("output file did not contain necessary data");
 		}
-		$self->{_tempphenosim} = Bio::KBase::ObjectAPI::KBasePhenotypes::PhenotypeSimulationSet->new({
-			id => $self->{_phenosimid},
-			fbamodel_ref => $self->fbamodel()->_reference(),
-			phenotypeset_ref => $self->phenotypeset_ref(),
-			phenotypeSimulations => []
-		});
-		$self->{_tempphenosim}->parent($self->parent());
-		$self->phenotypesimulationset_ref("");
-		$self->phenotypesimulationset($self->{_tempphenosim});
-		my $phenoOutputHash;
-		foreach my $row (@{$tbl->{data}}) {
-			if (defined($row->[5])) {
-				my $fraction = 0;
-				if ($row->[5] < 1e-7) {
-					$row->[5] = 0;	
-				}
-				if ($row->[4] < 1e-7) {
-					$row->[4] = 0;	
-				} else {
-					$fraction = $row->[5]/$row->[4];	
-				}
-				$phenoOutputHash->{$row->[0]} = {
-					simulatedGrowth => $row->[5],
-					wildtype => $row->[4],
-					simulatedGrowthFraction => $fraction,
-					noGrowthCompounds => [],
-					dependantReactions => [],
-					dependantGenes => [],
-					fluxes => {},
-					phenoclass => "UN",
-					phenotype_ref => $self->phenotypeset()->_reference()."/phenotypes/id/".$row->[0]
-				};
-				if (defined($self->parameters()->{"Perform gap filling"}) && $self->parameters()->{"Perform gap filling"} == 1) {
-					if ($row->[9] =~ m/_[a-z]+\d+$/) {
-						$phenoOutputHash->{$row->[0]}->{gapfilledReactions} = [split(/;/,$row->[9])];
-						$phenoOutputHash->{$row->[0]}->{numGapfilledReactions} = @{$phenoOutputHash->{$row->[0]}->{gapfilledReactions}};
+		if ( (!defined($self->phenotypeset_ref()) || !defined($self->phenotypeset())) && (length($self->mediaset_ref()) > 0 || @{$self->media_list()} > 0)) {
+			foreach my $row (@{$tbl->{data}}) {
+				if (defined($row->[6])) {
+					#Setting objective to WTGrowth first, then standard growth - should always be the same
+					if ($row->[5] < 1e-7) {
+						push(@{$self->other_objectives()},0);	
+					} else {
+						push(@{$self->other_objectives()},$row->[5]+0);
 					}
-				}	
-				if (defined($row->[6]) && length($row->[6]) > 0) {
-					chomp($row->[6]);
-					$phenoOutputHash->{$row->[0]}->{noGrowthCompounds} = [split(/;/,$row->[6])];
-				}
-				if (defined($row->[7]) && length($row->[7]) > 0) {
-					$phenoOutputHash->{$row->[0]}->{dependantReactions} = [split(/;/,$row->[7])];
-				}
-				if (defined($row->[8]) && length($row->[8]) > 0) {
-					$phenoOutputHash->{$row->[0]}->{dependantReactions} = [split(/;/,$row->[8])];
-				}
-				if (defined($row->[10]) && length($row->[10]) > 0) {
-					my @fluxList = split(/;/,$row->[10]);
-					for (my $j=0; $j < @fluxList; $j++) {
-						my @temp = split(/:/,$fluxList[$j]);
-						$phenoOutputHash->{$row->[0]}->{fluxes}->{$temp[0]} = $temp[1];
+					if (defined($row->[10]) && length($row->[10]) > 0) {
+						my $fluxList = [split(/;/,$row->[10])];
+						my $fluxhash = {};
+						for (my $j=0; $j < @{$fluxList}; $j++) {
+							my $temp = [split(/:/,$fluxList->[$j])];
+							$fluxhash->{$temp->[0]} = $temp->[1];
+						}
+						my $vars = $self->FBAReactionVariables();
+						for (my $m=0; $m < @{$vars}; $m++) {
+							my $id = $vars->[$m]->modelreaction()->id();
+							if (defined($fluxhash->{$id})) {
+								push(@{$vars->[$m]->other_values()},$fluxhash->{$id}+0);
+							} else {
+								push(@{$vars->[$m]->other_values()},0);
+							}
+						}
+						$vars = $self->FBACompoundVariables();
+						for (my $m=0; $m < @{$vars}; $m++) {
+							my $id = $vars->[$m]->modelcompound()->id();
+							if (defined($fluxhash->{$id})) {
+								push(@{$vars->[$m]->other_values()},$fluxhash->{$id}+0);
+							} else {
+								push(@{$vars->[$m]->other_values()},0);
+							}
+						}
+						$vars = $self->FBABiomassVariables();
+						for (my $m=0; $m < @{$vars}; $m++) {
+							my $id = $vars->[$m]->biomass()->id();
+							if (defined($fluxhash->{$id})) {
+								push(@{$vars->[$m]->other_values()},$fluxhash->{$id}+0);
+							} else {
+								push(@{$vars->[$m]->other_values()},0);
+							}
+						}
 					}
 				}
 			}
-		}
-		#Scanning through all phenotype data in FBAFormulation and creating corresponding phenotype result objects
-		my $phenos = $self->phenotypeset()->phenotypes();
-		for (my $i=0; $i < @{$phenos}; $i++) {
-			my $pheno = $phenos->[$i];
-			if (defined($phenoOutputHash->{$pheno->id()})) {
-				$phenoOutputHash->{$pheno->id()}->{id} = $pheno->id().".sim";
-				if (defined($pheno->normalizedGrowth())) {
-					if ($pheno->normalizedGrowth() > 0.0001) {
-						if ($phenoOutputHash->{$pheno->id()}->{simulatedGrowthFraction} > 0) {
-							$phenoOutputHash->{$pheno->id()}->{phenoclass} = "CP";
-						} else {
-							$phenoOutputHash->{$pheno->id()}->{phenoclass} = "FN";
-						}
+		} else {
+			$self->{_tempphenosim} = Bio::KBase::ObjectAPI::KBasePhenotypes::PhenotypeSimulationSet->new({
+				id => $self->{_phenosimid},
+				fbamodel_ref => $self->fbamodel()->_reference(),
+				phenotypeset_ref => $self->phenotypeset_ref(),
+				phenotypeSimulations => []
+			});
+			$self->{_tempphenosim}->parent($self->parent());
+			$self->phenotypesimulationset_ref("");
+			$self->phenotypesimulationset($self->{_tempphenosim});
+			my $phenoOutputHash;
+			foreach my $row (@{$tbl->{data}}) {
+				if (defined($row->[5])) {
+					my $fraction = 0;
+					if ($row->[5] < 1e-7) {
+						$row->[5] = 0;	
+					}
+					if ($row->[4] < 1e-7) {
+						$row->[4] = 0;	
 					} else {
-						if ($phenoOutputHash->{$pheno->id()}->{simulatedGrowthFraction} > 0) {
-							$phenoOutputHash->{$pheno->id()}->{phenoclass} = "FP";
-						} else {
-							$phenoOutputHash->{$pheno->id()}->{phenoclass} = "CN";
+						$fraction = $row->[5]/$row->[4];	
+					}
+					$phenoOutputHash->{$row->[0]} = {
+						simulatedGrowth => $row->[5],
+						wildtype => $row->[4],
+						simulatedGrowthFraction => $fraction,
+						noGrowthCompounds => [],
+						dependantReactions => [],
+						dependantGenes => [],
+						fluxes => {},
+						phenoclass => "UN",
+						phenotype_ref => $self->phenotypeset()->_reference()."/phenotypes/id/".$row->[0]
+					};
+					if (defined($self->parameters()->{"Perform gap filling"}) && $self->parameters()->{"Perform gap filling"} == 1) {
+						if ($row->[9] =~ m/_[a-z]+\d+$/) {
+							$phenoOutputHash->{$row->[0]}->{gapfilledReactions} = [split(/;/,$row->[9])];
+							$phenoOutputHash->{$row->[0]}->{numGapfilledReactions} = @{$phenoOutputHash->{$row->[0]}->{gapfilledReactions}};
+						}
+					}	
+					if (defined($row->[6]) && length($row->[6]) > 0) {
+						chomp($row->[6]);
+						$phenoOutputHash->{$row->[0]}->{noGrowthCompounds} = [split(/;/,$row->[6])];
+					}
+					if (defined($row->[7]) && length($row->[7]) > 0) {
+						$phenoOutputHash->{$row->[0]}->{dependantReactions} = [split(/;/,$row->[7])];
+					}
+					if (defined($row->[8]) && length($row->[8]) > 0) {
+						$phenoOutputHash->{$row->[0]}->{dependantReactions} = [split(/;/,$row->[8])];
+					}
+					if (defined($row->[10]) && length($row->[10]) > 0) {
+						my @fluxList = split(/;/,$row->[10]);
+						for (my $j=0; $j < @fluxList; $j++) {
+							my @temp = split(/:/,$fluxList[$j]);
+							$phenoOutputHash->{$row->[0]}->{fluxes}->{$temp[0]} = $temp[1]+0;
 						}
 					}
 				}
-				$self->{_tempphenosim}->add("phenotypeSimulations",$phenoOutputHash->{$pheno->id()});	
+			}
+			#Scanning through all phenotype data in FBAFormulation and creating corresponding phenotype result objects
+			my $phenos = $self->phenotypeset()->phenotypes();
+			for (my $i=0; $i < @{$phenos}; $i++) {
+				my $pheno = $phenos->[$i];
+				if (defined($phenoOutputHash->{$pheno->id()})) {
+					$phenoOutputHash->{$pheno->id()}->{id} = $pheno->id().".sim";
+					if (defined($pheno->normalizedGrowth())) {
+						if ($pheno->normalizedGrowth() > 0.0001) {
+							if ($phenoOutputHash->{$pheno->id()}->{simulatedGrowthFraction} > 0) {
+								$phenoOutputHash->{$pheno->id()}->{phenoclass} = "CP";
+							} else {
+								$phenoOutputHash->{$pheno->id()}->{phenoclass} = "FN";
+							}
+						} else {
+							if ($phenoOutputHash->{$pheno->id()}->{simulatedGrowthFraction} > 0) {
+								$phenoOutputHash->{$pheno->id()}->{phenoclass} = "FP";
+							} else {
+								$phenoOutputHash->{$pheno->id()}->{phenoclass} = "CN";
+							}
+						}
+					}
+					$self->{_tempphenosim}->add("phenotypeSimulations",$phenoOutputHash->{$pheno->id()});	
+				}
 			}
 		}
 	}

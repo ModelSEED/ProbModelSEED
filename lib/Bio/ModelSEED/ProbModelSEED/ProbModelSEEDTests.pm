@@ -6,6 +6,7 @@
 	use Test::More;
 	use Data::Dumper;
 	use Config::Simple;
+	use Bio::KBase::utilities;
 	
 	my $serverclass = "Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl";
 	my $clientclass = "Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient";
@@ -55,12 +56,20 @@
 	}
 	
 	sub set_user {
-		my($self,$user) = @_;
+		my($self,$user,$function) = @_;
 		if (!defined($self->{url}) || $self->{url} eq "impl") {
 			if ($user == 2) {
-				$Bio::ModelSEED::ProbModelSEED::Service::CallContext = CallContext->new($self->{tokentwo},"test",$self->{usertwo});
+				$Bio::ModelSEED::ProbModelSEED::Service::CallContext = Bio::KBase::utilities::create_context({
+					token => $self->{tokentwo},
+					user => $self->{usertwo},
+					method => $function
+				});
 			} else {
-				$Bio::ModelSEED::ProbModelSEED::Service::CallContext = CallContext->new($self->{token},"test",$self->{user});
+				$Bio::ModelSEED::ProbModelSEED::Service::CallContext = Bio::KBase::utilities::create_context({
+					token => $self->{token},
+					user => $self->{user},
+					method => $function
+				});
 			}
 		} else {
 			if ($user == 2) {
@@ -73,7 +82,7 @@
 	
 	sub test_harness {
 		my($self,$function,$parameters,$name,$tests,$fail_to_pass,$dependency,$user,$app) = @_;
-		$self->set_user($user);
+		$self->set_user($user,$function);
 		$self->{testoutput}->{$name} = {
 			output => undef,
 			"index" => $self->{testcount},
@@ -94,7 +103,7 @@
 			return;
 		}
 		my $output;
-		eval {
+		#eval {
 			if ($app == 1) {
 				 if (!defined($self->{url}) || $self->{url} eq "impl") {
 				 	my $fullparam = {command => $function,arguments => $parameters};
@@ -103,7 +112,7 @@
 				 	print $fa $json;
 				 	close($fa);
 				 	$ENV{KB_AUTH_TOKEN} = $self->{token};
-				 	my $command = "perl ".$self->{directory}."../../internalScripts/App-RunProbModelSEEDJob.pl ".Bio::KBase::ObjectAPI::config::appservice_url()." ".$self->{directory}."../../internalScripts/RunProbModelSEEDJob.json ".$self->{directory}."CurrentParams.json ".$self->{directory}."CurrentOutput ".$self->{directory}."CurrentError";
+				 	my $command = "perl ".$self->{directory}."../../internalScripts/App-RunProbModelSEEDJob.pl ".Bio::KBase::utilities::conf("ProbModelSEED","appservice_url")." ".$self->{directory}."../../internalScripts/RunProbModelSEEDJob.json ".$self->{directory}."CurrentParams.json ".$self->{directory}."CurrentOutput ".$self->{directory}."CurrentError";
 				 	print "Running: ".$command."\n";
 				 	my $result = system($command);
 				 	if ($result != 0) {
@@ -118,7 +127,7 @@
 					$output = $self->{obj}->$function();
 				}
 			}
-		};
+		#};
 		my $errors;
 		if ($@) {
 			$errors = $@;
@@ -168,22 +177,64 @@
 		my $model_dir = "/".$self->{user}."/home/modeltesting";
 		my $model_name = "TestModel";
 		my $model = $model_dir."/".$model_name;
-		my $output = $self->test_harness("list_models",{path => "/".$self->{user}."/home/modeltesting"},,"initial list models test",[],0,undef,1);
+		my $output = $self->test_harness("CreateJobs",{
+			jobs => [{
+				app => "ModelReconstruction",
+				parameters => {
+					genome => "RAST:315750.3",
+					fulldb => "0",
+					output_path => $model_dir,
+					output_file => $model_name
+				}
+			},{
+				app => "ModelReconstruction",
+				parameters => {
+					genome => "RAST:315750.3",
+					fulldb => "0",
+					output_path => $model_dir,
+					output_file => $model_name
+				}
+			},{
+				app => "ModelReconstruction",
+				parameters => {
+					genome => "RAST:315750.3",
+					fulldb => "0",
+					output_path => $model_dir,
+					output_file => $model_name
+				}
+			}]
+		},"Create jobs",[],0,undef,1,0);
+		my $ids = [sort(keys(%{$output}))];
+		$output = $self->test_harness("ManageJobs",{
+			jobs => [$ids->[0]],
+			errors => {$ids->[0] => "test error"},
+			action => "finish"
+		},"Finishing job",[],0,undef,1,0);
+		$output = $self->test_harness("ManageJobs",{
+			jobs => [$ids->[1]],
+			action => "start"
+		},"Starting job",[],0,undef,1,0);
+		$output = $self->test_harness("ManageJobs",{
+			jobs => [$ids->[2]],
+			action => "delete"
+		},"Deleting job",[],0,undef,1,0);
+		$output = $self->test_harness("CheckJobs",{},"Checking jobs",[],0,undef,1,0);
+		$output = $self->test_harness("list_models",{path => "/".$self->{user}."/home/modeltesting"},,"initial list models test",[],0,undef,1,0);
 		for(my $i=0; $i < @{$output}; $i++) {
 			if ($output->[$i]->{ref} eq $model_dir."/TestModel") {
 				my $output = $self->test_harness("delete_model",{
 					model => $model,
-				},"Clear TestModel test",[],0,undef,1);
+				},"Clear TestModel test",[],0,undef,1,0);
 			}
 			if ($output->[$i]->{ref} eq $model_dir."/PubGenomeModel") {
 				my $output = $self->test_harness("delete_model",{
 					model => $model_dir."/PubGenomeModel",
-				},"Clear PubGenomeModel test",[],0,undef,1);
+				},"Clear PubGenomeModel test",[],0,undef,1,0);
 			}
 			if ($output->[$i]->{ref} eq $model_dir."/TestCommunityModel") {
 				my $output = $self->test_harness("delete_model",{
 					model => $model_dir."/TestCommunityModel",
-				},"Clear TestCommunityModel test",[],0,undef,1);
+				},"Clear TestCommunityModel test",[],0,undef,1,0);
 			}
 		}
 		$output = $self->test_harness("ModelReconstruction",{
@@ -214,27 +265,27 @@
 		$output = $self->test_harness("export_media",{
 			media => "/chenry/public/modelsupport/media/Carbon-D-Glucose",
 			to_shock => 1,
-		},"media export test",[],0,undef,1);
+		},"media export test",[],0,undef,1,0);
 		$output = $self->test_harness("MergeModels",{
-			models => [[$model,1],[$model,1]],
+			models => [$model,$model],
 			output_path => $model_dir,
 			output_file => "TestCommunityModel"
 		},"Merging model test",[],0,undef,1,0);
 		$output = $self->test_harness("ModelReconstruction",{
-			genome => "PATRICSOLR:83333.84",
+			genome => "PATRIC:83333.84",
 			fulldb => "0",
 			output_path => $model_dir,
 			output_file => "PubGenomeModel"
 		},"Reconstruct public PATRIC genome test",[],0,undef,1,0);
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => $model
-		},"List ".$model_name." gapfill solutions",[["defined(\$output->[0]) && !defined(\$output->[1])","Model should have only one gapfilling"]],0,"Reconstruct from workspace genome test",1);
+		},"List ".$model_name." gapfill solutions",[["defined(\$output->[0]) && !defined(\$output->[1])","Model should have only one gapfilling"]],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("list_fba_studies",{
 			model => $model
-		},"List ".$model_name." FBA studies",[],0,"Reconstruct from workspace genome test",1);
+		},"List ".$model_name." FBA studies",[],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("list_model_edits",{
 			model => $model
-		},"List ".$model_name." model edits",[],0,"Reconstruct from workspace genome test",1);
+		},"List ".$model_name." model edits",[],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("GapfillModel",{
 			model => $model,
 			integrate_solution => "1",
@@ -244,7 +295,7 @@
 			model => $model,
 			format => "sbml",
 			to_shock => 1
-		},"Export ".$model_name." as SBML",[],0,"Reconstruct from workspace genome test",1);
+		},"Export ".$model_name." as SBML",[],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("FluxBalanceAnalysis",{
 			model => $model,
 		#},"FBA of ".$model_name." in complete media",[["\$output->{objective} >= 0.0001","Model should grow in Complete media"]],0,"Reconstruct from workspace genome test",1);
@@ -256,69 +307,33 @@
 		},"FBA of ".$model_name." in minimal media",[],0,"Gapfill ".$model_name." in minimal media",1,0);
 		$output = $self->test_harness("list_gapfill_solutions",{
 			model => $model
-		},"List ".$model_name." gapfill solutions again",[["defined(\$output->[1])","Model should have two gapfillings"]],0,"Gapfill ".$model_name." in minimal media",1);
+		},"List ".$model_name." gapfill solutions again",[["defined(\$output->[1])","Model should have two gapfillings"]],0,"Gapfill ".$model_name." in minimal media",1,0);
 		$output = $self->test_harness("manage_gapfill_solutions",{
 			model => $model,
 			commands => {
 				"gf.0" => "u"
 			}
-		},"Unintegrating ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1);
+		},"Unintegrating ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("manage_gapfill_solutions",{
 			model => $model,
 			commands => {
 				"gf.0" => "i"
 			}
-		},"Integrating ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1);
+		},"Integrating ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("manage_gapfill_solutions",{
 			model => $model,
 			commands => {
 				"gf.1" => "d"
 			}
-		},"Deleting ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1);
+		},"Deleting ".$model_name." gapfill solution",[],0,"Reconstruct from workspace genome test",1,0);
 		$output = $self->test_harness("list_fba_studies",{
 			model => $model
-		},"List ".$model_name." FBA studies after running additional FBA",[["length(\$output) == 3","Model should have three FBAs"]],0,"FBA of ".$model_name." in minimal media",1);
+		},"List ".$model_name." FBA studies after running additional FBA",[["length(\$output) == 3","Model should have three FBAs"]],0,"FBA of ".$model_name." in minimal media",1,0);
 		$output = $self->test_harness("delete_fba_studies",{
 			model => $model,
 			fbas => ["fba.0"]
-		},"Deleting ".$model_name." FBA",[],0,undef,1);
+		},"Deleting ".$model_name." FBA",[],0,undef,1,0);
 		done_testing($self->{completetestcount});
-	}
-}	
-
-{
-	package CallContext;
-	
-	use strict;
-	
-	sub new {
-	    my($class,$token,$method,$user) = @_;
-	    my $self = {
-	        token => $token,
-	        method => $method,
-	        user_id => $user
-	    };
-	    return bless $self, $class;
-	}
-	sub user_id {
-		my($self) = @_;
-		return $self->{user_id};
-	}
-	sub token {
-		my($self) = @_;
-		return $self->{token};
-	}
-	sub method {
-		my($self) = @_;
-		return $self->{method};
-	}
-	sub log_debug {
-		my($self,$msg) = @_;
-		print STDERR $msg."\n";
-	}
-	sub log_info {
-		my($self,$msg) = @_;
-		print STDERR $msg."\n";
 	}
 }
 

@@ -121,7 +121,7 @@ sub buildModel {
 	my $genome = $args->{genome};
 	my $mdl = Bio::KBase::ObjectAPI::KBaseFBA::FBAModel->new({
 		id => $args->{modelid},
-		source => Bio::KBase::ObjectAPI::config::source(),
+		source => Bio::KBase::utilities::conf("ModelSEED","source"),
 		source_id => $args->{modelid},
 		type => $self->type(),
 		name => $genome->scientific_name(),
@@ -349,13 +349,19 @@ Description:
 =cut
 
 sub searchForCompound {
-	my ($self,$compound) = @_;
+	my ($self,$compound,$searchbio) = @_;
 	#First search by exact alias match
 	my $cpdobj = $self->getObject("compounds",$compound);
 	#Next, search by name
 	if (!defined($cpdobj)) {
 		my $searchname = Bio::KBase::ObjectAPI::KBaseFBA::TemplateCompound->nameToSearchname($compound);
 		$cpdobj = $self->queryObject("compounds",{searchnames => $searchname});
+	}
+	if (!defined($cpdobj) && defined($searchbio)) {
+		$cpdobj = $self->biochemistry()->searchForCompound($compound);
+		if (defined($cpdobj)) {
+			$cpdobj = $self->getObject("compounds",$cpdobj->id());
+		}
 	}
 	return $cpdobj;
 }

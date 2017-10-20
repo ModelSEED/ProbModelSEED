@@ -3039,6 +3039,7 @@ bool is an int
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
 	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
 	status has a value which is a string
 	submit_time has a value which is a string
 	start_time has a value which is a string
@@ -3065,6 +3066,7 @@ bool is an int
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
 	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
 	status has a value which is a string
 	submit_time has a value which is a string
 	start_time has a value which is a string
@@ -3130,6 +3132,222 @@ sub CheckJobs
 
 
 
+=head2 ManageJobs
+
+  $output = $obj->ManageJobs($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a ManageJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+ManageJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a JobID
+	action has a value which is a string
+JobID is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a ManageJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+ManageJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a JobID
+	action has a value which is a string
+JobID is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub ManageJobs
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function ManageJobs (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to ManageJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'ManageJobs');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.ManageJobs",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'ManageJobs',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method ManageJobs",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'ManageJobs',
+				       );
+    }
+}
+
+
+
+=head2 CreateJobs
+
+  $output = $obj->CreateJobs($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a CreateJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+CreateJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a Task
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+JobID is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a CreateJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+CreateJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a Task
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+JobID is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub CreateJobs
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function CreateJobs (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to CreateJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'CreateJobs');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "ProbModelSEED.CreateJobs",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'CreateJobs',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method CreateJobs",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'CreateJobs',
+				       );
+    }
+}
+
+
+
 sub version {
     my ($self) = @_;
     my $result = $self->{client}->call($self->{url}, $self->{headers}, {
@@ -3141,16 +3359,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'CheckJobs',
+                method_name => 'CreateJobs',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method CheckJobs",
+            error => "Error invoking method CreateJobs",
             status_line => $self->{client}->status_line,
-            method_name => 'CheckJobs',
+            method_name => 'CreateJobs',
         );
     }
 }
@@ -5965,6 +6183,7 @@ output_path has a value which is a string
 a reference to a hash where the following keys are defined:
 id has a value which is a JobID
 app has a value which is a string
+parameters has a value which is a reference to a hash where the key is a string and the value is a string
 status has a value which is a string
 submit_time has a value which is a string
 start_time has a value which is a string
@@ -5981,6 +6200,7 @@ stderr_shock_node has a value which is a string
 a reference to a hash where the following keys are defined:
 id has a value which is a JobID
 app has a value which is a string
+parameters has a value which is a reference to a hash where the key is a string and the value is a string
 status has a value which is a string
 submit_time has a value which is a string
 start_time has a value which is a string
@@ -6031,6 +6251,82 @@ include_completed has a value which is a bool
 include_failed has a value which is a bool
 include_running has a value which is a bool
 include_errors has a value which is a bool
+
+
+=end text
+
+=back
+
+
+
+=head2 ManageJobs_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: ManageJobs
+DESCRIPTION: This function supports the deletion and rerunning of jobs
+
+action - character specifying what to do with the job (d - delete, r - run)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a JobID
+action has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a JobID
+action has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 CreateJobs_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: CreateJobs
+DESCRIPTION: This function supports the creation of a new job
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a Task
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a Task
 
 
 =end text

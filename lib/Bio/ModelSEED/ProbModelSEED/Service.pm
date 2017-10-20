@@ -55,6 +55,8 @@ our %return_counts = (
         'MergeModels' => 1,
         'ImportKBaseModel' => 1,
         'CheckJobs' => 1,
+        'ManageJobs' => 1,
+        'CreateJobs' => 1,
         'version' => 1,
 );
 
@@ -86,6 +88,8 @@ our %method_authentication = (
         'MergeModels' => 'required',
         'ImportKBaseModel' => 'required',
         'CheckJobs' => 'required',
+        'ManageJobs' => 'required',
+        'CreateJobs' => 'required',
 );
 
 
@@ -120,6 +124,8 @@ sub _build_valid_methods
         'MergeModels' => 1,
         'ImportKBaseModel' => 1,
         'CheckJobs' => 1,
+        'ManageJobs' => 1,
+        'CreateJobs' => 1,
         'version' => 1,
     };
     return $methods;
@@ -353,7 +359,7 @@ sub call_method {
 	    my ($t, $us) = &$get_time();
 	    $us = sprintf("%06d", $us);
 	    my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
-	    $tag = "S:$self->{hostname}:$$:$ts";
+	    $tag = "S:".$ctx->hostname().":$$:$ts";
 	}
 	local $ENV{KBRPC_TAG} = $tag;
 	my $kb_metadata = $self->_plack_req->header("Kbrpc-Metadata");

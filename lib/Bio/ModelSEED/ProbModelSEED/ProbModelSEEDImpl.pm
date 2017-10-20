@@ -22,7 +22,8 @@ use Data::Dumper;
 use Config::Simple;
 use Plack::Request;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
-use Bio::KBase::ObjectAPI::utilities;
+use Bio::KBase::utilities;
+use Bio::ModelSEED::patricenv;
 
 #
 # Alias our context variable.
@@ -30,67 +31,30 @@ use Bio::KBase::ObjectAPI::utilities;
 *Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl::CallContext = *Bio::ModelSEED::ProbModelSEED::Service::CallContext;
 our $CallContext;
 
-#Returns the authentication token supplied to the service in the context object
-sub token {
-	my($self) = @_;
-	return $CallContext->token;
-}
-
-#Returns the username supplied to the service in the context object
-sub user_id {
-	my ($self) = @_;
-	return $CallContext->user_id;
-}
-
-sub workspace_url {
-	my ($self) = @_;
-	if (!defined($CallContext->{"_workspace-url"})) {
-		$CallContext->{"_workspace-url"} = Bio::KBase::ObjectAPI::config::workspace_url();
-	}
-	return $CallContext->{"_workspace-url"};
-}
-
-sub adminmode {
-	my ($self) = @_;
-	if (!defined($CallContext->{_adminmode})) {
-		return 0;
-	}
-	return $CallContext->{_adminmode};
-}
-
 #Initialization function for call
 sub initialize_call {
 	my ($self,$params) = @_;
-	if (defined($params->{adminmode})) {
-		$CallContext->{_adminmode} = $params->{adminmode};
+	$params = Bio::KBase::utilities::args($params,[],{
+		adminmode => 0
+	});
+	if (!defined($CallContext) && defined(Bio::KBase::utilities::context())) {
+		$CallContext = Bio::KBase::utilities::context();
 	}
-	if (defined($params->{wsurl})) {
-		$CallContext->{"_workspace-url"} = $params->{wsurl};
-	}
-	Bio::KBase::ObjectAPI::utilities::elapsedtime();
-	Bio::KBase::ObjectAPI::config::username($self->user_id());
-	Bio::KBase::ObjectAPI::config::token($self->token());
-	Bio::KBase::ObjectAPI::config::adminmode($self->adminmode());
+	$self->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
+    	adminmode => $params->{adminmode},
+    	configfile => $ENV{KB_DEPLOYMENT_CONFIG},
+    	configservice => "ProbModelSEED",
+    	workspace_url => $params->{wsurl},
+    	parameters => $params,
+    	call_context => $CallContext,
+    	method => $CallContext->method()
+	});
 	return $params;
-}
-
-#Returns the method supplied to the service in the context object
-sub current_method {
-	my ($self) = @_;
-	return $CallContext->method;
 }
 
 sub helper {
 	my ($self) = @_;
-	if (!defined($CallContext->{_helper})) {
-		$CallContext->{_helper} = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
-			token => $self->token(),
-			username => $self->user_id(),
-			adminmode => $self->adminmode(),
-			workspace_url => $self->workspace_url()
-		});
-	}
-	return $CallContext->{_helper};
+	return $self->{_helper};
 }
 
 #END_HEADER
@@ -102,12 +66,11 @@ sub new
     };
     bless $self, $class;
     #BEGIN_CONSTRUCTOR
-    Bio::KBase::ObjectAPI::config::load_config({
-    	filename => $ENV{KB_DEPLOYMENT_CONFIG},
+    my $config = Bio::KBase::utilities::read_config({
+		filename => $ENV{KB_DEPLOYMENT_CONFIG},
 		service => "ProbModelSEED"
-    });
-	print "Server starting! Current configuration parameters loaded:\n".Data::Dumper->Dump([Bio::KBase::ObjectAPI::config::all_params()]);
-    #END_CONSTRUCTOR
+	});
+	#END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
     {
@@ -211,7 +174,7 @@ sub list_gapfill_solutions
     my($output);
     #BEGIN list_gapfill_solutions
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{include_metadata => 0});
+    $input = Bio::KBase::utilities::args($input,["model"],{include_metadata => 0});
 	$output = $self->helper()->list_model_gapfills($input->{model},$input->{include_metadata});
     #END list_gapfill_solutions
     my @_bad_returns;
@@ -324,7 +287,7 @@ sub manage_gapfill_solutions
     my($output);
     #BEGIN manage_gapfill_solutions
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model","commands"],{
+    $input = Bio::KBase::utilities::args($input,["model","commands"],{
     	selected_solutions => {},
     	include_meta => 1
     });
@@ -450,7 +413,7 @@ sub list_fba_studies
     my($output);
     #BEGIN list_fba_studies
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{});
+    $input = Bio::KBase::utilities::args($input,["model"],{});
     $output = $self->helper()->list_model_fba($input->{model});
     #END list_fba_studies
     my @_bad_returns;
@@ -549,7 +512,7 @@ sub delete_fba_studies
     my($output);
     #BEGIN delete_fba_studies
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model","fbas"],{});
+    $input = Bio::KBase::utilities::args($input,["model","fbas"],{});
     $output = $self->helper()->delete_model_objects($input->{model},$input->{fbas},"fba");
     #END delete_fba_studies
     my @_bad_returns;
@@ -630,7 +593,7 @@ sub export_model
     my($output);
     #BEGIN export_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{
+    $input = Bio::KBase::utilities::args($input,["model"],{
 		format => "sbml",
 		to_shock => 0
     });
@@ -716,7 +679,7 @@ sub export_media
     my($output);
     #BEGIN export_media
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["media"],{
+    $input = Bio::KBase::utilities::args($input,["media"],{
 		to_shock => 0
     });
     my $media = $self->helper()->get_object($input->{media},"media");
@@ -893,7 +856,7 @@ sub get_model
     my($output);
     #BEGIN get_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{to => 0});
+    $input = Bio::KBase::utilities::args($input,["model"],{to => 0});
     if ($input->{to} == 1) {
     	$output = $self->helper()->get_object($input->{model})->serializeToDB();
     } else {
@@ -1018,7 +981,7 @@ sub delete_model
     my($output);
     #BEGIN delete_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{});
+    $input = Bio::KBase::utilities::args($input,["model"],{});
     $output = $self->helper()->delete_model($input->{model});
     #END delete_model
     my @_bad_returns;
@@ -1138,11 +1101,15 @@ sub list_models
     #BEGIN list_models
     $input = $self->initialize_call($input);
     my $hash = $self->helper()->list_models($input);
-	my $output = [];
+	$output = [];
 	foreach my $key (keys(%{$hash})) {
 		push(@{$output},$hash->{$key});
 	}
-    $output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+    if(exists($input->{path}) && $input->{path} =~ /^\/plantseed\/plantseed/){
+	$output = [sort { $a->{id} cmp $b->{id} } @{$output}];
+    }else{
+	$output = [sort { $b->{rundate} cmp $a->{rundate} } @{$output}];
+    }
     #END list_models
     my @_bad_returns;
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -1278,6 +1245,19 @@ sub copy_model
     my($output);
     #BEGIN copy_model
     $input = $self->initialize_call($input);
+    $input = Bio::KBase::utilities::args($input,["model"],{
+    	destination => undef,
+    	destname => undef,
+		plantseed => 0,
+		copy_genome => 1,
+		to_kbase => 0,
+		workspace_url => undef,
+		kbase_username => undef,
+		kbase_password => undef,
+		kbase_token => undef
+    });
+    #synchronizing with parameter in Helper
+    $input->{source_model_path}=$input->{model};
     $output = $self->helper()->copy_model($input);
     #END copy_model
     my @_bad_returns;
@@ -1414,7 +1394,7 @@ sub copy_genome
     my($output);
     #BEGIN copy_genome
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["genome"],{
+    $input = Bio::KBase::utilities::args($input,["genome"],{
     	destination => undef,
 		destname => undef,
 		plantseed => 0,
@@ -1520,7 +1500,7 @@ sub list_model_edits
     my($output);
     #BEGIN list_model_edits
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{});
+    $input = Bio::KBase::utilities::args($input,["model"],{});
     my $model = $self->helper()->get_object($input->{model});
     $output = $model->model_edits();
     #END list_model_edits
@@ -1670,7 +1650,7 @@ sub edit_model
     my($output);
     #BEGIN edit_model
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["model"],{
+    $input = Bio::KBase::utilities::args($input,["model"],{
     	biomass_changes => [],
     	reactions_to_remove => [],
     	reactions_to_add => [],
@@ -1778,18 +1758,19 @@ sub get_feature
     my($output);
     #BEGIN get_feature
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["genome","feature"],{});
+    $input = Bio::KBase::utilities::args($input,["genome","feature"],{});
 
     my $genome = $self->helper()->get_object($input->{genome}."/genome","genome");
     if(!$genome){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
 
-    my $output=undef;
+    $output=undef;
     foreach my $ftr (@{$genome->{features}}){
 	if($ftr->{data}{id} eq $input->{feature}){
 	    $output = $ftr->{data};
 	    delete($output->{parent});
+	    last;
 	}
     }
 
@@ -1799,7 +1780,6 @@ sub get_feature
 
     #Retrieve subsystems
     my $Annotation = $self->helper()->get_object("/plantseed/Data/annotation_overview","unspecified");
-    $Annotation = Bio::KBase::ObjectAPI::utilities::FROMJSON($Annotation);
     my %Roles_Subsystems=();
     foreach my $role (@{$Annotation}){
 	foreach my $ss (keys %{$role->{subsystems}}){
@@ -1821,7 +1801,6 @@ sub get_feature
     #Retrieve Minimal Genome object (unspecified type)
     my $min_genome = $input->{genome}."/.plantseed_data/minimal_genome";    
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
-    $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
 
     #Retrieve sims object containing hits for feature
     my $sim_index = $min_genome->{similarities_index}{$input->{feature}};
@@ -1834,33 +1813,33 @@ sub get_feature
 
     my $sim_file = $input->{genome}."/.plantseed_data/Sims_".$sim_index;
     $sim_file = $self->helper()->get_object($sim_file,"unspecified");
-    $sim_file = Bio::KBase::ObjectAPI::utilities::FROMJSON($sim_file);
-    
+
+    #Retrieve details for plants
+    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
+
     #Iterate through hits and separate them out into plant and prokaryote hits
     #By rule, prokaryote hits still have their peg identifiers and plants dont
     #percent_id|hit_id|bit_score|e_value
     my ($plant_count,$prokaryotic_count)=(0,0);
-    foreach my $hit (@{$sim_file->{$input->{feature}}}){
+    foreach my $hit ( sort { $b->{percent_id} <=> $a->{percent_id} } @{$sim_file->{$input->{feature}}}){
+	next if !exists($ftr_lu->{$hit->{hit_id}});
 	last if $plant_count>=10; # && $prokaryotic_count>=10;
 
 #	if($hit->{hit_id} =~ /^fig\|\d+\.\d+\.peg\.\d+/ && $prokaryotic_count<10){
 #	    push(@{$output->{prokaryotic_similarities}},$hit);
 #	    $prokaryotic_count++;
 #	}elsif($plant_count<10){
+
 	if($plant_count<10){
 	    push(@{$output->{plant_similarities}},$hit);
 	    $plant_count++;
 	}
     }
 
-    #Retrieve details for plants
-    my $ftr_lu = $self->helper()->get_object("/plantseed/Data/feature_lookup","unspecified");
-    $ftr_lu = Bio::KBase::ObjectAPI::utilities::FROMJSON($ftr_lu);
 
     my @Plants = @{$output->{plant_similarities}};
     undef(@{$output->{plant_similarities}});
     foreach my $plant ( @Plants ){
-	print $plant->{hit_id},"\n";
 	my $Obj = { hit_id => $plant->{hit_id}, percent_id => $plant->{percent_id},
 		    genome => $ftr_lu->{$plant->{hit_id}}{genome}, aliases => { 'SEED' => $ftr_lu->{$plant->{hit_id}}{'seed'} },
 		    function => $ftr_lu->{$plant->{hit_id}}{function} };
@@ -1981,44 +1960,42 @@ sub save_feature_function
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     #BEGIN save_feature_function
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["genome","feature","function"],{"user"=>undef});
-	if ($input->{genome} =~ m/\/plantseed\/[^\/]+$/) {
-		$input->{genome} .= "/genome";
-	}
-    my $genome_obj = $self->helper()->get_object($input->{genome},undef,{data_only => 1});
-    $genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($genome_obj);
+    if ($input->{genome} =~ m/\/plantseed\/[^\/]+$/) {
+	$input->{genome} .= "/genome";
+    }
+    print "Retrieving ".$input->{genome}."\n";
+    my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
     if(!$genome_obj){
 	$self->helper()->error("Genome not found using reference ".$input->{genome}."!");
     }
-
+    
     my $found_ftr=undef;
     foreach my $ftr (@{$genome_obj->{features}}){
-	if($ftr->{id} eq $input->{feature}){
-	    $ftr->{function} = $input->{function};
+	if($ftr->{data}{id} eq $input->{feature}){
+	    $ftr->{data}{function} = $input->{function};
 	    $found_ftr = 1;
-
+	    
 	    if(defined($input->{user})){
-		my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
-		push(@{$ftr->{annotations}},\@Annotation);
+	    	my @Annotation = ($input->{user},$input->{function},scalar(localtime()));
+	    	push(@{$ftr->{data}{annotations}},\@Annotation);
 	    }
-
 	    last;
 	}
     }
-
+    
     if(!$found_ftr){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in genome!");
     }
-
+    
     #Retrieve Minimal Genome object (unspecified type)
     my @path = split(/\//, $input->{genome});
     my $genome = pop @path;
     my $root = join("/",@path);
     my $min_genome = $root."/.plantseed_data/minimal_genome";
-
-    my $min_genome_obj = $self->helper()->get_object($min_genome,undef,{data_only => 1});
-    $min_genome_obj = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome_obj);
-
+    
+    #Retrieving minimal genome
+    my $min_genome_obj = $self->helper()->get_object($min_genome,"unspecified");
+    
     $found_ftr = undef;
     foreach my $ftr (@{$min_genome_obj->{features}}){
 	if($ftr->{id} eq $input->{feature}){
@@ -2027,14 +2004,18 @@ sub save_feature_function
 	    last;
 	}
     }
-
+    
     if(!$found_ftr){
 	$self->helper()->error("Feature (".$input->{feature}.") not found in minimal genome!");
     }
-
+    
     #Save objects
     $self->helper->save_object($input->{genome},$genome_obj,"genome",{});
-    $self->helper->save_object($min_genome, $min_genome_obj,"unspecified",{});
+
+    $min_genome_obj = Bio::KBase::ObjectAPI::utilities::TOJSON($min_genome_obj,1);
+    Bio::ModelSEED::patricenv::call_ws("create",{ objects => [[$min_genome,"unspecified",{},$min_genome_obj]], overwrite=>1 });
+
+#    $self->helper->save_object($min_genome, $min_genome_obj,"unspecified",{});
 
     #END save_feature_function
     return();
@@ -2142,7 +2123,7 @@ sub compare_regions
     my($output);
     #BEGIN compare_regions
     $input = $self->initialize_call($input);
-    $input = $self->helper()->validate_args($input,["similarities"],{number_regions=>10,region_size=>15000});
+    $input = Bio::KBase::utilities::args($input,["similarities"],{number_regions=>10,region_size=>15000});
 
     use Bio::ModelSEED::Client::SAP;
     my $sapsvr = Bio::ModelSEED::Client::SAP->new();
@@ -2222,7 +2203,7 @@ sub compare_regions
     }
 
     @Regions = map { $Regions{$_} } @Regions;
-    my $output = {'size' => $input->{region_size}, 'number' => $input->{number_regions}, 'regions' => \@Regions};
+    $output = {'size' => $input->{region_size}, 'number' => $input->{number_regions}, 'regions' => \@Regions};
 
     #END compare_regions
     my @_bad_returns;
@@ -2316,7 +2297,8 @@ sub plant_annotation_overview
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
     my($output);
     #BEGIN plant_annotation_overview
-    $input = $self->helper()->validate_args($input,["genome"],{});
+    $input = $self->initialize_call($input);
+    $input = Bio::KBase::utilities::args($input,["genome"],{});
 
     my $genome_obj = $self->helper()->get_object($input->{genome},"genome");
     if(!$genome_obj){
@@ -2325,8 +2307,6 @@ sub plant_annotation_overview
 
     #Find Missing annotation
     my $annotation = $self->helper()->get_object("/plantseed/Data/annotation_overview","unspecified");
-    $annotation = decode_json($annotation);
-
     my %Exemplar_Roles=();
     foreach my $row (@{$annotation}){
 	foreach my $ftr (keys %{$row->{features}}){
@@ -2351,14 +2331,17 @@ sub plant_annotation_overview
     my $genome = pop @path;
     my $root = join("/",@path);
     my $min_genome = $root."/.plantseed_data/minimal_genome";
-
     $min_genome = $self->helper()->get_object($min_genome,"unspecified");
-    $min_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON($min_genome);
-    
-    foreach my $role (keys %$output){
-	foreach my $exemplar ( grep { exists($min_genome->{exemplars}{$_}) } keys %{$Exemplar_Roles{$role}}){
-	    foreach my $query (keys %{$min_genome->{exemplars}{$exemplar}}){
-		$output->{$role}{'blast-features'}{$query}=1;
+ 
+     foreach my $role (keys %$output){
+	foreach my $exemplar (keys %{$Exemplar_Roles{$role}}){
+	    foreach my $hit (keys %{$min_genome->{exemplars}}){
+		#Necessary to compare between Arabidopsis gene and transcript ids
+		if($hit =~ /${exemplar}/){
+		    foreach my $query (keys %{$min_genome->{exemplars}{$hit}}){
+			$output->{$role}{'blast-features'}{$query}=1;
+		    }
+		}
 	    }
 	}
     }
@@ -2518,7 +2501,7 @@ sub plant_pipeline
     #BEGIN plant_pipeline
 
     $input = $self->initialize_call($input);
-    $output = $self->helper()->plant_pipeline($input);
+    $output = $self->helper()->app_harness("plant_pipeline",$input);
 
     #END plant_pipeline
     my @_bad_returns;
@@ -2594,7 +2577,7 @@ sub annotate_plant_genome
     #BEGIN annotate_plant_genome
     
     $input = $self->initialize_call($input);
-    $output = $self->helper()->annotate_plant_genome($input);
+    $output = $self->helper()->app_harness("annotate_plant_genome",$input);
 
     #END annotate_plant_genome
     my @_bad_returns;
@@ -2745,12 +2728,41 @@ sub ModelReconstruction
     my($output);
     #BEGIN ModelReconstruction
     $input = $self->initialize_call($input);
-    if ($input->{model} =~ m/\/plantseed\//) {
-    	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
+    if (!defined($input->{output_file})) {
+    	$input->{output_file} = $input->{genome};
+    	$input->{output_file} =~ s/.+://;
+    	$input->{output_file} =~ s/.+\///;
     }
+    if (!defined($input->{output_path})) {
+    	if ($input->{genome_type} eq  "plant") {
+    		$input->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
+    	} else {
+    		$input->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
+    	}
+    }
+    if (substr($input->{output_path},-1,1) ne "/") {
+    	$input->{output_path} .= "/";
+    }
+    my $folder = $input->{output_path}."/".$input->{output_file};
+    if ($folder =~ m/modelseed\/(.+)/ || $folder =~ m/plantseed\/(.+)/) {
+    	if (length($1) == 0) {
+    		Bio::KBase::utilities::error("No model name provided!");
+    	}
+    } else {
+    	Bio::KBase::utilities::error("Model path not suitable!");
+    }
+#    Bio::ModelSEED::patricenv::call_ws("delete",{
+#		objects => [$folder],
+#		deleteDirectories => 1,
+#		force => 1
+#	});
+    Bio::ModelSEED::patricenv::call_ws("create",{
+		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
+	});
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
+    if (ref($output) eq 'HASH') {
+    	$output = $output->{fbamodel_ref};
+    }
     #END ModelReconstruction
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2826,12 +2838,10 @@ sub FluxBalanceAnalysis
     my($output);
     #BEGIN FluxBalanceAnalysis
     $input = $self->initialize_call($input);
-    if ($input->{model} =~ m/\/plantseed\//) {
-    	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
-    }
     $output = $self->helper()->app_harness("FluxBalanceAnalysis",$input);
+    if (ref($output) eq 'HASH') {
+    	$output = $output->{fba_ref};
+    }
     #END FluxBalanceAnalysis
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2907,12 +2917,10 @@ sub GapfillModel
     my($output);
     #BEGIN GapfillModel
     $input = $self->initialize_call($input);
-    if ($input->{model} =~ m/\/plantseed\//) {
-    	Bio::KBase::ObjectAPI::config::run_as_app(0);
-    } else { 
-    	Bio::KBase::ObjectAPI::config::run_as_app(1);
-    }
     $output = $self->helper()->app_harness("GapfillModel",$input);
+    if (ref($output) eq 'HASH') {
+    	$output = $output->{fbamodel_ref};
+    }
     #END GapfillModel
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -2999,6 +3007,9 @@ sub MergeModels
     #BEGIN MergeModels
     $input = $self->initialize_call($input);
     $output = $self->helper()->app_harness("MergeModels",$input);
+    if (ref($output) eq 'HASH') {
+    	$output = $output->{fbamodel_ref};
+    }
     #END MergeModels
     my @_bad_returns;
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
@@ -3125,6 +3136,7 @@ bool is an int
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
 	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
 	status has a value which is a string
 	submit_time has a value which is a string
 	start_time has a value which is a string
@@ -3151,6 +3163,7 @@ bool is an int
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
 	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
 	status has a value which is a string
 	submit_time has a value which is a string
 	start_time has a value which is a string
@@ -3196,6 +3209,196 @@ sub CheckJobs
 	my $msg = "Invalid returns passed to CheckJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
 							       method_name => 'CheckJobs');
+    }
+    return($output);
+}
+
+
+
+
+=head2 ManageJobs
+
+  $output = $obj->ManageJobs($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a ManageJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+ManageJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a JobID
+	action has a value which is a string
+JobID is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a ManageJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+ManageJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a JobID
+	action has a value which is a string
+JobID is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub ManageJobs
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to ManageJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'ManageJobs');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN ManageJobs
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->manage_jobs($input);
+    #END ManageJobs
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to ManageJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'ManageJobs');
+    }
+    return($output);
+}
+
+
+
+
+=head2 CreateJobs
+
+  $output = $obj->CreateJobs($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a CreateJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+CreateJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a Task
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+JobID is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a CreateJobs_params
+$output is a reference to a hash where the key is a JobID and the value is a Task
+CreateJobs_params is a reference to a hash where the following keys are defined:
+	jobs has a value which is a reference to a list where each element is a Task
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a JobID
+	app has a value which is a string
+	parameters has a value which is a reference to a hash where the key is a string and the value is a string
+	status has a value which is a string
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+JobID is a string
+
+
+=end text
+
+
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub CreateJobs
+{
+    my $self = shift;
+    my($input) = @_;
+
+    my @_bad_arguments;
+    (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
+    if (@_bad_arguments) {
+	my $msg = "Invalid arguments passed to CreateJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'CreateJobs');
+    }
+
+    my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
+    my($output);
+    #BEGIN CreateJobs
+    $input = $self->initialize_call($input);
+    $output = $self->helper()->create_jobs($input);
+    #END CreateJobs
+    my @_bad_returns;
+    (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
+    if (@_bad_returns) {
+	my $msg = "Invalid returns passed to CreateJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+							       method_name => 'CreateJobs');
     }
     return($output);
 }
@@ -6019,6 +6222,7 @@ output_path has a value which is a string
 a reference to a hash where the following keys are defined:
 id has a value which is a JobID
 app has a value which is a string
+parameters has a value which is a reference to a hash where the key is a string and the value is a string
 status has a value which is a string
 submit_time has a value which is a string
 start_time has a value which is a string
@@ -6035,6 +6239,7 @@ stderr_shock_node has a value which is a string
 a reference to a hash where the following keys are defined:
 id has a value which is a JobID
 app has a value which is a string
+parameters has a value which is a reference to a hash where the key is a string and the value is a string
 status has a value which is a string
 submit_time has a value which is a string
 start_time has a value which is a string
@@ -6085,6 +6290,82 @@ include_completed has a value which is a bool
 include_failed has a value which is a bool
 include_running has a value which is a bool
 include_errors has a value which is a bool
+
+
+=end text
+
+=back
+
+
+
+=head2 ManageJobs_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: ManageJobs
+DESCRIPTION: This function supports the deletion and rerunning of jobs
+
+action - character specifying what to do with the job (d - delete, r - run)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a JobID
+action has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a JobID
+action has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 CreateJobs_params
+
+=over 4
+
+
+
+=item Description
+
+FUNCTION: CreateJobs
+DESCRIPTION: This function supports the creation of a new job
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a Task
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+jobs has a value which is a reference to a list where each element is a Task
 
 
 =end text

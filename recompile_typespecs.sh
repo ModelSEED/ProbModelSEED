@@ -1,4 +1,4 @@
-compile_typespec \
+perl /Users/chenry/code/typecomp/scripts/compile_typespec.pl \
 	-impl Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl \
 	-service Bio::ModelSEED::ProbModelSEED::Service \
 	-psgi ProbModelSEED.psgi \

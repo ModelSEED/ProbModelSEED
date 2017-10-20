@@ -7,6 +7,7 @@ use File::Temp qw(tempfile);
 use File::Path;
 use File::Copy::Recursive;
 use JSON::XS;
+use JSON;
 use HTTP::Request::Common;
 
 our $VERBOSE = undef; # A GLOBAL Reference to print verbose() calls to, or undef.
@@ -16,7 +17,7 @@ our $report = {};
 our $source = undef;
 our $defbio = undef;
 our $globalparams = {"gapfill name" => "none"};
-our $startime = undef;
+
 our $classifierdata = undef;
 our $full_trace = 1;
 our $ssohash = undef;
@@ -1047,6 +1048,7 @@ sub load_config {
 sub rest_download {
 	my ($args,$params) = @_;
 	$args = Bio::KBase::ObjectAPI::utilities::ARGS($args,["url"],{
+		json => 1,
 		retry => 5,
 		token => undef
 	});
@@ -1060,18 +1062,15 @@ sub rest_download {
 			if (defined($res->{_headers}->{"content-range"}) && $res->{_headers}->{"content-range"} =~ m/\/(.+)/) {
 				$params->{count} = $1;
 			}
-			return Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
+			if ($args->{json} == 1) {
+				return Bio::KBase::ObjectAPI::utilities::FROMJSON($res->{_content});
+			} else {
+				return $res->{_content};
+			}
 		} else {
 		}
 	}
 	Bio::KBase::ObjectAPI::utilities::error("REST download failed at URL:".$args->{url});
-}
-
-sub elapsedtime {
-	if (!defined($startime)) {
-		$startime = time();
-	}
-	return time()-$startime;
 }
 
 sub kblogin {
@@ -1095,14 +1094,14 @@ sub kblogin {
 sub classifier_data {
 	if (!defined($classifierdata)) {
 		my $data;
-		if (Bio::KBase::ObjectAPI::config::classifier() =~ m/^WS:(.+)/) {
+		if (Bio::KBase::utilities::conf("ModelSEED","classifier") =~ m/^WS:(.+)/) {
 			$data = Bio::KBase::ObjectAPI::functions::util_get_object($1);
 			$data = [split(/\n/,$data)];
 		} else {
-			if (!-e Bio::KBase::ObjectAPI::config::classifier()) {
-				system("curl https://raw.githubusercontent.com/kbase/KBaseFBAModeling/dev/classifier/classifier.txt > ".Bio::KBase::ObjectAPI::config::classifier());
+			if (!-e Bio::KBase::utilities::conf("ModelSEED","classifier")) {
+				system("curl https://raw.githubusercontent.com/kbase/KBaseFBAModeling/dev/classifier/classifier.txt > ".Bio::KBase::utilities::conf("ModelSEED","classifier"));
 			}
-			$data = Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::ObjectAPI::config::classifier());
+			$data = Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::utilities::conf("ModelSEED","classifier"));
 		}
 		my $headings = [split(/\t/,$data->[0])];
 		my $popprob = [split(/\t/,$data->[1])];

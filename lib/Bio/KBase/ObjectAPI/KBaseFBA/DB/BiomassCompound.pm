@@ -73,10 +73,10 @@ my $attributes = [
             'default' => 'sub {return {};}',
             'type' => 'HashRef',
             'perm' => 'rw'
-          },
+          }
         ];
 
-my $attribute_map = {modelcompound_ref => 0, coefficient => 1, gapfill_data => 2,edits => 3};
+my $attribute_map = {modelcompound_ref => 0, coefficient => 1, gapfill_data => 2, edits => 3};
 sub _attributes {
 	 my ($self, $key) = @_;
 	 if (defined($key)) {

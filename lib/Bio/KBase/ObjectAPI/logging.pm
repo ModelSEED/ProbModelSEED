@@ -1,9 +1,6 @@
 package Bio::KBase::ObjectAPI::logging;
 use strict;
-use Bio::KBase::ObjectAPI::config;
-use File::Path;
 use DateTime;
-use Log::Log4perl;
 
 our $processid = undef;
 
@@ -23,11 +20,7 @@ sub processid {
 
 sub log {
 	my ($msg,$type) = @_;
-	if (!defined($handler)) {
-		print STDERR $msg."\n";
-	} else {
-		$handler->util_log($msg,$type,Bio::KBase::ObjectAPI::logging::processid());
-	}
+	$handler->util_log($msg,$type,Bio::KBase::ObjectAPI::logging::processid());
 }
 
 1;
