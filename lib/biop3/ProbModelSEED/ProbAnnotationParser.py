@@ -47,7 +47,7 @@ class ProbAnnotationParser:
         self.separator = config['separator']
         self.searchProgram = config['search_program']
         self.searchProgramPath = config['search_program_path']
-        self.shockURL = config['shock_url']
+        self.shockURL = config['shock-url']
         self.loadDataOption = config['load_data_option']
 
         # Create a dictionary with the valid sources and initialize to not set.
