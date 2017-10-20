@@ -1559,26 +1559,6 @@ sub annotate_microbial_genome {
 		}
 	}
 	$self->assign_taxonomy_from_close_genome({genome => $genome});
-	Bio::KBase::ObjectAPI::utilities::PRINTFILE("/Users/chenry/workspace/genome2.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($genome,1)]);
-#	my $ftrhash;
-#	for (my $i=0; $i < @{$genome->{features}}; $i++) {
-#		$ftrhash->{$genome->{features}->[$i]->{id}} = $genome->{features}->[$i];
-#	}
-#	my $uuid = $args->{uuid};
-#	my $path = Bio::KBase::utilities::conf("ModelSEED","fbajobdir");
-#	File::Path::mkpath ($path."/".$uuid);
-#	my $json = Bio::KBase::ObjectAPI::utilities::TOJSON($genome,1);
-#	Bio::KBase::ObjectAPI::utilities::PRINTFILE($path."/".$uuid."/genome.json",[$json]);
-#	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v2 -i "'.$path."/".$uuid.'/genome.json" -o "'.$path."/".$uuid.'/rast-kv2.json"');
-#	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v1 -i "'.$path."/".$uuid.'/rast-kv2.json" -o "'.$path."/".$uuid.'/rast-kv1.json" -H');
-#	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-similarity -i "'.$path."/".$uuid.'/rast-kv1.json" -o "'.$path."/".$uuid.'/rast-sim.json" -H');
-#	my $data = Bio::KBase::ObjectAPI::utilities::LOADFILE($path."/".$uuid."/rast-sim.json");
-#    my $anno_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$data}));
-#	for (my $i=0; $i < @{$anno_genome->{features}}; $i++) {
-#		if (defined($ftrhash->{$anno_genome->{features}->[$i]->{id}})) {
-#			$ftrhash->{$anno_genome->{features}->[$i]->{id}}->{function} = $anno_genome->{features}->[$i]->{function};
-#		}
-#	}
 	return $genome;
 }
 
@@ -1625,7 +1605,6 @@ sub annotate_microbial_contigs {
 		}
 	}
 	$self->assign_taxonomy_from_close_genome({genome => $genome});
-	Bio::KBase::ObjectAPI::utilities::PRINTFILE("/Users/chenry/workspace/genome.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($genome,1)]);
 	return $genome;
 }
 
