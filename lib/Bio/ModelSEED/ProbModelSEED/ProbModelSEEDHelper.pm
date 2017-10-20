@@ -18,6 +18,7 @@ use Bio::KBase::ObjectAPI::KBaseStore;
 use Bio::ModelSEED::MSSeedSupportServer::MSSeedSupportClient;
 use Bio::KBase::ObjectAPI::functions;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
+use Bio::KBase::GenomeAnnotation::Client;
 use MongoDB::Connection;
 use MongoDB::Collection;
 
@@ -1249,6 +1250,7 @@ sub create_genome_from_shock {
 	use IO::Uncompress::Gunzip qw(gunzip);
 	my $data=undef;
 	gunzip \$raw_data => \$data;
+	my $seqs = read_fasta($data);
 	
 	#Building genome
 	my $genometype = "Bacteria";
@@ -1283,7 +1285,6 @@ sub create_genome_from_shock {
 	
 	#Processing features
 	if ($args->{genome_type} eq "plant" || $args->{genome_type} eq "microbial_features") {
-		my $seqs = read_fasta($data);
 		my $IsDNA = $self->is_dna($seqs->[0][2]);
 		foreach my $ftr (@{$seqs}) {
 			my $featureObj = {
@@ -1304,6 +1305,8 @@ sub create_genome_from_shock {
 			} else {
 				$featureObj->{dna_sequence}=$ftr->[2];
 				$featureObj->{dna_sequence_length}=length($ftr->[2]);
+				$featureObj->{protein_translation} = $self->translate_nucleotides($ftr->[2]);
+				$featureObj->{protein_translation_length} = length($featureObj->{protein_translation});
 			}
 			$user_meta->{dna_size}+=$featureObj->{dna_sequence_length};
 			$user_meta->{num_features}++;
@@ -1330,12 +1333,21 @@ sub create_genome_from_shock {
 		}
 	} else {
 	#Processing contigs
+		$GenomeObj->{contigs} = [];
+		$GenomeObj->{dna_size} = 0;
+		foreach my $ftr (@{$seqs}) {
+			$GenomeObj->{dna_size} += length($ftr->[2]);
+			push(@{$GenomeObj->{contigs}},{
+				id => $ftr->[0], dna => $ftr->[2]
+			});
+			push(@{$GenomeObj->{contig_lengths}},length($ftr->[2]));
+			$GenomeObj->{num_contigs}++;
+		}
 		$GenomeObj = $self->annotate_microbial_contigs({
-			genome => $GenomeObj,
-			fasta => $data
+			genome => $GenomeObj
 		});
+		$user_meta->{dna_size} = $GenomeObj->{dna_size};
 		for (my $i=0; $i < @{$GenomeObj->{features}}; $i++) {
-			$user_meta->{dna_size} += $GenomeObj->{features}->[$i]->{dna_sequence_length};
 			$user_meta->{num_features}++;
 			push(@{$MinGenomeObj->{features}},{
 				id => $GenomeObj->{features}->[$i]->{id},
@@ -1501,74 +1513,105 @@ sub annotate_plant_genome {
     return $return_string;
 }
 
-sub annotate_microbial_genome {
+sub assign_taxonomy_from_close_genome {
 	my ($self,$args) = @_;
-	$args = Bio::KBase::utilities::args($args,["genome"],{
-    	uuid => Data::UUID->new()->create_str()
-	});
+	$args = Bio::KBase::utilities::args($args,["genome"],{});
 	my $genome = $args->{genome};
-	my $ftrhash;
-	for (my $i=0; $i < @{$genome->{features}}; $i++) {
-		$ftrhash->{$genome->{features}->[$i]->{id}} = $genome->{features}->[$i];
-	}
-	my $uuid = $args->{uuid};
-	my $path = Bio::KBase::utilities::conf("ModelSEED","fbajobdir");
-	File::Path::mkpath ($path."/".$uuid);
-	my $json = Bio::KBase::ObjectAPI::utilities::TOJSON($genome,1);
-	Bio::KBase::ObjectAPI::utilities::PRINTFILE($path."/".$uuid."/genome.json",[$json]);
-	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v2 -i "'.$path."/".$uuid.'/genome.json" -o "'.$path."/".$uuid.'/rast-kv2.json"');
-	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v1 -i "'.$path."/".$uuid.'/rast-kv2.json" -o "'.$path."/".$uuid.'/rast-kv1.json" -H');
-	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-similarity -i "'.$path."/".$uuid.'/rast-kv1.json" -o "'.$path."/".$uuid.'/rast-sim.json" -H');
-	my $data = Bio::KBase::ObjectAPI::utilities::LOADFILE($path."/".$uuid."/rast-sim.json");
-    my $anno_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$data}));
-	for (my $i=0; $i < @{$anno_genome->{features}}; $i++) {
-		if (defined($ftrhash->{$anno_genome->{features}->[$i]->{id}})) {
-			$ftrhash->{$anno_genome->{features}->[$i]->{id}}->{function} = $anno_genome->{features}->[$i]->{function};
+	if (defined($genome->{close_genomes}->[0]) && $genome->{close_genomes}->[0]->{genome_name} =~ m/(\w+)\s/) {
+		$genome->{scientific_name} = $1;
+		my $taxid = $genome->{close_genomes}->[0]->{genome_id};
+		$taxid =~ s/\.\d+//;
+		my $content = Bio::KBase::ObjectAPI::utilities::rest_download({
+			json => 0,
+			url => "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&id=".$taxid
+		});
+		if ($content =~ m/\<Lineage\>(.+)\<\/Lineage\>/) {
+			$genome->{taxonomy} = $1;
 		}
 	}
+}
+
+sub annotate_microbial_genome {
+	my ($self,$args) = @_;
+	$args = Bio::KBase::utilities::args($args,["genome"],{});
+	my $genome = $args->{genome};	
+	my $client = Bio::KBase::GenomeAnnotation::Client->new('http://tutorial.theseed.org/services/genome_annotation');
+	my $newgenome = $client->create_genome({
+		scientific_name => $genome->{scientific_name},
+		domain => $genome->{domain},
+		genetic_code => $genome->{genetic_code},
+		taxonomy => $genome->{taxonomy}
+	});
+	$genome->{id} = $newgenome->{id};
+	$genome->{source} = "RAST";
+	$genome->{source_id} = $newgenome->{id};
+	$genome = $client->run_pipeline($genome,{stages => Bio::KBase::constants::gene_annotation_pipeline()});
+	delete $genome->{analysis_events};
+	for(my $i=0; $i < @{$genome->{features}}; $i++) {
+		delete $genome->{features}->[$i]->{annotations};
+		delete $genome->{features}->[$i]->{feature_creation_event};
+		delete $genome->{features}->[$i]->{quality};
+		if (defined($genome->{features}->[$i]->{protein_translation})) {
+			$genome->{features}->[$i]->{protein_translation_length} = length($genome->{features}->[$i]->{protein_translation});
+			$genome->{features}->[$i]->{md5} = Digest::MD5::md5_hex($genome->{features}->[$i]->{protein_translation});
+		}
+	}
+	$self->assign_taxonomy_from_close_genome({genome => $genome});
+	Bio::KBase::ObjectAPI::utilities::PRINTFILE("/Users/chenry/workspace/genome2.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($genome,1)]);
+#	my $ftrhash;
+#	for (my $i=0; $i < @{$genome->{features}}; $i++) {
+#		$ftrhash->{$genome->{features}->[$i]->{id}} = $genome->{features}->[$i];
+#	}
+#	my $uuid = $args->{uuid};
+#	my $path = Bio::KBase::utilities::conf("ModelSEED","fbajobdir");
+#	File::Path::mkpath ($path."/".$uuid);
+#	my $json = Bio::KBase::ObjectAPI::utilities::TOJSON($genome,1);
+#	Bio::KBase::ObjectAPI::utilities::PRINTFILE($path."/".$uuid."/genome.json",[$json]);
+#	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v2 -i "'.$path."/".$uuid.'/genome.json" -o "'.$path."/".$uuid.'/rast-kv2.json"');
+#	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-kmer-v1 -i "'.$path."/".$uuid.'/rast-kv2.json" -o "'.$path."/".$uuid.'/rast-kv1.json" -H');
+#	system(Bio::KBase::utilities::conf("ProbModelSEED","RAST_CLI_dir").'/rast-annotate-proteins-similarity -i "'.$path."/".$uuid.'/rast-kv1.json" -o "'.$path."/".$uuid.'/rast-sim.json" -H');
+#	my $data = Bio::KBase::ObjectAPI::utilities::LOADFILE($path."/".$uuid."/rast-sim.json");
+#    my $anno_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$data}));
+#	for (my $i=0; $i < @{$anno_genome->{features}}; $i++) {
+#		if (defined($ftrhash->{$anno_genome->{features}->[$i]->{id}})) {
+#			$ftrhash->{$anno_genome->{features}->[$i]->{id}}->{function} = $anno_genome->{features}->[$i]->{function};
+#		}
+#	}
 	return $genome;
 }
 
 sub annotate_microbial_contigs {
 	my ($self,$args) = @_;
-	$args = Bio::KBase::utilities::args($args,["genome","fasta"],{
-    	uuid => Data::UUID->new()->create_str()
-	});
+	$args = Bio::KBase::utilities::args($args,["genome"],{});
 	my $genome = $args->{genome};
-	my $fasta = $args->{fasta};
-	my $uuid = $args->{uuid};
-	my $path = Bio::KBase::utilities::conf("ModelSEED","fbajobdir");
-	File::Path::mkpath ($path."/".$uuid);
-	Bio::KBase::ObjectAPI::utilities::PRINTFILE($path."/".$uuid."/fasta",[$fasta]);
-	system(Bio::KBase::utilities::conf("ModelSEED","RAST_CLI_dir").'/rast-create-genome --scientific-name "'.$genome->{scientific_name}.'" --genetic-code '.$genome->{genetic_code}.' --domain '.$genome->{domain}.' --source ModelSEED --source-id '.$genome->{id}.' --contigs "'.$path."/".$uuid."/fasta".'" -o "'.$path."/".$uuid."/genome1.json".'"');
-	system(Bio::KBase::utilities::conf("ModelSEED","RAST_CLI_dir").'/rast-call-features-CDS-glimmer3 -i "'.$path."/".$uuid."/genome1.json".'" -o "'.$path."/".$uuid."/genome2.json".'"');
-	system(Bio::KBase::utilities::conf("ModelSEED","RAST_CLI_dir").'/rast-call-features-rRNA-SEED -i "'.$path."/".$uuid."/genome2.json".'" -o "'.$path."/".$uuid."/genome3.json".'" --call-5S --call-SSU --call-LSU');
-	my $data = Bio::KBase::ObjectAPI::utilities::LOADFILE($path."/".$uuid."/genome3.json");
-    my $anno_genome = Bio::KBase::ObjectAPI::utilities::FROMJSON(join("\n",@{$data}));
-	$genome->{contigs} = $anno_genome->{contigs};
+	my $client = Bio::KBase::GenomeAnnotation::Client->new('http://tutorial.theseed.org/services/genome_annotation');
+	my $newgenome = $client->create_genome({
+		scientific_name => $genome->{scientific_name},
+		domain => $genome->{domain},
+		genetic_code => $genome->{genetic_code},
+		taxonomy => $genome->{taxonomy}
+	});
+	$genome->{id} = $newgenome->{id};
+	$genome->{source} = "RAST";
+	$genome->{source_id} = $newgenome->{id};
+	$genome = $client->run_pipeline($genome,{stages => Bio::KBase::constants::contig_annotation_pipeline()});
 	my $ftrhash;
-	for (my $i=0; $i < @{$anno_genome->{features}}; $i++) {
-		my $newgene = {
-			id => $anno_genome->{features}->[$i]->{id},
-			location => $anno_genome->{features}->[$i]->{location},
-			function => "",
-			dna_sequence => "",
-			dna_sequence_length => 0,
-			md5 => ""
-		};
-		$ftrhash->{$newgene->{id}} = $newgene;
-		if (defined($anno_genome->{features}->[$i]->{protein_translation})) {
-			$newgene->{protein_translation} = $anno_genome->{features}->[$i]->{protein_translation};
-			$newgene->{protein_translation_length} = length($newgene->{protein_translation});
-			$newgene->{md5} = Digest::MD5::md5_hex($newgene->{protein_translation});
+	delete $genome->{analysis_events};
+	for(my $i=0; $i < @{$genome->{features}}; $i++) {
+		$ftrhash->{$genome->{features}->[$i]->{id}} = $genome->{features}->[$i];
+		delete $genome->{features}->[$i]->{annotations};
+		delete $genome->{features}->[$i]->{feature_creation_event};
+		delete $genome->{features}->[$i]->{quality};
+		if (defined($genome->{features}->[$i]->{protein_translation})) {
+			$genome->{features}->[$i]->{protein_translation_length} = length($genome->{features}->[$i]->{protein_translation});
+			$genome->{features}->[$i]->{md5} = Digest::MD5::md5_hex($genome->{features}->[$i]->{protein_translation});
 		}
-		push(@{$genome->{features}},$newgene);
 	}
-	system(Bio::KBase::utilities::conf("ModelSEED","RAST_CLI_dir").'/rast-export-genome -i "'.$path."/".$uuid.'/genome3.json" feature_dna -o "'.$path."/".$uuid.'/dna"');
-	open(my $fin,"<",$path."/".$uuid.'/dna');
+	my $dna = $client->export_genome($genome,"feature_dna",[]);
+	my $array = [split(/\n/,$dna)];
 	my $currentgene;
-	while (my $line = <$fin>) {
-		chomp($line);
+	for (my $i=0; $i < @{$array}; $i++) {
+		my $line = $array->[$i];
 		if ($line =~ m/\>([^\s^\t]+)/) {
 			$currentgene = $1;
 			if (defined($ftrhash->{$currentgene})) {
@@ -1579,10 +1622,8 @@ sub annotate_microbial_contigs {
 			$ftrhash->{$currentgene}->{dna_sequence_length} = length($ftrhash->{$currentgene}->{dna_sequence});
 		}
 	}
-	close($fin);
-	$genome = $self->annotate_microbial_genome({
-		genome => $genome
-	});
+	$self->assign_taxonomy_from_close_genome({genome => $genome});
+	Bio::KBase::ObjectAPI::utilities::PRINTFILE("/Users/chenry/workspace/genome.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($genome,1)]);
 	return $genome;
 }
 
@@ -1620,28 +1661,28 @@ sub annotate_plant_genome_kmers {
 
     my %Kmers_Functions=();
     foreach my $function (keys %Functions_Kmers){
-	foreach my $kmer (@{$Functions_Kmers{$function}}){
-	    $Kmers_Functions{$kmer}=$function;
-	}
+		foreach my $kmer (@{$Functions_Kmers{$function}}){
+		    $Kmers_Functions{$kmer}=$function;
+		}
     }
 
     my $Kmer_Length=8;
     my %Hit_Proteins=();
     foreach my $ftr (@{$Genome->{features}}){
-	my $Seq = $ftr->{protein_translation};
-	my $SeqLen = length($Seq);
-	next if $SeqLen < 10;
-	
-	for (my $frame = 0; $frame <= $Kmer_Length; $frame++){
-	    # run through frames
-	    my $SeqString = substr($Seq,$frame,$SeqLen);
-	    # take the relevant substring
-	    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
-		if(exists($Kmers_Functions{$1})){
-		    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
+		my $Seq = $ftr->{protein_translation};
+		my $SeqLen = length($Seq);
+		next if $SeqLen < 10;
+		
+		for (my $frame = 0; $frame <= $Kmer_Length; $frame++){
+		    # run through frames
+		    my $SeqString = substr($Seq,$frame,$SeqLen);
+		    # take the relevant substring
+		    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
+				if(exists($Kmers_Functions{$1})){
+				    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
+				}
+		    }
 		}
-	    }
-	}
     }
 
     #Eliminate hits that have a small number of kmers
@@ -1649,49 +1690,49 @@ sub annotate_plant_genome_kmers {
     my $Kmer_Threshold = 1;
     my %Deleted_Proteins=();
     foreach my $protein (keys %Hit_Proteins){
-	my %Deleted_Functions=();
-	foreach my $function (keys %{$Hit_Proteins{$protein}}){
-	    my $N_Kmers = scalar(keys %{$Hit_Proteins{$protein}{$function}});
-	    if($N_Kmers <= $Kmer_Threshold){
-		$Deleted_Functions{$function}=1;
-	    }
-	}
-
-	foreach my $function (keys %Deleted_Functions){
-	    delete($Hit_Proteins{$protein}{$function});
-	}
-
-	if(scalar(keys %{$Hit_Proteins{$protein}})==0){
-	    $Deleted_Proteins{$protein}=1;
-	}
+		my %Deleted_Functions=();
+		foreach my $function (keys %{$Hit_Proteins{$protein}}){
+		    my $N_Kmers = scalar(keys %{$Hit_Proteins{$protein}{$function}});
+		    if($N_Kmers <= $Kmer_Threshold){
+				$Deleted_Functions{$function}=1;
+		    }
+		}
+	
+		foreach my $function (keys %Deleted_Functions){
+		    delete($Hit_Proteins{$protein}{$function});
+		}
+	
+		if(scalar(keys %{$Hit_Proteins{$protein}})==0){
+		    $Deleted_Proteins{$protein}=1;
+		}
     }
 
     foreach my $protein (keys %Deleted_Proteins){
-	delete($Hit_Proteins{$protein});
+		delete($Hit_Proteins{$protein});
     }
 
     #Scan for multi-hits, and, for now, ignore them
     undef(%Deleted_Proteins);
     foreach my $protein (keys %Hit_Proteins){
-	next if scalar(keys %{$Hit_Proteins{$protein}})==1;
-
-	my %Top_Functions=();
-	foreach my $function (keys %{$Hit_Proteins{$protein}}){
-#	    print $function,"\t",join("|",keys %{$Hit_Proteins{$protein}{$function}}),"\n";
-	    $Top_Functions{scalar(keys %{$Hit_Proteins{$protein}{$function}})}{$function}=1;
-	}
-
-	my $Top_Number = ( sort { $b <=> $a } keys %Top_Functions )[0];
-	my $Top_Function = ( keys %{$Top_Functions{$Top_Number}} )[0];
-	if(scalar(keys %{$Top_Functions{$Top_Number}})>1){
-	    $Deleted_Proteins{$protein}=1;
-	}else{
-	    $Hit_Proteins{$protein}={ $Top_Function => $Hit_Proteins{$protein}{$Top_Function} };
-	}
+		next if scalar(keys %{$Hit_Proteins{$protein}})==1;
+	
+		my %Top_Functions=();
+		foreach my $function (keys %{$Hit_Proteins{$protein}}){
+	#	    print $function,"\t",join("|",keys %{$Hit_Proteins{$protein}{$function}}),"\n";
+		    $Top_Functions{scalar(keys %{$Hit_Proteins{$protein}{$function}})}{$function}=1;
+		}
+	
+		my $Top_Number = ( sort { $b <=> $a } keys %Top_Functions )[0];
+		my $Top_Function = ( keys %{$Top_Functions{$Top_Number}} )[0];
+		if(scalar(keys %{$Top_Functions{$Top_Number}})>1){
+		    $Deleted_Proteins{$protein}=1;
+		}else{
+		    $Hit_Proteins{$protein}={ $Top_Function => $Hit_Proteins{$protein}{$Top_Function} };
+		}
     }
 
     foreach my $protein (keys %Deleted_Proteins){
-	delete($Hit_Proteins{$protein});
+			delete($Hit_Proteins{$protein});
     }
 
     return \%Hit_Proteins;
@@ -1713,8 +1754,8 @@ sub annotate_plant_genome_blast {
     #Print out protein sequences
     open(OUT, "> ".$jobFiles.".fasta");
     foreach my $ftr (@{$Genome->{features}}){
-	print OUT ">".$ftr->{id}."\n";
-	print OUT join("\n", $ftr->{protein_translation} =~ m/.{1,60}/g)."\n";
+		print OUT ">".$ftr->{id}."\n";
+		print OUT join("\n", $ftr->{protein_translation} =~ m/.{1,60}/g)."\n";
     }
     close(OUT);
 	    
@@ -1738,8 +1779,6 @@ sub annotate_plant_genome_blast {
     use Symbol 'gensym'; $err = gensym;
     use IPC::Open3;
 
-#    my $Command = "/vol/kbase/runtime/bin/blastp";
-#    my $Command = "/sw/bin/blastp";
     my $Command = "blastp";
 
     my @Command_Array = ("nice -n 10 ".$Command);
@@ -1774,22 +1813,22 @@ sub annotate_plant_genome_blast {
     my %Ftrs_Sims=();
     my $Current_Ftr="";
     while(<FH>){
-	chomp;
-    
-	my @temp=split(/\t/,$_,-1);
-	next unless $temp[10] < 1e-10;
-
-	$Current_Ftr = $temp[0];
-	my $identity = $temp[2]/100.0;
-	$Ftrs_Sims{$Current_Ftr}{$temp[1]}={bitscore=>$temp[11],identity=>sprintf("%.2f",$identity),line=>$_};
-
-	if(exists($exemplars->{$temp[1]})){
-	    foreach my $ortholog_spp (keys %{$families->{$exemplars->{$temp[1]}}}){
-		my ($spp,$ortholog)=split(/\|\|/,$ortholog_spp);
-		my $line = $Current_Ftr."\t".$ortholog."\t".$families->{$exemplars->{$temp[1]}}{$ortholog_spp}."\t".join("\t",@temp[3..$#temp]);
-		$Ftrs_Sims{$Current_Ftr}{$ortholog}={bitscore=>$temp[11],identity=>$families->{$exemplars->{$temp[1]}}{$ortholog_spp},line=>$line};
-	    }
-	}
+		chomp;
+	    
+		my @temp=split(/\t/,$_,-1);
+		next unless $temp[10] < 1e-10;
+	
+		$Current_Ftr = $temp[0];
+		my $identity = $temp[2]/100.0;
+		$Ftrs_Sims{$Current_Ftr}{$temp[1]}={bitscore=>$temp[11],identity=>sprintf("%.2f",$identity),line=>$_};
+	
+		if(exists($exemplars->{$temp[1]})){
+		    foreach my $ortholog_spp (keys %{$families->{$exemplars->{$temp[1]}}}){
+			my ($spp,$ortholog)=split(/\|\|/,$ortholog_spp);
+			my $line = $Current_Ftr."\t".$ortholog."\t".$families->{$exemplars->{$temp[1]}}{$ortholog_spp}."\t".join("\t",@temp[3..$#temp]);
+			$Ftrs_Sims{$Current_Ftr}{$ortholog}={bitscore=>$temp[11],identity=>$families->{$exemplars->{$temp[1]}}{$ortholog_spp},line=>$line};
+		    }
+		}
     }
     close(FH);
 
@@ -1800,38 +1839,38 @@ sub annotate_plant_genome_blast {
     my $Ftr_Index = {};
     my $Exems = {};
     foreach my $ftr (sort keys %Ftrs_Sims){
-	foreach my $sim ( sort { $Ftrs_Sims{$ftr}{$a}{bitscore} <=> $Ftrs_Sims{$ftr}{$b}{bitscore} || 
-				     $Ftrs_Sims{$ftr}{$a}{identity} <=> $Ftrs_Sims{$ftr}{$b}{identity} } keys %{$Ftrs_Sims{$ftr}} ){
-	    
-	    my $line = $Ftrs_Sims{$ftr}{$sim}{line};
-	    my @temp=split(/\t/,$line,-1);
-	    my ($query,$hit,$percent,$evalue,$bitscore) = @temp[0,1,2,10,11];
-
-	    if($percent > 1){
-		$percent = $percent/100.0;
-		$percent = sprintf("%.2f",$percent);
-	    }
-
-	    if(exists($exemplars->{$hit})){
-		$Exems->{$hit}{$query}=1;
-	    }
-	    
-	    if(scalar(keys %$Sims)>=1000 && !exists($Sims->{$query})){
-		push(@Sim_Objects,Bio::KBase::ObjectAPI::utilities::TOJSON($Sims));
-		
-		undef($Sims);
-		$Sims_Index++;
-	    }
-	    
-	    my $ftr_json = { hit_id => $hit, percent_id => $percent, e_value => $evalue, bit_score => $bitscore };
-	    $Sims->{$query} = [] if !exists($Sims->{$query});
-	    push(@{$Sims->{$query}},$ftr_json);
-	    $N_Sims++;
-	    if(exists($Ftr_Index->{$query}) && $Ftr_Index->{$query} != $Sims_Index){
-		print "Warning";
-	    }
-	    $Ftr_Index->{$query}=$Sims_Index;
-	}
+		foreach my $sim ( sort { $Ftrs_Sims{$ftr}{$a}{bitscore} <=> $Ftrs_Sims{$ftr}{$b}{bitscore} || 
+					     $Ftrs_Sims{$ftr}{$a}{identity} <=> $Ftrs_Sims{$ftr}{$b}{identity} } keys %{$Ftrs_Sims{$ftr}} ){
+		    
+		    my $line = $Ftrs_Sims{$ftr}{$sim}{line};
+		    my @temp=split(/\t/,$line,-1);
+		    my ($query,$hit,$percent,$evalue,$bitscore) = @temp[0,1,2,10,11];
+	
+		    if($percent > 1){
+				$percent = $percent/100.0;
+				$percent = sprintf("%.2f",$percent);
+		    }
+	
+		    if(exists($exemplars->{$hit})){
+				$Exems->{$hit}{$query}=1;
+		    }
+		    
+		    if(scalar(keys %$Sims)>=1000 && !exists($Sims->{$query})){
+			push(@Sim_Objects,Bio::KBase::ObjectAPI::utilities::TOJSON($Sims));
+			
+			undef($Sims);
+			$Sims_Index++;
+		    }
+		    
+		    my $ftr_json = { hit_id => $hit, percent_id => $percent, e_value => $evalue, bit_score => $bitscore };
+		    $Sims->{$query} = [] if !exists($Sims->{$query});
+		    push(@{$Sims->{$query}},$ftr_json);
+		    $N_Sims++;
+		    if(exists($Ftr_Index->{$query}) && $Ftr_Index->{$query} != $Sims_Index){
+			print "Warning";
+		    }
+		    $Ftr_Index->{$query}=$Sims_Index;
+		}
     }
 
     #Last one
@@ -2553,9 +2592,9 @@ sub ModelReconstruction {
     }
     if (!defined($parameters->{output_path})) {
     	if ($parameters->{genome_type} eq  "plant") {
-	    $parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
+	    	$parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/";
     	} else {
-	    $parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
+	    	$parameters->{output_path} = "/".Bio::KBase::utilities::user_id()."/".Bio::KBase::utilities::conf("ProbModelSEED","home_dir")."/";
     	}
     }
     if (substr($parameters->{output_path},-1,1) ne "/") {
@@ -2588,32 +2627,31 @@ sub ModelReconstruction {
     } elsif ($parameters->{genome} =~ m/RAST:/ || $parameters->{genome} =~ m/PATRIC:/) {
     	my $GenomeObj = $self->get_genome($parameters->{genome});
     	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/genome", "genome", {}, $GenomeObj->serializeToDB()] ] });
-	$parameters->{genome} = $folder."/genome";
+		$parameters->{genome} = $folder."/genome";
     }elsif ( $parameters->{genome_type} eq "plant" && $parameters->{annotation_process} eq "blast" ){
-
-	my $kmers = $parameters->{annotation_process} eq "kmer" ? 1 : 0;
-	my $blast = $parameters->{annotation_process} eq "blast" ? 1 : 0;
-
-	my $GenomeObj = $self->get_object($folder."/genome")->serializeToDB();
-	my $MinGenomeObj = $self->get_object($folder."/.plantseed_data/minimal_genome");
-	my $annotation_summary = $self->annotate_plant_genome({genome => $GenomeObj,
-							       min_genome => $MinGenomeObj,
-							       kmers => $kmers,
-							       blast => $blast,
-							       model_folder => $folder});
-
-	#Saving genome
-	my $genome_meta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$folder."/genome"], metadata_only=>1 })->[0][0][7];
-	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/genome", "genome", $genome_meta, $GenomeObj] ] });
-	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/.plantseed_data/minimal_genome", "unspecified", {}, $MinGenomeObj] ]});
-
-	#Updating status
-	my $modelfolder_meta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$folder], metadata_only=>1 })->[0][0][7];
-	$modelfolder_meta->{status}="complete";
-	$modelfolder_meta->{status_timestamp} = Bio::KBase::utilities::timestamp();
-	Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$folder,$modelfolder_meta]]});
-
-	return {fbamodel_ref => $folder};
+		my $kmers = $parameters->{annotation_process} eq "kmer" ? 1 : 0;
+		my $blast = $parameters->{annotation_process} eq "blast" ? 1 : 0;
+	
+		my $GenomeObj = $self->get_object($folder."/genome")->serializeToDB();
+		my $MinGenomeObj = $self->get_object($folder."/.plantseed_data/minimal_genome");
+		my $annotation_summary = $self->annotate_plant_genome({genome => $GenomeObj,
+								       min_genome => $MinGenomeObj,
+								       kmers => $kmers,
+								       blast => $blast,
+								       model_folder => $folder});
+	
+		#Saving genome
+		my $genome_meta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$folder."/genome"], metadata_only=>1 })->[0][0][7];
+		Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/genome", "genome", $genome_meta, $GenomeObj] ] });
+		Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/.plantseed_data/minimal_genome", "unspecified", {}, $MinGenomeObj] ]});
+	
+		#Updating status
+		my $modelfolder_meta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$folder], metadata_only=>1 })->[0][0][7];
+		$modelfolder_meta->{status}="complete";
+		$modelfolder_meta->{status_timestamp} = Bio::KBase::utilities::timestamp();
+		Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$folder,$modelfolder_meta]]});
+	
+		return {fbamodel_ref => $folder};
     }
     $parameters->{genome} =~ s/\/\//\//g;
     

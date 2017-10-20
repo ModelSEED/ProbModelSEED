@@ -9,3 +9,7 @@ my $output = $msclient->ModelReconstruction({
 });
 
 print Data::Dumper->Dump([$output]);
+
+$output = $msclient->list_models();
+
+print "\n\n\n"Data::Dumper->Dump([$output]);
