@@ -2743,7 +2743,7 @@ sub ModelReconstruction
     if (substr($input->{output_path},-1,1) ne "/") {
     	$input->{output_path} .= "/";
     }
-    my $folder = $input->{output_path}."/".$input->{output_file};
+    my $folder = $input->{output_path}.$input->{output_file};
     if ($folder =~ m/modelseed\/(.+)/ || $folder =~ m/plantseed\/(.+)/) {
     	if (length($1) == 0) {
     		Bio::KBase::utilities::error("No model name provided!");
@@ -2751,11 +2751,21 @@ sub ModelReconstruction
     } else {
     	Bio::KBase::utilities::error("Model path not suitable!");
     }
-#    Bio::ModelSEED::patricenv::call_ws("delete",{
-#		objects => [$folder],
-#		deleteDirectories => 1,
-#		force => 1
-#	});
+    #We need to delete a model if it already exists
+    my $getoutput;
+    eval {
+	    $getoutput = Bio::ModelSEED::patricenv::call_ws("get",{
+			objects => [$folder],
+			metadata_only => 1
+		});
+    };
+    if (defined($getoutput)) {
+	    Bio::ModelSEED::patricenv::call_ws("delete",{
+			objects => [$folder],
+			deleteDirectories => 1,
+			force => 1
+		});
+    }
     Bio::ModelSEED::patricenv::call_ws("create",{
 		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
 	});
