@@ -2708,6 +2708,7 @@ sub ModelReconstruction {
 
 sub FluxBalanceAnalysis {
 	my($self,$parameters,$model) = @_;
+	$analysis_type = "FBA";
 	$parameters = Bio::KBase::utilities::args($parameters,["model"],{
 		media => undef,
 		fva => 1,
@@ -2781,6 +2782,7 @@ sub FluxBalanceAnalysis {
 	}
 	($parameters->{fbamodel_workspace},$parameters->{fbamodel_id}) = $self->util_parserefs($parameters->{model});	
 	delete $parameters->{model};
+	print "RUNNING FBA:".$parameters->{workspace}."/".$parameters->{fba_output_id}."\n";
 	Bio::KBase::ObjectAPI::functions::func_run_flux_balance_analysis($parameters,$model);
     return {
 		fba_ref => $outputfile,
@@ -2860,6 +2862,7 @@ sub GapfillModel {
 	delete $parameters->{source_model};
 	delete $parameters->{exp_series};
 	delete $parameters->{probanno};
+	print "RUNNING GAPFILLING:".$parameters->{workspace}."/".$parameters->{fbamodel_output_id}."\n";
 	Bio::KBase::ObjectAPI::functions::func_gapfill_metabolic_model($parameters,$model);
 	return {
 		gapfill_ref => $parameters->{output_path}."/".$parameters->{output_file},
