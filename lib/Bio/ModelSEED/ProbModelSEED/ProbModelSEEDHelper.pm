@@ -1439,15 +1439,50 @@ sub create_featurevalues_from_shock {
 	return $expressionfolder.$input->{destname};
 }
 
+sub annotate_plant_genome_wrapper {
+    my ($self,$args) = @_;
+    $args = Bio::KBase::utilities::args($args,["destmodel"],{kmers => 0,blast => 1});
+        
+    my $kmers = $args->{kmers};
+    my $blast = $args->{blast};
+    my $user = Bio::KBase::utilities::user_id();
+    my $folder = "/".$user."/".Bio::KBase::utilities::conf("ProbModelSEED","plantseed_home_dir")."/".$args->{destmodel}."/";
+
+    my $GenomeObj = $self->get_object($folder."/genome")->serializeToDB();
+    my $MinGenomeObj = $self->get_object($folder."/.plantseed_data/minimal_genome");
+    my $output = $self->annotate_plant_genome({genome => $GenomeObj,
+					       min_genome => $MinGenomeObj,
+					       kmers => $kmers,
+					       blast => $blast,
+					       model_folder => $folder});
+
+    #Saving genome
+    my $genome_meta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$folder."/genome"], metadata_only=>1 })->[0][0][7];
+    Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/genome", "genome", $genome_meta, $GenomeObj] ] });
+    Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/.plantseed_data/minimal_genome", "unspecified", {}, $MinGenomeObj] ]});
+	
+    #Updating status
+    my $modelfolder_meta = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$folder], metadata_only=>1 })->[0][0][7];
+    $modelfolder_meta->{status}="complete";
+    $modelfolder_meta->{status_timestamp} = Bio::KBase::utilities::timestamp();
+    Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$folder,$modelfolder_meta]]});
+
+    return $output;
+}
+
 sub annotate_plant_genome {
     my ($self,$args) = @_;
     $args = Bio::KBase::utilities::args($args,["genome","min_genome","model_folder"],{kmers => 1,blast => 0});
-    
+
     my $modelfolder = $args->{model_folder};
     my $Genome = $args->{genome};
     my $Min_Genome = $args->{min_genome};
     my $user_metadata = $args->{metadata};
     my $genome_user_metadata = {};
+
+    $user_metadata->{status}="annotating";
+    $user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
+    Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$modelfolder,$user_metadata]]});
 
     #Translate nucleotides
     foreach my $ftr (@{$Genome->{features}}){
@@ -1642,28 +1677,28 @@ sub annotate_plant_genome_kmers {
 
     my %Kmers_Functions=();
     foreach my $function (keys %Functions_Kmers){
-		foreach my $kmer (@{$Functions_Kmers{$function}}){
-		    $Kmers_Functions{$kmer}=$function;
-		}
+	foreach my $kmer (@{$Functions_Kmers{$function}}){
+	    $Kmers_Functions{$kmer}=$function;
+	}
     }
 
     my $Kmer_Length=8;
     my %Hit_Proteins=();
     foreach my $ftr (@{$Genome->{features}}){
-		my $Seq = $ftr->{protein_translation};
-		my $SeqLen = length($Seq);
-		next if $SeqLen < 10;
-		
-		for (my $frame = 0; $frame <= $Kmer_Length; $frame++){
-		    # run through frames
-		    my $SeqString = substr($Seq,$frame,$SeqLen);
-		    # take the relevant substring
-		    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
-				if(exists($Kmers_Functions{$1})){
-				    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
-				}
-		    }
+	my $Seq = $ftr->{protein_translation};
+	my $SeqLen = length($Seq);
+	next if $SeqLen < 10;
+	
+	for (my $frame = 0; $frame <= $Kmer_Length; $frame++){
+	    # run through frames
+	    my $SeqString = substr($Seq,$frame,$SeqLen);
+	    # take the relevant substring
+	    while($SeqString =~ /((\w){${Kmer_Length}})/gim){
+		if(exists($Kmers_Functions{$1})){
+		    $Hit_Proteins{$ftr->{id}}{$Kmers_Functions{$1}}{$1}=1;
 		}
+	    }
+	}
     }
 
     #Eliminate hits that have a small number of kmers
@@ -1671,49 +1706,48 @@ sub annotate_plant_genome_kmers {
     my $Kmer_Threshold = 1;
     my %Deleted_Proteins=();
     foreach my $protein (keys %Hit_Proteins){
-		my %Deleted_Functions=();
-		foreach my $function (keys %{$Hit_Proteins{$protein}}){
-		    my $N_Kmers = scalar(keys %{$Hit_Proteins{$protein}{$function}});
-		    if($N_Kmers <= $Kmer_Threshold){
-				$Deleted_Functions{$function}=1;
-		    }
-		}
+	my %Deleted_Functions=();
+	foreach my $function (keys %{$Hit_Proteins{$protein}}){
+	    my $N_Kmers = scalar(keys %{$Hit_Proteins{$protein}{$function}});
+	    if($N_Kmers <= $Kmer_Threshold){
+		$Deleted_Functions{$function}=1;
+	    }
+	}
 	
-		foreach my $function (keys %Deleted_Functions){
-		    delete($Hit_Proteins{$protein}{$function});
-		}
+	foreach my $function (keys %Deleted_Functions){
+	    delete($Hit_Proteins{$protein}{$function});
+	}
 	
-		if(scalar(keys %{$Hit_Proteins{$protein}})==0){
-		    $Deleted_Proteins{$protein}=1;
-		}
+	if(scalar(keys %{$Hit_Proteins{$protein}})==0){
+	    $Deleted_Proteins{$protein}=1;
+	}
     }
 
     foreach my $protein (keys %Deleted_Proteins){
-		delete($Hit_Proteins{$protein});
+	delete($Hit_Proteins{$protein});
     }
 
     #Scan for multi-hits, and, for now, ignore them
     undef(%Deleted_Proteins);
     foreach my $protein (keys %Hit_Proteins){
-		next if scalar(keys %{$Hit_Proteins{$protein}})==1;
+	next if scalar(keys %{$Hit_Proteins{$protein}})==1;
 	
-		my %Top_Functions=();
+	my %Top_Functions=();
 		foreach my $function (keys %{$Hit_Proteins{$protein}}){
-	#	    print $function,"\t",join("|",keys %{$Hit_Proteins{$protein}{$function}}),"\n";
 		    $Top_Functions{scalar(keys %{$Hit_Proteins{$protein}{$function}})}{$function}=1;
 		}
 	
-		my $Top_Number = ( sort { $b <=> $a } keys %Top_Functions )[0];
-		my $Top_Function = ( keys %{$Top_Functions{$Top_Number}} )[0];
-		if(scalar(keys %{$Top_Functions{$Top_Number}})>1){
-		    $Deleted_Proteins{$protein}=1;
-		}else{
-		    $Hit_Proteins{$protein}={ $Top_Function => $Hit_Proteins{$protein}{$Top_Function} };
-		}
+	my $Top_Number = ( sort { $b <=> $a } keys %Top_Functions )[0];
+	my $Top_Function = ( keys %{$Top_Functions{$Top_Number}} )[0];
+	if(scalar(keys %{$Top_Functions{$Top_Number}})>1){
+	    $Deleted_Proteins{$protein}=1;
+	}else{
+	    $Hit_Proteins{$protein}={ $Top_Function => $Hit_Proteins{$protein}{$Top_Function} };
+	}
     }
-
+    
     foreach my $protein (keys %Deleted_Proteins){
-			delete($Hit_Proteins{$protein});
+	delete($Hit_Proteins{$protein});
     }
 
     return \%Hit_Proteins;
@@ -2533,34 +2567,34 @@ sub EditModel {
 sub ModelReconstruction {
 	my($self,$parameters) = @_;
 	$parameters = Bio::KBase::utilities::args($parameters,[],{
-    	genome_type => undef,
-    	shock_id => undef,
-    	media => undef,
-    	template_model => "auto",
-    	fulldb => 0,
-    	output_path => undef,
-    	genome => undef,
-    	output_file => undef,
-    	gapfill => 1,
-    	probannogapfill => 0,
-    	probanno => 0,
-    	predict_essentiality => 1,
-    	gapfill_model => 0,#This ensures the KBase function does not run gapfilling internally
-    	thermodynamic_constraints => 0,
-    	comprehensive_gapfill => 0,
-    	custom_bound_list => [],
-		media_supplement_list => [],
-		expseries => undef,
-		expression_condition => undef,
-		exp_threshold_percentile => 0.5,
-		exp_threshold_margin => 0.1,
-		activation_coefficient => 0.5,
-		omega => 0,
-		objective_fraction => 0.1,
-		minimum_target_flux => 0.1,
-		number_of_solutions => 1,
-		annotation_process => "kmer"
-    });
+	    genome_type => undef,
+	    shock_id => undef,
+	    media => undef,
+	    template_model => "auto",
+	    fulldb => 0,
+	    output_path => undef,
+	    genome => undef,
+	    output_file => undef,
+	    gapfill => 1,
+	    probannogapfill => 0,
+	    probanno => 0,
+	    predict_essentiality => 1,
+	    gapfill_model => 0,#This ensures the KBase function does not run gapfilling internally
+	    thermodynamic_constraints => 0,
+	    comprehensive_gapfill => 0,
+	    custom_bound_list => [],
+	    media_supplement_list => [],
+	    expseries => undef,
+	    expression_condition => undef,
+	    exp_threshold_percentile => 0.5,
+	    exp_threshold_margin => 0.1,
+	    activation_coefficient => 0.5,
+	    omega => 0,
+	    objective_fraction => 0.1,
+	    minimum_target_flux => 0.1,
+	    number_of_solutions => 1,
+	    annotation_process => "kmer"});
+
     if (defined($parameters->{use_cplex})) {
     	Bio::KBase::utilities::setconf("ModelSEED","use_cplex",$parameters->{use_cplex});
     }
