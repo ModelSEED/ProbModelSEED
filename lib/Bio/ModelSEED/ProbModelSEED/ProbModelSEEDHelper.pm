@@ -2383,10 +2383,11 @@ sub app_harness {
 	} else {
 		Bio::KBase::utilities::log($command.": job started");
 	    my $output = $self->$command($parameters);
-		Bio::ModelSEED::patricenv::create_report({
+		if(defined($output) && exists($output->{report_ref})){
+		    Bio::ModelSEED::patricenv::create_report({
 			"ref" => $output->{report_ref},
-			output => $output
-		});
+			output => $output});
+		}
 	    Bio::KBase::utilities::log($command.": job done (elapsed time ".Bio::KBase::utilities::elapsedtime().")");
 	    return $output;
 	}
