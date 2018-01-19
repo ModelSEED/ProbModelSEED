@@ -1477,9 +1477,10 @@ sub annotate_plant_genome {
     my $modelfolder = $args->{model_folder};
     my $Genome = $args->{genome};
     my $Min_Genome = $args->{min_genome};
-    my $user_metadata = $args->{metadata};
     my $genome_user_metadata = {};
 
+    #Updating status
+    my $user_metadata = Bio::ModelSEED::patricenv::call_ws("get",{ objects => [$modelfolder], metadata_only=>1 })->[0][0][7];
     $user_metadata->{status}="annotating";
     $user_metadata->{status_timestamp} = Bio::KBase::utilities::timestamp();
     Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$modelfolder,$user_metadata]]});
