@@ -2383,7 +2383,7 @@ sub app_harness {
 	} else {
 		Bio::KBase::utilities::log($command.": job started");
 	    my $output = $self->$command($parameters);
-		if(defined($output) && exists($output->{report_ref})){
+		if(defined($output) && ref($output) eq "HASH" && exists($output->{report_ref})){
 		    Bio::ModelSEED::patricenv::create_report({
 			"ref" => $output->{report_ref},
 			output => $output});
