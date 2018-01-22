@@ -1763,7 +1763,7 @@ sub annotate_plant_genome_blast {
     $job .= $chars[rand @chars] for 1..8;
     #$job = "hWJcfo6K";
 
-    my $jobDir = "/tmp/blastjobs/".$job."/";
+    my $jobDir = "/scratch/blastjobs/".$job."/";
     system("mkdir -p ".$jobDir);
     my $jobFiles = $jobDir.$Genome->{id};
 
