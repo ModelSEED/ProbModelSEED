@@ -10,6 +10,11 @@ our $method = undef;
 
 sub initialize_call {
 	my ($ctx,$method,$arguments,$pid) = @_;
+
+	Bio::KBase::utilities::read_config({
+	    filename => $ENV{KB_DEPLOYMENT_CONFIG},
+	    service => "ProbModelSEED"});
+
 	Bio::KBase::utilities::processid($pid);
 	Bio::KBase::utilities::arguments($arguments);
 	Bio::KBase::utilities::start_time(1);

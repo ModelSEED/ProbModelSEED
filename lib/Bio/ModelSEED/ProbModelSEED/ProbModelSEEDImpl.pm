@@ -2716,7 +2716,24 @@ sub ModelReconstruction
 			metadata_only => 1
 		});
     };
+    my ($plant_meta,$plant_genome,$plant_min_genome) = (undef,undef,undef);
     if (defined($getoutput)) {
+	if( $input->{genome_type} eq "plant" ){
+	    #Need to preserve ModelTemplate
+	    my $model = $self->helper()->get_object($folder."/model");
+	    $input->{template_model}=$model->template_ref();
+	    $input->{template_model}=~ s/\|\|$//;
+
+	    if(exists($input->{genome})){
+		#Need to preserve genome
+		$plant_meta = Bio::ModelSEED::patricenv::call_ws("get",{objects => [$folder."/genome"],
+									metadata_only => 1})->[0][0][8];
+
+		$plant_genome = $self->helper()->get_object($folder."/genome")->serializeToDB();
+		$plant_min_genome = $self->helper()->get_object($folder."/.plantseed_data/minimal_genome");
+	    }
+	}
+
 	    Bio::ModelSEED::patricenv::call_ws("delete",{
 			objects => [$folder],
 			deleteDirectories => 1,
@@ -2726,6 +2743,12 @@ sub ModelReconstruction
     Bio::ModelSEED::patricenv::call_ws("create",{
 		objects => [[$folder,"modelfolder",{status => "queued",status_timestamp => Bio::KBase::utilities::timestamp()},undef]]
 	});
+
+    if(defined($plant_genome)){
+	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/genome", "genome", $plant_meta, $plant_genome] ] });
+	Bio::ModelSEED::patricenv::call_ws("create", { objects => [ [$folder."/.plantseed_data/minimal_genome", "unspecified", {}, $plant_min_genome] ]});
+    }
+
     $output = $self->helper()->app_harness("ModelReconstruction",$input);
     if (ref($output) eq 'HASH') {
     	$output = $output->{fbamodel_ref};
