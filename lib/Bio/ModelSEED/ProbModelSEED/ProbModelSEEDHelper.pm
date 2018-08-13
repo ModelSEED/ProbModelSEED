@@ -2683,8 +2683,6 @@ sub ModelReconstruction {
 		if($parameters->{genome} !~ m/\//){
 		    $parameters->{genome} = $parameters->{output_path}.$parameters->{genome};
 		}
-	use JSON;
-	print to_json($parameters,{pretty=>1}),"\n";
     }
 
 	if ($parameters->{template_model} =~ m/\//) {
