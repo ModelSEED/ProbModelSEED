@@ -688,7 +688,8 @@ sub save_model {
     }
     $summary->{status} = "complete";
     $summary->{status_timestamp} = Bio::KBase::utilities::timestamp();
-	$self->helper()->update_model_meta($ref,$summary);
+	#$self->helper()->update_model_meta($ref,$summary);
+	Bio::ModelSEED::patricenv::call_ws("update_metadata",{objects => [[$ref,$summary]]});
 	return $output;
 }
 
