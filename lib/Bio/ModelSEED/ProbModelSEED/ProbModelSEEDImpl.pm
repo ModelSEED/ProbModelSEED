@@ -1,6 +1,5 @@
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDImpl;
 use strict;
-use Bio::KBase::Exceptions;
 # Use Semantic Versioning (2.0.0-rc.1)
 # http://semver.org 
 our $VERSION = "0.1.0";
@@ -70,7 +69,7 @@ sub new
 		filename => $ENV{KB_DEPLOYMENT_CONFIG},
 		service => "ProbModelSEED"
 	});
-	#END_CONSTRUCTOR
+    #END_CONSTRUCTOR
 
     if ($self->can('_init_instance'))
     {
@@ -166,8 +165,7 @@ sub list_gapfill_solutions
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to list_gapfill_solutions:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'list_gapfill_solutions');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -181,8 +179,7 @@ sub list_gapfill_solutions
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_gapfill_solutions:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'list_gapfill_solutions');
+	die $msg;
     }
     return($output);
 }
@@ -279,8 +276,7 @@ sub manage_gapfill_solutions
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to manage_gapfill_solutions:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'manage_gapfill_solutions');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -327,8 +323,7 @@ sub manage_gapfill_solutions
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to manage_gapfill_solutions:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'manage_gapfill_solutions');
+	die $msg;
     }
     return($output);
 }
@@ -405,8 +400,7 @@ sub list_fba_studies
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to list_fba_studies:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'list_fba_studies');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -420,8 +414,7 @@ sub list_fba_studies
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_fba_studies:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'list_fba_studies');
+	die $msg;
     }
     return($output);
 }
@@ -504,8 +497,7 @@ sub delete_fba_studies
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to delete_fba_studies:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'delete_fba_studies');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -519,8 +511,7 @@ sub delete_fba_studies
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to delete_fba_studies:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'delete_fba_studies');
+	die $msg;
     }
     return($output);
 }
@@ -585,8 +576,7 @@ sub export_model
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to export_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'export_model');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -607,8 +597,7 @@ sub export_model
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to export_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'export_model');
+	die $msg;
     }
     return($output);
 }
@@ -671,8 +660,7 @@ sub export_media
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to export_media:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'export_media');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -698,8 +686,7 @@ sub export_media
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to export_media:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'export_media');
+	die $msg;
     }
     return($output);
 }
@@ -848,8 +835,7 @@ sub get_model
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to get_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'get_model');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -867,8 +853,7 @@ sub get_model
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to get_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'get_model');
+	die $msg;
     }
     return($output);
 }
@@ -973,8 +958,7 @@ sub delete_model
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to delete_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'delete_model');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -988,8 +972,7 @@ sub delete_model
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to delete_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'delete_model');
+	die $msg;
     }
     return($output);
 }
@@ -1092,8 +1075,7 @@ sub list_models
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to list_models:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'list_models');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -1115,8 +1097,7 @@ sub list_models
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_models:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'list_models');
+	die $msg;
     }
     return($output);
 }
@@ -1237,8 +1218,7 @@ sub copy_model
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to copy_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'copy_model');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -1264,8 +1244,7 @@ sub copy_model
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to copy_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'copy_model');
+	die $msg;
     }
     return($output);
 }
@@ -1386,8 +1365,7 @@ sub copy_genome
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to copy_genome:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'copy_genome');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -1410,8 +1388,7 @@ sub copy_genome
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to copy_genome:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'copy_genome');
+	die $msg;
     }
     return($output);
 }
@@ -1492,8 +1469,7 @@ sub list_model_edits
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to list_model_edits:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'list_model_edits');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -1508,8 +1484,7 @@ sub list_model_edits
     (ref($output) eq 'ARRAY') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to list_model_edits:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'list_model_edits');
+	die $msg;
     }
     return($output);
 }
@@ -1642,8 +1617,7 @@ sub edit_model
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to edit_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'edit_model');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -1662,8 +1636,7 @@ sub edit_model
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to edit_model:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'edit_model');
+	die $msg;
     }
     return($output);
 }
@@ -1750,8 +1723,7 @@ sub get_feature
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to get_feature:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'get_feature');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -1889,8 +1861,7 @@ sub get_feature
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to get_feature:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'get_feature');
+	die $msg;
     }
     return($output);
 }
@@ -1953,8 +1924,7 @@ sub save_feature_function
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to save_feature_function:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'save_feature_function');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2115,8 +2085,7 @@ sub compare_regions
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to compare_regions:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'compare_regions');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2210,8 +2179,7 @@ sub compare_regions
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to compare_regions:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'compare_regions');
+	die $msg;
     }
     return($output);
 }
@@ -2290,8 +2258,7 @@ sub plant_annotation_overview
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to plant_annotation_overview:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'plant_annotation_overview');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2356,8 +2323,7 @@ sub plant_annotation_overview
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to plant_annotation_overview:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'plant_annotation_overview');
+	die $msg;
     }
     return($output);
 }
@@ -2416,8 +2382,7 @@ sub create_genome_from_shock
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to create_genome_from_shock:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'create_genome_from_shock');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2432,8 +2397,7 @@ sub create_genome_from_shock
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to create_genome_from_shock:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'create_genome_from_shock');
+	die $msg;
     }
     return($output);
 }
@@ -2492,8 +2456,7 @@ sub plant_pipeline
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to plant_pipeline:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'plant_pipeline');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2508,8 +2471,7 @@ sub plant_pipeline
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to plant_pipeline:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'plant_pipeline');
+	die $msg;
     }
     return($output);
 }
@@ -2568,8 +2530,7 @@ sub annotate_plant_genome
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to annotate_plant_genome:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'annotate_plant_genome');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2584,8 +2545,7 @@ sub annotate_plant_genome
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to annotate_plant_genome:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'annotate_plant_genome');
+	die $msg;
     }
     return($output);
 }
@@ -2642,8 +2602,7 @@ sub create_featurevalues_from_shock
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to create_featurevalues_from_shock:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'create_featurevalues_from_shock');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2658,8 +2617,7 @@ sub create_featurevalues_from_shock
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to create_featurevalues_from_shock:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'create_featurevalues_from_shock');
+	die $msg;
     }
     return($output);
 }
@@ -2720,8 +2678,7 @@ sub ModelReconstruction
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to ModelReconstruction:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'ModelReconstruction');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2799,8 +2756,7 @@ sub ModelReconstruction
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to ModelReconstruction:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'ModelReconstruction');
+	die $msg;
     }
     return($output);
 }
@@ -2861,8 +2817,7 @@ sub FluxBalanceAnalysis
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to FluxBalanceAnalysis:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'FluxBalanceAnalysis');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2878,8 +2833,7 @@ sub FluxBalanceAnalysis
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to FluxBalanceAnalysis:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'FluxBalanceAnalysis');
+	die $msg;
     }
     return($output);
 }
@@ -2940,8 +2894,7 @@ sub GapfillModel
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to GapfillModel:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'GapfillModel');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -2957,8 +2910,7 @@ sub GapfillModel
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to GapfillModel:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'GapfillModel');
+	die $msg;
     }
     return($output);
 }
@@ -3029,8 +2981,7 @@ sub MergeModels
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to MergeModels:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'MergeModels');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -3046,8 +2997,7 @@ sub MergeModels
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to MergeModels:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'MergeModels');
+	die $msg;
     }
     return($output);
 }
@@ -3120,8 +3070,7 @@ sub ImportKBaseModel
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to ImportKBaseModel:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'ImportKBaseModel');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -3134,8 +3083,7 @@ sub ImportKBaseModel
     (!ref($output)) or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to ImportKBaseModel:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'ImportKBaseModel');
+	die $msg;
     }
     return($output);
 }
@@ -3162,6 +3110,7 @@ CheckJobs_params is a reference to a hash where the following keys are defined:
 	include_failed has a value which is a bool
 	include_running has a value which is a bool
 	include_errors has a value which is a bool
+	include_queued has a value which is a bool
 JobID is a string
 bool is an int
 Task is a reference to a hash where the following keys are defined:
@@ -3189,6 +3138,7 @@ CheckJobs_params is a reference to a hash where the following keys are defined:
 	include_failed has a value which is a bool
 	include_running has a value which is a bool
 	include_errors has a value which is a bool
+	include_queued has a value which is a bool
 JobID is a string
 bool is an int
 Task is a reference to a hash where the following keys are defined:
@@ -3224,8 +3174,7 @@ sub CheckJobs
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to CheckJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'CheckJobs');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -3238,8 +3187,7 @@ sub CheckJobs
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to CheckJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'CheckJobs');
+	die $msg;
     }
     return($output);
 }
@@ -3263,6 +3211,8 @@ $output is a reference to a hash where the key is a JobID and the value is a Tas
 ManageJobs_params is a reference to a hash where the following keys are defined:
 	jobs has a value which is a reference to a list where each element is a JobID
 	action has a value which is a string
+	errors has a value which is a reference to a hash where the key is a string and the value is a string
+	reports has a value which is a reference to a hash where the key is a string and the value is a string
 JobID is a string
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
@@ -3286,6 +3236,8 @@ $output is a reference to a hash where the key is a JobID and the value is a Tas
 ManageJobs_params is a reference to a hash where the following keys are defined:
 	jobs has a value which is a reference to a list where each element is a JobID
 	action has a value which is a string
+	errors has a value which is a reference to a hash where the key is a string and the value is a string
+	reports has a value which is a reference to a hash where the key is a string and the value is a string
 JobID is a string
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
@@ -3320,8 +3272,7 @@ sub ManageJobs
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to ManageJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'ManageJobs');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -3334,8 +3285,7 @@ sub ManageJobs
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to ManageJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'ManageJobs');
+	die $msg;
     }
     return($output);
 }
@@ -3414,8 +3364,7 @@ sub CreateJobs
     (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument \"input\" (value was \"$input\")");
     if (@_bad_arguments) {
 	my $msg = "Invalid arguments passed to CreateJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'CreateJobs');
+	die $msg;
     }
 
     my $ctx = $Bio::ModelSEED::ProbModelSEED::Service::CallContext;
@@ -3428,11 +3377,11 @@ sub CreateJobs
     (ref($output) eq 'HASH') or push(@_bad_returns, "Invalid type for return variable \"output\" (value was \"$output\")");
     if (@_bad_returns) {
 	my $msg = "Invalid returns passed to CreateJobs:\n" . join("", map { "\t$_\n" } @_bad_returns);
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-							       method_name => 'CreateJobs');
+	die $msg;
     }
     return($output);
 }
+
 
 
 
@@ -3470,6 +3419,7 @@ Return the module version. This is a Semantic Versioning number.
 sub version {
     return $VERSION;
 }
+
 
 =head1 TYPES
 
@@ -4689,18 +4639,18 @@ biomasses has a value which is a reference to a list where each element is a mod
 
 ObjectMeta: tuple containing information about an object in the workspace 
 
-        ObjectName - name selected for object in workspace
-        ObjectType - type of the object in the workspace
-        FullObjectPath - full path to object in workspace, including object name
-        Timestamp creation_time - time when the object was created
-        ObjectID - a globally unique UUID assigned to every object that will never change even if the object is moved
-        Username object_owner - name of object owner
-        ObjectSize - size of the object in bytes or if object is directory, the number of objects in directory
-        UserMetadata - arbitrary user metadata associated with object
-        AutoMetadata - automatically populated metadata generated from object data in automated way
-        WorkspacePerm user_permission - permissions for the authenticated user of this workspace.
-        WorkspacePerm global_permission - whether this workspace is globally readable.
-        string shockurl - shockurl included if object is a reference to a shock node
+       ObjectName - name selected for object in workspace
+       ObjectType - type of the object in the workspace
+       FullObjectPath - full path to object in workspace, including object name
+       Timestamp creation_time - time when the object was created
+       ObjectID - a globally unique UUID assigned to every object that will never change even if the object is moved
+       Username object_owner - name of object owner
+       ObjectSize - size of the object in bytes or if object is directory, the number of objects in directory
+       UserMetadata - arbitrary user metadata associated with object
+       AutoMetadata - automatically populated metadata generated from object data in automated way
+       WorkspacePerm user_permission - permissions for the authenticated user of this workspace.
+       WorkspacePerm global_permission - whether this workspace is globally readable.
+       string shockurl - shockurl included if object is a reference to a shock node
 
 
 =item Definition
@@ -4795,14 +4745,14 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: manage_gapfill_solutions
-DESCRIPTION: This function manages the gapfill solutions for a model and returns gapfill solution data
-
-REQUIRED INPUTS:
-reference model - reference to model to integrate solutions for
-mapping<gapfill_id,gapfill_command> commands - commands to manage gapfill solutions
-
-OPTIONAL INPUTS:
-mapping<gapfill_id,int> selected_solutions - solutions to integrate
+                DESCRIPTION: This function manages the gapfill solutions for a model and returns gapfill solution data
+                
+                REQUIRED INPUTS:
+                reference model - reference to model to integrate solutions for
+                mapping<gapfill_id,gapfill_command> commands - commands to manage gapfill solutions
+                
+                OPTIONAL INPUTS:
+                mapping<gapfill_id,int> selected_solutions - solutions to integrate
 
 
 =item Definition
@@ -4879,11 +4829,11 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: delete_fba_studies
-DESCRIPTION: This function deletes fba studies associated with model
-
-REQUIRED INPUTS:
-reference model - reference to model to integrate solutions for
-list<fba_id> fbas - list of FBA studies to delete
+                DESCRIPTION: This function deletes fba studies associated with model
+                
+                REQUIRED INPUTS:
+                reference model - reference to model to integrate solutions for
+                list<fba_id> fbas - list of FBA studies to delete
 
 
 =item Definition
@@ -4962,11 +4912,11 @@ to_shock has a value which is a bool
 =item Description
 
 FUNCTION: export_media
-DESCRIPTION: This function exports a media in TSV format
-
-REQUIRED INPUTS:
-reference media - reference to media to export
-bool to_shock - load exported file to shock and return shock url
+                DESCRIPTION: This function exports a media in TSV format
+                
+                REQUIRED INPUTS:
+                reference media - reference to media to export
+                bool to_shock - load exported file to shock and return shock url
 
 
 =item Definition
@@ -5041,10 +4991,10 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: delete_model
-DESCRIPTION: This function deletes a model specified by the user
-
-REQUIRED INPUTS:
-    reference model - reference to model to delete
+            DESCRIPTION: This function deletes a model specified by the user
+            
+            REQUIRED INPUTS:
+                reference model - reference to model to delete
 
 
 =item Definition
@@ -5080,12 +5030,12 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: list_models
-DESCRIPTION: This function lists all models owned by the user
-
-REQUIRED INPUTS:
-    
-    OPTIONAL INPUTS:
-    reference path;
+            DESCRIPTION: This function lists all models owned by the user
+            
+            REQUIRED INPUTS:
+                
+                OPTIONAL INPUTS:
+                reference path;
 
 
 =item Definition
@@ -5121,18 +5071,18 @@ path has a value which is a reference
 =item Description
 
 FUNCTION: copy_model
-DESCRIPTION: This function copies the specified model to another location or even workspace
-
-REQUIRED INPUTS:
-    reference model - reference to model to copy
-    
-    OPTIONAL INPUTS:
-    reference destination - location where the model should be copied to
-    bool copy_genome - set this to copy the genome associated with the model
-    bool to_kbase - set to one to copy the model to KBase
-    string workspace_url - URL of workspace to which data should be copied
-    string kbase_username - kbase username for copying models to kbase
-    string kbase_password - kbase password for copying models to kbase
+            DESCRIPTION: This function copies the specified model to another location or even workspace
+            
+            REQUIRED INPUTS:
+                reference model - reference to model to copy
+                
+                OPTIONAL INPUTS:
+                reference destination - location where the model should be copied to
+                bool copy_genome - set this to copy the genome associated with the model
+                bool to_kbase - set to one to copy the model to KBase
+                string workspace_url - URL of workspace to which data should be copied
+                string kbase_username - kbase username for copying models to kbase
+                string kbase_password - kbase password for copying models to kbase
 
 
 =item Definition
@@ -5184,17 +5134,17 @@ plantseed has a value which is a bool
 =item Description
 
 FUNCTION: copy_genome
-DESCRIPTION: This function copies the specified genome to another location or even workspace
-
-REQUIRED INPUTS:
-    reference genome - reference to genome to copy
-    
-    OPTIONAL INPUTS:
-    reference destination - location where the genome should be copied to
-    bool to_kbase - set to one to copy the genome to KBase
-    string workspace_url - URL of workspace to which data should be copied
-    string kbase_username - kbase username for copying models to kbase
-    string kbase_password - kbase password for copying models to kbase
+            DESCRIPTION: This function copies the specified genome to another location or even workspace
+            
+            REQUIRED INPUTS:
+                reference genome - reference to genome to copy
+                
+                OPTIONAL INPUTS:
+                reference destination - location where the genome should be copied to
+                bool to_kbase - set to one to copy the genome to KBase
+                string workspace_url - URL of workspace to which data should be copied
+                string kbase_username - kbase username for copying models to kbase
+                string kbase_password - kbase password for copying models to kbase
 
 
 =item Definition
@@ -5339,10 +5289,10 @@ biomass_removed has a value which is a reference to a list where each element is
 =item Description
 
 FUNCTION: list_model_edits
-DESCRIPTION: This function lists all model edits submitted by the user
-
-REQUIRED INPUTS:
-    reference model - reference to model for which to list edits
+            DESCRIPTION: This function lists all model edits submitted by the user
+            
+            REQUIRED INPUTS:
+                reference model - reference to model for which to list edits
 
 
 =item Definition
@@ -5378,14 +5328,14 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: manage_model_edits
-DESCRIPTION: This function manages edits to model submitted by user
-
-REQUIRED INPUTS:
-reference model - reference to model to integrate solutions for
-mapping<edit_id,gapfill_command> commands - list of edit commands
-
-OPTIONAL INPUTS:
-edit_data new_edit - list of new edits to add
+                DESCRIPTION: This function manages edits to model submitted by user
+                
+                REQUIRED INPUTS:
+                reference model - reference to model to integrate solutions for
+                mapping<edit_id,gapfill_command> commands - list of edit commands
+                
+                OPTIONAL INPUTS:
+                edit_data new_edit - list of new edits to add
 
 
 =item Definition
@@ -5556,11 +5506,11 @@ prokaryotic_similarities has a value which is a reference to a list where each e
 =item Description
 
 FUNCTION: get_feature
-DESCRIPTION: This function retrieves an individual Plant feature
+                DESCRIPTION: This function retrieves an individual Plant feature
 
-REQUIRED INPUTS:
-reference genome - reference of genome that contains feature
-feature_id feature - identifier of feature to get
+                REQUIRED INPUTS:
+                reference genome - reference of genome that contains feature
+                feature_id feature - identifier of feature to get
 
 
 =item Definition
@@ -5598,13 +5548,13 @@ feature has a value which is a feature_id
 =item Description
 
 FUNCTION: save_feature_function
-DESCRIPTION: This function saves the newly assigned function in a feature
-             thereby updating the annotation of a genome
+                DESCRIPTION: This function saves the newly assigned function in a feature
+                             thereby updating the annotation of a genome
 
-REQUIRED INPUTS:
-reference genome - reference of genome that contains feature
-feature_id feature - identifier of feature to get
-string function - the new annotation to assign to a feature
+                REQUIRED INPUTS:
+                reference genome - reference of genome that contains feature
+                feature_id feature - identifier of feature to get
+                string function - the new annotation to assign to a feature
 
 
 =item Definition
@@ -5758,14 +5708,14 @@ regions has a value which is a reference to a hash where the key is a string and
 =item Description
 
 FUNCTION: compare_regions
-DESCRIPTION: This function retrieves the data required to build the CompareRegions view
+                DESCRIPTION: This function retrieves the data required to build the CompareRegions view
 
-REQUIRED INPUTS:
-list<string> similarities - list of peg identifiers
+                REQUIRED INPUTS:
+                list<string> similarities - list of peg identifiers
 
-OPTIONAL INPUTS:
-int region_size - width of regions (in bp) to cover. Defaults to 15000
-int number_regions - number of regions to show. Defaults to 10
+                OPTIONAL INPUTS:
+                int region_size - width of regions (in bp) to cover. Defaults to 15000
+                int number_regions - number of regions to show. Defaults to 10
 
 
 =item Definition
@@ -5835,10 +5785,10 @@ roles has a value which is a reference to a hash where the key is a string and t
 =item Description
 
 FUNCTION: plant_annotation_overview
-DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome PlantSEED annotation
+                DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome PlantSEED annotation
 
-REQUIRED INPUTS:
-reference genome - annotated genome to explore
+                REQUIRED INPUTS:
+                reference genome - annotated genome to explore
 
 
 =item Definition
@@ -5874,11 +5824,11 @@ genome has a value which is a reference
 =item Description
 
 FUNCTION: create_genome_from_shock
-DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+                DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
 
-REQUIRED INPUTS:
-string shock_id - id in shock with which to retrieve fasta file
-string name - name under which to store the genome and resulting model
+                REQUIRED INPUTS:
+                string shock_id - id in shock with which to retrieve fasta file
+                string name - name under which to store the genome and resulting model
 
 
 =item Definition
@@ -5916,11 +5866,11 @@ destname has a value which is a string
 =item Description
 
 FUNCTION: plant_pipeline
-DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+                DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
 
-REQUIRED INPUTS:
-string shock_id - id in shock with which to retrieve fasta file
-string name - name under which to store the genome and resulting model
+                REQUIRED INPUTS:
+                string shock_id - id in shock with which to retrieve fasta file
+                string name - name under which to store the genome and resulting model
 
 
 =item Definition
@@ -5958,10 +5908,10 @@ destname has a value which is a string
 =item Description
 
 FUNCTION: annotate_plant_genome
-DESCRIPTION: This function retrieves the sequences from a plantseed genome object and annotates them
+                DESCRIPTION: This function retrieves the sequences from a plantseed genome object and annotates them
 
-REQUIRED INPUTS:
-reference genome - annotated genome to explore
+                REQUIRED INPUTS:
+                reference genome - annotated genome to explore
 
 
 =item Definition
@@ -5997,10 +5947,10 @@ genome has a value which is a reference
 =item Description
 
 FUNCTION: create_featurevalues_from_shock
-DESCRIPTION: This function retrieves the tsv file from shock and creates a FeatureValues object
+                DESCRIPTION: This function retrieves the tsv file from shock and creates a FeatureValues object
 
-REQUIRED INPUTS:
-string shock_id - id in shock with which to retrieve tsv file
+                REQUIRED INPUTS:
+                string shock_id - id in shock with which to retrieve tsv file
 
 
 =item Definition
@@ -6073,7 +6023,7 @@ genome has a value which is a reference
 =item Description
 
 FUNCTION: FluxBalanceAnalysis
-DESCRIPTION: This function runs the flux balance analysis app directly. See app service for detailed specs.
+                DESCRIPTION: This function runs the flux balance analysis app directly. See app service for detailed specs.
 
 
 =item Definition
@@ -6109,7 +6059,7 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: GapfillModel
-DESCRIPTION: This function runs the gapfilling app directly. See app service for detailed specs.
+                DESCRIPTION: This function runs the gapfilling app directly. See app service for detailed specs.
 
 
 =item Definition
@@ -6145,7 +6095,7 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: MergeModels
-DESCRIPTION: This function combines multiple FBA models into a single community model
+                DESCRIPTION: This function combines multiple FBA models into a single community model
 
 
 =item Definition
@@ -6191,7 +6141,7 @@ output_path has a value which is a string
 =item Description
 
 FUNCTION: ImportKBaseModel
-DESCRIPTION: This function imports a metabolic model from a specified location in KBase
+                DESCRIPTION: This function imports a metabolic model from a specified location in KBase
 
 
 =item Definition
@@ -6294,7 +6244,7 @@ stderr_shock_node has a value which is a string
 =item Description
 
 FUNCTION: CheckJobs
-DESCRIPTION: This function checks on the current status of app service jobs
+                DESCRIPTION: This function checks on the current status of app service jobs
 
 
 =item Definition
@@ -6308,6 +6258,7 @@ include_completed has a value which is a bool
 include_failed has a value which is a bool
 include_running has a value which is a bool
 include_errors has a value which is a bool
+include_queued has a value which is a bool
 
 </pre>
 
@@ -6321,6 +6272,7 @@ include_completed has a value which is a bool
 include_failed has a value which is a bool
 include_running has a value which is a bool
 include_errors has a value which is a bool
+include_queued has a value which is a bool
 
 
 =end text
@@ -6338,9 +6290,9 @@ include_errors has a value which is a bool
 =item Description
 
 FUNCTION: ManageJobs
-DESCRIPTION: This function supports the deletion and rerunning of jobs
-
-action - character specifying what to do with the job (d - delete, r - run)
+                DESCRIPTION: This function supports the deletion and rerunning of jobs
+                
+                action - character specifying what to do with the job (d - delete, r - run)
 
 
 =item Definition
@@ -6351,6 +6303,8 @@ action - character specifying what to do with the job (d - delete, r - run)
 a reference to a hash where the following keys are defined:
 jobs has a value which is a reference to a list where each element is a JobID
 action has a value which is a string
+errors has a value which is a reference to a hash where the key is a string and the value is a string
+reports has a value which is a reference to a hash where the key is a string and the value is a string
 
 </pre>
 
@@ -6361,6 +6315,8 @@ action has a value which is a string
 a reference to a hash where the following keys are defined:
 jobs has a value which is a reference to a list where each element is a JobID
 action has a value which is a string
+errors has a value which is a reference to a hash where the key is a string and the value is a string
+reports has a value which is a reference to a hash where the key is a string and the value is a string
 
 
 =end text
@@ -6378,7 +6334,7 @@ action has a value which is a string
 =item Description
 
 FUNCTION: CreateJobs
-DESCRIPTION: This function supports the creation of a new job
+                DESCRIPTION: This function supports the creation of a new job
 
 
 =item Definition
