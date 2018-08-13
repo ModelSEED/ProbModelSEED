@@ -1,20 +1,21 @@
 package Bio::ModelSEED::ProbModelSEED::Service;
 
 
+use strict;
 use Data::Dumper;
 use Moose;
 use POSIX;
 use JSON;
-use Bio::KBase::Log;
 use Class::Load qw();
 use Config::Simple;
 my $get_time = sub { time, 0 };
 eval {
     require Time::HiRes;
-    $get_time = sub { Time::HiRes::gettimeofday };
+    $get_time = sub { Time::HiRes::gettimeofday(); };
 };
 
-use Bio::KBase::AuthToken;
+use P3AuthToken;
+use P3TokenValidator;
 
 extends 'RPC::Any::Server::JSONRPC::PSGI';
 
@@ -22,9 +23,7 @@ has 'instance_dispatch' => (is => 'ro', isa => 'HashRef');
 has 'user_auth' => (is => 'ro', isa => 'UserAuth');
 has 'valid_methods' => (is => 'ro', isa => 'HashRef', lazy => 1,
 			builder => '_build_valid_methods');
-has 'loggers' => (is => 'ro', required => 1, builder => '_build_loggers');
-has 'config' => (is => 'ro', required => 1, builder => '_build_config');
-
+has 'validator' => (is => 'ro', isa => 'P3TokenValidator', lazy => 1, builder => '_build_validator');
 our $CallContext;
 
 our %return_counts = (
@@ -92,6 +91,13 @@ our %method_authentication = (
         'CreateJobs' => 'required',
 );
 
+sub _build_validator
+{
+    my($self) = @_;
+    return P3TokenValidator->new();
+
+}
+
 
 sub _build_valid_methods
 {
@@ -129,79 +135,6 @@ sub _build_valid_methods
         'version' => 1,
     };
     return $methods;
-}
-
-my $DEPLOY = 'KB_DEPLOYMENT_CONFIG';
-my $SERVICE = 'KB_SERVICE_NAME';
-
-sub get_config_file
-{
-    my ($self) = @_;
-    if(!defined $ENV{$DEPLOY}) {
-        return undef;
-    }
-    return $ENV{$DEPLOY};
-}
-
-sub get_service_name
-{
-    my ($self) = @_;
-    if(!defined $ENV{$SERVICE}) {
-        return 'ProbModelSEED';
-    }
-    return $ENV{$SERVICE};
-}
-
-sub _build_config
-{
-    my ($self) = @_;
-    my $sn = $self->get_service_name();
-    my $cf = $self->get_config_file();
-    if (!($cf)) {
-        return {};
-    }
-    my $cfg = new Config::Simple($cf);
-    my $cfgdict = $cfg->get_block($sn);
-    if (!($cfgdict)) {
-        return {};
-    }
-    return $cfgdict;
-}
-
-sub logcallback
-{
-    my ($self) = @_;
-    $self->loggers()->{serverlog}->set_log_file(
-        $self->{loggers}->{userlog}->get_log_file());
-}
-
-sub log
-{
-    my ($self, $level, $context, $message, $tag) = @_;
-    my $user = defined($context->user_id()) ? $context->user_id(): undef; 
-    $self->loggers()->{serverlog}->log_message($level, $message, $user, 
-        $context->module(), $context->method(), $context->call_id(),
-        $context->client_ip(), $tag);
-}
-
-sub _build_loggers
-{
-    my ($self) = @_;
-    my $submod = $self->get_service_name();
-    my $loggers = {};
-    my $callback = sub {$self->logcallback();};
-    $loggers->{userlog} = Bio::KBase::Log->new(
-            $submod, {}, {ip_address => 1, authuser => 1, module => 1,
-            method => 1, call_id => 1, changecallback => $callback,
-	    tag => 1,
-            config => $self->get_config_file()});
-    $loggers->{serverlog} = Bio::KBase::Log->new(
-            $submod, {}, {ip_address => 1, authuser => 1, module => 1,
-            method => 1, call_id => 1,
-	    tag => 1,
-            logfile => $loggers->{userlog}->get_log_file()});
-    $loggers->{serverlog}->set_log_level(6);
-    return $loggers;
 }
 
 #
@@ -251,7 +184,6 @@ sub encode_output_from_exception {
             my @errlines;
             $errlines[0] = $error_params{message};
             push @errlines, split("\n", $error_params{data});
-            $self->log($Bio::KBase::Log::ERR, $error_params{context}, \@errlines);
             delete $error_params{context};
         }
     } else {
@@ -272,6 +204,22 @@ sub encode_output_from_exception {
     return $self->encode_output_from_object($json_error);
 }
 
+#
+# another override.
+#
+sub get_package_isa {
+    my ($self, $module) = @_;
+    my $original_isa;
+    { no strict 'refs'; $original_isa = \@{"${module}::ISA"}; }
+    my @new_isa = @$original_isa;
+
+    my $base = $self->package_base;
+    if (not $module->isa($base)) {
+        Class::Load::load_class($base);
+        push(@new_isa, $base);
+    }
+    return \@new_isa;
+}
 sub trim {
     my ($str) = @_;
     if (!(defined $str)) {
@@ -285,7 +233,8 @@ sub getIPAddress {
     my ($self) = @_;
     my $xFF = trim($self->_plack_req->header("X-Forwarded-For"));
     my $realIP = trim($self->_plack_req->header("X-Real-IP"));
-    my $nh = $self->config->{"dont_trust_x_ip_headers"};
+    # my $nh = $self->config->{"dont_trust_x_ip_headers"};
+    my $nh;
     my $trustXHeaders = !(defined $nh) || $nh ne "true";
 
     if ($trustXHeaders) {
@@ -300,13 +249,51 @@ sub getIPAddress {
     return $self->_plack_req->address;
 }
 
+#
+# Ping method reflected from /ping on the service.
+#
+sub ping
+{
+    my($self, $env) = @_;
+    return [ 200, ["Content-type" => "text/plain"], [ "OK\n" ] ];
+}
+
+
+#
+# Authenticated ping method reflected from /auth_ping on the service.
+#
+sub auth_ping
+{
+    my($self, $env) = @_;
+
+    my $req = Plack::Request->new($env);
+    my $token = $req->header("Authorization");
+
+    if (!$token)
+    {
+	return [401, [], ["Authentication required"]];
+    }
+
+    my $auth_token = P3AuthToken->new(token => $token, ignore_authrc => 1);
+    my($valid, $validate_err) = $self->validator->validate($auth_token);
+
+    if ($valid)
+    {
+	return [200, ["Content-type" => "text/plain"], ["OK " . $auth_token->user_id . "\n"]];
+    }
+    else
+    {
+        warn "Token validation error $validate_err\n";
+	return [403, [], "Authentication failed"];
+    }
+}
+
 sub call_method {
     my ($self, $data, $method_info) = @_;
 
     my ($module, $method, $modname) = @$method_info{qw(module method modname)};
     
-    my $ctx = Bio::ModelSEED::ProbModelSEED::ServiceContext->new($self->{loggers}->{userlog},
-                           client_ip => $self->getIPAddress());
+    my $ctx = Bio::ModelSEED::ProbModelSEED::ServiceContext->new(client_ip => $self->getIPAddress());
     $ctx->module($modname);
     $ctx->method($method);
     $ctx->call_id($self->{_last_call}->{id});
@@ -331,12 +318,12 @@ sub call_method {
 	    $self->exception('PerlError', "Authentication required for ProbModelSEED but no authentication header was passed");
 	}
 
-	my $auth_token = Bio::KBase::AuthToken->new(token => $token, ignore_authrc => 1);
-	my $valid = $auth_token->validate();
+	my $auth_token = P3AuthToken->new(token => $token, ignore_authrc => 1);
+	my($valid, $validate_err) = $self->validator->validate($auth_token);
 	# Only throw an exception if authentication was required and it fails
 	if ($method_auth eq 'required' && !$valid)
 	{
-	    $self->exception('PerlError', "Token validation failed: " . $auth_token->error_message);
+	    $self->exception('PerlError', "Token validation failed: $validate_err");
 	} elsif ($valid) {
 	    $ctx->authenticated(1);
 	    $ctx->user_id($auth_token->user_id);
@@ -356,10 +343,15 @@ sub call_method {
 	my $tag = $self->_plack_req->header("Kbrpc-Tag");
 	if (!$tag)
 	{
+	    if (!$self->{hostname}) {
+		chomp($self->{hostname} = `hostname`);
+                $self->{hostname} ||= 'unknown-host';
+	    }
+
 	    my ($t, $us) = &$get_time();
 	    $us = sprintf("%06d", $us);
 	    my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
-	    $tag = "S:".$ctx->hostname().":$$:$ts";
+	    $tag = "S:$self->{hostname}:$$:$ts";
 	}
 	local $ENV{KBRPC_TAG} = $tag;
 	my $kb_metadata = $self->_plack_req->header("Kbrpc-Metadata");
@@ -371,22 +363,15 @@ sub call_method {
 	$ctx->stderr($stderr);
 
         my $xFF = $self->_plack_req->header("X-Forwarded-For");
-        if ($xFF) {
-            $self->log($Bio::KBase::Log::INFO, $ctx,
-                "X-Forwarded-For: " . $xFF, $tag);
-        }
 	
         my $err;
         eval {
-            $self->log($Bio::KBase::Log::INFO, $ctx, "start method", $tag);
 	    local $SIG{__WARN__} = sub {
 		my($msg) = @_;
-		$stderr->log($msg);
 		print STDERR $msg;
 	    };
 
             @result = $module->$method(@{ $data->{arguments} });
-            $self->log($Bio::KBase::Log::INFO, $ctx, "end method", $tag);
         };
 	
         if ($@)
@@ -395,25 +380,15 @@ sub call_method {
 	    $stderr->log($err);
 	    $ctx->stderr(undef);
 	    undef $stderr;
-            $self->log($Bio::KBase::Log::INFO, $ctx, "fail method", $tag);
             my $nicerr;
-            if(ref($err) eq "Bio::KBase::Exceptions::KBaseException") {
-                $nicerr = {code => -32603, # perl error from RPC::Any::Exception
-                           message => $err->error,
-                           data => $err->trace->as_string,
-                           context => $ctx
-                           };
-            } else {
-                my $str = "$err";
-                $str =~ s/Bio::KBase::CDMI::Service::call_method.*//s; # is this still necessary? not sure
-                my $msg = $str;
-                $msg =~ s/ at [^\s]+.pm line \d+.\n$//;
-                $nicerr =  {code => -32603, # perl error from RPC::Any::Exception
+	    my $str = "$err";
+	    my $msg = $str;
+	    $msg =~ s/ at [^\s]+.pm line \d+.\n$//;
+	    $nicerr =  {code => -32603, # perl error from RPC::Any::Exception
                             message => $msg,
                             data => $str,
                             context => $ctx
                             };
-            }
             die $nicerr;
         }
 	$ctx->stderr(undef);
@@ -504,77 +479,21 @@ __PACKAGE__->mk_accessors(qw(user_id client_ip authenticated token
 
 sub new
 {
-    my($class, $logger, %opts) = @_;
+    my($class, @opts) = @_;
+
+    if (!defined($opts[0]) || ref($opts[0]))
+    {
+        # We were invoked by old code that stuffed a logger in here.
+	# Strip that option.
+	shift @opts;
+    }
     
     my $self = {
-        %opts,
+        @opts,
     };
     chomp($self->{hostname} = `hostname`);
     $self->{hostname} ||= 'unknown-host';
-    $self->{_logger} = $logger;
-    $self->{_debug_levels} = {7 => 1, 8 => 1, 9 => 1,
-                              'DEBUG' => 1, 'DEBUG2' => 1, 'DEBUG3' => 1};
     return bless $self, $class;
-}
-
-sub _get_user
-{
-    my ($self) = @_;
-    return defined($self->user_id()) ? $self->user_id(): undef; 
-}
-
-sub _log
-{
-    my ($self, $level, $message) = @_;
-    $self->{_logger}->log_message($level, $message, $self->_get_user(),
-        $self->module(), $self->method(), $self->call_id(),
-        $self->client_ip());
-}
-
-sub log_err
-{
-    my ($self, $message) = @_;
-    $self->_log($Bio::KBase::Log::ERR, $message);
-}
-
-sub log_info
-{
-    my ($self, $message) = @_;
-    $self->_log($Bio::KBase::Log::INFO, $message);
-}
-
-sub log_debug
-{
-    my ($self, $message, $level) = @_;
-    if(!defined($level)) {
-        $level = 1;
-    }
-    if($self->{_debug_levels}->{$level}) {
-    } else {
-        if ($level =~ /\D/ || $level < 1 || $level > 3) {
-            die "Invalid log level: $level";
-        }
-        $level += 6;
-    }
-    $self->_log($level, $message);
-}
-
-sub set_log_level
-{
-    my ($self, $level) = @_;
-    $self->{_logger}->set_log_level($level);
-}
-
-sub get_log_level
-{
-    my ($self) = @_;
-    return $self->{_logger}->get_log_level();
-}
-
-sub clear_log_level
-{
-    my ($self) = @_;
-    $self->{_logger}->clear_user_log_level();
 }
 
 package Bio::ModelSEED::ProbModelSEED::ServiceStderrWrapper;

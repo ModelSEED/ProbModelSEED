@@ -1,23 +1,18 @@
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient;
 
-use JSON::RPC::Client;
 use POSIX;
 use strict;
 use Data::Dumper;
 use URI;
-use Bio::KBase::Exceptions;
+
 my $get_time = sub { time, 0 };
 eval {
     require Time::HiRes;
     $get_time = sub { Time::HiRes::gettimeofday() };
 };
 
-use Bio::KBase::AuthToken;
+use P3AuthToken;
 
-# Client version should match Impl version
-# This is a Semantic Version number,
-# http://semver.org
-our $VERSION = "0.1.0";
 
 =head1 NAME
 
@@ -31,10 +26,15 @@ Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient
 
 =cut
 
+
 sub new
 {
     my($class, $url, @args) = @_;
     
+    if (!defined($url))
+    {
+	$url = 'http://p3.theseed.org/services/ProbModelSEED';
+    }
 
     my $self = {
 	client => Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient->new,
@@ -81,12 +81,12 @@ sub new
     # We create an auth token, passing through the arguments that we were (hopefully) given.
 
     {
-	my $token = Bio::KBase::AuthToken->new(@args);
+	my $token = P3AuthToken->new(@args);
 	
-	if (!$token->error_message)
+	if (my $token_str = $token->token())
 	{
-	    $self->{token} = $token->token;
-	    $self->{client}->{token} = $token->token;
+	    $self->{token} = $token_str;
+	    $self->{client}->{token} = $token_str;
 	}
         else
         {
@@ -94,15 +94,15 @@ sub new
 	    # All methods in this module require authentication. In this case, if we
 	    # don't have a token, we can't continue.
 	    #
-	    die "Authentication failed: " . $token->error_message;
+	    die "Authentication failed\n";
 	}
     }
 
     my $ua = $self->{client}->ua;	 
     my $timeout = $ENV{CDMI_TIMEOUT} || (30 * 60);	 
     $ua->timeout($timeout);
+    $ua->agent("Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient UserAgent");
     bless $self, $class;
-    #    $self->_validate_version();
     return $self;
 }
 
@@ -189,8 +189,7 @@ sub list_gapfill_solutions
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function list_gapfill_solutions (received $n, expecting 1)");
+        die "Invalid argument count for function list_gapfill_solutions (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -199,8 +198,7 @@ sub list_gapfill_solutions
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to list_gapfill_solutions:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'list_gapfill_solutions');
+	    die $msg;
 	}
     }
 
@@ -209,20 +207,15 @@ sub list_gapfill_solutions
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'list_gapfill_solutions',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking list_gapfill_solutions:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method list_gapfill_solutions",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'list_gapfill_solutions',
-				       );
+	die "Error invoking method list_gapfill_solutions: " .  $self->{client}->status_line;
     }
 }
 
@@ -314,8 +307,7 @@ sub manage_gapfill_solutions
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function manage_gapfill_solutions (received $n, expecting 1)");
+        die "Invalid argument count for function manage_gapfill_solutions (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -324,8 +316,7 @@ sub manage_gapfill_solutions
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to manage_gapfill_solutions:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'manage_gapfill_solutions');
+	    die $msg;
 	}
     }
 
@@ -334,20 +325,15 @@ sub manage_gapfill_solutions
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'manage_gapfill_solutions',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking manage_gapfill_solutions:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method manage_gapfill_solutions",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'manage_gapfill_solutions',
-				       );
+	die "Error invoking method manage_gapfill_solutions: " .  $self->{client}->status_line;
     }
 }
 
@@ -419,8 +405,7 @@ sub list_fba_studies
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function list_fba_studies (received $n, expecting 1)");
+        die "Invalid argument count for function list_fba_studies (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -429,8 +414,7 @@ sub list_fba_studies
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to list_fba_studies:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'list_fba_studies');
+	    die $msg;
 	}
     }
 
@@ -439,20 +423,15 @@ sub list_fba_studies
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'list_fba_studies',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking list_fba_studies:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method list_fba_studies",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'list_fba_studies',
-				       );
+	die "Error invoking method list_fba_studies: " .  $self->{client}->status_line;
     }
 }
 
@@ -530,8 +509,7 @@ sub delete_fba_studies
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function delete_fba_studies (received $n, expecting 1)");
+        die "Invalid argument count for function delete_fba_studies (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -540,8 +518,7 @@ sub delete_fba_studies
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to delete_fba_studies:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'delete_fba_studies');
+	    die $msg;
 	}
     }
 
@@ -550,20 +527,15 @@ sub delete_fba_studies
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'delete_fba_studies',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking delete_fba_studies:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method delete_fba_studies",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'delete_fba_studies',
-				       );
+	die "Error invoking method delete_fba_studies: " .  $self->{client}->status_line;
     }
 }
 
@@ -623,8 +595,7 @@ sub export_model
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function export_model (received $n, expecting 1)");
+        die "Invalid argument count for function export_model (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -633,8 +604,7 @@ sub export_model
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to export_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'export_model');
+	    die $msg;
 	}
     }
 
@@ -643,20 +613,15 @@ sub export_model
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'export_model',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking export_model:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method export_model",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'export_model',
-				       );
+	die "Error invoking method export_model: " .  $self->{client}->status_line;
     }
 }
 
@@ -714,8 +679,7 @@ sub export_media
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function export_media (received $n, expecting 1)");
+        die "Invalid argument count for function export_media (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -724,8 +688,7 @@ sub export_media
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to export_media:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'export_media');
+	    die $msg;
 	}
     }
 
@@ -734,20 +697,15 @@ sub export_media
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'export_media',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking export_media:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method export_media",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'export_media',
-				       );
+	die "Error invoking method export_media: " .  $self->{client}->status_line;
     }
 }
 
@@ -891,8 +849,7 @@ sub get_model
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function get_model (received $n, expecting 1)");
+        die "Invalid argument count for function get_model (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -901,8 +858,7 @@ sub get_model
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to get_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'get_model');
+	    die $msg;
 	}
     }
 
@@ -911,20 +867,15 @@ sub get_model
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'get_model',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking get_model:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method get_model",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'get_model',
-				       );
+	die "Error invoking method get_model: " .  $self->{client}->status_line;
     }
 }
 
@@ -1024,8 +975,7 @@ sub delete_model
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function delete_model (received $n, expecting 1)");
+        die "Invalid argument count for function delete_model (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -1034,8 +984,7 @@ sub delete_model
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to delete_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'delete_model');
+	    die $msg;
 	}
     }
 
@@ -1044,20 +993,15 @@ sub delete_model
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'delete_model',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking delete_model:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method delete_model",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'delete_model',
-				       );
+	die "Error invoking method delete_model: " .  $self->{client}->status_line;
     }
 }
 
@@ -1155,8 +1099,7 @@ sub list_models
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function list_models (received $n, expecting 1)");
+        die "Invalid argument count for function list_models (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -1165,8 +1108,7 @@ sub list_models
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to list_models:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'list_models');
+	    die $msg;
 	}
     }
 
@@ -1175,20 +1117,15 @@ sub list_models
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'list_models',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking list_models:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method list_models",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'list_models',
-				       );
+	die "Error invoking method list_models: " .  $self->{client}->status_line;
     }
 }
 
@@ -1304,8 +1241,7 @@ sub copy_model
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function copy_model (received $n, expecting 1)");
+        die "Invalid argument count for function copy_model (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -1314,8 +1250,7 @@ sub copy_model
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to copy_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'copy_model');
+	    die $msg;
 	}
     }
 
@@ -1324,20 +1259,15 @@ sub copy_model
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'copy_model',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking copy_model:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method copy_model",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'copy_model',
-				       );
+	die "Error invoking method copy_model: " .  $self->{client}->status_line;
     }
 }
 
@@ -1453,8 +1383,7 @@ sub copy_genome
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function copy_genome (received $n, expecting 1)");
+        die "Invalid argument count for function copy_genome (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -1463,8 +1392,7 @@ sub copy_genome
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to copy_genome:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'copy_genome');
+	    die $msg;
 	}
     }
 
@@ -1473,20 +1401,15 @@ sub copy_genome
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'copy_genome',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking copy_genome:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method copy_genome",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'copy_genome',
-				       );
+	die "Error invoking method copy_genome: " .  $self->{client}->status_line;
     }
 }
 
@@ -1562,8 +1485,7 @@ sub list_model_edits
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function list_model_edits (received $n, expecting 1)");
+        die "Invalid argument count for function list_model_edits (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -1572,8 +1494,7 @@ sub list_model_edits
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to list_model_edits:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'list_model_edits');
+	    die $msg;
 	}
     }
 
@@ -1582,20 +1503,15 @@ sub list_model_edits
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'list_model_edits',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking list_model_edits:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method list_model_edits",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'list_model_edits',
-				       );
+	die "Error invoking method list_model_edits: " .  $self->{client}->status_line;
     }
 }
 
@@ -1723,8 +1639,7 @@ sub edit_model
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function edit_model (received $n, expecting 1)");
+        die "Invalid argument count for function edit_model (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -1733,8 +1648,7 @@ sub edit_model
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to edit_model:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'edit_model');
+	    die $msg;
 	}
     }
 
@@ -1743,20 +1657,15 @@ sub edit_model
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'edit_model',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking edit_model:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method edit_model",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'edit_model',
-				       );
+	die "Error invoking method edit_model: " .  $self->{client}->status_line;
     }
 }
 
@@ -1838,8 +1747,7 @@ sub get_feature
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function get_feature (received $n, expecting 1)");
+        die "Invalid argument count for function get_feature (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -1848,8 +1756,7 @@ sub get_feature
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to get_feature:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'get_feature');
+	    die $msg;
 	}
     }
 
@@ -1858,20 +1765,15 @@ sub get_feature
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'get_feature',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking get_feature:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method get_feature",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'get_feature',
-				       );
+	die "Error invoking method get_feature: " .  $self->{client}->status_line;
     }
 }
 
@@ -1929,8 +1831,7 @@ sub save_feature_function
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function save_feature_function (received $n, expecting 1)");
+        die "Invalid argument count for function save_feature_function (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -1939,8 +1840,7 @@ sub save_feature_function
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to save_feature_function:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'save_feature_function');
+	    die $msg;
 	}
     }
 
@@ -1949,20 +1849,15 @@ sub save_feature_function
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'save_feature_function',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking save_feature_function:\n$msg\n";
 	} else {
 	    return;
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method save_feature_function",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'save_feature_function',
-				       );
+	die "Error invoking method save_feature_function: " .  $self->{client}->status_line;
     }
 }
 
@@ -2056,8 +1951,7 @@ sub compare_regions
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function compare_regions (received $n, expecting 1)");
+        die "Invalid argument count for function compare_regions (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2066,8 +1960,7 @@ sub compare_regions
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to compare_regions:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'compare_regions');
+	    die $msg;
 	}
     }
 
@@ -2076,20 +1969,15 @@ sub compare_regions
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'compare_regions',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking compare_regions:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method compare_regions",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'compare_regions',
-				       );
+	die "Error invoking method compare_regions: " .  $self->{client}->status_line;
     }
 }
 
@@ -2163,8 +2051,7 @@ sub plant_annotation_overview
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function plant_annotation_overview (received $n, expecting 1)");
+        die "Invalid argument count for function plant_annotation_overview (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2173,8 +2060,7 @@ sub plant_annotation_overview
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to plant_annotation_overview:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'plant_annotation_overview');
+	    die $msg;
 	}
     }
 
@@ -2183,20 +2069,15 @@ sub plant_annotation_overview
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'plant_annotation_overview',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking plant_annotation_overview:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method plant_annotation_overview",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'plant_annotation_overview',
-				       );
+	die "Error invoking method plant_annotation_overview: " .  $self->{client}->status_line;
     }
 }
 
@@ -2250,8 +2131,7 @@ sub create_genome_from_shock
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function create_genome_from_shock (received $n, expecting 1)");
+        die "Invalid argument count for function create_genome_from_shock (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2260,8 +2140,7 @@ sub create_genome_from_shock
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to create_genome_from_shock:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'create_genome_from_shock');
+	    die $msg;
 	}
     }
 
@@ -2270,20 +2149,15 @@ sub create_genome_from_shock
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'create_genome_from_shock',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking create_genome_from_shock:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method create_genome_from_shock",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'create_genome_from_shock',
-				       );
+	die "Error invoking method create_genome_from_shock: " .  $self->{client}->status_line;
     }
 }
 
@@ -2337,8 +2211,7 @@ sub plant_pipeline
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function plant_pipeline (received $n, expecting 1)");
+        die "Invalid argument count for function plant_pipeline (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2347,8 +2220,7 @@ sub plant_pipeline
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to plant_pipeline:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'plant_pipeline');
+	    die $msg;
 	}
     }
 
@@ -2357,20 +2229,15 @@ sub plant_pipeline
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'plant_pipeline',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking plant_pipeline:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method plant_pipeline",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'plant_pipeline',
-				       );
+	die "Error invoking method plant_pipeline: " .  $self->{client}->status_line;
     }
 }
 
@@ -2424,8 +2291,7 @@ sub annotate_plant_genome
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function annotate_plant_genome (received $n, expecting 1)");
+        die "Invalid argument count for function annotate_plant_genome (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2434,8 +2300,7 @@ sub annotate_plant_genome
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to annotate_plant_genome:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'annotate_plant_genome');
+	    die $msg;
 	}
     }
 
@@ -2444,20 +2309,15 @@ sub annotate_plant_genome
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'annotate_plant_genome',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking annotate_plant_genome:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method annotate_plant_genome",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'annotate_plant_genome',
-				       );
+	die "Error invoking method annotate_plant_genome: " .  $self->{client}->status_line;
     }
 }
 
@@ -2509,8 +2369,7 @@ sub create_featurevalues_from_shock
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function create_featurevalues_from_shock (received $n, expecting 1)");
+        die "Invalid argument count for function create_featurevalues_from_shock (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2519,8 +2378,7 @@ sub create_featurevalues_from_shock
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to create_featurevalues_from_shock:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'create_featurevalues_from_shock');
+	    die $msg;
 	}
     }
 
@@ -2529,20 +2387,15 @@ sub create_featurevalues_from_shock
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'create_featurevalues_from_shock',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking create_featurevalues_from_shock:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method create_featurevalues_from_shock",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'create_featurevalues_from_shock',
-				       );
+	die "Error invoking method create_featurevalues_from_shock: " .  $self->{client}->status_line;
     }
 }
 
@@ -2598,8 +2451,7 @@ sub ModelReconstruction
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function ModelReconstruction (received $n, expecting 1)");
+        die "Invalid argument count for function ModelReconstruction (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2608,8 +2460,7 @@ sub ModelReconstruction
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to ModelReconstruction:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'ModelReconstruction');
+	    die $msg;
 	}
     }
 
@@ -2618,20 +2469,15 @@ sub ModelReconstruction
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'ModelReconstruction',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking ModelReconstruction:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method ModelReconstruction",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'ModelReconstruction',
-				       );
+	die "Error invoking method ModelReconstruction: " .  $self->{client}->status_line;
     }
 }
 
@@ -2687,8 +2533,7 @@ sub FluxBalanceAnalysis
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function FluxBalanceAnalysis (received $n, expecting 1)");
+        die "Invalid argument count for function FluxBalanceAnalysis (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2697,8 +2542,7 @@ sub FluxBalanceAnalysis
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to FluxBalanceAnalysis:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'FluxBalanceAnalysis');
+	    die $msg;
 	}
     }
 
@@ -2707,20 +2551,15 @@ sub FluxBalanceAnalysis
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'FluxBalanceAnalysis',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking FluxBalanceAnalysis:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method FluxBalanceAnalysis",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'FluxBalanceAnalysis',
-				       );
+	die "Error invoking method FluxBalanceAnalysis: " .  $self->{client}->status_line;
     }
 }
 
@@ -2776,8 +2615,7 @@ sub GapfillModel
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function GapfillModel (received $n, expecting 1)");
+        die "Invalid argument count for function GapfillModel (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2786,8 +2624,7 @@ sub GapfillModel
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to GapfillModel:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'GapfillModel');
+	    die $msg;
 	}
     }
 
@@ -2796,20 +2633,15 @@ sub GapfillModel
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'GapfillModel',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking GapfillModel:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method GapfillModel",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'GapfillModel',
-				       );
+	die "Error invoking method GapfillModel: " .  $self->{client}->status_line;
     }
 }
 
@@ -2875,8 +2707,7 @@ sub MergeModels
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function MergeModels (received $n, expecting 1)");
+        die "Invalid argument count for function MergeModels (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2885,8 +2716,7 @@ sub MergeModels
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to MergeModels:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'MergeModels');
+	    die $msg;
 	}
     }
 
@@ -2895,20 +2725,15 @@ sub MergeModels
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'MergeModels',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking MergeModels:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method MergeModels",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'MergeModels',
-				       );
+	die "Error invoking method MergeModels: " .  $self->{client}->status_line;
     }
 }
 
@@ -2976,8 +2801,7 @@ sub ImportKBaseModel
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function ImportKBaseModel (received $n, expecting 1)");
+        die "Invalid argument count for function ImportKBaseModel (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -2986,8 +2810,7 @@ sub ImportKBaseModel
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to ImportKBaseModel:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'ImportKBaseModel');
+	    die $msg;
 	}
     }
 
@@ -2996,20 +2819,15 @@ sub ImportKBaseModel
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'ImportKBaseModel',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking ImportKBaseModel:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method ImportKBaseModel",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'ImportKBaseModel',
-				       );
+	die "Error invoking method ImportKBaseModel: " .  $self->{client}->status_line;
     }
 }
 
@@ -3034,6 +2852,7 @@ CheckJobs_params is a reference to a hash where the following keys are defined:
 	include_failed has a value which is a bool
 	include_running has a value which is a bool
 	include_errors has a value which is a bool
+	include_queued has a value which is a bool
 JobID is a string
 bool is an int
 Task is a reference to a hash where the following keys are defined:
@@ -3061,6 +2880,7 @@ CheckJobs_params is a reference to a hash where the following keys are defined:
 	include_failed has a value which is a bool
 	include_running has a value which is a bool
 	include_errors has a value which is a bool
+	include_queued has a value which is a bool
 JobID is a string
 bool is an int
 Task is a reference to a hash where the following keys are defined:
@@ -3093,8 +2913,7 @@ sub CheckJobs
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function CheckJobs (received $n, expecting 1)");
+        die "Invalid argument count for function CheckJobs (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -3103,8 +2922,7 @@ sub CheckJobs
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to CheckJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'CheckJobs');
+	    die $msg;
 	}
     }
 
@@ -3113,20 +2931,15 @@ sub CheckJobs
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'CheckJobs',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking CheckJobs:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method CheckJobs",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'CheckJobs',
-				       );
+	die "Error invoking method CheckJobs: " .  $self->{client}->status_line;
     }
 }
 
@@ -3148,6 +2961,8 @@ $output is a reference to a hash where the key is a JobID and the value is a Tas
 ManageJobs_params is a reference to a hash where the following keys are defined:
 	jobs has a value which is a reference to a list where each element is a JobID
 	action has a value which is a string
+	errors has a value which is a reference to a hash where the key is a string and the value is a string
+	reports has a value which is a reference to a hash where the key is a string and the value is a string
 JobID is a string
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
@@ -3171,6 +2986,8 @@ $output is a reference to a hash where the key is a JobID and the value is a Tas
 ManageJobs_params is a reference to a hash where the following keys are defined:
 	jobs has a value which is a reference to a list where each element is a JobID
 	action has a value which is a string
+	errors has a value which is a reference to a hash where the key is a string and the value is a string
+	reports has a value which is a reference to a hash where the key is a string and the value is a string
 JobID is a string
 Task is a reference to a hash where the following keys are defined:
 	id has a value which is a JobID
@@ -3202,8 +3019,7 @@ sub ManageJobs
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function ManageJobs (received $n, expecting 1)");
+        die "Invalid argument count for function ManageJobs (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -3212,8 +3028,7 @@ sub ManageJobs
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to ManageJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'ManageJobs');
+	    die $msg;
 	}
     }
 
@@ -3222,20 +3037,15 @@ sub ManageJobs
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'ManageJobs',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking ManageJobs:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method ManageJobs",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'ManageJobs',
-				       );
+	die "Error invoking method ManageJobs: " .  $self->{client}->status_line;
     }
 }
 
@@ -3309,8 +3119,7 @@ sub CreateJobs
 
     if ((my $n = @args) != 1)
     {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function CreateJobs (received $n, expecting 1)");
+        die "Invalid argument count for function CreateJobs (received $n, expecting 1)";
     }
     {
 	my($input) = @args;
@@ -3319,8 +3128,7 @@ sub CreateJobs
         (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to CreateJobs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'CreateJobs');
+	    die $msg;
 	}
     }
 
@@ -3329,77 +3137,21 @@ sub CreateJobs
 	params => \@args,
     });
     if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'CreateJobs',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking CreateJobs:\n$msg\n";
 	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method CreateJobs",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'CreateJobs',
-				       );
+	die "Error invoking method CreateJobs: " .  $self->{client}->status_line;
     }
 }
 
 
 
-sub version {
-    my ($self) = @_;
-    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
-        method => "ProbModelSEED.version",
-        params => [],
-    });
-    if ($result) {
-        if ($result->is_error) {
-            Bio::KBase::Exceptions::JSONRPC->throw(
-                error => $result->error_message,
-                code => $result->content->{code},
-                method_name => 'CreateJobs',
-            );
-        } else {
-            return wantarray ? @{$result->result} : $result->result->[0];
-        }
-    } else {
-        Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method CreateJobs",
-            status_line => $self->{client}->status_line,
-            method_name => 'CreateJobs',
-        );
-    }
-}
 
-sub _validate_version {
-    my ($self) = @_;
-    my $svr_version = $self->version();
-    my $client_version = $VERSION;
-    my ($cMajor, $cMinor) = split(/\./, $client_version);
-    my ($sMajor, $sMinor) = split(/\./, $svr_version);
-    if ($sMajor != $cMajor) {
-        Bio::KBase::Exceptions::ClientServerIncompatible->throw(
-            error => "Major version numbers differ.",
-            server_version => $svr_version,
-            client_version => $client_version
-        );
-    }
-    if ($sMinor < $cMinor) {
-        Bio::KBase::Exceptions::ClientServerIncompatible->throw(
-            error => "Client minor version greater than Server minor version.",
-            server_version => $svr_version,
-            client_version => $client_version
-        );
-    }
-    if ($sMinor > $cMinor) {
-        warn "New client version available for Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient\n";
-    }
-    if ($sMajor == 0) {
-        warn "Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient version is $svr_version. API subject to change.\n";
-    }
-}
 
 =head1 TYPES
 
@@ -4619,18 +4371,18 @@ biomasses has a value which is a reference to a list where each element is a mod
 
 ObjectMeta: tuple containing information about an object in the workspace 
 
-        ObjectName - name selected for object in workspace
-        ObjectType - type of the object in the workspace
-        FullObjectPath - full path to object in workspace, including object name
-        Timestamp creation_time - time when the object was created
-        ObjectID - a globally unique UUID assigned to every object that will never change even if the object is moved
-        Username object_owner - name of object owner
-        ObjectSize - size of the object in bytes or if object is directory, the number of objects in directory
-        UserMetadata - arbitrary user metadata associated with object
-        AutoMetadata - automatically populated metadata generated from object data in automated way
-        WorkspacePerm user_permission - permissions for the authenticated user of this workspace.
-        WorkspacePerm global_permission - whether this workspace is globally readable.
-        string shockurl - shockurl included if object is a reference to a shock node
+       ObjectName - name selected for object in workspace
+       ObjectType - type of the object in the workspace
+       FullObjectPath - full path to object in workspace, including object name
+       Timestamp creation_time - time when the object was created
+       ObjectID - a globally unique UUID assigned to every object that will never change even if the object is moved
+       Username object_owner - name of object owner
+       ObjectSize - size of the object in bytes or if object is directory, the number of objects in directory
+       UserMetadata - arbitrary user metadata associated with object
+       AutoMetadata - automatically populated metadata generated from object data in automated way
+       WorkspacePerm user_permission - permissions for the authenticated user of this workspace.
+       WorkspacePerm global_permission - whether this workspace is globally readable.
+       string shockurl - shockurl included if object is a reference to a shock node
 
 
 =item Definition
@@ -4725,14 +4477,14 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: manage_gapfill_solutions
-DESCRIPTION: This function manages the gapfill solutions for a model and returns gapfill solution data
-
-REQUIRED INPUTS:
-reference model - reference to model to integrate solutions for
-mapping<gapfill_id,gapfill_command> commands - commands to manage gapfill solutions
-
-OPTIONAL INPUTS:
-mapping<gapfill_id,int> selected_solutions - solutions to integrate
+                DESCRIPTION: This function manages the gapfill solutions for a model and returns gapfill solution data
+                
+                REQUIRED INPUTS:
+                reference model - reference to model to integrate solutions for
+                mapping<gapfill_id,gapfill_command> commands - commands to manage gapfill solutions
+                
+                OPTIONAL INPUTS:
+                mapping<gapfill_id,int> selected_solutions - solutions to integrate
 
 
 =item Definition
@@ -4809,11 +4561,11 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: delete_fba_studies
-DESCRIPTION: This function deletes fba studies associated with model
-
-REQUIRED INPUTS:
-reference model - reference to model to integrate solutions for
-list<fba_id> fbas - list of FBA studies to delete
+                DESCRIPTION: This function deletes fba studies associated with model
+                
+                REQUIRED INPUTS:
+                reference model - reference to model to integrate solutions for
+                list<fba_id> fbas - list of FBA studies to delete
 
 
 =item Definition
@@ -4892,11 +4644,11 @@ to_shock has a value which is a bool
 =item Description
 
 FUNCTION: export_media
-DESCRIPTION: This function exports a media in TSV format
-
-REQUIRED INPUTS:
-reference media - reference to media to export
-bool to_shock - load exported file to shock and return shock url
+                DESCRIPTION: This function exports a media in TSV format
+                
+                REQUIRED INPUTS:
+                reference media - reference to media to export
+                bool to_shock - load exported file to shock and return shock url
 
 
 =item Definition
@@ -4971,10 +4723,10 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: delete_model
-DESCRIPTION: This function deletes a model specified by the user
-
-REQUIRED INPUTS:
-    reference model - reference to model to delete
+            DESCRIPTION: This function deletes a model specified by the user
+            
+            REQUIRED INPUTS:
+                reference model - reference to model to delete
 
 
 =item Definition
@@ -5010,12 +4762,12 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: list_models
-DESCRIPTION: This function lists all models owned by the user
-
-REQUIRED INPUTS:
-    
-    OPTIONAL INPUTS:
-    reference path;
+            DESCRIPTION: This function lists all models owned by the user
+            
+            REQUIRED INPUTS:
+                
+                OPTIONAL INPUTS:
+                reference path;
 
 
 =item Definition
@@ -5051,18 +4803,18 @@ path has a value which is a reference
 =item Description
 
 FUNCTION: copy_model
-DESCRIPTION: This function copies the specified model to another location or even workspace
-
-REQUIRED INPUTS:
-    reference model - reference to model to copy
-    
-    OPTIONAL INPUTS:
-    reference destination - location where the model should be copied to
-    bool copy_genome - set this to copy the genome associated with the model
-    bool to_kbase - set to one to copy the model to KBase
-    string workspace_url - URL of workspace to which data should be copied
-    string kbase_username - kbase username for copying models to kbase
-    string kbase_password - kbase password for copying models to kbase
+            DESCRIPTION: This function copies the specified model to another location or even workspace
+            
+            REQUIRED INPUTS:
+                reference model - reference to model to copy
+                
+                OPTIONAL INPUTS:
+                reference destination - location where the model should be copied to
+                bool copy_genome - set this to copy the genome associated with the model
+                bool to_kbase - set to one to copy the model to KBase
+                string workspace_url - URL of workspace to which data should be copied
+                string kbase_username - kbase username for copying models to kbase
+                string kbase_password - kbase password for copying models to kbase
 
 
 =item Definition
@@ -5114,17 +4866,17 @@ plantseed has a value which is a bool
 =item Description
 
 FUNCTION: copy_genome
-DESCRIPTION: This function copies the specified genome to another location or even workspace
-
-REQUIRED INPUTS:
-    reference genome - reference to genome to copy
-    
-    OPTIONAL INPUTS:
-    reference destination - location where the genome should be copied to
-    bool to_kbase - set to one to copy the genome to KBase
-    string workspace_url - URL of workspace to which data should be copied
-    string kbase_username - kbase username for copying models to kbase
-    string kbase_password - kbase password for copying models to kbase
+            DESCRIPTION: This function copies the specified genome to another location or even workspace
+            
+            REQUIRED INPUTS:
+                reference genome - reference to genome to copy
+                
+                OPTIONAL INPUTS:
+                reference destination - location where the genome should be copied to
+                bool to_kbase - set to one to copy the genome to KBase
+                string workspace_url - URL of workspace to which data should be copied
+                string kbase_username - kbase username for copying models to kbase
+                string kbase_password - kbase password for copying models to kbase
 
 
 =item Definition
@@ -5269,10 +5021,10 @@ biomass_removed has a value which is a reference to a list where each element is
 =item Description
 
 FUNCTION: list_model_edits
-DESCRIPTION: This function lists all model edits submitted by the user
-
-REQUIRED INPUTS:
-    reference model - reference to model for which to list edits
+            DESCRIPTION: This function lists all model edits submitted by the user
+            
+            REQUIRED INPUTS:
+                reference model - reference to model for which to list edits
 
 
 =item Definition
@@ -5308,14 +5060,14 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: manage_model_edits
-DESCRIPTION: This function manages edits to model submitted by user
-
-REQUIRED INPUTS:
-reference model - reference to model to integrate solutions for
-mapping<edit_id,gapfill_command> commands - list of edit commands
-
-OPTIONAL INPUTS:
-edit_data new_edit - list of new edits to add
+                DESCRIPTION: This function manages edits to model submitted by user
+                
+                REQUIRED INPUTS:
+                reference model - reference to model to integrate solutions for
+                mapping<edit_id,gapfill_command> commands - list of edit commands
+                
+                OPTIONAL INPUTS:
+                edit_data new_edit - list of new edits to add
 
 
 =item Definition
@@ -5486,11 +5238,11 @@ prokaryotic_similarities has a value which is a reference to a list where each e
 =item Description
 
 FUNCTION: get_feature
-DESCRIPTION: This function retrieves an individual Plant feature
+                DESCRIPTION: This function retrieves an individual Plant feature
 
-REQUIRED INPUTS:
-reference genome - reference of genome that contains feature
-feature_id feature - identifier of feature to get
+                REQUIRED INPUTS:
+                reference genome - reference of genome that contains feature
+                feature_id feature - identifier of feature to get
 
 
 =item Definition
@@ -5528,13 +5280,13 @@ feature has a value which is a feature_id
 =item Description
 
 FUNCTION: save_feature_function
-DESCRIPTION: This function saves the newly assigned function in a feature
-             thereby updating the annotation of a genome
+                DESCRIPTION: This function saves the newly assigned function in a feature
+                             thereby updating the annotation of a genome
 
-REQUIRED INPUTS:
-reference genome - reference of genome that contains feature
-feature_id feature - identifier of feature to get
-string function - the new annotation to assign to a feature
+                REQUIRED INPUTS:
+                reference genome - reference of genome that contains feature
+                feature_id feature - identifier of feature to get
+                string function - the new annotation to assign to a feature
 
 
 =item Definition
@@ -5688,14 +5440,14 @@ regions has a value which is a reference to a hash where the key is a string and
 =item Description
 
 FUNCTION: compare_regions
-DESCRIPTION: This function retrieves the data required to build the CompareRegions view
+                DESCRIPTION: This function retrieves the data required to build the CompareRegions view
 
-REQUIRED INPUTS:
-list<string> similarities - list of peg identifiers
+                REQUIRED INPUTS:
+                list<string> similarities - list of peg identifiers
 
-OPTIONAL INPUTS:
-int region_size - width of regions (in bp) to cover. Defaults to 15000
-int number_regions - number of regions to show. Defaults to 10
+                OPTIONAL INPUTS:
+                int region_size - width of regions (in bp) to cover. Defaults to 15000
+                int number_regions - number of regions to show. Defaults to 10
 
 
 =item Definition
@@ -5765,10 +5517,10 @@ roles has a value which is a reference to a hash where the key is a string and t
 =item Description
 
 FUNCTION: plant_annotation_overview
-DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome PlantSEED annotation
+                DESCRIPTION: This function retrieves the annotation_overview required to summarize a genome PlantSEED annotation
 
-REQUIRED INPUTS:
-reference genome - annotated genome to explore
+                REQUIRED INPUTS:
+                reference genome - annotated genome to explore
 
 
 =item Definition
@@ -5804,11 +5556,11 @@ genome has a value which is a reference
 =item Description
 
 FUNCTION: create_genome_from_shock
-DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+                DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
 
-REQUIRED INPUTS:
-string shock_id - id in shock with which to retrieve fasta file
-string name - name under which to store the genome and resulting model
+                REQUIRED INPUTS:
+                string shock_id - id in shock with which to retrieve fasta file
+                string name - name under which to store the genome and resulting model
 
 
 =item Definition
@@ -5846,11 +5598,11 @@ destname has a value which is a string
 =item Description
 
 FUNCTION: plant_pipeline
-DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
+                DESCRIPTION: This function retrieves the fasta file of sequences from shock and creates a genome object
 
-REQUIRED INPUTS:
-string shock_id - id in shock with which to retrieve fasta file
-string name - name under which to store the genome and resulting model
+                REQUIRED INPUTS:
+                string shock_id - id in shock with which to retrieve fasta file
+                string name - name under which to store the genome and resulting model
 
 
 =item Definition
@@ -5888,10 +5640,10 @@ destname has a value which is a string
 =item Description
 
 FUNCTION: annotate_plant_genome
-DESCRIPTION: This function retrieves the sequences from a plantseed genome object and annotates them
+                DESCRIPTION: This function retrieves the sequences from a plantseed genome object and annotates them
 
-REQUIRED INPUTS:
-reference genome - annotated genome to explore
+                REQUIRED INPUTS:
+                reference genome - annotated genome to explore
 
 
 =item Definition
@@ -5927,10 +5679,10 @@ genome has a value which is a reference
 =item Description
 
 FUNCTION: create_featurevalues_from_shock
-DESCRIPTION: This function retrieves the tsv file from shock and creates a FeatureValues object
+                DESCRIPTION: This function retrieves the tsv file from shock and creates a FeatureValues object
 
-REQUIRED INPUTS:
-string shock_id - id in shock with which to retrieve tsv file
+                REQUIRED INPUTS:
+                string shock_id - id in shock with which to retrieve tsv file
 
 
 =item Definition
@@ -6003,7 +5755,7 @@ genome has a value which is a reference
 =item Description
 
 FUNCTION: FluxBalanceAnalysis
-DESCRIPTION: This function runs the flux balance analysis app directly. See app service for detailed specs.
+                DESCRIPTION: This function runs the flux balance analysis app directly. See app service for detailed specs.
 
 
 =item Definition
@@ -6039,7 +5791,7 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: GapfillModel
-DESCRIPTION: This function runs the gapfilling app directly. See app service for detailed specs.
+                DESCRIPTION: This function runs the gapfilling app directly. See app service for detailed specs.
 
 
 =item Definition
@@ -6075,7 +5827,7 @@ model has a value which is a reference
 =item Description
 
 FUNCTION: MergeModels
-DESCRIPTION: This function combines multiple FBA models into a single community model
+                DESCRIPTION: This function combines multiple FBA models into a single community model
 
 
 =item Definition
@@ -6121,7 +5873,7 @@ output_path has a value which is a string
 =item Description
 
 FUNCTION: ImportKBaseModel
-DESCRIPTION: This function imports a metabolic model from a specified location in KBase
+                DESCRIPTION: This function imports a metabolic model from a specified location in KBase
 
 
 =item Definition
@@ -6224,7 +5976,7 @@ stderr_shock_node has a value which is a string
 =item Description
 
 FUNCTION: CheckJobs
-DESCRIPTION: This function checks on the current status of app service jobs
+                DESCRIPTION: This function checks on the current status of app service jobs
 
 
 =item Definition
@@ -6238,6 +5990,7 @@ include_completed has a value which is a bool
 include_failed has a value which is a bool
 include_running has a value which is a bool
 include_errors has a value which is a bool
+include_queued has a value which is a bool
 
 </pre>
 
@@ -6251,6 +6004,7 @@ include_completed has a value which is a bool
 include_failed has a value which is a bool
 include_running has a value which is a bool
 include_errors has a value which is a bool
+include_queued has a value which is a bool
 
 
 =end text
@@ -6268,9 +6022,9 @@ include_errors has a value which is a bool
 =item Description
 
 FUNCTION: ManageJobs
-DESCRIPTION: This function supports the deletion and rerunning of jobs
-
-action - character specifying what to do with the job (d - delete, r - run)
+                DESCRIPTION: This function supports the deletion and rerunning of jobs
+                
+                action - character specifying what to do with the job (d - delete, r - run)
 
 
 =item Definition
@@ -6281,6 +6035,8 @@ action - character specifying what to do with the job (d - delete, r - run)
 a reference to a hash where the following keys are defined:
 jobs has a value which is a reference to a list where each element is a JobID
 action has a value which is a string
+errors has a value which is a reference to a hash where the key is a string and the value is a string
+reports has a value which is a reference to a hash where the key is a string and the value is a string
 
 </pre>
 
@@ -6291,6 +6047,8 @@ action has a value which is a string
 a reference to a hash where the following keys are defined:
 jobs has a value which is a reference to a list where each element is a JobID
 action has a value which is a string
+errors has a value which is a reference to a hash where the key is a string and the value is a string
+reports has a value which is a reference to a hash where the key is a string and the value is a string
 
 
 =end text
@@ -6308,7 +6066,7 @@ action has a value which is a string
 =item Description
 
 FUNCTION: CreateJobs
-DESCRIPTION: This function supports the creation of a new job
+                DESCRIPTION: This function supports the creation of a new job
 
 
 =item Definition
@@ -6338,13 +6096,35 @@ jobs has a value which is a reference to a list where each element is a Task
 =cut
 
 package Bio::ModelSEED::ProbModelSEED::ProbModelSEEDClient::RpcClient;
-use base 'JSON::RPC::Client';
 use POSIX;
 use strict;
+use LWP::UserAgent;
+use JSON::XS;
 
-#
-# Override JSON::RPC::Client::call because it doesn't handle error returns properly.
-#
+BEGIN {
+    for my $method (qw/uri ua json content_type version id allow_call status_line/) {
+	eval qq|
+	    sub $method {
+		\$_[0]->{$method} = \$_[1] if defined \$_[1];
+		\$_[0]->{$method};
+	    }
+	    |;
+	}
+    }
+
+sub new
+{
+    my($class) = @_;
+
+    my $ua = LWP::UserAgent->new();
+    my $json = JSON::XS->new->allow_nonref->utf8;
+    
+    my $self = {
+	ua => $ua,
+	json => $json,
+    };
+    return bless $self, $class;
+}
 
 sub call {
     my ($self, $uri, $headers, $obj) = @_;
@@ -6366,25 +6146,33 @@ sub call {
 
     $self->status_line($result->status_line);
 
-    if ($result->is_success) {
+    if ($result->is_success || $result->content_type eq 'application/json') {
 
-        return unless($result->content); # notification?
+	my $txt = $result->content;
 
-        if ($service) {
-            return JSON::RPC::ServiceObject->new($result, $self->json);
-        }
+        return unless($txt); # notification?
 
-        return JSON::RPC::ReturnObject->new($result, $self->json);
-    }
-    elsif ($result->content_type eq 'application/json')
-    {
-        return JSON::RPC::ReturnObject->new($result, $self->json);
+	my $obj = eval { $self->json->decode($txt); };
+
+	if (!$obj)
+	{
+	    die "Error parsing result: $@";
+	}
+
+	return $obj;
     }
     else {
         return;
     }
 }
 
+sub _get {
+    my ($self, $uri) = @_;
+    $self->ua->get(
+		   $uri,
+		   Accept         => 'application/json',
+		  );
+}
 
 sub _post {
     my ($self, $uri, $headers, $obj) = @_;
@@ -6398,7 +6186,7 @@ sub _post {
             $self->id($obj->{id}) if ($obj->{id}); # if undef, it is notification.
         }
         else {
-            $obj->{id} = $self->id || ($self->id('JSON::RPC::Client'));
+            $obj->{id} = $self->id || ($self->id('JSON::RPC::Legacy::Client'));
         }
     }
     else {
