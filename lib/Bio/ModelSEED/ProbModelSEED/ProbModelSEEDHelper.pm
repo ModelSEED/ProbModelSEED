@@ -1386,7 +1386,7 @@ sub create_featurevalues_from_shock {
 	my($self,$input)=@_;
 	
 	my $ua = LWP::UserAgent->new();
-	my $shock_url = Bio::KBase::utilities::conf("ProbModelSEED","shock_url")."/node/".$input->{shock_id}."?download";
+	my $shock_url = Bio::KBase::utilities::conf("ProbModelSEED","shock-url")."/node/".$input->{shock_id}."?download";
 	my $token = Bio::KBase::utilities::token();
 	my $res = $ua->get($shock_url,Authorization => "OAuth " . $token);
 	my $raw_data = $res->{_content};
