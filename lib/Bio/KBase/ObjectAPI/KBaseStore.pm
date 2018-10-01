@@ -22,8 +22,8 @@ Class for managing KBase object retreival from KBase
 
 =head3 new
 
-    my $Store = Bio::KBase::ObjectAPI::KBaseStore->new(\%);
-    my $Store = Bio::KBase::ObjectAPI::KBaseStore->new(%);
+	my $Store = Bio::KBase::ObjectAPI::KBaseStore->new(\%);
+	my $Store = Bio::KBase::ObjectAPI::KBaseStore->new(%);
 
 This initializes a Storage interface object. This accepts a hash
 or hash reference to configuration details:
@@ -47,25 +47,25 @@ Client or server class for accessing a KBase workspace
 package Bio::KBase::ObjectAPI::KBaseStore;
 use Moose;
 use Bio::KBase::ObjectAPI::utilities;
-
+use Data::Dumper;
 use Class::Autouse qw(
-    Bio::KBase::kbaseenv
-    Bio::KBase::utilities
-    Bio::KBase::ObjectAPI::KBaseRegulation::Regulome
-    Bio::KBase::ObjectAPI::KBaseBiochem::Biochemistry
-    Bio::KBase::ObjectAPI::KBaseGenomes::Genome
-    Bio::KBase::ObjectAPI::KBaseGenomes::ContigSet
-    Bio::KBase::ObjectAPI::KBaseBiochem::Media
-    Bio::KBase::ObjectAPI::KBaseFBA::ModelTemplate
-    Bio::KBase::ObjectAPI::KBaseFBA::FBAComparison
-    Bio::KBase::ObjectAPI::KBaseOntology::Mapping
-    Bio::KBase::ObjectAPI::KBaseFBA::FBAModel
-    Bio::KBase::ObjectAPI::KBaseBiochem::BiochemistryStructures
-    Bio::KBase::ObjectAPI::KBaseFBA::Gapfilling
-    Bio::KBase::ObjectAPI::KBaseFBA::FBA
-    Bio::KBase::ObjectAPI::KBaseFBA::Gapgeneration
-    Bio::KBase::ObjectAPI::KBasePhenotypes::PhenotypeSet
-    Bio::KBase::ObjectAPI::KBasePhenotypes::PhenotypeSimulationSet
+	Bio::KBase::kbaseenv
+	Bio::KBase::utilities
+	Bio::KBase::ObjectAPI::KBaseRegulation::Regulome
+	Bio::KBase::ObjectAPI::KBaseBiochem::Biochemistry
+	Bio::KBase::ObjectAPI::KBaseGenomes::Genome
+	Bio::KBase::ObjectAPI::KBaseGenomes::ContigSet
+	Bio::KBase::ObjectAPI::KBaseBiochem::Media
+	Bio::KBase::ObjectAPI::KBaseFBA::ModelTemplate
+	Bio::KBase::ObjectAPI::KBaseFBA::FBAComparison
+	Bio::KBase::ObjectAPI::KBaseOntology::Mapping
+	Bio::KBase::ObjectAPI::KBaseFBA::FBAModel
+	Bio::KBase::ObjectAPI::KBaseBiochem::BiochemistryStructures
+	Bio::KBase::ObjectAPI::KBaseFBA::Gapfilling
+	Bio::KBase::ObjectAPI::KBaseFBA::FBA
+	Bio::KBase::ObjectAPI::KBaseFBA::Gapgeneration
+	Bio::KBase::ObjectAPI::KBasePhenotypes::PhenotypeSet
+	Bio::KBase::ObjectAPI::KBasePhenotypes::PhenotypeSimulationSet
 );
 use Module::Load;
 
@@ -189,12 +189,13 @@ sub process_object {
 			require "GenomeAnnotationAPI/GenomeAnnotationAPIClient.pm";
 			my $ga = new GenomeAnnotationAPI::GenomeAnnotationAPIClient(Bio::KBase::utilities::conf("fba_tools","call_back_url"));
 			my $gaoutput = $ga->get_genome_v1({
-				genomes => [{
-					"ref" => $info->[6]."/".$info->[0]."/".$info->[4]
-				}],
+				genomes       => [ {
+					"ref" => $origref
+				} ],
 				ignore_errors => 1,
-				no_data => 0,
-				no_metadata => 1
+				no_data       => 0,
+				no_metadata   => 1,
+				no_merge      => 1,
 			});
 			$data = $gaoutput->{genomes}->[0]->{data};
 			$class = "Bio::KBase::ObjectAPI::KBaseGenomes::Genome";
@@ -227,34 +228,34 @@ sub process_object {
 		if ($type eq "Biochemistry") {
 			$self->cache()->{$ref}->add("compounds",{
 				id => "cpd00000",
-		    	isCofactor => 0,
-		    	name => "CustomCompound",
-		    	abbreviation => "CustomCompound",
-		    	md5 => "",
-		    	formula => "",
-		    	unchargedFormula => "",
-		    	mass => 0,
-		    	defaultCharge => 0,
-		    	deltaG => 0,
-		    	deltaGErr => 0,
-		    	comprisedOfCompound_refs => [],
-		    	cues => {},
-		    	pkas => {},
-		    	pkbs => {}
+				isCofactor => 0,
+				name => "CustomCompound",
+				abbreviation => "CustomCompound",
+				md5 => "",
+				formula => "",
+				unchargedFormula => "",
+				mass => 0,
+				defaultCharge => 0,
+				deltaG => 0,
+				deltaGErr => 0,
+				comprisedOfCompound_refs => [],
+				cues => {},
+				pkas => {},
+				pkbs => {}
 			});
 			$self->cache()->{$ref}->add("reactions",{
 				id => "rxn00000",
-		    	name => "CustomReaction",
-		    	abbreviation => "CustomReaction",
-		    	md5 => "",
-		    	direction => "=",
-		    	thermoReversibility => "=",
-		    	status => "OK",
-		    	defaultProtons => 0,
-		    	deltaG => 0,
-		    	deltaGErr => 0,
-		    	cues => {},
-		    	reagents => []
+				name => "CustomReaction",
+				abbreviation => "CustomReaction",
+				md5 => "",
+				direction => "=",
+				thermoReversibility => "=",
+				status => "OK",
+				defaultProtons => 0,
+				deltaG => 0,
+				deltaGErr => 0,
+				cues => {},
+				reagents => []
 			});
 		}
 		if ($type eq "FBAModel" && $options->{raw} != 1) {
@@ -308,7 +309,7 @@ sub get_objects {
 	$options = Bio::KBase::utilities::args($options,[],{
 		refreshcache => 0,
 		raw => 0
-    });
+	});
 	#Checking cache for objects
 	my $newrefs = [];
 	for (my $i=0; $i < @{$refs}; $i++) {
@@ -323,10 +324,10 @@ sub get_objects {
 			$refs->[$i] = $options->{parent}->{_ref_chain}.";".$refs->[$i];
 		}
 		if (!defined($self->cache()->{$finalref}) || $options->{refreshcache} == 1) {
-    		if ($self->read_object_from_file_cache($finalref,$options) == 0) {
-    			push(@{$newrefs},$refs->[$i]);
-    		}
-    	}
+			if ($self->read_object_from_file_cache($finalref,$options) == 0) {
+				push(@{$newrefs},$refs->[$i]);
+			}
+		}
 	}
 	#Pulling objects from workspace
 	if (@{$newrefs} > 0) {
@@ -360,62 +361,62 @@ sub get_objects {
 }
 
 sub get_object {
-    my ($self,$ref,$options) = @_;
-    return $self->get_objects([$ref],$options)->[0];
+	my ($self,$ref,$options) = @_;
+	return $self->get_objects([$ref],$options)->[0];
 }
 
 sub get_object_by_handle {
-    my ($self,$handle,$type,$options) = @_;
-    my $typehandle = [split(/\./,$type)];
-    $typehandle->[1] =~ s/^New//;
-    my $class = "Bio::KBase::ObjectAPI::".$typehandle->[0]."::".$typehandle->[1];
-    my $data;
-    if ($handle->{type} eq "data") {
-    	$data = $handle->{data};
-    } elsif ($handle->{type} eq "workspace") {
-    	$options->{url} = $handle->{url};
-    	return $self->get_object($handle->{reference},$options);
-    }
-    return $class->new($data);
+	my ($self,$handle,$type,$options) = @_;
+	my $typehandle = [split(/\./,$type)];
+	$typehandle->[1] =~ s/^New//;
+	my $class = "Bio::KBase::ObjectAPI::".$typehandle->[0]."::".$typehandle->[1];
+	my $data;
+	if ($handle->{type} eq "data") {
+		$data = $handle->{data};
+	} elsif ($handle->{type} eq "workspace") {
+		$options->{url} = $handle->{url};
+		return $self->get_object($handle->{reference},$options);
+	}
+	return $class->new($data);
 }
 
 sub save_object {
-    my ($self,$object,$ref,$params) = @_;
-    my $args = {$ref => {hidden => $params->{hidden},meta => $params->{meta},object => $object}};
-    if (defined($params->{hash}) && $params->{hash} == 1) {
-    	$args->{$ref}->{hash} = 1;
-    	$args->{$ref}->{type} = $params->{type};
-    }
-    my $output = $self->save_objects($args);
-    return $output->{$ref};
+	my ($self,$object,$ref,$params) = @_;
+	my $args = {$ref => {hidden => $params->{hidden},meta => $params->{meta},object => $object}};
+	if (defined($params->{hash}) && $params->{hash} == 1) {
+		$args->{$ref}->{hash} = 1;
+		$args->{$ref}->{type} = $params->{type};
+	}
+	my $output = $self->save_objects($args);
+	return $output->{$ref};
 }
 
 sub save_objects {
-    my ($self,$refobjhash) = @_;
-    my $wsdata;
-    my $output = {};
-    foreach my $ref (keys(%{$refobjhash})) {
-    	my $obj = $refobjhash->{$ref};
-    	my $objdata = {
-    		provenance => Bio::KBase::utilities::provenance()
-    	};
-    	if (defined($obj->{hash}) && $obj->{hash} == 1) {
-    		$objdata->{type} = $obj->{type};
-    		$objdata->{data} = $obj->{object};
-    	} else {
-    		$objdata->{type} = $obj->{object}->_type();
-    		$objdata->{data} = $obj->{object}->serializeToDB();	
-    	}
-    	if (defined($obj->{hidden})) {
-    		$objdata->{hidden} = $obj->{hidden};
-    	}
-    	if (defined($obj->{meta})) {
-    		$objdata->{meta} = $obj->{meta};
-    	}
-    	if (defined($objdata->{provenance}->[0]->{method_params}->[0]->{notes})) {
-    		$objdata->{meta}->{notes} = $objdata->{provenance}->[0]->{method_params}->[0]->{notes};
-    	}
-    	my $array = [split(/\//,$ref)];
+	my ($self,$refobjhash) = @_;
+	my $wsdata;
+	my $output = {};
+	foreach my $ref (keys(%{$refobjhash})) {
+			my $obj = $refobjhash->{$ref};
+			my $objdata = {
+				provenance => Bio::KBase::utilities::provenance()
+			};
+			if (defined($obj->{hash}) && $obj->{hash} == 1) {
+				$objdata->{type} = $obj->{type};
+				$objdata->{data} = $obj->{object};
+			} else {
+				$objdata->{type} = $obj->{object}->_type();
+				$objdata->{data} = $obj->{object}->serializeToDB();	
+			}
+			if (defined($obj->{hidden})) {
+				$objdata->{hidden} = $obj->{hidden};
+			}
+			if (defined($obj->{meta})) {
+				$objdata->{meta} = $obj->{meta};
+			}
+			if (defined($objdata->{provenance}->[0]->{method_params}->[0]->{notes})) {
+				$objdata->{meta}->{notes} = $objdata->{provenance}->[0]->{method_params}->[0]->{notes};
+			}
+			my $array = [split(/\//,$ref)];
 		if (@{$array} < 2) {
 			Bio::KBase::ObjectAPI::utilities->error("Invalid reference:".$ref);
 		}
@@ -424,66 +425,85 @@ sub save_objects {
 		} else {
 			$objdata->{name} = $array->[1];
 		}
-		if ($objdata->{type} eq "KBaseGenomes.Genome" && Bio::KBase::utilities::conf("fba_tools","use_data_api") == 1) {
-			require "GenomeAnnotationAPI/GenomeAnnotationAPIClient.pm";
-			my $ga = new GenomeAnnotationAPI::GenomeAnnotationAPIClient(Bio::KBase::utilities::conf("ModelSEED","call_back_url"));
-			my $gaout = $ga->save_one_genome_v1({
-				workspace => $array->[0],
-		        name => $array->[1],
-		        data => $objdata->{data},
-		        provenance => $objdata->{provenance},
-		        hidden => $obj->{hidden}
-			});
-			my $info = $gaout->{info};
-	    	$self->cache()->{$gaout->{info}->[6]."/".$gaout->{info}->[0]."/".$gaout->{info}->[4]} = $obj->{object};
-	    	$self->cache()->{$gaout->{info}->[7]."/".$gaout->{info}->[1]."/".$gaout->{info}->[4]} = $obj->{object};
-		    $self->uuid_refs()->{$obj->{object}->uuid()} = $gaout->{info}->[7]."/".$gaout->{info}->[1]."/".$gaout->{info}->[4];
-		    $refobjhash->{$ref}->{object}->_reference($gaout->{info}->[6]."/".$gaout->{info}->[0]."/".$gaout->{info}->[4]);
-	    	$refobjhash->{$ref}->{object}->_wsobjid($gaout->{info}->[0]);
-			$refobjhash->{$ref}->{object}->_wsname($gaout->{info}->[1]);
-			$refobjhash->{$ref}->{object}->_wstype($gaout->{info}->[2]);
-			$refobjhash->{$ref}->{object}->_wssave_date($gaout->{info}->[3]);
-			$refobjhash->{$ref}->{object}->_wsversion($gaout->{info}->[4]);
-			$refobjhash->{$ref}->{object}->_wssaved_by($gaout->{info}->[5]);
-			$refobjhash->{$ref}->{object}->_wswsid($gaout->{info}->[6]);
-			$refobjhash->{$ref}->{object}->_wsworkspace($gaout->{info}->[7]);
-			$refobjhash->{$ref}->{object}->_wschsum($gaout->{info}->[8]);
-			$refobjhash->{$ref}->{object}->_wssize($gaout->{info}->[9]);
-			$refobjhash->{$ref}->{object}->_wsmeta($gaout->{info}->[10]);
-	    	$output->{$ref} = $gaout->{info};
-			next;
+		if ($array->[0] eq "NULL") {
+			#This enables us to write "cache only" objects that won't ever be stored permanently in the workspace
+			$self->cache()->{$ref} = $obj->{object};
+			$self->uuid_refs()->{$obj->{object}->uuid()} = $ref;
+			$refobjhash->{$ref}->{object}->_reference($ref);
+			$refobjhash->{$ref}->{object}->_wsobjid(0);
+			$refobjhash->{$ref}->{object}->_wsname($array->[1]);
+			$refobjhash->{$ref}->{object}->_wstype($objdata->{type});
+			$refobjhash->{$ref}->{object}->_wssave_date("");
+			$refobjhash->{$ref}->{object}->_wsversion(0);
+			$refobjhash->{$ref}->{object}->_wssaved_by("");
+			$refobjhash->{$ref}->{object}->_wswsid(0);
+			$refobjhash->{$ref}->{object}->_wsworkspace($array->[0]);
+			$refobjhash->{$ref}->{object}->_wschsum("");
+			$refobjhash->{$ref}->{object}->_wssize(0);
+			$refobjhash->{$ref}->{object}->_wsmeta({});
+			$output->{$ref} = [0,$array->[1],$objdata->{type},"",0,"",0,$array->[0],"",0,{}];
+		} else {
+			if ($objdata->{type} eq "KBaseGenomes.Genome" && Bio::KBase::utilities::conf("fba_tools","use_data_api") == 1) {
+				require "GenomeFileUtil/GenomeFileUtilClient.pm";
+				my $ga = new GenomeFileUtil::GenomeFileUtilClient(Bio::KBase::utilities::conf("fba_tools","call_back_url"));
+				my $gaout = $ga->save_one_genome({
+					workspace => $array->[0],
+					name => $array->[1],
+					data => $objdata->{data},
+					provenance => $objdata->{provenance},
+					hidden => $obj->{hidden}
+				});
+				my $info = $gaout->{info};
+				$self->cache()->{$gaout->{info}->[6]."/".$gaout->{info}->[0]."/".$gaout->{info}->[4]} = $obj->{object};
+				$self->cache()->{$gaout->{info}->[7]."/".$gaout->{info}->[1]."/".$gaout->{info}->[4]} = $obj->{object};
+				$self->uuid_refs()->{$obj->{object}->uuid()} = $gaout->{info}->[7]."/".$gaout->{info}->[1]."/".$gaout->{info}->[4];
+				$refobjhash->{$ref}->{object}->_reference($gaout->{info}->[6]."/".$gaout->{info}->[0]."/".$gaout->{info}->[4]);
+				$refobjhash->{$ref}->{object}->_wsobjid($gaout->{info}->[0]);
+				$refobjhash->{$ref}->{object}->_wsname($gaout->{info}->[1]);
+				$refobjhash->{$ref}->{object}->_wstype($gaout->{info}->[2]);
+				$refobjhash->{$ref}->{object}->_wssave_date($gaout->{info}->[3]);
+				$refobjhash->{$ref}->{object}->_wsversion($gaout->{info}->[4]);
+				$refobjhash->{$ref}->{object}->_wssaved_by($gaout->{info}->[5]);
+				$refobjhash->{$ref}->{object}->_wswsid($gaout->{info}->[6]);
+				$refobjhash->{$ref}->{object}->_wsworkspace($gaout->{info}->[7]);
+				$refobjhash->{$ref}->{object}->_wschsum($gaout->{info}->[8]);
+				$refobjhash->{$ref}->{object}->_wssize($gaout->{info}->[9]);
+				$refobjhash->{$ref}->{object}->_wsmeta($gaout->{info}->[10]);
+				$output->{$ref} = $gaout->{info};
+			} else {
+				push(@{$wsdata->{$array->[0]}->{refs}},$ref);
+				push(@{$wsdata->{$array->[0]}->{objects}},$objdata);
+			}
 		}
-		push(@{$wsdata->{$array->[0]}->{refs}},$ref);
-		push(@{$wsdata->{$array->[0]}->{objects}},$objdata);
-    }
+	}
 	foreach my $ws (keys(%{$wsdata})) {
-    	my $input = {objects => $wsdata->{$ws}->{objects}};
-    	if ($ws  =~ m/^\d+$/) {
-    		$input->{id} = $ws;
-    	} else {
-    		$input->{workspace} = $ws;
-    	}
-    	my $listout;
-    	if (defined($self->user_override()) && length($self->user_override()) > 0) {
-    		$listout = Bio::KBase::utilities::administer({
-    			"command" => "saveObjects",
-    			"user" => $self->user_override(),
-    			"params" => $input
-    		});
-    	} else {
-    		$listout = Bio::KBase::kbaseenv::save_objects($input);
-    	}    	
-	    #Placing output into a hash of references pointing to object infos
-	    for (my $i=0; $i < @{$listout}; $i++) {
-	    	$self->cache()->{$listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4]} = $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object};
-	    	$self->cache()->{$listout->[$i]->[7]."/".$listout->[$i]->[1]."/".$listout->[$i]->[4]} = $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object};
-	    	if (!defined($refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{hash}) || $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{hash} == 0) {
-		    	$self->uuid_refs()->{$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->uuid()} = $listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4];
-		    	if ($refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference() =~ m/^\w+\/\w+\/\w+$/) {
-		    		$self->updated_refs()->{$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference()} = $listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4];
-		    	}
-		    	$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference($listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4]);
-		    	$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsobjid($listout->[$i]->[0]);
+			my $input = {objects => $wsdata->{$ws}->{objects}};
+			if ($ws  =~ m/^\d+$/) {
+				$input->{id} = $ws;
+			} else {
+				$input->{workspace} = $ws;
+			}
+			my $listout;
+			if (defined($self->user_override()) && length($self->user_override()) > 0) {
+				$listout = Bio::KBase::utilities::administer({
+					"command" => "saveObjects",
+					"user" => $self->user_override(),
+					"params" => $input
+				});
+			} else {
+				$listout = Bio::KBase::kbaseenv::save_objects($input);
+			}		
+		#Placing output into a hash of references pointing to object infos
+		for (my $i=0; $i < @{$listout}; $i++) {
+			$self->cache()->{$listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4]} = $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object};
+			$self->cache()->{$listout->[$i]->[7]."/".$listout->[$i]->[1]."/".$listout->[$i]->[4]} = $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object};
+			if (!defined($refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{hash}) || $refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{hash} == 0) {
+				$self->uuid_refs()->{$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->uuid()} = $listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4];
+				if ($refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference() =~ m/^\w+\/\w+\/\w+$/) {
+					$self->updated_refs()->{$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference()} = $listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4];
+				}
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_reference($listout->[$i]->[6]."/".$listout->[$i]->[0]."/".$listout->[$i]->[4]);
+				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsobjid($listout->[$i]->[0]);
 				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsname($listout->[$i]->[1]);
 				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wstype($listout->[$i]->[2]);
 				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wssave_date($listout->[$i]->[3]);
@@ -494,11 +514,11 @@ sub save_objects {
 				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wschsum($listout->[$i]->[8]);
 				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wssize($listout->[$i]->[9]);
 				$refobjhash->{$wsdata->{$ws}->{refs}->[$i]}->{object}->_wsmeta($listout->[$i]->[10]);
-	    	}
-	    	$output->{$wsdata->{$ws}->{refs}->[$i]} = $listout->[$i];
-	    }
-	    return $output;
-    }
+			}
+			$output->{$wsdata->{$ws}->{refs}->[$i]} = $listout->[$i];
+		}
+	}
+	return $output;
 }
 
 sub list_objects {
@@ -514,6 +534,11 @@ sub uuid_to_ref {
 sub updated_reference {
 	my ($self,$oldref) = @_;
 	return $self->updated_refs()->{$oldref};
+}
+
+sub get_ref_from_metadata {
+	my ($self,$metadata) = @_;
+	return $metadata->[6]."/".$metadata->[0]."/".$metadata->[4]
 }
 
 no Moose;
