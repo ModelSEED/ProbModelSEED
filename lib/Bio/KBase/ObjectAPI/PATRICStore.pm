@@ -875,6 +875,11 @@ sub save_fba {
 	return $output;
 }
 
+sub get_ref_from_metadata {
+	my ($self,$metadata) = @_;
+	return $metadata->[2].$metadata->[0];
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
