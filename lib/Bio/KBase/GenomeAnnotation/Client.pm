@@ -40,7 +40,7 @@ sub new
     
     if (!defined($url))
     {
-	$url = 'http://tutorial.theseed.org/services/genome_annotation';
+	$url = 'https://tutorial.theseed.org/services/genome_annotation';
     }
 
     my $self = {

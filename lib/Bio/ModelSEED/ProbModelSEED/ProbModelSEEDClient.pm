@@ -33,7 +33,7 @@ sub new
     
     if (!defined($url))
     {
-	$url = 'http://p3.theseed.org/services/ProbModelSEED';
+	$url = 'https://p3.theseed.org/services/ProbModelSEED';
     }
 
     my $self = {
