@@ -1573,7 +1573,7 @@ sub annotate_microbial_genome {
 	my ($self,$args) = @_;
 	$args = Bio::KBase::utilities::args($args,["genome"],{});
 	my $genome = $args->{genome};	
-	my $client = Bio::KBase::GenomeAnnotation::Client->new('http://tutorial.theseed.org/services/genome_annotation');
+	my $client = Bio::KBase::GenomeAnnotation::Client->new();
 	my $newgenome = $client->create_genome({
 		scientific_name => $genome->{scientific_name},
 		domain => $genome->{domain},
@@ -1602,7 +1602,7 @@ sub annotate_microbial_contigs {
 	my ($self,$args) = @_;
 	$args = Bio::KBase::utilities::args($args,["genome"],{});
 	my $genome = $args->{genome};
-	my $client = Bio::KBase::GenomeAnnotation::Client->new('http://tutorial.theseed.org/services/genome_annotation');
+	my $client = Bio::KBase::GenomeAnnotation::Client->new();
 	my $newgenome = $client->create_genome({
 		scientific_name => $genome->{scientific_name},
 		domain => $genome->{domain},
