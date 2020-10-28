@@ -190,8 +190,8 @@ sub template_trans {
 
 sub contig_annotation_pipeline {
 	return  [
-		{ name => 'call_features_rRNA_SEED' },
-		{ name => 'call_features_tRNA_trnascan' },
+		#{ name => 'call_features_rRNA_SEED' },
+		#{ name => 'call_features_tRNA_trnascan' },
 		#{ name => 'call_features_repeat_region_SEED',repeat_region_SEED_parameters => { } },
 		#{ name => 'call_selenoproteins', failure_is_not_fatal => 1 },
 		#{ name => 'call_pyrrolysoproteins', failure_is_not_fatal => 1 },
