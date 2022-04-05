@@ -73,6 +73,7 @@ eval {
 	$obj->app_harness($job->{app},$job->{parameters});
 };
 if ($@) {
+    print("There were errors: $@\n");
     $errors->{$job->{id}} = $@;
     if ($job->{app} eq "ModelReconstruction") {
     	my $input = $job->{parameters};
