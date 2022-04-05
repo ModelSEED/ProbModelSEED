@@ -401,7 +401,7 @@ Description:
 sub retrieve_PATRIC_genome {
 	my ($self,$genomeid,$refseq,$hashonly) = @_;
 	#Retrieving genome information
-	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => Bio::KBase::utilities::conf("ProbModelSEED","data_api_url")."genome/?genome_id=".$genomeid."&http_accept=application/json",token => Bio::KBase::utilities::token()});
+	my $data = Bio::KBase::ObjectAPI::utilities::rest_download({url => Bio::KBase::utilities::conf("ProbModelSEED","data_api_url")."genome/?genome_id=".$genomeid."&http_accept=application/json"});
 	if (!defined($refseq)) {
 		$refseq = 0;
 	}
@@ -467,7 +467,7 @@ sub retrieve_PATRIC_genome {
 	my $allftrs = [];
 	while ($start >= 0 && $loopcount < 100) {
 		$loopcount++;#Insurance that no matter what, this loop won't run for more than 100 iterations
-		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => Bio::KBase::utilities::conf("ProbModelSEED","data_api_url")."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)",token => Bio::KBase::utilities::token()},$params);
+		my $ftrdata = Bio::KBase::ObjectAPI::utilities::rest_download({url => Bio::KBase::utilities::conf("ProbModelSEED","data_api_url")."genome_feature/?genome_id=".$genomeid."&http_accept=application/json&limit(10000,$start)"},$params);
 		if (defined($ftrdata) && @{$ftrdata} > 0) {
 			push(@{$allftrs},@{$ftrdata});
 		}
