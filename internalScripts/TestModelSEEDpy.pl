@@ -11,7 +11,7 @@ Bio::KBase::ObjectAPI::config::load_config({
 
 Bio::KBase::ObjectAPI::config::adminmode(1);
 
-$helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
+my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	token => Bio::P3::Workspace::ScriptHelpers::token(),
 	username => "chenry",
 	method => "ModelReconstruction",
@@ -25,7 +25,7 @@ my $parameters = {
 	genome => "PATRIC:83333.1",
 	output_file => "Test83333.1",
 	output_path => "/chenry/public/PATRICModels/"
-}
+};
 
 $parameters = Bio::KBase::utilities::args($parameters,[],{
 	genome_type => undef,
@@ -196,12 +196,13 @@ my $input = {
 	parameters => $parameters,
 	genome => $helper->get_object($folder."/genome")->serializeToDB(),
 	media => $helper->get_object($parameters->{media})->serializeToDB()
-}
-my $json = $datachannel->{fbamodel}->serializeToDB()
-Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/output_model.json",[$json])
+};
+
+my $json = $datachannel->{fbamodel}->serializeToDB();
+Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/output_model.json",[$json]);
 Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/input.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($input)]);
 my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","bin_directory")."/ModelSEEDpy-ModelReconstruction.pl ".Bio::KBase::utilities::conf("ProbModelSEED","work_dir")."/input.json";
-print("Command:",$cmd)
+print("Command:",$cmd);
 	#system($cmd);
 	#$data = Bio::KBase::ObjectAPI::utilities::FROMJSON(Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/output.json")[0])
 	#$modelobj = $helper->PATRICStore()->process_objec($meta,$data,$options)
