@@ -6,7 +6,7 @@ my $configfile = "/disks/p3dev2/deployment/deployment.cfg";
 
 Bio::KBase::utilities::read_config({
 	service => "ProbModelSEED",
-	filename => configfile
+	filename => $configfile
 });
 
 Bio::KBase::ObjectAPI::config::adminmode(1);
