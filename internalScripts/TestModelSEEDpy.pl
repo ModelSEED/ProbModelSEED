@@ -9,7 +9,7 @@ Bio::KBase::utilities::read_config({
 	filename => $configfile
 });
 
-Bio::KBase::ObjectAPI::config::adminmode(1);
+#Bio::KBase::ObjectAPI::config::adminmode(1);
 
 my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	token => Bio::P3::Workspace::ScriptHelpers::token(),
