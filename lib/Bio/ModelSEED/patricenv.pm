@@ -106,7 +106,6 @@ sub ws_client {
 		refresh => 0
 	});
 	if ($parameters->{refresh} == 1 || !defined($ws_client)) {
-		print("URL:".Bio::KBase::utilities::conf("ProbModelSEED","workspace-url"));
 		if (Bio::KBase::utilities::conf("ProbModelSEED","workspace-url") eq "impl") {
 			eval {
 				require "Bio/P3/Workspace/WorkspaceImpl.pm";
