@@ -3,21 +3,16 @@ use Data::Dumper;
 use Bio::P3::Workspace::ScriptHelpers;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 my $configfile = "/disks/p3dev2/deployment/deployment.cfg";
-
-Bio::KBase::utilities::read_config({
-	service => "ProbModelSEED",
-	filename => $configfile
-});
-
 #Bio::KBase::ObjectAPI::config::adminmode(1);
 
-print("URL:".Bio::KBase::utilities::conf("ProbModelSEED","workspace-url"));
 my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	token => Bio::P3::Workspace::ScriptHelpers::token(),
 	username => "chenry",
 	method => "ModelReconstruction",
 	configfile => $configfile
 });
+
+print("Test URL:".Bio::KBase::utilities::conf("ProbModelSEED","workspace-url"));
 
 my $parameters = {
 	media => "/chenry/public/modelsupport/media/ArgonneLBMedia",
