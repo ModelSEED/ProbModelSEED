@@ -13,6 +13,7 @@ my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 });
 
 print("Test URL:".Bio::KBase::utilities::conf("ProbModelSEED","workspace-url"));
+print("WC-Client:".Bio::ModelSEED::patricenv::ws_client()->{url}."|". Bio::ModelSEED::patricenv::ws_client()->{headers});
 
 my $parameters = {
 	media => "/chenry/public/modelsupport/media/ArgonneLBMedia",
