@@ -11,6 +11,7 @@ Bio::KBase::utilities::read_config({
 
 #Bio::KBase::ObjectAPI::config::adminmode(1);
 
+print("URL:".Bio::KBase::utilities::conf("ProbModelSEED","workspace-url"));
 my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	token => Bio::P3::Workspace::ScriptHelpers::token(),
 	username => "chenry",
