@@ -70,9 +70,7 @@ if (substr($parameters->{output_path},-1,1) ne "/") {
 	$parameters->{output_path} .= "/";
 }
 my $folder = $parameters->{output_path}."/".$parameters->{output_file};
-
 #Creating model folder and adding meta data
-print(Bio::KBase::ObjectAPI::utilities::TOJSON({objects => [[$folder,"modelfolder",{},undef]]}));
 Bio::ModelSEED::patricenv::call_ws("create",{objects => [[$folder,"modelfolder",{},undef]]});
 
 #############################################################

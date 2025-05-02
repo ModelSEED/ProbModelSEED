@@ -109,6 +109,7 @@ has provenance => ( is => 'rw', isa => 'ArrayRef',default => sub { return []; })
 has user_override => ( is => 'rw', isa => 'Str',default => "");
 has file_cache => ( is => 'rw', isa => 'Str',default => "");
 has cache_targets => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
+has updated_refs => ( is => 'rw', isa => 'HashRef',default => sub { return {}; });
 
 #***********************************************************************************************************
 # BUILDERS:
@@ -873,6 +874,14 @@ sub save_fba {
 		}
 	}
 	return $output;
+}
+
+sub updated_reference {
+	my ($self,$oldref) = @_;
+	if (defined($self->updated_refs()->{$oldref})) {
+		return $self->updated_refs()->{$oldref};
+	}
+	return $oldref;
 }
 
 no Moose;
