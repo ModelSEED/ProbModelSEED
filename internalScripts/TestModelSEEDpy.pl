@@ -4,6 +4,23 @@ use Bio::P3::Workspace::ScriptHelpers;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 my $configfile = "/disks/p3dev2/deployment/deployment.cfg";
 #Bio::KBase::ObjectAPI::config::adminmode(1);
+use POSIX;
+use strict;
+use LWP::UserAgent;
+use JSON::XS;
+
+my $ua = LWP::UserAgent->new();
+my $json = JSON::XS->new->allow_nonref->utf8;
+$resulmy $json = $self->json;
+
+$self->ua->post(
+	$Bio::KBase::utilities::conf("ProbModelSEED","workspace-url")),
+	Content_Type   => $self->{content_type},
+	Content        => $content,
+	Accept         => 'application/json',
+@$headers,
+($self->{token} ? (Authorization => $self->{token}) : ()),
+);
 
 my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	token => Bio::P3::Workspace::ScriptHelpers::token(),
@@ -11,9 +28,6 @@ my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	method => "ModelReconstruction",
 	configfile => $configfile
 });
-
-print("Test URL:".Bio::KBase::utilities::conf("ProbModelSEED","workspace-url"));
-print("WC-Client:".Bio::ModelSEED::patricenv::ws_client()->{url}."|". Bio::ModelSEED::patricenv::ws_client()->{headers});
 
 my $parameters = {
 	media => "/chenry/public/modelsupport/media/ArgonneLBMedia",
@@ -76,6 +90,7 @@ if (substr($parameters->{output_path},-1,1) ne "/") {
 my $folder = $parameters->{output_path}."/".$parameters->{output_file};
 
 #Creating model folder and adding meta data
+print(Bio::KBase::ObjectAPI::utilities::TOJSON({objects => [[$folder,"modelfolder",{},undef]]}));
 Bio::ModelSEED::patricenv::call_ws("create",{objects => [[$folder,"modelfolder",{},undef]]});
 
 #############################################################
