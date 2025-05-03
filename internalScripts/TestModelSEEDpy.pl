@@ -191,6 +191,10 @@ my $input = {
 };
 
 my $json = $datachannel->{fbamodel}->serializeToDB();
+print("File1:".Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/output_model.json");
+print("File2:".Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/input.json");
+print("Bin1:".Bio::KBase::utilities::conf("ProbModelSEED","bin_directory"));
+print("Input:",Bio::KBase::ObjectAPI::utilities::TOJSON($input));
 Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/output_model.json",[$json]);
 Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/input.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($input)]);
 my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","bin_directory")."/ModelSEEDpy-ModelReconstruction.pl ".Bio::KBase::utilities::conf("ProbModelSEED","work_dir")."/input.json";
