@@ -69,7 +69,9 @@ eval {
 		username => $job->{owner},
 		method => $job->{app},
 		parameters => $job->{parameters},
+		jobid => $jobid
 	});
+	Bio::KBase::utilities::setconf("Scheduler","jobid",$jobid);
 	$obj->app_harness($job->{app},$job->{parameters});
 };
 if ($@) {

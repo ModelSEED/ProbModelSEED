@@ -3,6 +3,7 @@ use Data::Dumper;
 use Bio::P3::Workspace::ScriptHelpers;
 use Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper;
 my $configfile = "/disks/p3dev2/deployment/deployment.cfg";
+my $jobid = $ARGV[0];
 #Bio::KBase::ObjectAPI::config::adminmode(1);
 my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	token => Bio::P3::Workspace::ScriptHelpers::token(),
@@ -10,6 +11,7 @@ my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	method => "ModelReconstruction",
 	configfile => $configfile
 });
+Bio::KBase::utilities::setconf("Scheduler","jobid",$parameters->{jobid});
 
 my $parameters = {
 	media => "/chenry/public/modelsupport/media/ArgonneLBMedia",
@@ -185,20 +187,17 @@ if ($parameters->{gapfill} == 1) {
 }
 #} else {
 my $input = {
+	config => Bio::KBase::utilities::config_hash(),
 	parameters => $parameters,
 	genome => $helper->get_object($folder."/genome")->serializeToDB(),
 	media => $helper->get_object($parameters->{media})->serializeToDB()
 };
 
 my $json = $datachannel->{fbamodel}->serializeToDB();
-#print("File1:".Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/output_model.json");
-#print("File2:".Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/input.json");
-#print("Bin1:".Bio::KBase::utilities::conf("ProbModelSEED","bin_directory"));
-print("Config:".Bio::KBase::ObjectAPI::utilities::TOJSON(Bio::KBase::utilities::config_hash()));
-#print("Input:",Bio::KBase::ObjectAPI::utilities::TOJSON($input));
-Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/output_model.json",[$json]);
-Bio::KBase::ObjectAPI::utilities::PRINTFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/input.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($input)]);
-my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","bin_directory")."/ModelSEEDpy-ModelReconstruction.pl ".Bio::KBase::utilities::conf("ProbModelSEED","work_dir")."/input.json";
+my $directory = Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".Bio::KBase::utilities::conf("Scheduler","jobid")."/";
+Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."/output_model.json",[$json]);
+Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."/input.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($input)]);
+my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","internal_scripts_directory")."/ModelSEEDpy-ModelRecon.py ".$directory."/input.json";
 print("Command:",$cmd);
 	#system($cmd);
 	#$data = Bio::KBase::ObjectAPI::utilities::FROMJSON(Bio::KBase::ObjectAPI::utilities::LOADFILE(Bio::KBase::utilities::conf("ProbModelSEED","work_dir")+"/output.json")[0])
