@@ -11,7 +11,7 @@ my $helper = Bio::ModelSEED::ProbModelSEED::ProbModelSEEDHelper->new({
 	method => "ModelReconstruction",
 	configfile => $configfile
 });
-Bio::KBase::utilities::setconf("Scheduler","jobid",$parameters->{jobid});
+Bio::KBase::utilities::setconf("Scheduler","jobid",$jobid;
 
 my $parameters = {
 	media => "/chenry/public/modelsupport/media/ArgonneLBMedia",
