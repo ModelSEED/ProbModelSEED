@@ -17,8 +17,8 @@ my $parameters = {
 	media => "/chenry/public/modelsupport/media/ArgonneLBMedia",
 	gapfill => 1,
 	predict_essentiality => 1,
-	genome => "PATRIC:83333.1",
-	output_file => "Test83333.1",
+	genome => "PATRIC:511145.1508",
+	output_file => "Test511145.1508",
 	output_path => "/chenry/public/PATRICModels/"
 };
 
@@ -196,7 +196,7 @@ my $input = {
 my $json = $datachannel->{fbamodel}->serializeToDB();
 my $directory = Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".Bio::KBase::utilities::conf("Scheduler","jobid")."/";
 Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."/output_model.json",[$json]);
-Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."/input.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($input)]);
+Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."/input.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($input,1)]);
 my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","internal_scripts_directory")."/ModelSEEDpy-ModelRecon.py ".$directory."/input.json";
 print("Command:",$cmd);
 	#system($cmd);
