@@ -195,7 +195,7 @@ my $input = {
 
 my $json = $datachannel->{fbamodel}->serializeToDB();
 my $directory = Bio::KBase::utilities::conf("Scheduler","jobdirectory")."jobs/".Bio::KBase::utilities::conf("Scheduler","jobid")."/";
-Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."/output_model.json",[$json]);
+Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."/output_model.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($json,1)]);
 Bio::KBase::ObjectAPI::utilities::PRINTFILE($directory."/input.json",[Bio::KBase::ObjectAPI::utilities::TOJSON($input,1)]);
 my $cmd = Bio::KBase::utilities::conf("ProbModelSEED","internal_scripts_directory")."/ModelSEEDpy-ModelRecon.py ".$directory."/input.json";
 print("Command:",$cmd);
