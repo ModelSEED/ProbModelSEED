@@ -7,4 +7,16 @@
 !.gitignore
 MFAToolkit/bin/*
 MFAToolkit/Debug/*
-MFAToolkit/stderr.log
+MFAToolkit/stderr.log__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
