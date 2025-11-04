@@ -415,16 +415,160 @@ def run_gapfill_model(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
     setup_modelseedpy_path(config)
 
-    # Load model from workspace
+    # Initialize helper
+    helper = ModelSEEDReconHelper(config)
+
+    # Parse model reference
     model_path = params['model']
+    print(f"Loading model from {model_path}")
+
+    # Load model from workspace
     model_data = workspace.get_object_data(model_path)
 
-    # TODO: Implement full gapfilling logic
-    # This is a placeholder
+    # Convert to FBAModel
+    from cobrakbase.core.kbasefba import FBAModel
+    model = helper.kbase_api._build_object("KBaseFBA.FBAModel", model_data, None, None)
+
+    # Get MSModelUtil
+    mdlutl = MSModelUtil.get(model)
+
+    # Determine output path and file
+    output_path = model_path + "/gapfilling"
+    output_file = params.get('output_file')
+
+    if not output_file:
+        # Auto-generate gapfill filename (gf.0, gf.1, etc.)
+        try:
+            gflist = workspace.ls(
+                [output_path],
+                excludeDirectories=True,
+                excludeObjects=False,
+                recursive=True,
+                query={'type': 'fba'}
+            )
+
+            index = 0
+            if gflist and output_path in gflist:
+                files = gflist[output_path]
+                for file_info in files:
+                    filename = file_info[0]
+                    if filename.startswith('gf.'):
+                        try:
+                            file_index = int(filename.split('.')[1])
+                            if file_index >= index:
+                                index = file_index + 1
+                        except (IndexError, ValueError):
+                            pass
+
+            output_file = f"gf.{index}"
+        except Exception as e:
+            print(f"Warning: Could not list existing gapfills: {e}")
+            output_file = "gf.0"
+
+    # Load media
+    media_ref = params.get('media')
+    if media_ref:
+        media_data = workspace.get_object_data(media_ref)
+        media_obj = helper.get_media(media_data)
+    else:
+        raise ValueError("media parameter is required for gapfilling")
+
+    # Load core template if needed
+    if not helper.core_template:
+        helper.core_template = helper.get_template(helper.kbase_templates["core"])
+
+    # Get template from model
+    template_ref = model.template_ref
+    if template_ref:
+        template_id = template_ref.rstrip('|').split('/')[-1]
+        template = helper.get_template(template_id)
+    else:
+        raise ValueError("Model does not have template_ref")
+
+    # Get ATP tests
+    atp_medias_path = config.get("ModelSEEDpy", {}).get("codebase", "") + "ModelSEEDpy/modelseedpy/data/atp_medias.tsv"
+    tests = mdlutl.get_atp_tests(
+        core_template=helper.core_template,
+        atp_media_filename=atp_medias_path,
+        recompute=False
+    )
+
+    # Create gapfilling object
+    print(f"Setting up gapfilling for {model_path}")
+
+    msgapfill = MSGapfill(
+        mdlutl,
+        [template],
+        [],
+        tests,
+        blacklist=params.get('blacklisted_rxn_list', []),
+        default_target=params.get('target_reaction', 'bio1'),
+        minimum_obj=params.get('minimum_target_flux', 0.1),
+        base_media=None,
+        base_media_target_element=None
+    )
+
+    # Run gapfilling
+    print(f"Running gapfilling on {media_obj.id}")
+
+    mdlutl.gfutl.cumulative_gapfilling = []
+    solutions = msgapfill.run_multi_gapfill(
+        [media_obj],
+        target=params.get('target_reaction', 'bio1'),
+        default_minimum_objective=params.get('minimum_target_flux', 0.1),
+        binary_check=False,
+        prefilter=True,
+        check_for_growth=True,
+        gapfilling_mode="Sequential",
+        run_sensitivity_analysis=True,
+        integrate_solutions=params.get('integrate_solution', 0) == 1
+    )
+
+    # Process solution
+    growth = 0
+    if media_obj in solutions and "growth" in solutions[media_obj]:
+        growth = solutions[media_obj]["growth"]
+        print(f"Gapfilling resulted in growth: {growth}")
+
+    # Get solution for FBA
+    if growth > 0:
+        mdlutl.pkgmgr.getpkg("KBaseMediaPkg").build_package(media_obj)
+        mdlutl.pkgmgr.getpkg("ElementUptakePkg").build_package({"C": 60})
+        fba_solution = cobra.flux_analysis.pfba(mdlutl.model)
+    else:
+        fba_solution = None
+        print("Warning: No growth after gapfilling")
+
+    # Save model if integrate_solution is set
+    if params.get('integrate_solution', 0) == 1:
+        print(f"Saving integrated model to {model_path}")
+        helper.save_model(mdlutl, workspace, model_path)
+
+    # Save gapfilling FBA result
+    gapfill_path = f"{output_path}/{output_file}"
+
+    if fba_solution:
+        # Create MSFBA object and save
+        from modelseedpy.core.msfba import MSFBA
+        fba = MSFBA(mdlutl, media_obj, primary_solution=fba_solution)
+        fba.id = output_file
+
+        # Generate KBase data
+        fba_data = fba.generate_kbase_data(
+            model_path + "||",
+            media_ref + "||"
+        )
+
+        # Save FBA result
+        workspace.save_object(gapfill_path, "FBA", fba_data, overwrite=True)
+        print(f"Saved gapfilling results to {gapfill_path}")
 
     return {
-        "status": "complete",
-        "model": model_path
+        "gapfill_ref": gapfill_path,
+        "fbamodel_ref": model_path,
+        "report_ref": gapfill_path + ".jobresult",
+        "num_gapfilled_reactions": len(mdlutl.gfutl.cumulative_gapfilling),
+        "growth": growth
     }
 
 
@@ -444,18 +588,141 @@ def run_fba(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
     setup_modelseedpy_path(config)
 
-    # TODO: Implement FBA logic
-    # This is a placeholder
+    # Initialize helper
+    helper = ModelSEEDReconHelper(config)
+
+    # Parse model reference
+    model_path = params['model']
+    print(f"Loading model from {model_path}")
+
+    # Load model from workspace
+    model_data = workspace.get_object_data(model_path)
+
+    # Convert to FBAModel
+    from cobrakbase.core.kbasefba import FBAModel
+    model = helper.kbase_api._build_object("KBaseFBA.FBAModel", model_data, None, None)
+
+    # Get MSModelUtil
+    mdlutl = MSModelUtil.get(model)
+
+    # Determine output path and file
+    output_path = model_path + "/fba"
+    output_file = params.get('output_file')
+
+    if not output_file:
+        # Auto-generate FBA filename (fba.0, fba.1, etc.)
+        try:
+            fba_list = workspace.ls(
+                [output_path],
+                excludeDirectories=True,
+                excludeObjects=False,
+                recursive=True,
+                query={'type': 'fba'}
+            )
+
+            index = 0
+            if fba_list and output_path in fba_list:
+                files = fba_list[output_path]
+                for file_info in files:
+                    filename = file_info[0]
+                    if filename.startswith('fba.'):
+                        try:
+                            file_index = int(filename.split('.')[1])
+                            if file_index >= index:
+                                index = file_index + 1
+                        except (IndexError, ValueError):
+                            pass
+
+            output_file = f"fba.{index}"
+        except Exception as e:
+            print(f"Warning: Could not list existing FBAs: {e}")
+            output_file = "fba.0"
+
+    # Load media if provided
+    media_obj = None
+    media_ref = params.get('media')
+
+    if media_ref:
+        media_data = workspace.get_object_data(media_ref)
+        media_obj = helper.get_media(media_data)
+        print(f"Using media: {media_obj.id}")
+
+        # Set up media package
+        mdlutl.pkgmgr.getpkg("KBaseMediaPkg").build_package(media_obj)
+
+    # Apply gene knockouts if specified
+    feature_ko_list = params.get('feature_ko_list', [])
+    if feature_ko_list:
+        print(f"Applying {len(feature_ko_list)} gene knockouts")
+        for gene_id in feature_ko_list:
+            try:
+                gene = mdlutl.model.genes.get_by_id(gene_id)
+                gene.knock_out()
+            except KeyError:
+                print(f"Warning: Gene {gene_id} not found in model")
+
+    # Apply reaction knockouts if specified
+    reaction_ko_list = params.get('reaction_ko_list', [])
+    if reaction_ko_list:
+        print(f"Applying {len(reaction_ko_list)} reaction knockouts")
+        for rxn_id in reaction_ko_list:
+            try:
+                rxn = mdlutl.model.reactions.get_by_id(rxn_id)
+                rxn.knock_out()
+            except KeyError:
+                print(f"Warning: Reaction {rxn_id} not found in model")
+
+    # Run FBA
+    print(f"Running FBA on model {model_path}")
+
+    # Set objective
+    mdlutl.model.objective = "bio1"
+
+    # Run optimization
+    solution = mdlutl.model.optimize()
+
+    print(f"FBA objective value: {solution.objective_value}")
+
+    # Create MSFBA object
+    from modelseedpy.core.msfba import MSFBA
+    fba = MSFBA(mdlutl, media_obj, primary_solution=solution)
+    fba.id = output_file
+
+    # Run FVA if requested
+    if params.get('fva', 1) == 1:
+        print("Running flux variability analysis")
+        # FVA is computationally expensive, so we skip it for now in the basic implementation
+        # Could be added: fva_result = cobra.flux_analysis.flux_variability_analysis(mdlutl.model)
+
+    # Simulate gene knockouts if requested
+    if params.get('simulate_ko', 0) == 1:
+        print("Simulating gene knockouts for essentiality prediction")
+        # This would involve running single gene deletions
+        # Could be added: from cobra.flux_analysis import single_gene_deletion
+        # deletion_results = single_gene_deletion(mdlutl.model)
+
+    # Generate KBase FBA data
+    fba_data = fba.generate_kbase_data(
+        model_path + "||",
+        media_ref + "||" if media_ref else None
+    )
+
+    # Save FBA result
+    fba_path = f"{output_path}/{output_file}"
+    workspace.save_object(fba_path, "FBA", fba_data, overwrite=True)
+    print(f"Saved FBA results to {fba_path}")
 
     return {
-        "status": "complete",
-        "fba_id": params.get("fba_output_id", "fba")
+        "fba_ref": fba_path,
+        "report_ref": fba_path + ".jobresult",
+        "objective_value": solution.objective_value,
+        "status": solution.status
     }
 
 
 def run_compute_reaction_probabilities(input_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Compute reaction probabilities
+    Compute reaction probabilities using ProbAnno
 
     Args:
         input_data: Dictionary with config, parameters, workspace
@@ -463,16 +730,88 @@ def run_compute_reaction_probabilities(input_data: Dict[str, Any]) -> Dict[str, 
     Returns:
         Output dictionary with reaction probabilities
     """
+    import subprocess
+    import os
+
     config = input_data['config']
     params = input_data['parameters']
     workspace = input_data['workspace']
 
     setup_modelseedpy_path(config)
 
-    # TODO: Implement reaction probability computation
-    # This is a placeholder
+    # Get required parameters
+    genome_ref = params['genome']
+    template_ref = params['template']
+    rxnprobs_ref = params['rxnprobs']
+
+    print(f"Computing reaction probabilities for {genome_ref} with template {template_ref}")
+
+    # Get probanno binary path from config
+    probanno_bin = config.get("ProbModelSEED", {}).get("probannobin")
+
+    if not probanno_bin:
+        # Try to find ms-probanno in common locations
+        possible_paths = [
+            "/disks/p3dev2/deployment/bin/ms-probanno",
+            "ms-probanno",  # Assume in PATH
+        ]
+
+        for path in possible_paths:
+            if os.path.exists(path) or subprocess.run(['which', path], capture_output=True).returncode == 0:
+                probanno_bin = path
+                break
+
+        if not probanno_bin:
+            raise ValueError(
+                "ProbAnno binary not found. Set 'probannobin' in [ProbModelSEED] config section."
+            )
+
+    print(f"Using ProbAnno binary: {probanno_bin}")
+
+    # Get authentication token
+    token = os.environ.get('KB_AUTH_TOKEN') or os.environ.get('P3_AUTH_TOKEN', '')
+
+    # Build command
+    cmd = [
+        probanno_bin,
+        genome_ref,
+        template_ref,
+        rxnprobs_ref,
+        '--token', token
+    ]
+
+    print(f"Running command: {' '.join(cmd[:4])} --token <hidden>")
+
+    # Execute ProbAnno
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=3600  # 1 hour timeout
+        )
+
+        if result.returncode != 0:
+            error_msg = f"ProbAnno failed with return code {result.returncode}\n"
+            error_msg += f"STDOUT: {result.stdout}\n"
+            error_msg += f"STDERR: {result.stderr}"
+            raise RuntimeError(error_msg)
+
+        print("ProbAnno completed successfully")
+
+        if result.stdout:
+            print(f"ProbAnno output:\n{result.stdout}")
+
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("ProbAnno execution timed out after 1 hour")
+
+    except Exception as e:
+        raise RuntimeError(f"Error running ProbAnno: {e}")
+
+    print("Finished calculating reaction probabilities")
 
     return {
-        "status": "complete",
-        "rxnprobs": params.get("rxnprobs", "rxnprobs")
+        "rxnprobs_ref": rxnprobs_ref,
+        "report_ref": rxnprobs_ref + ".jobresult",
+        "status": "complete"
     }
